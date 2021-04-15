@@ -10,3 +10,4 @@ Mesonomics crypto-currency alert service.
 - Users can register for a free or paid account on the web site.
 - Payments can be taken by BTC, credit-card or pay-pal.
 - Users can request alerts via an end-user web front-end, or via an API.
+- API access is throttled according to account tier.
