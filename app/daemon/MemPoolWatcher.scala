@@ -1,6 +1,6 @@
 package daemon
 
-import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction}
+import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction, TransactionBag}
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.utils.BriefLogFormatter
@@ -31,7 +31,9 @@ object MemPoolWatcher {
         incrementCounter(TOTAL_KEY)
         log.info("tx {} result {}", tx.getTxId, result)
         incrementCounter(result.name)
-        if (result eq RiskAnalysis.Result.NON_STANDARD) incrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
+        if (result eq RiskAnalysis.Result.NON_STANDARD)
+          incrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
+        log.info("value {}", tx.getOutputSum.value)
       }
     )
     peerGroup.start()
