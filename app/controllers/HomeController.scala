@@ -1,15 +1,20 @@
 package controllers
 
-import javax.inject._
-import play.api._
+import actors.ValueWatchActor
+import akka.actor.ActorSystem
+import akka.stream.Materializer
+import play.api.libs.streams.ActorFlow
 import play.api.mvc._
+
+import javax.inject._
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
  * application's home page.
  */
 @Singleton
-class HomeController @Inject()(val controllerComponents: ControllerComponents) extends BaseController {
+class HomeController @Inject()(val controllerComponents: ControllerComponents)
+                              (implicit system: ActorSystem, mat: Materializer) extends BaseController {
 
   /**
    * Create an Action to render an HTML page.
@@ -20,5 +25,11 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents) e
    */
   def index(): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     Ok(views.html.index())
+  }
+
+  def socket: WebSocket = WebSocket.accept[String, String] { _ =>
+    ActorFlow.actorRef { out =>
+      ValueWatchActor.props(out)
+    }
   }
 }
