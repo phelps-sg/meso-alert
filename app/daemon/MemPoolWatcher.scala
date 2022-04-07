@@ -27,14 +27,14 @@ object MemPoolWatcher {
     peerGroup.setMaxConnections(32)
     peerGroup.addPeerDiscovery(new DnsDiscovery(PARAMS))
     peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
-        val result: RiskAnalysis.Result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze
-        incrementCounter(TOTAL_KEY)
-        log.info("tx {} result {}", tx.getTxId, result)
-        incrementCounter(result.name)
-        if (result eq RiskAnalysis.Result.NON_STANDARD)
-          incrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
-        log.info("value {}", tx.getOutputSum.value)
-      }
+      val result: RiskAnalysis.Result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze
+      incrementCounter(TOTAL_KEY)
+      log.info("tx {} result {}", tx.getTxId, result)
+      incrementCounter(result.name)
+      if (result eq RiskAnalysis.Result.NON_STANDARD)
+        incrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
+      log.info("value {}", tx.getOutputSum.value)
+    }
     )
     peerGroup.start()
     while (true) {
