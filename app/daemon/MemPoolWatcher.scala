@@ -2,6 +2,7 @@ package daemon
 
 import actors.ValueWatchActor
 import akka.actor.{Actor, ActorRef}
+import com.github.nscala_time.time.Imports.DateTime
 import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction}
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.params.MainNetParams
@@ -43,7 +44,7 @@ class MemPoolWatcher(listener: ActorRef) {
       incrementCounter(result.name)
       if (result eq RiskAnalysis.Result.NON_STANDARD)
         incrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
-      listener ! ValueWatchActor.TxUpdate(tx.getTxId.toString, tx.getOutputSum.value)
+      listener ! ValueWatchActor.TxUpdate(tx.getTxId.toString, tx.getOutputSum.value, DateTime.now())
     })
     peerGroup.start()
     while (true) {

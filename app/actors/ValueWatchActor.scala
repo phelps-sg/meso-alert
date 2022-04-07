@@ -1,6 +1,7 @@
 package actors
 
 import akka.actor.{Actor, ActorRef, Props}
+import com.github.nscala_time.time.Imports.DateTime
 import daemon.MemPoolWatcher
 
 import scala.concurrent.Future
@@ -9,7 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object ValueWatchActor {
   def props(out: ActorRef): Props = Props(new ValueWatchActor(out))
 
-  case class TxUpdate(hash: String, value: Long)
+  case class TxUpdate(hash: String, value: Long, time: DateTime)
 
 }
 
@@ -26,7 +27,7 @@ class ValueWatchActor(out: ActorRef) extends Actor {
     case msg: String =>
       out ! s"I received your message: $msg"
     case txUpdate: ValueWatchActor.TxUpdate =>
-      out ! s"${txUpdate.hash}: ${txUpdate.value}"
+      out ! s"${txUpdate.time.toString}: ${txUpdate.hash} / ${txUpdate.value}"
   }
 
 }
