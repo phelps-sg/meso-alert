@@ -37,9 +37,7 @@ object MemPoolWatcher {
       }
     )
     peerGroup.start()
-    while ( {
-      true
-    }) {
+    while (true) {
       Thread.sleep(STATISTICS_FREQUENCY_MS)
       printCounters()
     }
