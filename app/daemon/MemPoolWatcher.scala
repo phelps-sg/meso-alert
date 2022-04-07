@@ -1,5 +1,7 @@
 package daemon
 
+import actors.ValueWatchActor
+import akka.actor.{Actor, ActorRef}
 import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction}
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.params.MainNetParams
@@ -7,11 +9,20 @@ import org.bitcoinj.utils.BriefLogFormatter
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import java.util
 import java.util.Collections
 import scala.collection.mutable
+import scala.concurrent.Future
 
 object MemPoolWatcher {
+
+  def main(args: Array[String]): Unit = {
+  }
+
+}
+
+class MemPoolWatcher(listener: ActorRef) {
   private val log: Logger = LoggerFactory.getLogger("mem-pool-watcher")
   private val PARAMS: NetworkParameters = MainNetParams.get
   private val NO_DEPS: util.List[Transaction] = Collections.emptyList
@@ -20,8 +31,7 @@ object MemPoolWatcher {
   private val START_MS: Long = System.currentTimeMillis
   private val STATISTICS_FREQUENCY_MS: Long = 1000 * 5
 
-  @throws[InterruptedException]
-  def main(args: Array[String]): Unit = {
+  def run(): Unit = {
     BriefLogFormatter.initVerbose()
     val peerGroup: PeerGroup = new PeerGroup(PARAMS)
     peerGroup.setMaxConnections(32)
@@ -33,7 +43,7 @@ object MemPoolWatcher {
       incrementCounter(result.name)
       if (result eq RiskAnalysis.Result.NON_STANDARD)
         incrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
-      log.info("value {}", tx.getOutputSum.value)
+      listener ! ValueWatchActor.TxUpdate(tx.getTxId.toString, tx.getOutputSum.value)
     })
     peerGroup.start()
     while (true) {
@@ -41,6 +51,13 @@ object MemPoolWatcher {
       printCounters()
     }
   }
+
+  def startDaemon(): Future[Unit] = {
+    Future {
+      run()
+    }
+  }
+
 
   private def incrementCounter(name: String): Unit = {
     counters(name) += 1
