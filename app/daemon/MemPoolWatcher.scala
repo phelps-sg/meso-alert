@@ -34,8 +34,7 @@ object MemPoolWatcher {
       if (result eq RiskAnalysis.Result.NON_STANDARD)
         incrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
       log.info("value {}", tx.getOutputSum.value)
-    }
-    )
+    })
     peerGroup.start()
     while (true) {
       Thread.sleep(STATISTICS_FREQUENCY_MS)
