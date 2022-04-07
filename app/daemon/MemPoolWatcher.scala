@@ -1,6 +1,6 @@
 package daemon
 
-import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction, TransactionBag}
+import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction}
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.utils.BriefLogFormatter
@@ -8,7 +8,7 @@ import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util
-import java.util.{Collections, HashMap, List, Map}
+import java.util.Collections
 import scala.collection.mutable
 
 object MemPoolWatcher {
@@ -26,7 +26,7 @@ object MemPoolWatcher {
     val peerGroup: PeerGroup = new PeerGroup(PARAMS)
     peerGroup.setMaxConnections(32)
     peerGroup.addPeerDiscovery(new DnsDiscovery(PARAMS))
-    peerGroup.addOnTransactionBroadcastListener((peer: Peer, tx: Transaction) => {
+    peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
         val result: RiskAnalysis.Result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze
         incrementCounter(TOTAL_KEY)
         log.info("tx {} result {}", tx.getTxId, result)
@@ -44,8 +44,7 @@ object MemPoolWatcher {
   }
 
   private def incrementCounter(name: String): Unit = {
-    var count: Integer = counters(name)
-    counters(name) = count + 1
+    counters(name) += 1
   }
 
   private def printCounters(): Unit = {
