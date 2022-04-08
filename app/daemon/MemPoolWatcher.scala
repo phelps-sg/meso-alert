@@ -35,8 +35,9 @@ class MemPoolWatcher(listener: ActorRef) {
       incrementCounter(TOTAL_KEY)
       log.info("tx {} result {}", tx.getTxId, result)
       incrementCounter(result.name)
-      if (result eq RiskAnalysis.Result.NON_STANDARD)
+      if (result eq RiskAnalysis.Result.NON_STANDARD) {
         incrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
+      }
       listener ! TxWatchActor.TxUpdate(tx.getTxId.toString, tx.getOutputSum.value, DateTime.now())
     })
     peerGroup.start()
@@ -56,12 +57,11 @@ class MemPoolWatcher(listener: ActorRef) {
     counters(name) += 1
   }
 
+  //noinspection RedundantBlock
   private def printCounters(): Unit = {
-    System.out.printf("Runtime: %d minutes\n", (System.currentTimeMillis - START_MS) / 1000 / 60)
-    val total: Integer = counters(TOTAL_KEY)
-    if (total == null) return
+    log.info(f"Runtime: ${(System.currentTimeMillis - START_MS) / 1000 / 60}%d minutes")
     for ((key, value) <- counters) {
-      System.out.printf("  %-40s%6d  (%d%% of total)\n", key, value, value.asInstanceOf[Int] * 100 / total)
+      log.info(f"  $key%-40s${value}%6d  (${value.asInstanceOf[Int] * 100 / counters(TOTAL_KEY)}%d%% of total)")
     }
   }
 }
