@@ -1,0 +1,13 @@
+version: "3.3"
+
+services:
+  meso-alert:
+    image: registry.gitlab.com/mesonomics/meso-alert/play-server
+    container_name: meso-alert
+    ports:
+      - "9000:9000"
+    build:
+      context: ../
+      dockerfile: ./docker/meso-alert.docker
+      args:
+        play_secret: ${PLAY_SECRET}
