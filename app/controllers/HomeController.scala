@@ -1,6 +1,6 @@
 package controllers
 
-import actors.ValueWatchActor
+import actors.TxWatchActor
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import play.api.libs.json.JsValue
@@ -18,8 +18,8 @@ import javax.inject._
 class HomeController @Inject()(val controllerComponents: ControllerComponents)
                               (implicit system: ActorSystem, mat: Materializer) extends BaseController {
 
-  implicit val messageFlowTransformer: MessageFlowTransformer[String, ValueWatchActor.TxUpdate] =
-    MessageFlowTransformer.jsonMessageFlowTransformer[String, ValueWatchActor.TxUpdate]
+  implicit val messageFlowTransformer: MessageFlowTransformer[String, TxWatchActor.TxUpdate] =
+    MessageFlowTransformer.jsonMessageFlowTransformer[String, TxWatchActor.TxUpdate]
 
   /**
    * Create an Action to render an HTML page.
@@ -32,9 +32,9 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents)
     Ok(views.html.index())
   }
 
-  def socket: WebSocket = WebSocket.accept[String, ValueWatchActor.TxUpdate] { _ =>
+  def socket: WebSocket = WebSocket.accept[String, TxWatchActor.TxUpdate] { _ =>
     ActorFlow.actorRef { out =>
-      ValueWatchActor.props(out)
+      TxWatchActor.props(out)
     }
   }
 

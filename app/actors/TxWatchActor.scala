@@ -7,9 +7,9 @@ import daemon.MemPoolWatcher
 import play.api.libs.json.{JsObject, Json, Writes}
 
 //noinspection TypeAnnotation
-object ValueWatchActor {
+object TxWatchActor {
 
-  def props(out: ActorRef): Props = Props(new ValueWatchActor(out))
+  def props(out: ActorRef): Props = Props(new TxWatchActor(out))
 
   case class TxUpdate(hash: String, value: Long, time: DateTime)
 
@@ -23,7 +23,7 @@ object ValueWatchActor {
 }
 
 //noinspection TypeAnnotation
-class ValueWatchActor(out: ActorRef) extends Actor {
+class TxWatchActor(out: ActorRef) extends Actor {
 
   val daemon = new MemPoolWatcher(this.self)
 
@@ -32,7 +32,7 @@ class ValueWatchActor(out: ActorRef) extends Actor {
   }
 
   def receive = {
-    case txUpdate: ValueWatchActor.TxUpdate =>
+    case txUpdate: TxWatchActor.TxUpdate =>
       out ! txUpdate
   }
 
