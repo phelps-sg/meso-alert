@@ -2,10 +2,8 @@ const WebSocket = require('ws');
 
 const socket = new WebSocket('ws://localhost:9000/ws');
 
-socket.onopen = function(e) {
+socket.onopen = function() {
   console.info('[open] Connection established');
-  console.info('Sending to server');
-  socket.send('My name is John');
 };
 
 socket.onmessage = function(event) {
