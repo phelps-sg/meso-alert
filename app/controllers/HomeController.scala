@@ -32,4 +32,5 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents)
       ValueWatchActor.props(out)
     }
   }
+
 }
