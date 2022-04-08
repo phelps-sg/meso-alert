@@ -7,7 +7,8 @@ socket.onopen = function() {
 };
 
 socket.onmessage = function(event) {
-  console.info(`[message] Data received from server: ${event.data}`);
+  const data = JSON.parse(event.data);
+  console.info(`[message] Data received from server: ${JSON.stringify(data)}`);
 };
 
 socket.onclose = function(event) {
