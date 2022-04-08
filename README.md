@@ -2,6 +2,23 @@
 
 Mesonomics crypto-currency alert service.
 
+## Running
+
+### Server
+
+To build and run the server from the project root directory:
+
+~~~bash
+export PLAY_SECRET=<changeme>
+make -e docker-server-start
+~~~
+
+### Client
+
+~~~bash
+make client-start
+~~~
+
 ## Features
 
 - Users can monitor a BTC address or wallet and receive real-time alerts via Slack.  
