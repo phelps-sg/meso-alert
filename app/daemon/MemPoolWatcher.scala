@@ -1,7 +1,7 @@
 package daemon
 
 import actors.TxWatchActor
-import akka.actor.{Actor, ActorRef}
+import akka.actor.ActorRef
 import com.github.nscala_time.time.Imports.DateTime
 import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction}
 import org.bitcoinj.net.discovery.DnsDiscovery
@@ -10,10 +10,10 @@ import org.bitcoinj.utils.BriefLogFormatter
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
 import org.slf4j.{Logger, LoggerFactory}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import java.util
 import java.util.Collections
 import scala.collection.mutable
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class MemPoolWatcher(listener: ActorRef) {

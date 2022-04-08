@@ -3,7 +3,6 @@ package controllers
 import actors.TxWatchActor
 import akka.actor.ActorSystem
 import akka.stream.Materializer
-import play.api.libs.json.JsValue
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
