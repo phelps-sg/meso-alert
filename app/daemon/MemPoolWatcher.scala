@@ -52,7 +52,6 @@ class MemPoolWatcher(listener: ActorRef) {
     }
   }
 
-
   private def incrementCounter(name: String): Unit = {
     counters(name) += 1
   }
