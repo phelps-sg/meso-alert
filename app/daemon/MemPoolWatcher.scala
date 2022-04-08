@@ -16,13 +16,6 @@ import java.util.Collections
 import scala.collection.mutable
 import scala.concurrent.Future
 
-object MemPoolWatcher {
-
-  def main(args: Array[String]): Unit = {
-  }
-
-}
-
 class MemPoolWatcher(listener: ActorRef) {
   private val log: Logger = LoggerFactory.getLogger("mem-pool-watcher")
   private val PARAMS: NetworkParameters = MainNetParams.get
