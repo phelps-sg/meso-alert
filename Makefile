@@ -1,8 +1,10 @@
 
 SHELL=/bin/bash
 SDK_INIT=source ~/.sdkman/bin/sdkman-init.sh
+NVM_INIT=source ~/.nvm/nvm.sh
 
 EXPORT_ENV=export PLAY_SECRET=$(PLAY_SECRET)
+
 
 apt-update:
 	sudo apt update
@@ -22,10 +24,7 @@ sbt-install:
 nvm-install:
 	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 
-nodejs-install: nvm-install
-	nvm install --lts
-
-install-dev: curl-install sdkman-install sbt-install docker-install nodejs-install
+install-dev: curl-install sdkman-install sbt-install docker-install nvm-install
 
 sbt-build:
 	$(SDK_INIT); sbt dist
@@ -39,8 +38,11 @@ docker-push: docker-build
 docker-server-start: docker-build
 	$(EXPORT_ENV); cd docker; sudo -E docker-compose up
 
-client-install:
-	cd nodejs; npm install
+nodejs-install:
+	$(NVM_INIT); nvm install --lts
+
+client-install: nodejs-install
+	$(NVM_INIT); cd nodejs; npm install
 
 client-start: client-install
-	cd nodejs; nodejs ws-client.js
+	$(NVM_INIT); cd nodejs; node ws-client.js
