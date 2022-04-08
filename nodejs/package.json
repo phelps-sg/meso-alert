@@ -18,5 +18,9 @@
   "homepage": "https://gitlab.com/mesonomics/meso-alert#readme",
   "dependencies": {
     "ws": "^8.5.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.12.0",
+    "eslint-config-google": "^0.14.0"
   }
 }
