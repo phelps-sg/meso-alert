@@ -2,6 +2,14 @@
 
 Mesonomics crypto-currency alert service.
 
+## Installation
+
+To install the tools needed to build and run the application from the shell run:
+
+~~~bash
+make install-dev
+~~~
+
 ## Running
 
 ### Server
