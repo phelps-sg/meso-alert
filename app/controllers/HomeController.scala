@@ -3,6 +3,7 @@ package controllers
 import actors.TxWatchActor
 import akka.actor.ActorSystem
 import akka.stream.Materializer
+import daemon.MemPoolWatcher
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
@@ -16,6 +17,8 @@ import javax.inject._
 @Singleton
 class HomeController @Inject()(val controllerComponents: ControllerComponents)
                               (implicit system: ActorSystem, mat: Materializer) extends BaseController {
+
+  MemPoolWatcher.startDaemon()
 
   implicit val messageFlowTransformer: MessageFlowTransformer[String, TxWatchActor.TxUpdate] =
     MessageFlowTransformer.jsonMessageFlowTransformer[String, TxWatchActor.TxUpdate]

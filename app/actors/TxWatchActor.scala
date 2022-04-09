@@ -25,10 +25,8 @@ object TxWatchActor {
 //noinspection TypeAnnotation
 class TxWatchActor(out: ActorRef) extends Actor {
 
-  val daemon = new MemPoolWatcher(this.self)
-
   override def preStart(): Unit = {
-    daemon.startDaemon()
+    MemPoolWatcher.addListener(self)
   }
 
   def receive = {

@@ -16,7 +16,7 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class MemPoolWatcher(listener: ActorRef) {
+object MemPoolWatcher {
   private val log: Logger = LoggerFactory.getLogger("mem-pool-watcher")
   private val PARAMS: NetworkParameters = MainNetParams.get
   private val NO_DEPS: util.List[Transaction] = Collections.emptyList
@@ -25,9 +25,10 @@ class MemPoolWatcher(listener: ActorRef) {
   private val START_MS: Long = System.currentTimeMillis
   private val STATISTICS_FREQUENCY_MS: Long = 1000 * 5
 
+  BriefLogFormatter.initVerbose()
+  val peerGroup: PeerGroup = new PeerGroup(PARAMS)
+
   def run(): Unit = {
-    BriefLogFormatter.initVerbose()
-    val peerGroup: PeerGroup = new PeerGroup(PARAMS)
     peerGroup.setMaxConnections(32)
     peerGroup.addPeerDiscovery(new DnsDiscovery(PARAMS))
     peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
@@ -38,7 +39,6 @@ class MemPoolWatcher(listener: ActorRef) {
       if (result eq RiskAnalysis.Result.NON_STANDARD) {
         incrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
       }
-      listener ! TxWatchActor.TxUpdate(tx.getTxId.toString, tx.getOutputSum.value, DateTime.now())
     })
     peerGroup.start()
     while (true) {
@@ -51,6 +51,12 @@ class MemPoolWatcher(listener: ActorRef) {
     Future {
       run()
     }
+  }
+
+  def addListener(listener: ActorRef): Unit = {
+    peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
+      listener ! TxWatchActor.TxUpdate(tx.getTxId.toString, tx.getOutputSum.value, DateTime.now())
+    })
   }
 
   private def incrementCounter(name: String): Unit = {
