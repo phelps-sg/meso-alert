@@ -26,6 +26,9 @@ nvm-install:
 
 install-dev: curl-install sdkman-install sbt-install docker-install nvm-install
 
+sbt-run:
+	$(SDK_INIT); sbt run
+
 sbt-build:
 	$(SDK_INIT); sbt dist
 

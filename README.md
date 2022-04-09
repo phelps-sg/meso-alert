@@ -14,7 +14,13 @@ make install-dev
 
 ### Server
 
-To build and run the server from the project root directory:
+To build and run the server in development mode, from the project root directory run:
+
+~~~bash
+make sbt-run
+~~~
+
+To build and run the server in production mode, from the project root directory run:
 
 ~~~bash
 export PLAY_SECRET=<changeme>
