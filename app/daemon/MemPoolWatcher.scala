@@ -23,7 +23,7 @@ object MemPoolWatcher {
   private val counters: mutable.Map[String, Integer] = mutable.Map[String, Integer]().withDefaultValue(0)
   private val TOTAL_KEY: String = "TOTAL"
   private val START_MS: Long = System.currentTimeMillis
-  private val STATISTICS_FREQUENCY_MS: Long = 1000 * 5
+  private val STATISTICS_FREQUENCY_MS: Long = 1000 * 60
 
   BriefLogFormatter.initVerbose()
   val peerGroup: PeerGroup = new PeerGroup(PARAMS)
@@ -34,7 +34,7 @@ object MemPoolWatcher {
     peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
       val result: RiskAnalysis.Result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze
       incrementCounter(TOTAL_KEY)
-      log.info("tx {} result {}", tx.getTxId, result)
+      log.debug("tx {} result {}", tx.getTxId, result)
       incrementCounter(result.name)
       if (result eq RiskAnalysis.Result.NON_STANDARD) {
         incrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
