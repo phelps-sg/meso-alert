@@ -10,6 +10,12 @@ To install the tools needed to build and run the application from the shell run:
 make install-dev
 ~~~
 
+Ensure that docker is logged into the container registry:
+
+~~~bash
+docker login registry.gitlab.com
+~~~
+
 ## Running
 
 ### Server
