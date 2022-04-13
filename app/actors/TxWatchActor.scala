@@ -1,6 +1,6 @@
 package actors
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import com.github.nscala_time.time.Imports.DateTime
 import daemon.MemPoolWatcher
 import org.slf4j.{Logger, LoggerFactory}
@@ -14,6 +14,7 @@ object TxWatchActor {
 
   case class TxUpdate(hash: String, value: Long, time: DateTime)
   case class Auth(id: String, token: String)
+  case class Die(message: String)
 
   implicit val txUpdateWrites = new Writes[TxUpdate] {
     def writes(tx: TxUpdate): JsObject = Json.obj(
@@ -35,19 +36,40 @@ class TxWatchActor(out: ActorRef) extends Actor {
 
   import TxWatchActor._
 
-  override def preStart(): Unit = {
+  def registerWithWatcher(): Unit = {
     log.info("Registering new mem pool listener... ")
     MemPoolWatcher.addListener(self)
     log.info("registration complete.")
   }
 
-  def receive = {
+  override def receive: Receive = unauthorized
+
+  private def deathHandler: Receive = {
+    case Die(reason) =>
+      log.info(s"Died due to reason: $reason")
+      self ! PoisonPill
+  }
+
+  def authorized: Receive = {
     case txUpdate: TxUpdate =>
       out ! txUpdate
+  }
+
+  def unauthorized: Receive = deathHandler.orElse {
     case auth: Auth =>
       log.info(s"Received auth request for id ${auth.id}")
+      authenticate(auth)
     case x =>
       log.warn(s"Unrecognized message $x")
+  }
+
+  def authenticate(auth: Auth) = {
+    if (auth.id == "guest") {
+      context.become(authorized)
+      registerWithWatcher()
+    } else {
+        self ! Die("Invalid token!")
+    }
   }
 
 }
