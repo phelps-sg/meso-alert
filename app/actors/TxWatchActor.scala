@@ -1,11 +1,11 @@
 package actors
 
-
 import akka.actor.{Actor, ActorRef, Props}
 import com.github.nscala_time.time.Imports.DateTime
 import daemon.MemPoolWatcher
 import org.slf4j.{Logger, LoggerFactory}
-import play.api.libs.json.{JsObject, Json, Writes}
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.json.{JsObject, JsPath, Json, Reads, Writes}
 
 //noinspection TypeAnnotation
 object TxWatchActor {
@@ -13,6 +13,7 @@ object TxWatchActor {
   def props(out: ActorRef): Props = Props(new TxWatchActor(out))
 
   case class TxUpdate(hash: String, value: Long, time: DateTime)
+  case class Auth(id: String, token: String)
 
   implicit val txUpdateWrites = new Writes[TxUpdate] {
     def writes(tx: TxUpdate): JsObject = Json.obj(
@@ -21,6 +22,10 @@ object TxWatchActor {
       "time" -> tx.time.toString()
     )
   }
+
+  implicit val authReads: Reads[Auth] =
+    ((JsPath \ "id").read[String] and (JsPath \ "token").read[String])(Auth.apply _)
+
 }
 
 //noinspection TypeAnnotation
@@ -39,6 +44,10 @@ class TxWatchActor(out: ActorRef) extends Actor {
   def receive = {
     case txUpdate: TxUpdate =>
       out ! txUpdate
+    case auth: Auth =>
+      log.info(s"Received auth request for id ${auth.id}")
+    case x =>
+      log.warn(s"Unrecognized message $x")
   }
 
 }

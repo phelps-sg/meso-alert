@@ -20,8 +20,8 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents)
 
   MemPoolWatcher.startDaemon()
 
-  implicit val messageFlowTransformer: MessageFlowTransformer[String, TxWatchActor.TxUpdate] =
-    MessageFlowTransformer.jsonMessageFlowTransformer[String, TxWatchActor.TxUpdate]
+  implicit val mft: MessageFlowTransformer[TxWatchActor.Auth, TxWatchActor.TxUpdate] =
+    MessageFlowTransformer.jsonMessageFlowTransformer[TxWatchActor.Auth, TxWatchActor.TxUpdate]
 
   /**
    * Create an Action to render an HTML page.
@@ -34,7 +34,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents)
     Ok(views.html.index())
   }
 
-  def socket: WebSocket = WebSocket.accept[String, TxWatchActor.TxUpdate] { _ =>
+  def socket: WebSocket = WebSocket.accept[TxWatchActor.Auth, TxWatchActor.TxUpdate] { _ =>
     ActorFlow.actorRef { out =>
       TxWatchActor.props(out)
     }

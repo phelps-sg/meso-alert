@@ -4,6 +4,7 @@ const socket = new WebSocket('ws://localhost:9000/ws');
 
 socket.onopen = function() {
   console.info('[open] Connection established');
+  socket.send(JSON.stringify({id: 'guest', token: 'test'}));
 };
 
 socket.onmessage = function(event) {
