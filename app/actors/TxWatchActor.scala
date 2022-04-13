@@ -29,7 +29,7 @@ class TxWatchActor(out: ActorRef) extends Actor {
   private val log: Logger = LoggerFactory.getLogger(classOf[TxWatchActor])
 
   override def preStart(): Unit = {
-    log.info("Registering new mempool listener... ")
+    log.info("Registering new mem pool listener... ")
     MemPoolWatcher.addListener(self)
     log.info("registration complete.")
   }
