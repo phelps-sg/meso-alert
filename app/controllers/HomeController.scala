@@ -15,10 +15,10 @@ import javax.inject._
  * application's home page.
  */
 @Singleton
-class HomeController @Inject()(val controllerComponents: ControllerComponents)
+class HomeController @Inject()(val controllerComponents: ControllerComponents, val memPoolWatcher: MemPoolWatcher)
                               (implicit system: ActorSystem, mat: Materializer) extends BaseController {
 
-  MemPoolWatcher.startDaemon()
+  memPoolWatcher.startDaemon()
 
   implicit val mft: MessageFlowTransformer[TxWatchActor.Auth, TxWatchActor.TxUpdate] =
     MessageFlowTransformer.jsonMessageFlowTransformer[TxWatchActor.Auth, TxWatchActor.TxUpdate]
@@ -36,7 +36,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents)
 
   def socket: WebSocket = WebSocket.accept[TxWatchActor.Auth, TxWatchActor.TxUpdate] { _ =>
     ActorFlow.actorRef { out =>
-      TxWatchActor.props(out)
+      TxWatchActor.props(out, memPoolWatcher)
     }
   }
 

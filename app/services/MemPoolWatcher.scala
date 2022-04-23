@@ -12,11 +12,13 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import java.util
 import java.util.Collections
+import javax.inject.Singleton
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-object MemPoolWatcher {
+@Singleton
+class MemPoolWatcher {
   private val log: Logger = LoggerFactory.getLogger("mem-pool-watcher")
   private val PARAMS: NetworkParameters = MainNetParams.get
   private val NO_DEPS: util.List[Transaction] = Collections.emptyList

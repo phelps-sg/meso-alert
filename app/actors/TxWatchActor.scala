@@ -10,7 +10,7 @@ import play.api.libs.json.{JsObject, JsPath, Json, Reads, Writes}
 //noinspection TypeAnnotation
 object TxWatchActor {
 
-  def props(out: ActorRef): Props = Props(new TxWatchActor(out))
+  def props(out: ActorRef, memPoolWatcher: MemPoolWatcher): Props = Props(new TxWatchActor(out, memPoolWatcher))
 
   case class TxUpdate(hash: String, value: Long, time: DateTime, isPending: Boolean)
   case class Auth(id: String, token: String)
@@ -31,7 +31,7 @@ object TxWatchActor {
 }
 
 //noinspection TypeAnnotation
-class TxWatchActor(out: ActorRef) extends Actor {
+class TxWatchActor(out: ActorRef, memPoolWatcher: MemPoolWatcher) extends Actor {
 
   private val log: Logger = LoggerFactory.getLogger(classOf[TxWatchActor])
 
@@ -39,7 +39,7 @@ class TxWatchActor(out: ActorRef) extends Actor {
 
   def registerWithWatcher(): Unit = {
     log.info("Registering new mem pool listener... ")
-    MemPoolWatcher.addListener(self)
+    memPoolWatcher.addListener(self)
     log.info("registration complete.")
   }
 
