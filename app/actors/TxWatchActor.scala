@@ -1,4 +1,5 @@
 package actors
+import services.UserManager
 
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import com.github.nscala_time.time.Imports.DateTime
@@ -10,7 +11,7 @@ import play.api.libs.json.{JsObject, JsPath, Json, Reads, Writes}
 //noinspection TypeAnnotation
 object TxWatchActor {
 
-  def props(out: ActorRef, memPoolWatcher: MemPoolWatcher): Props = Props(new TxWatchActor(out, memPoolWatcher))
+  def props(out: ActorRef, memPoolWatcher: MemPoolWatcher, userManager: UserManager): Props = Props(new TxWatchActor(out, memPoolWatcher, userManager))
 
   case class TxUpdate(hash: String, value: Long, time: DateTime, isPending: Boolean)
   case class Auth(id: String, token: String)
@@ -31,7 +32,7 @@ object TxWatchActor {
 }
 
 //noinspection TypeAnnotation
-class TxWatchActor(out: ActorRef, memPoolWatcher: MemPoolWatcher) extends Actor {
+class TxWatchActor(out: ActorRef, memPoolWatcher: MemPoolWatcher, userManager: UserManager) extends Actor {
 
   private val log: Logger = LoggerFactory.getLogger(classOf[TxWatchActor])
 
@@ -51,11 +52,6 @@ class TxWatchActor(out: ActorRef, memPoolWatcher: MemPoolWatcher) extends Actor 
       self ! PoisonPill
   }
 
-  def authorized: Receive = {
-    case txUpdate: TxUpdate =>
-      out ! txUpdate
-  }
-
   def unauthorized: Receive = deathHandler.orElse {
     case auth: Auth =>
       log.info(s"Received auth request for id ${auth.id}")
@@ -65,12 +61,15 @@ class TxWatchActor(out: ActorRef, memPoolWatcher: MemPoolWatcher) extends Actor 
   }
 
   def authenticate(auth: Auth) = {
-    if (auth.id == "guest") {
-      context.become(authorized)
-      registerWithWatcher()
-    } else {
-        self ! Die("Invalid token!")
+    val user = userManager.authenticate(auth.id)
+
+    def authorized: Receive = {
+      case txUpdate: TxUpdate =>
+        if (user.filter(txUpdate)) out ! txUpdate
     }
+
+    context.become(authorized)
+    registerWithWatcher()
   }
 
 }

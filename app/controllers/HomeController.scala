@@ -3,7 +3,7 @@ package controllers
 import actors.TxWatchActor
 import akka.actor.ActorSystem
 import akka.stream.Materializer
-import services.MemPoolWatcher
+import services.{MemPoolWatcher, UserManager}
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
@@ -15,7 +15,9 @@ import javax.inject._
  * application's home page.
  */
 @Singleton
-class HomeController @Inject()(val controllerComponents: ControllerComponents, val memPoolWatcher: MemPoolWatcher)
+class HomeController @Inject()(val controllerComponents: ControllerComponents,
+                               val memPoolWatcher: MemPoolWatcher,
+                               val userManager: UserManager)
                               (implicit system: ActorSystem, mat: Materializer) extends BaseController {
 
   memPoolWatcher.startDaemon()
@@ -36,7 +38,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents, v
 
   def socket: WebSocket = WebSocket.accept[TxWatchActor.Auth, TxWatchActor.TxUpdate] { _ =>
     ActorFlow.actorRef { out =>
-      TxWatchActor.props(out, memPoolWatcher)
+      TxWatchActor.props(out, memPoolWatcher, userManager)
     }
   }
 
