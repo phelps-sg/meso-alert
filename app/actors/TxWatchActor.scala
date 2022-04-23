@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import com.github.nscala_time.time.Imports.DateTime
-import daemon.MemPoolWatcher
+import services.MemPoolWatcher
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.{JsObject, JsPath, Json, Reads, Writes}

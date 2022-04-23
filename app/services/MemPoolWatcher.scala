@@ -1,4 +1,4 @@
-package daemon
+package services
 
 import actors.TxWatchActor
 import akka.actor.ActorRef
