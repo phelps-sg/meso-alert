@@ -12,7 +12,7 @@ object TxWatchActor {
 
   def props(out: ActorRef): Props = Props(new TxWatchActor(out))
 
-  case class TxUpdate(hash: String, value: Long, time: DateTime)
+  case class TxUpdate(hash: String, value: Long, time: DateTime, isPending: Boolean)
   case class Auth(id: String, token: String)
   case class Die(message: String)
 
@@ -20,7 +20,8 @@ object TxWatchActor {
     def writes(tx: TxUpdate): JsObject = Json.obj(
       "hash" -> tx.hash,
       "value" -> tx.value,
-      "time" -> tx.time.toString()
+      "time" -> tx.time.toString(),
+      "isPending" -> tx.isPending
     )
   }
 

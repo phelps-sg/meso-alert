@@ -55,7 +55,7 @@ object MemPoolWatcher {
 
   def addListener(listener: ActorRef): Unit = {
     peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
-      listener ! TxWatchActor.TxUpdate(tx.getTxId.toString, tx.getOutputSum.value, DateTime.now())
+      listener ! TxWatchActor.TxUpdate(tx.getTxId.toString, tx.getOutputSum.value, DateTime.now(), tx.isPending)
     })
   }
 
