@@ -19,7 +19,6 @@ object TxWatchActor {
   }
   case class Die(message: String)
 
-
   implicit val authWrites = new Writes[Auth] {
     def writes(auth: Auth): JsObject = Json.obj(
       "id" -> auth.id,
