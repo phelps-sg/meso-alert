@@ -43,30 +43,30 @@ object TxWatchActor {
 //noinspection TypeAnnotation
 class TxWatchActor(out: ActorRef, memPoolWatcher: MemPoolWatcher, userManager: UserManager) extends Actor {
 
-  private val log: Logger = LoggerFactory.getLogger(classOf[TxWatchActor])
+  private val logger: Logger = LoggerFactory.getLogger(classOf[TxWatchActor])
 
   import TxWatchActor._
 
   def registerWithWatcher(): Unit = {
-    log.info("Registering new mem pool listener... ")
+    logger.info("Registering new mem pool listener... ")
     memPoolWatcher.addListener(self)
-    log.info("registration complete.")
+    logger.info("registration complete.")
   }
 
   override def receive: Receive = unauthorized
 
   private def deathHandler: Receive = {
     case Die(reason) =>
-      log.info(s"Died due to reason: $reason")
+      logger.info(s"Died due to reason: $reason")
       self ! PoisonPill
   }
 
   def unauthorized: Receive = deathHandler.orElse {
     case auth: Auth =>
-      log.info(s"Received auth request for id ${auth.id}")
+      logger.info(s"Received auth request for id ${auth.id}")
       authenticate(auth)
     case x =>
-      log.warn(s"Unrecognized message $x")
+      logger.warn(s"Unrecognized message $x")
   }
 
   def authenticate(auth: Auth) = {
