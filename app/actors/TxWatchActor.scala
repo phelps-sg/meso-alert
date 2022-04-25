@@ -1,7 +1,7 @@
 package actors
 import services.UserManager
-
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
+import akka.http.scaladsl.model.ws.TextMessage
 import com.github.nscala_time.time.Imports.DateTime
 import services.MemPoolWatcher
 import org.slf4j.{Logger, LoggerFactory}
@@ -14,8 +14,18 @@ object TxWatchActor {
   def props(out: ActorRef, memPoolWatcher: MemPoolWatcher, userManager: UserManager): Props = Props(new TxWatchActor(out, memPoolWatcher, userManager))
 
   case class TxUpdate(hash: String, value: Long, time: DateTime, isPending: Boolean)
-  case class Auth(id: String, token: String)
+  case class Auth(id: String, token: String) {
+    def message: TextMessage.Strict = TextMessage(authWrites.writes(this).toString())
+  }
   case class Die(message: String)
+
+
+  implicit val authWrites = new Writes[Auth] {
+    def writes(auth: Auth): JsObject = Json.obj(
+      "id" -> auth.id,
+      "token" -> auth.token
+    )
+  }
 
   implicit val txUpdateWrites = new Writes[TxUpdate] {
     def writes(tx: TxUpdate): JsObject = Json.obj(

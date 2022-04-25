@@ -12,6 +12,8 @@ libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.0.0
 libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.11"
 libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.30.0"
+libraryDependencies += "org.awaitility" % "awaitility" % "4.0.1" % Test
+
 // Adds additional packages into Twirl
 //TwirlKeys.templateImports += "com.mesonomics.controllers._"
 
