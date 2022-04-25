@@ -1,0 +1,8 @@
+image:
+  name: registry.gitlab.com/mesonomics/meso-alert/play-server
+  entrypoint: [""]
+
+scalatest:
+  stage: test
+  script:
+    - make sbt-test
