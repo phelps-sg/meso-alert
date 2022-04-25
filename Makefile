@@ -5,6 +5,8 @@ NVM_INIT=source ~/.nvm/nvm.sh
 
 EXPORT_ENV=export PLAY_SECRET=$(PLAY_SECRET)
 
+docker-build: sbt-build
+	$(EXPORT_ENV); cd docker; sudo -E docker-compose up --no-start --build
 
 apt-update:
 	sudo apt update
@@ -29,11 +31,11 @@ install-dev: curl-install sdkman-install sbt-install docker-install nvm-install
 sbt-run:
 	$(SDK_INIT); sbt run
 
+sbt-test:
+	$(SDK_INIT); sbt test
+
 sbt-build:
 	$(SDK_INIT); sbt dist
-
-docker-build: sbt-build
-	$(EXPORT_ENV); cd docker; sudo -E docker-compose up --no-start --build
 
 docker-push: docker-build
 	sudo docker push registry.gitlab.com/mesonomics/meso-alert/play-server
