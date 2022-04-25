@@ -25,7 +25,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
                                val memPoolWatcher: MemPoolWatcher,
                                val userManager: UserManager)
                               (implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext)
-  extends BaseController {
+  extends BaseController with SameOriginCheck {
 
   val logger: Logger = play.api.Logger(getClass)
 
@@ -43,6 +43,14 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
    */
   def index(): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     Ok(views.html.index())
+  }
+
+  def wsFutureFlow(request: RequestHeader): Future[Flow[TxWatchActor.Auth, TxWatchActor.TxUpdate, _]] = {
+    Future {
+      ActorFlow.actorRef[TxWatchActor.Auth, TxWatchActor.TxUpdate] {
+        out => TxWatchActor.props(out, memPoolWatcher, userManager)
+      }
+    }
   }
 
   def websocket: WebSocket = WebSocket.acceptOrResult[TxWatchActor.Auth, TxWatchActor.TxUpdate] {
@@ -63,6 +71,13 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
         Left(Forbidden("forbidden"))
       }
   }
+
+}
+
+trait SameOriginCheck {
+
+  private val logger: Logger = play.api.Logger(getClass)
+
   /**
    * Checks that the WebSocket comes from the same origin.  This is necessary to protect
    * against Cross-Site WebSocket Hijacking as WebSocket does not implement Same Origin Policy.
@@ -85,20 +100,6 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
         false
     }
   }
-
-  def wsFutureFlow(request: RequestHeader): Future[Flow[TxWatchActor.Auth, TxWatchActor.TxUpdate, _]] = {
-    Future {
-      ActorFlow.actorRef[TxWatchActor.Auth, TxWatchActor.TxUpdate] {
-        out => TxWatchActor.props(out, memPoolWatcher, userManager)
-      }
-    }
-  }
-
-//  def wsFutureFlow: WebSocket = WebSocket.accept[TxWatchActor.Auth, TxWatchActor.TxUpdate] { _ =>
-//    ActorFlow.actorRef { out =>
-//      TxWatchActor.props(out, memPoolWatcher, userManager)
-//    }
-//  }
 
   /**
    * Returns true if the value of the Origin header contains an acceptable value.
