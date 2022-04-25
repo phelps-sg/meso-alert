@@ -1,14 +1,20 @@
 package controllers
 
 import actors.TxWatchActor
+import akka.NotUsed
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.ws.Message
 import akka.stream.Materializer
+import akka.stream.scaladsl.Flow
+import play.api.Logger
+import play.api.libs.json.{JsValue, Json}
 import services.{MemPoolWatcher, UserManager}
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
 
 import javax.inject._
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -18,7 +24,10 @@ import javax.inject._
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
                                val memPoolWatcher: MemPoolWatcher,
                                val userManager: UserManager)
-                              (implicit system: ActorSystem, mat: Materializer) extends BaseController {
+                              (implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext)
+  extends BaseController {
+
+  val logger: Logger = play.api.Logger(getClass)
 
   memPoolWatcher.startDaemon()
 
@@ -36,10 +45,68 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     Ok(views.html.index())
   }
 
-  def socket: WebSocket = WebSocket.accept[TxWatchActor.Auth, TxWatchActor.TxUpdate] { _ =>
-    ActorFlow.actorRef { out =>
-      TxWatchActor.props(out, memPoolWatcher, userManager)
+  def websocket: WebSocket = WebSocket.acceptOrResult[TxWatchActor.Auth, TxWatchActor.TxUpdate] {
+    case rh if sameOriginCheck(rh) =>
+      wsFutureFlow(rh).map { flow =>
+        Right(flow)
+      }.recover {
+        case e: Exception =>
+          logger.error("Cannot create websocket", e)
+          val jsError = Json.obj("error" -> "Cannot create websocket")
+          val result = InternalServerError(jsError)
+          Left(result)
+      }
+
+    case rejected =>
+      logger.error(s"Request $rejected failed same origin check")
+      Future.successful {
+        Left(Forbidden("forbidden"))
+      }
+  }
+  /**
+   * Checks that the WebSocket comes from the same origin.  This is necessary to protect
+   * against Cross-Site WebSocket Hijacking as WebSocket does not implement Same Origin Policy.
+   *
+   * See https://tools.ietf.org/html/rfc6455#section-1.3 and
+   * http://blog.dewhurstsecurity.com/2013/08/30/security-testing-html5-websockets.html
+   */
+  def sameOriginCheck(rh: RequestHeader): Boolean = {
+    rh.headers.get("Origin") match {
+      case Some(originValue) if originMatches(originValue) =>
+        logger.debug(s"originCheck: originValue = $originValue")
+        true
+
+      case Some(badOrigin) =>
+        logger.error(s"originCheck: rejecting request because Origin header value $badOrigin is not in the same origin")
+        false
+
+      case None =>
+        logger.error("originCheck: rejecting request because no Origin header found")
+        false
     }
+  }
+
+  def wsFutureFlow(request: RequestHeader): Future[Flow[TxWatchActor.Auth, TxWatchActor.TxUpdate, _]] = {
+    Future {
+      ActorFlow.actorRef[TxWatchActor.Auth, TxWatchActor.TxUpdate] {
+        out => TxWatchActor.props(out, memPoolWatcher, userManager)
+      }
+    }
+  }
+
+//  def wsFutureFlow: WebSocket = WebSocket.accept[TxWatchActor.Auth, TxWatchActor.TxUpdate] { _ =>
+//    ActorFlow.actorRef { out =>
+//      TxWatchActor.props(out, memPoolWatcher, userManager)
+//    }
+//  }
+
+  /**
+   * Returns true if the value of the Origin header contains an acceptable value.
+   *
+   * This is probably better done through configuration same as the allowedhosts filter.
+   */
+  def originMatches(origin: String): Boolean = {
+    origin.contains("localhost:9000") || origin.contains("localhost:19001")
   }
 
 }
