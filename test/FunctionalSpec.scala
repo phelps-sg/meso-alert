@@ -15,9 +15,21 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 
+//noinspection TypeAnnotation
 class FunctionalSpec extends PlaySpec with ScalaFutures {
 
-  val outgoing: Source[TextMessage.Strict, NotUsed] = Source.single(Auth("guest", "test").message)
+  def fixture = new {
+    val app = new GuiceApplicationBuilder().build()
+    val outgoing: Source[TextMessage.Strict, NotUsed] = Source.single(Auth("guest", "test").message)
+    val incoming = {
+      Sink.foreach[Message] {
+        case message: TextMessage.Strict =>
+          println(message.text)
+        case _ =>
+        // ignore other message types
+      }
+    }
+  }
 
   "HomeController" should {
 
@@ -26,19 +38,13 @@ class FunctionalSpec extends PlaySpec with ScalaFutures {
       implicit val system: ActorSystem = ActorSystem()
       import system.dispatcher
       lazy val port: Int = 9000
-      val app = new GuiceApplicationBuilder().build()
+      val app = fixture.app
       Helpers.running(TestServer(port, app)) {
         val myPublicAddress = s"localhost:$port"
         val serverURL = s"ws://$myPublicAddress/ws"
 
-        val incoming = {
-          Sink.foreach[Message] {
-            case message: TextMessage.Strict =>
-              println(message.text)
-            case _ =>
-            // ignore other message types
-          }
-        }
+        val outgoing = fixture.outgoing
+        val incoming = fixture.incoming
 
         val originPort = 10000
         val webSocketFlow =
@@ -78,19 +84,13 @@ class FunctionalSpec extends PlaySpec with ScalaFutures {
         val myPublicAddress = s"localhost:$port"
         val serverURL = s"ws://$myPublicAddress/ws"
 
-        val incoming = {
-          Sink.foreach[Message] {
-            case message: TextMessage.Strict =>
-              println(message.text)
-            case _ =>
-            // ignore other message types
-          }
-        }
+        val outgoing = fixture.outgoing
+        val incoming = fixture.incoming
 
         val webSocketFlow =
           Http().webSocketClientFlow(WebSocketRequest(serverURL, extraHeaders = Seq(Origin(s"ws://localhost:$port"))))
 
-        val (upgradeResponse, closed) =
+        val (upgradeResponse, _) =
           outgoing
             .viaMat(webSocketFlow)(Keep.right) // keep the materialized Future[WebSocketUpgradeResponse]
             .toMat(incoming)(Keep.both) // also keep the Future[Done]
