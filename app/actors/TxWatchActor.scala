@@ -1,10 +1,9 @@
 package actors
 
-import services.UserManagerService
+import services.{InvalidCredentialsException, MemPoolWatcherService, UserManagerService}
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
 import com.github.nscala_time.time.Imports.DateTime
-import services.MemPoolWatcherService
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.{JsObject, JsPath, Json, Reads, Writes}
@@ -71,15 +70,20 @@ class TxWatchActor(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userMan
   }
 
   def authenticate(auth: Auth) = {
-    val user = userManager.authenticate(auth.id)
+    try {
+      val user = userManager.authenticate(auth.id)
 
-    def authorized: Receive = {
-      case txUpdate: TxUpdate =>
-        if (user.filter(txUpdate)) out ! txUpdate
+      def authorized: Receive = deathHandler.orElse {
+        case txUpdate: TxUpdate =>
+          if (user.filter(txUpdate)) out ! txUpdate
+      }
+
+      context.become(authorized)
+      registerWithWatcher()
+    } catch {
+      case _: InvalidCredentialsException =>
+        self ! Die(s"Authentication failed for ${auth.id}.")
     }
-
-    context.become(authorized)
-    registerWithWatcher()
   }
 
 }

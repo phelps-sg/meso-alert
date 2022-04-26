@@ -1,13 +1,13 @@
 import actors.TxWatchActor
 import actors.TxWatchActor.{Auth, TxUpdate}
 import akka.actor.{Actor, ActorSystem, Props}
-import akka.testkit.{ImplicitSender, TestKit}
+import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.github.nscala_time.time.Imports.DateTime
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import services.{MemPoolWatcherService, User, UserManagerService}
+import services.{InvalidCredentialsException, MemPoolWatcherService, User, UserManagerService}
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -34,7 +34,6 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
 
   def fixture = new {
     val mockMemPoolWatcher = mock[MemPoolWatcherService]
-    (mockMemPoolWatcher.addListener _).expects(*)
     val updates = ArrayBuffer[TxUpdate]()
     val wsActor = system.actorOf(MockWebsocketActor.props(updates))
     val mockUser = mock[User]
@@ -51,6 +50,7 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
       val f = fixture
       (f.mockUser.filter _).expects(tx).returning(true)
       (f.mockUserManager.authenticate _).expects("test").returning(f.mockUser)
+      (f.mockMemPoolWatcher.addListener _).expects(*)
 
       f.txWatchActor ! Auth("test", "test")
       expectNoMessage()
@@ -59,6 +59,27 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
       expectNoMessage()
 
       f.updates.head mustBe tx
+    }
+
+    "not provide updates when credentials are invalid" in {
+
+      val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true)
+
+      val f = fixture
+      (f.mockUserManager.authenticate _).expects("test").throws(InvalidCredentialsException())
+
+      val probe = TestProbe()
+      probe.watch(f.txWatchActor)
+
+      f.txWatchActor ! Auth("test", "test")
+      expectNoMessage()
+
+      probe.expectTerminated(f.txWatchActor)
+
+      f.txWatchActor ! tx
+      expectNoMessage()
+
+      f.updates.isEmpty mustBe true
     }
   }
 

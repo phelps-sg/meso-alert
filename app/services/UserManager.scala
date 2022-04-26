@@ -4,6 +4,8 @@ import javax.inject.Singleton
 import actors.TxWatchActor.TxUpdate
 import com.google.inject.ImplementedBy
 
+case class InvalidCredentialsException() extends Exception
+
 abstract case class User(id: String) {
   def filter(tx: TxUpdate): Boolean
 }
@@ -16,8 +18,6 @@ trait UserManagerService {
 @Singleton
 class UserManager extends UserManagerService {
 
-  case class NoSuchUserException(str: String) extends Exception
-
   val guest: User = new User("guest") {
     def filter(tx: TxUpdate): Boolean = {
       tx.value > 1000000000
@@ -28,7 +28,7 @@ class UserManager extends UserManagerService {
     if (id == "guest") {
       guest
     } else {
-      throw NoSuchUserException(id)
+      throw InvalidCredentialsException()
     }
   }
 
