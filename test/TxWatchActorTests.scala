@@ -1,19 +1,15 @@
 import actors.TxWatchActor
 import actors.TxWatchActor.{Auth, TxUpdate}
 import akka.actor.{Actor, ActorSystem, Props}
-import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit}
 import com.github.nscala_time.time.Imports.DateTime
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import play.api.test.Helpers.defaultAwaitTimeout
 import services.{MemPoolWatcherService, User, UserManagerService}
 
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
 
 //noinspection TypeAnnotation
 class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
