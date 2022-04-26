@@ -102,7 +102,10 @@ class FunctionalSpec extends PlaySpec with ScalaFutures {
             .run()
 
         val connected = upgradeResponse.flatMap { upgrade =>
-          if (upgrade.response.status == StatusCodes.SwitchingProtocols) Future.successful(Done) else throw new RuntimeException(s"Connection failed: ${upgrade.response.status}")
+          if (upgrade.response.status == StatusCodes.SwitchingProtocols)
+            Future.successful(Done)
+          else
+            throw new RuntimeException(s"Connection failed: ${upgrade.response.status}")
         }
 
         connected.onComplete {
