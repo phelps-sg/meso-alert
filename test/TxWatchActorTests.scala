@@ -10,7 +10,6 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import services.{InvalidCredentialsException, MemPoolWatcherService, User, UserManagerService}
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
 //noinspection TypeAnnotation
 class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
