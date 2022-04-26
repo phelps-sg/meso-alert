@@ -4,12 +4,9 @@ import akka.actor.{Actor, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.github.nscala_time.time.Imports.DateTime
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import services.{InvalidCredentialsException, MemPoolWatcherService, User, UserManagerService}
-
-import scala.collection.mutable
 
 //noinspection TypeAnnotation
 class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
@@ -19,14 +16,18 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
   with ImplicitSender {
 
   object MockWebsocketActor {
-    def props(updates: mutable.Stack[TxUpdate]) = Props(new MockWebsocketActor(updates))
+    def props(mock: WebSocketMock) = Props(new MockWebsocketActor(mock))
   }
 
-  class MockWebsocketActor(val updates: mutable.Stack[TxUpdate]) extends Actor {
+  trait WebSocketMock {
+    def update(tx: TxUpdate): Unit
+  }
+
+  class MockWebsocketActor(val mock: WebSocketMock) extends Actor {
 
     override def receive: Receive = {
-      case update: TxUpdate =>
-        updates += update
+      case tx: TxUpdate =>
+        mock.update(tx)
       case _ =>
         fail("unrecognized message format")
     }
@@ -34,8 +35,8 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
 
   def fixture = new {
     val mockMemPoolWatcher = mock[MemPoolWatcherService]
-    val updates = mutable.Stack[TxUpdate]()
-    val wsActor = system.actorOf(MockWebsocketActor.props(updates))
+    val mockWs = mock[WebSocketMock]
+    val wsActor = system.actorOf(MockWebsocketActor.props(mockWs))
     val mockUser = mock[User]
     val mockUserManager = mock[UserManagerService]
     val txWatchActor = system.actorOf(TxWatchActor.props(wsActor, mockMemPoolWatcher, mockUserManager))
@@ -51,14 +52,13 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
       (f.mockUser.filter _).expects(tx).returning(true)
       (f.mockUserManager.authenticate _).expects("test").returning(f.mockUser)
       (f.mockMemPoolWatcher.addListener _).expects(*)
+      (f.mockWs.update _).expects(tx)
 
       f.txWatchActor ! Auth("test", "test")
       expectNoMessage()
 
       f.txWatchActor ! tx
       expectNoMessage()
-
-      f.updates.head mustBe tx
     }
 
     "not provide updates when credentials are invalid" in {
@@ -78,8 +78,6 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
 
       f.txWatchActor ! tx
       expectNoMessage()
-
-      f.updates.isEmpty mustBe true
     }
   }
 
@@ -92,17 +90,17 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
     (f.mockUserManager.authenticate _).expects("test").returning(f.mockUser)
     (f.mockMemPoolWatcher.addListener _).expects(*)
 
-
     f.txWatchActor ! Auth("test", "test")
     expectNoMessage()
 
     (f.mockUser.filter _).expects(tx1).returning(true)
+    (f.mockWs.update _).expects(tx1)
     f.txWatchActor ! tx1
-    f.updates.pop() mustBe tx1
+    expectNoMessage()
 
     (f.mockUser.filter _).expects(tx2).returning(false)
     f.txWatchActor ! tx2
-    f.updates.isEmpty mustBe true
+    expectNoMessage()
   }
 
 }
