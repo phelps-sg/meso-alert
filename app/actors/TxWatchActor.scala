@@ -1,10 +1,10 @@
 package actors
 
-import services.UserManager
+import services.UserManagerService
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
 import com.github.nscala_time.time.Imports.DateTime
-import services.MemPoolWatcher
+import services.MemPoolWatcherService
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.{JsObject, JsPath, Json, Reads, Writes}
@@ -12,7 +12,7 @@ import play.api.libs.json.{JsObject, JsPath, Json, Reads, Writes}
 //noinspection TypeAnnotation
 object TxWatchActor {
 
-  def props(out: ActorRef, memPoolWatcher: MemPoolWatcher, userManager: UserManager): Props = Props(new TxWatchActor(out, memPoolWatcher, userManager))
+  def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService): Props = Props(new TxWatchActor(out, memPoolWatcher, userManager))
 
   case class TxUpdate(hash: String, value: Long, time: DateTime, isPending: Boolean)
   case class Auth(id: String, token: String) {
@@ -42,7 +42,7 @@ object TxWatchActor {
 }
 
 //noinspection TypeAnnotation
-class TxWatchActor(out: ActorRef, memPoolWatcher: MemPoolWatcher, userManager: UserManager) extends Actor {
+class TxWatchActor(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService) extends Actor {
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[TxWatchActor])
 

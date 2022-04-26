@@ -3,6 +3,7 @@ package services
 import actors.TxWatchActor
 import akka.actor.ActorRef
 import com.github.nscala_time.time.Imports.DateTime
+import com.google.inject.ImplementedBy
 import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction}
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.params.MainNetParams
@@ -17,8 +18,14 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+@ImplementedBy(classOf[MemPoolWatcher])
+trait MemPoolWatcherService {
+  def addListener(listener: ActorRef): Unit
+  def startDaemon(): Future[Unit]
+}
+
 @Singleton
-class MemPoolWatcher {
+class MemPoolWatcher extends MemPoolWatcherService {
   private val log: Logger = LoggerFactory.getLogger("mem-pool-watcher")
   private val PARAMS: NetworkParameters = MainNetParams.get
   private val NO_DEPS: util.List[Transaction] = Collections.emptyList

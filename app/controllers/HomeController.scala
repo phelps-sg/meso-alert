@@ -8,7 +8,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import play.api.Logger
 import play.api.libs.json.{JsValue, Json}
-import services.{MemPoolWatcher, UserManager}
+import services.{MemPoolWatcherService, UserManagerService}
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
@@ -22,8 +22,8 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
-                               val memPoolWatcher: MemPoolWatcher,
-                               val userManager: UserManager)
+                               val memPoolWatcher: MemPoolWatcherService,
+                               val userManager: UserManagerService)
                               (implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext)
   extends BaseController with SameOriginCheck {
 
