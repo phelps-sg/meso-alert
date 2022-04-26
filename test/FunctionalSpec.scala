@@ -38,10 +38,7 @@ class FunctionalSpec extends PlaySpec with ScalaFutures {
           }
         }
 
-        // send this as a message over the WebSocket
-        //        val outgoing = Source.single(TextMessage("hello world!"))
         val outgoing = Source.single(Auth("guest", "test").message)
-        //        val outgoing = Source.empty
 
         val originPort = 10000
         val webSocketFlow =
