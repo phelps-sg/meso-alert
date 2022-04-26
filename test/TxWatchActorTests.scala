@@ -43,7 +43,7 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
 
   "TxWatchActor" should {
 
-    "provide updates when a valid user sends authentication" in {
+    "provide updates when user is authentication" in {
 
       val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true)
 
