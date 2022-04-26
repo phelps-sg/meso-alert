@@ -69,7 +69,7 @@ class TxWatchActor(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userMan
       logger.warn(s"Unrecognized message $x")
   }
 
-  def authenticate(auth: Auth) = {
+  def authenticate(auth: Auth): Unit = {
     try {
       val user = userManager.authenticate(auth.id)
 
