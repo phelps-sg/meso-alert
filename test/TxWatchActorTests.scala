@@ -40,24 +40,21 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
     val mockMemPoolWatcher = mock[MemPoolWatcherService]
     (mockMemPoolWatcher.addListener _).expects(*)
     val updates = ArrayBuffer[TxUpdate]()
-    def wsActor(implicit system: ActorSystem) = system.actorOf(MockWebsocketActor.props(updates))
-    def txWatchActor(mockUserManager: UserManagerService)(implicit system: ActorSystem) =
-      system.actorOf(TxWatchActor.props(wsActor, mockMemPoolWatcher, mockUserManager))
+    val wsActor = system.actorOf(MockWebsocketActor.props(updates))
+    val mockUser = mock[User]
+    val mockUserManager = mock[UserManagerService]
+    val txWatchActor = system.actorOf(TxWatchActor.props(wsActor, mockMemPoolWatcher, mockUserManager))
   }
 
   "TxWatchActor" should {
 
     "provide updates when a valid user sends authentication" in {
       val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true)
-      val mockUser = mock[User]
-      val mockUserManager = mock[UserManagerService]
-      (mockUser.filter _).expects(tx).returning(true)
-      (mockUserManager.authenticate _).expects("test").returning(mockUser)
-      implicit val system: ActorSystem = ActorSystem()
       val f = fixture
-      val txWatchActor = f.txWatchActor(mockUserManager)
-      txWatchActor ! Auth("test", "test")
-      txWatchActor ! tx
+      (f.mockUser.filter _).expects(tx).returning(true)
+      (f.mockUserManager.authenticate _).expects("test").returning(f.mockUser)
+      f.txWatchActor ! Auth("test", "test")
+      f.txWatchActor ! tx
       f.updates.head mustBe tx
     }
   }
