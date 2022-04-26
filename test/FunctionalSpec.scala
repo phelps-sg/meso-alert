@@ -1,5 +1,5 @@
 import actors.TxWatchActor._
-import akka.Done
+import akka.{Done, NotUsed}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
@@ -16,6 +16,8 @@ import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 
 class FunctionalSpec extends PlaySpec with ScalaFutures {
+
+  val outgoing: Source[TextMessage.Strict, NotUsed] = Source.single(Auth("guest", "test").message)
 
   "HomeController" should {
 
@@ -37,8 +39,6 @@ class FunctionalSpec extends PlaySpec with ScalaFutures {
             // ignore other message types
           }
         }
-
-        val outgoing = Source.single(Auth("guest", "test").message)
 
         val originPort = 10000
         val webSocketFlow =
@@ -86,8 +86,6 @@ class FunctionalSpec extends PlaySpec with ScalaFutures {
             // ignore other message types
           }
         }
-
-        val outgoing = Source.single(Auth("guest", "test").message)
 
         val webSocketFlow =
           Http().webSocketClientFlow(WebSocketRequest(serverURL, extraHeaders = Seq(Origin(s"ws://localhost:$port"))))
