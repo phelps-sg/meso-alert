@@ -9,6 +9,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import services.{InvalidCredentialsException, MemPoolWatcherService, User, UserManagerService}
 
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 //noinspection TypeAnnotation
@@ -19,10 +20,10 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
   with ImplicitSender {
 
   object MockWebsocketActor {
-    def props(updates: ArrayBuffer[TxUpdate]) = Props(new MockWebsocketActor(updates))
+    def props(updates: mutable.Stack[TxUpdate]) = Props(new MockWebsocketActor(updates))
   }
 
-  class MockWebsocketActor(val updates: ArrayBuffer[TxUpdate]) extends Actor {
+  class MockWebsocketActor(val updates: mutable.Stack[TxUpdate]) extends Actor {
 
     override def receive: Receive = {
       case update: TxUpdate =>
@@ -34,7 +35,7 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
 
   def fixture = new {
     val mockMemPoolWatcher = mock[MemPoolWatcherService]
-    val updates = ArrayBuffer[TxUpdate]()
+    val updates = mutable.Stack[TxUpdate]()
     val wsActor = system.actorOf(MockWebsocketActor.props(updates))
     val mockUser = mock[User]
     val mockUserManager = mock[UserManagerService]
@@ -81,6 +82,28 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
 
       f.updates.isEmpty mustBe true
     }
+  }
+
+  "only provide updates according to the user's filter" in {
+
+    val tx1 = TxUpdate("testHash1", 10, DateTime.now(), isPending = true)
+    val tx2 = TxUpdate("testHash2", 1, DateTime.now(), isPending = true)
+
+    val f = fixture
+    (f.mockUserManager.authenticate _).expects("test").returning(f.mockUser)
+    (f.mockMemPoolWatcher.addListener _).expects(*)
+
+
+    f.txWatchActor ! Auth("test", "test")
+    expectNoMessage()
+
+    (f.mockUser.filter _).expects(tx1).returning(true)
+    f.txWatchActor ! tx1
+    f.updates.pop() mustBe tx1
+
+    (f.mockUser.filter _).expects(tx2).returning(false)
+    f.txWatchActor ! tx2
+    f.updates.isEmpty mustBe true
   }
 
 }
