@@ -45,12 +45,19 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
   "TxWatchActor" should {
 
     "provide updates when a valid user sends authentication" in {
+
       val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true)
+
       val f = fixture
       (f.mockUser.filter _).expects(tx).returning(true)
       (f.mockUserManager.authenticate _).expects("test").returning(f.mockUser)
+
       f.txWatchActor ! Auth("test", "test")
+      expectNoMessage()
+
       f.txWatchActor ! tx
+      expectNoMessage()
+
       f.updates.head mustBe tx
     }
   }
