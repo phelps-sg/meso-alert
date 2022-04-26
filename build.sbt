@@ -13,7 +13,7 @@ libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.11"
 libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.30.0"
 libraryDependencies += "org.awaitility" % "awaitility" % "4.0.1" % Test
-
+libraryDependencies += "org.scalamock" %% "scalamock" % "5.1.0" % Test
 // Adds additional packages into Twirl
 //TwirlKeys.templateImports += "com.mesonomics.controllers._"
 
