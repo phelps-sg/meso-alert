@@ -6,7 +6,7 @@ import com.github.nscala_time.time.Imports.DateTime
 import com.google.inject.ImplementedBy
 import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction, TransactionOutput}
 import org.bitcoinj.net.discovery.DnsDiscovery
-import org.bitcoinj.params.MainNetParams
+import org.bitcoinj.params.{MainNetParams, TestNet3Params}
 import org.bitcoinj.script.ScriptException
 import org.bitcoinj.utils.BriefLogFormatter
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
@@ -14,7 +14,7 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import java.util
 import java.util.Collections
-import javax.inject.Singleton
+import javax.inject.{Inject, Singleton}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -26,12 +26,18 @@ trait MemPoolWatcherService {
   def startDaemon(): Future[Unit]
 }
 
-object MainNetPeerGroup {
+@ImplementedBy(classOf[MainNetPeerGroup])
+trait PeerGroupFactory {
+  def apply(): PeerGroup
+}
+
+@Singleton
+class MainNetPeerGroup extends PeerGroupFactory {
   def apply() = new PeerGroup(MainNetParams.get)
 }
 
 @Singleton
-class MemPoolWatcher extends MemPoolWatcherService {
+class MemPoolWatcher @Inject() (PeerGroup: PeerGroupFactory) extends MemPoolWatcherService {
   private val log: Logger = LoggerFactory.getLogger("mem-pool-watcher")
   private val PARAMS: NetworkParameters = MainNetParams.get
   private val NO_DEPS: util.List[Transaction] = Collections.emptyList
@@ -41,7 +47,7 @@ class MemPoolWatcher extends MemPoolWatcherService {
   private val STATISTICS_FREQUENCY_MS: Long = 1000 * 60
 
   BriefLogFormatter.initVerbose()
-  val peerGroup: PeerGroup = MainNetPeerGroup()
+  val peerGroup: PeerGroup = PeerGroup()
 
   def run(): Unit = {
     peerGroup.setMaxConnections(32)
