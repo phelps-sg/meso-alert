@@ -27,17 +27,17 @@ trait MemPoolWatcherService {
 }
 
 @ImplementedBy(classOf[MainNetPeerGroup])
-trait PeerGroupFactory {
-  def apply(): PeerGroup
+trait PeerGroupSelection {
+  val peerGroup: PeerGroup
 }
 
 @Singleton
-class MainNetPeerGroup extends PeerGroupFactory {
-  def apply() = new PeerGroup(MainNetParams.get)
+class MainNetPeerGroup extends PeerGroupSelection {
+  val peerGroup = new PeerGroup(MainNetParams.get)
 }
 
 @Singleton
-class MemPoolWatcher @Inject() (PeerGroup: PeerGroupFactory) extends MemPoolWatcherService {
+class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends MemPoolWatcherService {
   private val log: Logger = LoggerFactory.getLogger("mem-pool-watcher")
   private val PARAMS: NetworkParameters = MainNetParams.get
   private val NO_DEPS: util.List[Transaction] = Collections.emptyList
@@ -47,7 +47,7 @@ class MemPoolWatcher @Inject() (PeerGroup: PeerGroupFactory) extends MemPoolWatc
   private val STATISTICS_FREQUENCY_MS: Long = 1000 * 60
 
   BriefLogFormatter.initVerbose()
-  val peerGroup: PeerGroup = PeerGroup()
+  val peerGroup: PeerGroup = peerGroupSelection.peerGroup
 
   def run(): Unit = {
     peerGroup.setMaxConnections(32)

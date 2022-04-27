@@ -3,10 +3,17 @@ import actors.TxWatchActor.{Auth, TxUpdate}
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.github.nscala_time.time.Imports.DateTime
+import com.google.common.util.concurrent.ListenableFuture
+//import com.google.common.util.concurrent.ListenableFuture
+import org.bitcoinj.core.PeerGroup
+import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
 import org.scalamock.scalatest.MockFactory
+import org.scalamock.util.Defaultable
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import services.{InvalidCredentialsException, MemPoolWatcherService, User, UserManagerService}
+import services.{InvalidCredentialsException, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, User, UserManagerService}
+
+import java.util.concurrent.Executor
 
 //noinspection TypeAnnotation
 class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
@@ -40,6 +47,18 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
     val mockUser = mock[User]
     val mockUserManager = mock[UserManagerService]
     val txWatchActor = system.actorOf(TxWatchActor.props(wsActor, mockMemPoolWatcher, mockUserManager))
+  }
+
+  "MemPoolWatcher" should {
+
+    "send TxUpdate messages when transaction updates are received from the peer group" in {
+      implicit val d = new Defaultable[ListenableFuture[_]] {
+        override val default = null
+      }
+      val mockPeerGroup = mock[PeerGroup]
+      (mockPeerGroup.addOnTransactionBroadcastListener(_: Executor, _: OnTransactionBroadcastListener)) expects (*, *)
+      val memPoolWatcher = new MemPoolWatcher(new PeerGroupSelection() { val peerGroup = mockPeerGroup })
+    }
   }
 
   "TxWatchActor" should {
