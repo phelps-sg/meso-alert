@@ -4,9 +4,9 @@ import actors.TxWatchActor
 import akka.actor.ActorRef
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.inject.ImplementedBy
-import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction, TransactionOutput}
+import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction}
 import org.bitcoinj.net.discovery.DnsDiscovery
-import org.bitcoinj.params.{MainNetParams, TestNet3Params}
+import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.script.ScriptException
 import org.bitcoinj.utils.BriefLogFormatter
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
