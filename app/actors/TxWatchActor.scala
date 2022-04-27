@@ -14,7 +14,13 @@ object TxWatchActor {
   def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService): Props =
     Props(new TxWatchActor(out, memPoolWatcher, userManager))
 
-  case class TxUpdate(hash: String, value: Long, time: DateTime, isPending: Boolean, outputAddresses: Seq[String])
+  case class TxUpdate( hash: String,
+                       value: Long,
+                       time: DateTime,
+                       isPending: Boolean,
+                       outputAddresses: Seq[String],
+                       inputAddresses: Seq[String]
+                     )
   case class Auth(id: String, token: String) {
     def message: TextMessage.Strict = TextMessage(authWrites.writes(this).toString())
   }
@@ -28,12 +34,13 @@ object TxWatchActor {
   }
 
   implicit val txUpdateWrites = new Writes[TxUpdate] {
-    def writes(tx: TxUpdate): JsObject = Json.obj(
+    def writes(tx: TxUpdate): JsObject = Json.obj(fields =
       "hash" -> tx.hash,
       "value" -> tx.value,
       "time" -> tx.time.toString(),
       "isPending" -> tx.isPending,
-      "outputAddresses" -> Json.arr(tx.outputAddresses)
+      "outputAddresses" -> Json.arr(tx.outputAddresses),
+      "inputAddresses" -> Json.arr(tx.inputAddresses),
     )
   }
 

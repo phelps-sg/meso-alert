@@ -124,7 +124,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
     "provide updates when user is authenticated" in {
 
-      val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List())
+      val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List(), List())
 
       val f = fixture
       (f.mockUser.filter _).expects(tx).returning(true)
@@ -141,7 +141,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
     "not provide updates when credentials are invalid" in {
 
-      val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List())
+      val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List(), List())
 
       val f = fixture
       (f.mockUserManager.authenticate _).expects("test").throws(InvalidCredentialsException())
@@ -161,8 +161,8 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
   "only provide updates according to the user's filter" in {
 
-    val tx1 = TxUpdate("testHash1", 10, DateTime.now(), isPending = true, List())
-    val tx2 = TxUpdate("testHash2", 1, DateTime.now(), isPending = true, List())
+    val tx1 = TxUpdate("testHash1", 10, DateTime.now(), isPending = true, List(), List())
+    val tx2 = TxUpdate("testHash2", 1, DateTime.now(), isPending = true, List(), List())
 
     val f = fixture
     (f.mockUserManager.authenticate _).expects("test").returning(f.mockUser)

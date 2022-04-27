@@ -3,13 +3,16 @@ package services
 import actors.TxWatchActor
 import akka.actor.ActorRef
 import com.github.nscala_time.time.Imports.DateTime
+import com.google.common.io.BaseEncoding
 import com.google.inject.ImplementedBy
-import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction}
+import org.bitcoinj.core.{Address, ECKey, LegacyAddress, NetworkParameters, Peer, PeerGroup, SegwitAddress, Transaction, TransactionInput}
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.params.MainNetParams
+import org.bitcoinj.script.Script.ScriptType
 import org.bitcoinj.script.ScriptException
 import org.bitcoinj.utils.BriefLogFormatter
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
+import org.bouncycastle.util.encoders.Hex
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util
@@ -45,7 +48,7 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
   private val TOTAL_KEY: String = "TOTAL"
   private val START_MS: Long = System.currentTimeMillis
   private val STATISTICS_FREQUENCY_MS: Long = 1000 * 60
-
+  private val HEX: BaseEncoding = BaseEncoding.base16.lowerCase
   BriefLogFormatter.initVerbose()
   val peerGroup: PeerGroup = peerGroupSelection.peerGroup
 
@@ -74,6 +77,26 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
     }
   }
 
+  import org.bitcoinj.core.Utils
+  import org.bitcoinj.params.MainNetParams
+  import org.bitcoinj.script.ScriptChunk
+
+  // https://bitcoin.stackexchange.com/questions/83481/bitcoinj-java-library-not-decoding-input-addresses-for-some-transactions
+  def address(input: TransactionInput): Option[Address] = {
+    val chunks = input.getScriptSig.getChunks.asScala
+    if (chunks.size < 2) {
+      None
+    } else if (chunks.size >= 2) {
+      val pubKey = chunks.takeRight(1).head
+      val hash = Utils.sha256hash160(pubKey.data)
+      if (chunks.size == 2)
+        Some(LegacyAddress.fromPubKeyHash(PARAMS, hash))
+      else
+        Some(SegwitAddress.fromHash(PARAMS, hash))
+    }
+    None
+  }
+
   def addListener(listener: ActorRef): Unit = {
     peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
       listener ! TxWatchActor.TxUpdate(
@@ -81,6 +104,8 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
         value = tx.getOutputSum.value,
         time = DateTime.now(),
         isPending = tx.isPending,
+        inputAddresses =
+          tx.getInputs.asScala.map(address).filterNot(_.isEmpty).map(_.get.toString).toSeq,
         outputAddresses = tx.getOutputs.asScala.map( output =>
           try {
             Some(output.getScriptPubKey.getToAddress(PARAMS).toString)
@@ -88,7 +113,8 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
             case _: ScriptException =>
               None
           }
-        ).filterNot(_.isEmpty).map(_.get).toSeq)
+        ).filterNot(_.isEmpty).map(_.get).toSeq
+      )
     })
   }
 
