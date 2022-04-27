@@ -48,6 +48,9 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
     val mockUser = mock[User]
     val mockUserManager = mock[UserManagerService]
     val txWatchActor = system.actorOf(TxWatchActor.props(wsActor, mockMemPoolWatcher, mockUserManager))
+    val params = MainNetParams.get()
+    class MockPeerGroup extends PeerGroup(params)
+    val mockPeerGroup = mock[MockPeerGroup]
   }
 
   "MemPoolWatcher" should {
@@ -67,10 +70,9 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
       implicit val d = new Defaultable[ListenableFuture[_]] {
         override val default = null
       }
-      val mockPeerGroup = mock[MockPeerGroup]
       val c1 = CaptureAll[OnTransactionBroadcastListener]()
-      (mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener)).expects(capture(c1)).atLeastOnce()
-      val memPoolWatcher = new MemPoolWatcher(new PeerGroupSelection() { val peerGroup = mockPeerGroup })
+      (f.mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener)).expects(capture(c1)).atLeastOnce()
+      val memPoolWatcher = new MemPoolWatcher(new PeerGroupSelection() { val peerGroup = f.mockPeerGroup })
       memPoolWatcher.addListener(f.txWatchActor)
 
       val txWatchActor = system.actorOf(TxWatchActor.props(f.wsActor, memPoolWatcher, f.mockUserManager))
