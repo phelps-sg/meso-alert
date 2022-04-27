@@ -5,7 +5,7 @@ import akka.actor.ActorRef
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.io.BaseEncoding
 import com.google.inject.ImplementedBy
-import org.bitcoinj.core.{Address, ECKey, LegacyAddress, NetworkParameters, Peer, PeerGroup, SegwitAddress, Transaction, TransactionInput}
+import org.bitcoinj.core.{Address, ECKey, LegacyAddress, NetworkParameters, Peer, PeerGroup, SegwitAddress, Transaction, TransactionInput, TransactionOutput}
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.script.Script.ScriptType
@@ -97,6 +97,18 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
     None
   }
 
+  def address(output: TransactionOutput): Option[Address] = {
+    try {
+      Some(output.getScriptPubKey.getToAddress(PARAMS))
+    } catch {
+      case _: ScriptException =>
+        None
+    }
+  }
+
+  def addressesToStrings(addresses: Iterable[Option[Address]]): Seq[String] =
+    addresses.filterNot(_.isEmpty).map(_.get.toString).toSeq
+
   def addListener(listener: ActorRef): Unit = {
     peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
       listener ! TxWatchActor.TxUpdate(
@@ -104,16 +116,8 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
         value = tx.getOutputSum.value,
         time = DateTime.now(),
         isPending = tx.isPending,
-        inputAddresses =
-          tx.getInputs.asScala.map(address).filterNot(_.isEmpty).map(_.get.toString).toSeq,
-        outputAddresses = tx.getOutputs.asScala.map( output =>
-          try {
-            Some(output.getScriptPubKey.getToAddress(PARAMS).toString)
-          } catch {
-            case _: ScriptException =>
-              None
-          }
-        ).filterNot(_.isEmpty).map(_.get).toSeq
+        inputAddresses = addressesToStrings(tx.getInputs.asScala.map(address)),
+        outputAddresses = addressesToStrings(tx.getOutputs.asScala.map(address)),
       )
     })
   }
