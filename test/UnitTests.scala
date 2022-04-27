@@ -64,9 +64,6 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       (f.mockUserManager.authenticate _).expects("test").returning(f.mockUser)
       (f.mockWs.update _).expects(capture(updateCapture)).once()
 
-      val params = MainNetParams.get()
-      class MockPeerGroup extends PeerGroup(params)
-
       implicit val d = new Defaultable[ListenableFuture[_]] {
         override val default = null
       }
@@ -80,17 +77,17 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       expectNoMessage()
 
       val listener = c1.value
-      val transaction: Transaction = new Transaction(params)
+      val transaction: Transaction = new Transaction(f.params)
 
       //noinspection SpellCheckingInspection
       val outputAddress1 = "1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"
       val value1 = 100L
-      transaction.addOutput(Coin.valueOf(value1), Address.fromString(params, outputAddress1))
+      transaction.addOutput(Coin.valueOf(value1), Address.fromString(f.params, outputAddress1))
 
       //noinspection SpellCheckingInspection
       val outputAddress2 = "1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"
       val value2 = 200L
-      transaction.addOutput(Coin.valueOf(value2), Address.fromString(params, outputAddress2))
+      transaction.addOutput(Coin.valueOf(value2), Address.fromString(f.params, outputAddress2))
 
       listener.onTransaction(null, transaction)
       expectNoMessage()
@@ -105,7 +102,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
   "TxWatchActor" should {
 
-    "provide updates when user is authentication" in {
+    "provide updates when user is authenticated" in {
 
       val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List())
 
