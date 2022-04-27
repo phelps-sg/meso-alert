@@ -4,9 +4,10 @@ import actors.TxWatchActor
 import akka.actor.ActorRef
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.inject.ImplementedBy
-import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction}
+import org.bitcoinj.core.{NetworkParameters, Peer, PeerGroup, Transaction, TransactionOutput}
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.params.MainNetParams
+import org.bitcoinj.script.ScriptException
 import org.bitcoinj.utils.BriefLogFormatter
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
 import org.slf4j.{Logger, LoggerFactory}
@@ -17,11 +18,16 @@ import javax.inject.Singleton
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 @ImplementedBy(classOf[MemPoolWatcher])
 trait MemPoolWatcherService {
   def addListener(listener: ActorRef): Unit
   def startDaemon(): Future[Unit]
+}
+
+object MainNetPeerGroup {
+  def apply() = new PeerGroup(MainNetParams.get)
 }
 
 @Singleton
@@ -35,7 +41,7 @@ class MemPoolWatcher extends MemPoolWatcherService {
   private val STATISTICS_FREQUENCY_MS: Long = 1000 * 60
 
   BriefLogFormatter.initVerbose()
-  val peerGroup: PeerGroup = new PeerGroup(PARAMS)
+  val peerGroup: PeerGroup = MainNetPeerGroup()
 
   def run(): Unit = {
     peerGroup.setMaxConnections(32)
@@ -64,7 +70,19 @@ class MemPoolWatcher extends MemPoolWatcherService {
 
   def addListener(listener: ActorRef): Unit = {
     peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
-      listener ! TxWatchActor.TxUpdate(tx.getTxId.toString, tx.getOutputSum.value, DateTime.now(), tx.isPending)
+      listener ! TxWatchActor.TxUpdate(
+        hash = tx.getTxId.toString,
+        value = tx.getOutputSum.value,
+        time = DateTime.now(),
+        isPending = tx.isPending,
+        outputAddresses = tx.getOutputs.asScala.map( output =>
+          try {
+            Some(output.getScriptPubKey.getToAddress(PARAMS).toString)
+          } catch {
+            case _: ScriptException =>
+              None
+          }
+        ).filterNot(_.isEmpty).map(_.get).toSeq)
     })
   }
 

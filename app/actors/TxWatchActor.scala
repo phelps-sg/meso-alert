@@ -11,9 +11,10 @@ import play.api.libs.json.{JsObject, JsPath, Json, Reads, Writes}
 //noinspection TypeAnnotation
 object TxWatchActor {
 
-  def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService): Props = Props(new TxWatchActor(out, memPoolWatcher, userManager))
+  def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService): Props =
+    Props(new TxWatchActor(out, memPoolWatcher, userManager))
 
-  case class TxUpdate(hash: String, value: Long, time: DateTime, isPending: Boolean)
+  case class TxUpdate(hash: String, value: Long, time: DateTime, isPending: Boolean, outputAddresses: Seq[String])
   case class Auth(id: String, token: String) {
     def message: TextMessage.Strict = TextMessage(authWrites.writes(this).toString())
   }
@@ -31,7 +32,8 @@ object TxWatchActor {
       "hash" -> tx.hash,
       "value" -> tx.value,
       "time" -> tx.time.toString(),
-      "isPending" -> tx.isPending
+      "isPending" -> tx.isPending,
+      "outputAddresses" -> Json.arr(tx.outputAddresses)
     )
   }
 
