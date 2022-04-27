@@ -80,10 +80,12 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
       val listener = c1.value
       val transaction: Transaction = new Transaction(params)
 
+      //noinspection SpellCheckingInspection
       val outputAddress1 = "1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"
       val value1 = 100L
       transaction.addOutput(Coin.valueOf(value1), Address.fromString(params, outputAddress1))
 
+      //noinspection SpellCheckingInspection
       val outputAddress2 = "1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"
       val value2 = 200L
       transaction.addOutput(Coin.valueOf(value2), Address.fromString(params, outputAddress2))
