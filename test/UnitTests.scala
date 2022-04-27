@@ -59,37 +59,57 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       "the bitcoinj peer group" in {
 
       val f = fixture
-      val updateCapture = CaptureOne[TxUpdate]()
+
+      // Configure user to not filter events.
       (f.mockUser.filter _).expects(*).returning(true).once()
+      // The user will authenticate  successfully with id "test".
       (f.mockUserManager.authenticate _).expects("test").returning(f.mockUser)
+
+      // Capture the update message sent to the web socket for later verification.
+      val updateCapture = CaptureOne[TxUpdate]()
       (f.mockWs.update _).expects(capture(updateCapture)).once()
 
+      // This is required for raw types (see https://scalamock.org/user-guide/advanced_topics/).
       implicit val d = new Defaultable[ListenableFuture[_]] {
         override val default = null
       }
-      val c1 = CaptureAll[OnTransactionBroadcastListener]()
-      (f.mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener)).expects(capture(c1)).atLeastOnce()
+
+      // Capture the listeners.  The second listener will be the txWatchActor
+      val listenerCapture = CaptureAll[OnTransactionBroadcastListener]()
+      (f.mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(capture(listenerCapture)).atLeastOnce()
+
       val memPoolWatcher = new MemPoolWatcher(new PeerGroupSelection() { val peerGroup = f.mockPeerGroup })
       memPoolWatcher.addListener(f.txWatchActor)
 
       val txWatchActor = system.actorOf(TxWatchActor.props(f.wsActor, memPoolWatcher, f.mockUserManager))
+
+      // Authenticate the user so that the actor is ready send updates.
       txWatchActor ! Auth("test", "test")
       expectNoMessage()
 
-      val listener = c1.value
+      val listener = listenerCapture.value
+
+      // Configure a test bitcoinj transaction.
       val transaction: Transaction = new Transaction(f.params)
+
+      // The first transaction output has a value of 100 Satoshi.
 
       //noinspection SpellCheckingInspection
       val outputAddress1 = "1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"
       val value1 = 100L
       transaction.addOutput(Coin.valueOf(value1), Address.fromString(f.params, outputAddress1))
 
+      // The second transaction output has a value of 200 Satoshi.
+
       //noinspection SpellCheckingInspection
       val outputAddress2 = "1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"
       val value2 = 200L
       transaction.addOutput(Coin.valueOf(value2), Address.fromString(f.params, outputAddress2))
 
+      // Simulate a broadcast of the transaction from PeerGroup.
       listener.onTransaction(null, transaction)
+      // We have to wait for the actors to process their messages.
       expectNoMessage()
 
       val receivedTx = updateCapture.value
