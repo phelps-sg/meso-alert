@@ -52,7 +52,7 @@ class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
 
   "MemPoolWatcher" should {
 
-    "send the correct TxUpdate message  when a transaction update is received from " +
+    "send the correct TxUpdate message when a transaction update is received from " +
       "the bitcoinj peer group" in {
 
       val f = fixture
