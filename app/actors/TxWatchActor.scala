@@ -4,9 +4,13 @@ import services.{InvalidCredentialsException, MemPoolWatcherService, UserManager
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
 import com.github.nscala_time.time.Imports.DateTime
+import org.bitcoinj.core.Address
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json.{JsObject, JsPath, Json, Reads, Writes}
+
+import scala.collection.immutable.ArraySeq
+import scala.collection.mutable.ArrayBuffer
 
 //noinspection TypeAnnotation
 object TxWatchActor {
@@ -14,12 +18,14 @@ object TxWatchActor {
   def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService): Props =
     Props(new TxWatchActor(out, memPoolWatcher, userManager))
 
+  case class TxInputOutput(address: Option[String], value: Option[Long])
+
   case class TxUpdate( hash: String,
                        value: Long,
                        time: DateTime,
                        isPending: Boolean,
-                       outputAddresses: Seq[String],
-                       inputAddresses: Seq[String]
+                       outputs: Seq[TxInputOutput],
+                       inputs: Seq[TxInputOutput],
                      )
   case class Auth(id: String, token: String) {
     def message: TextMessage.Strict = TextMessage(authWrites.writes(this).toString())
@@ -33,14 +39,24 @@ object TxWatchActor {
     )
   }
 
+  implicit val txInputOutputWrites = new Writes[TxInputOutput] {
+    def writes(inpOut: TxInputOutput): JsObject = {
+      val addressField: Array[(String, Json.JsValueWrapper)] =
+        Array(inpOut.address).filterNot(_.isEmpty).map("address" -> _.get)
+      val valueField: Array[(String, Json.JsValueWrapper)] =
+        Array(inpOut.value).filterNot(_.isEmpty).map("value" -> _.get)
+      Json.obj(ArraySeq.unsafeWrapArray(addressField ++ valueField): _*)
+    }
+  }
+
   implicit val txUpdateWrites = new Writes[TxUpdate] {
     def writes(tx: TxUpdate): JsObject = Json.obj(fields =
       "hash" -> tx.hash,
       "value" -> tx.value,
       "time" -> tx.time.toString(),
       "isPending" -> tx.isPending,
-      "outputAddresses" -> Json.arr(tx.outputAddresses),
-      "inputAddresses" -> Json.arr(tx.inputAddresses),
+      "outputs" -> Json.arr(tx.outputs),
+      "inputs" -> Json.arr(tx.inputs),
     )
   }
 

@@ -82,32 +82,34 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
   import org.bitcoinj.script.ScriptChunk
 
   // https://bitcoin.stackexchange.com/questions/83481/bitcoinj-java-library-not-decoding-input-addresses-for-some-transactions
-  def address(input: TransactionInput): Option[Address] = {
+  def address(input: TransactionInput): Option[String] = {
     val chunks = input.getScriptSig.getChunks.asScala
-    if (chunks.size < 2) {
-      None
-    } else if (chunks.size >= 2) {
+    if (chunks.isEmpty) {
+      Some(LegacyAddress.fromScriptHash(PARAMS, Utils.sha256hash160(input.getScriptBytes)).toString)
+    } else {
       val pubKey = chunks.takeRight(1).head
       val hash = Utils.sha256hash160(pubKey.data)
       if (chunks.size == 2)
-        Some(LegacyAddress.fromPubKeyHash(PARAMS, hash))
+        Some(LegacyAddress.fromPubKeyHash(PARAMS, hash).toString)
       else
-        Some(SegwitAddress.fromHash(PARAMS, hash))
+        Some(SegwitAddress.fromHash(PARAMS, hash).toString)
     }
-    None
   }
 
-  def address(output: TransactionOutput): Option[Address] = {
+  def address(output: TransactionOutput): Option[String] = {
     try {
-      Some(output.getScriptPubKey.getToAddress(PARAMS))
+      Some(output.getScriptPubKey.getToAddress(PARAMS).toString)
     } catch {
       case _: ScriptException =>
         None
     }
   }
 
-  def addressesToStrings(addresses: Iterable[Option[Address]]): Seq[String] =
-    addresses.filterNot(_.isEmpty).map(_.get.toString).toSeq
+  def value(input: TransactionInput): Option[Long] =
+    if (input.getValue == null) None else Some(input.getValue.value)
+
+  def value(output: TransactionOutput): Option[Long] =
+    if (output.getValue == null) None else Some(output.getValue.value)
 
   def addListener(listener: ActorRef): Unit = {
     peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
@@ -116,8 +118,12 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
         value = tx.getOutputSum.value,
         time = DateTime.now(),
         isPending = tx.isPending,
-        inputAddresses = addressesToStrings(tx.getInputs.asScala.map(address)),
-        outputAddresses = addressesToStrings(tx.getOutputs.asScala.map(address)),
+        inputs =
+          (for (input <- tx.getInputs.asScala)
+            yield TxWatchActor.TxInputOutput(address(input), value(input))).toSeq,
+        outputs =
+          (for (output <- tx.getOutputs.asScala)
+            yield TxWatchActor.TxInputOutput(address(output), value(output))).toSeq,
       )
     })
   }

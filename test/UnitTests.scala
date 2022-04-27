@@ -114,8 +114,8 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
       val receivedTx = updateCapture.value
       //noinspection ZeroIndexToHead
-      receivedTx.outputAddresses(0) shouldBe outputAddress1
-      receivedTx.outputAddresses(1) shouldBe outputAddress2
+      receivedTx.outputs(0).address shouldBe outputAddress1
+      receivedTx.outputs(1).address shouldBe outputAddress2
       receivedTx.value shouldBe value1 + value2
     }
   }
