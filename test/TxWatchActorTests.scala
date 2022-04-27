@@ -4,8 +4,8 @@ import akka.actor.{Actor, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
-import org.bitcoinj.core.{Address, Coin, Peer, Transaction, TransactionOutput}
-import org.bitcoinj.params.{MainNetParams, TestNet3Params}
+import org.bitcoinj.core.{Address, Coin, Transaction}
+import org.bitcoinj.params.MainNetParams
 import org.scalamock.matchers.ArgCapture.{CaptureAll, CaptureOne}
 //import com.google.common.util.concurrent.ListenableFuture
 import org.bitcoinj.core.PeerGroup
@@ -14,9 +14,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import services.{InvalidCredentialsException, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, User, UserManagerService}
-
-import java.util.concurrent.Executor
+import services._
 
 //noinspection TypeAnnotation
 class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
