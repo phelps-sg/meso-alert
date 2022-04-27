@@ -5,14 +5,12 @@ import akka.actor.ActorRef
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.io.BaseEncoding
 import com.google.inject.ImplementedBy
-import org.bitcoinj.core.{Address, ECKey, LegacyAddress, NetworkParameters, Peer, PeerGroup, SegwitAddress, Transaction, TransactionInput, TransactionOutput}
+import org.bitcoinj.core._
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.params.MainNetParams
-import org.bitcoinj.script.Script.ScriptType
 import org.bitcoinj.script.ScriptException
 import org.bitcoinj.utils.BriefLogFormatter
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
-import org.bouncycastle.util.encoders.Hex
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.util
@@ -76,10 +74,6 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
       run()
     }
   }
-
-  import org.bitcoinj.core.Utils
-  import org.bitcoinj.params.MainNetParams
-  import org.bitcoinj.script.ScriptChunk
 
   // https://bitcoin.stackexchange.com/questions/83481/bitcoinj-java-library-not-decoding-input-addresses-for-some-transactions
   def address(input: TransactionInput): Option[String] = {
