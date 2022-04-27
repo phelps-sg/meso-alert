@@ -17,7 +17,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import services._
 
 //noinspection TypeAnnotation
-class TxWatchActorTests extends TestKit(ActorSystem("MySpec"))
+class UnitTests extends TestKit(ActorSystem("MySpec"))
   with Matchers
   with AnyWordSpecLike
   with MockFactory
