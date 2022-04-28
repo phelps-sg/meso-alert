@@ -164,14 +164,10 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
       val transaction2 = new Transaction(f.params)
 
-      // The first output has a value of 100 Satoshi.
-
       //noinspection SpellCheckingInspection
       val outputAddress1 = "1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"
       val value1 = 100L
       transaction2.addOutput(Coin.valueOf(value1), Address.fromString(f.params, outputAddress1))
-
-      // The second output has a value of 200 Satoshi.
 
       //noinspection SpellCheckingInspection
       val outputAddress2 = "1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"
