@@ -142,8 +142,11 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       receivedTx3.inputs.size shouldBe 1
       receivedTx3.outputs.size shouldBe 2
       receivedTx3.value shouldBe 300000000
+      //noinspection SpellCheckingInspection
       receivedTx3.inputs(0).address.get shouldBe "15vScfMHNrXN4QvWe54q5hwfVoYwG79CS1"
+      //noinspection SpellCheckingInspection
       receivedTx3.outputs(0).address.get shouldBe "1H8ANdafjpqYntniT3Ddxh4xPBMCSz33pj"
+      //noinspection SpellCheckingInspection
       receivedTx3.outputs(1).address.get shouldBe "1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"
     }
   }
