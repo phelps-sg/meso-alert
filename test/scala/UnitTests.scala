@@ -7,15 +7,8 @@ import com.google.common.util.concurrent.ListenableFuture
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
 import org.bitcoinj.params.MainNetParams
-import org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE
-import org.bitcoinj.script.{Script, ScriptOpCodes}
 import org.scalamock.matchers.ArgCapture.CaptureAll
-import play.api.libs.json.{JsArray, JsValue, Json}
-
-import java.math.BigInteger
-import java.nio.charset.StandardCharsets
-import scala.collection.mutable
-//import com.google.common.util.concurrent.ListenableFuture
+import play.api.libs.json.{JsArray, Json}
 import org.bitcoinj.core.PeerGroup
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
 import org.scalamock.scalatest.MockFactory
