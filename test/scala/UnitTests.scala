@@ -240,7 +240,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
     expectNoMessage()
 
     (f.mockUser.filter _).expects(tx1).returning(true)
-    (f.mockWs.update _).expects(tx1)
+    (f.mockWs.update _).expects(tx1).once()
     f.txWatchActor ! tx1
     expectNoMessage()
 
