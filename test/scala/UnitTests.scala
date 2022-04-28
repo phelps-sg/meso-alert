@@ -116,6 +116,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       broadcastTransaction(transaction1)
 
       val receivedTx1 = updateCapture.value
+      receivedTx1.outputs.size shouldBe 1
       receivedTx1.outputs.head.address.get shouldBe "1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"
       receivedTx1.value shouldBe 1000000
 
@@ -134,6 +135,8 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       broadcastTransaction(transaction2)
 
       val receivedTx2 = updateCapture.value
+      receivedTx2.outputs.size shouldBe 2
+      receivedTx2.inputs.isEmpty shouldBe true
       receivedTx2.outputs(0).address.get shouldBe outputAddress1
       receivedTx2.outputs(1).address.get shouldBe outputAddress2
       receivedTx2.value shouldBe value1 + value2
@@ -143,6 +146,8 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       broadcastTransaction(transaction3)
 
       val receivedTx3 = updateCapture.value
+      receivedTx3.inputs.size shouldBe 1
+      receivedTx3.outputs.size shouldBe 2
       receivedTx3.value shouldBe 300000000
       receivedTx3.inputs(0).address.get shouldBe "15vScfMHNrXN4QvWe54q5hwfVoYwG79CS1"
       receivedTx3.outputs(0).address.get shouldBe "1H8ANdafjpqYntniT3Ddxh4xPBMCSz33pj"
