@@ -151,27 +151,6 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 //      val transaction: Transaction = new Transaction(f.params)
       val transaction1 = f.transactions.head
 
-      // The first transaction output has a value of 100 Satoshi.
-
-      //noinspection SpellCheckingInspection
-//      val outputAddress1 = "1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"
-//      val value1 = 100L
-//      transaction.addOutput(Coin.valueOf(value1), Address.fromString(f.params, outputAddress1))
-
-      // The second transaction output has a value of 200 Satoshi.
-
-      //noinspection SpellCheckingInspection
-//      val outputAddress2 = "1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"
-//      val value2 = 200L
-//      transaction.addOutput(Coin.valueOf(value2), Address.fromString(f.params, outputAddress2))
-
-      //noinspection SpellCheckingInspection
-//      val pubKeyProg = "76a91433e81a941e64cda12c6a299ed322ddbdd03f8d0e88ac"
-//      val pubKeyBytes = HEX.decode(pubKeyProg)
-//      val pubKey = new Script(pubKeyBytes)
-//      val inputAddress1 = LegacyAddress.fromPubKeyHash(f.params, ScriptPattern.extractHashFromP2PKH(pubKey)).toString
-//      transaction.addInput(new TransactionInput(f.params, transaction, pubKeyBytes))
-
       // Simulate a broadcast of the transaction from PeerGroup.
       listener.onTransaction(null, transaction1)
       // We have to wait for the actors to process their messages.
@@ -182,14 +161,15 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       receivedTx1.value shouldBe 1000000
 
       val transaction2 = new Transaction(f.params)
-      // The second transaction output has a value of 100 Satoshi.
+
+      // The first output has a value of 100 Satoshi.
 
       //noinspection SpellCheckingInspection
       val outputAddress1 = "1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"
       val value1 = 100L
       transaction2.addOutput(Coin.valueOf(value1), Address.fromString(f.params, outputAddress1))
 
-      // The second transaction output has a value of 200 Satoshi.
+      // The second output has a value of 200 Satoshi.
 
       //noinspection SpellCheckingInspection
       val outputAddress2 = "1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"
