@@ -102,7 +102,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
     private def parseTransactions(testData: JsValue): Array[Transaction] = {
       testData.as[Array[JsArray]].map(_.value).filter(_.size > 1).map {
         testData => {
-          val scriptPubKeys = parseScriptPubKeys(testData(0))
+//          val scriptPubKeys = parseScriptPubKeys(testData(0))
           params.getDefaultSerializer.makeTransaction(HEX.decode(testData(1).as[String].toLowerCase))
         }
       }
@@ -110,6 +110,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
   }
 
+  //noinspection ZeroIndexToHead
   "MemPoolWatcher" should {
 
     "send the correct TxUpdate message when a transaction update is received from " +
@@ -177,10 +178,19 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       broadcastTransaction(transaction2)
 
       val receivedTx2 = updateCapture.value
-      //noinspection ZeroIndexToHead
       receivedTx2.outputs(0).address.get shouldBe outputAddress1
       receivedTx2.outputs(1).address.get shouldBe outputAddress2
       receivedTx2.value shouldBe value1 + value2
+
+      // https://www.blockchain.com/btc/address/1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT
+      val transaction3 = f.transactions(1)
+      broadcastTransaction(transaction3)
+
+      val receivedTx3 = updateCapture.value
+      receivedTx3.value shouldBe 300000000
+      receivedTx3.inputs(0).address.get shouldBe "15vScfMHNrXN4QvWe54q5hwfVoYwG79CS1"
+      receivedTx3.outputs(0).address.get shouldBe "1H8ANdafjpqYntniT3Ddxh4xPBMCSz33pj"
+      receivedTx3.outputs(1).address.get shouldBe "1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"
     }
   }
 
