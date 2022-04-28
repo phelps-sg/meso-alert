@@ -2,15 +2,15 @@ import actors.TxWatchActor
 import actors.TxWatchActor.{Auth, TxUpdate}
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
-import play.api.libs.json.{JsArray, JsObject, JsPath, JsValue, Json, Reads, Writes}
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
 import org.bitcoinj.core.Utils.HEX
-import org.bitcoinj.core.{Address, Coin, LegacyAddress, Sha256Hash, Transaction, TransactionInput, TransactionOutPoint, UnsafeByteArrayOutputStream, Utils}
+import org.bitcoinj.core._
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE
-import org.bitcoinj.script.{Script, ScriptOpCodes, ScriptPattern}
-import org.scalamock.matchers.ArgCapture.{CaptureAll, CaptureOne}
+import org.bitcoinj.script.{Script, ScriptOpCodes}
+import org.scalamock.matchers.ArgCapture.CaptureAll
+import play.api.libs.json.{JsArray, JsValue, Json}
 
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
@@ -22,8 +22,9 @@ import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import scala.io.Source
 import services._
+
+import scala.io.Source
 
 //noinspection TypeAnnotation
 class UnitTests extends TestKit(ActorSystem("MySpec"))
