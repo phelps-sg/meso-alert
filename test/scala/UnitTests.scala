@@ -147,13 +147,16 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
       val listener = listenerCapture.value
 
+      def broadcastTransaction(tx: Transaction): Unit = {
+        // Simulate a broadcast of the transaction from PeerGroup.
+        listener.onTransaction(null, tx)
+        // We have to wait for the actors to process their messages.
+        expectNoMessage()
+      }
+
       // Configure a test bitcoinj transaction.
       val transaction1 = f.transactions.head
-
-      // Simulate a broadcast of the transaction from PeerGroup.
-      listener.onTransaction(null, transaction1)
-      // We have to wait for the actors to process their messages.
-      expectNoMessage()
+      broadcastTransaction(transaction1)
 
       val receivedTx1 = updateCapture.value
       receivedTx1.outputs.head.address.get shouldBe "1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"
@@ -175,10 +178,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       val value2 = 200L
       transaction2.addOutput(Coin.valueOf(value2), Address.fromString(f.params, outputAddress2))
 
-      // Simulate a broadcast of the transaction from PeerGroup.
-      listener.onTransaction(null, transaction2)
-      // We have to wait for the actors to process their messages.
-      expectNoMessage()
+      broadcastTransaction(transaction2)
 
       val receivedTx2 = updateCapture.value
       //noinspection ZeroIndexToHead
