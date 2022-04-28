@@ -63,47 +63,9 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
     val mockPeerGroup = mock[MockPeerGroup]
     val transactions = parseTransactions(Json.parse(Source.fromResource("tx_valid.json").getLines.mkString))
 
-    private def parseScriptString(string: String) = {
-      val words = string.split("[ \\t\\n]")
-      val out = new UnsafeByteArrayOutputStream
-      for (w <- words if w != "") {
-        if (w.matches("^-?[0-9]*$")) { // Number
-          val v = w.toLong
-          if (v >= -1 && v <= 16) out.write(Script.encodeToOpN(v.toInt))
-          else Script.writeBytes(out, Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(v), false)))
-        }
-        else if (w.matches("^0x[0-9a-fA-F]*$")) { // Raw hex data, inserted NOT pushed onto stack:
-          out.write(HEX.decode(w.substring(2).toLowerCase))
-        }
-        else if (w.length >= 2 && w.startsWith("'") && w.endsWith("'")) { // Single-quoted string, pushed as data. NOTE: this is poor-man's
-          // parsing, spaces/tabs/newlines in single-quoted strings won't work.
-          Script.writeBytes(out, w.substring(1, w.length - 1).getBytes(StandardCharsets.UTF_8))
-        }
-        else if (ScriptOpCodes.getOpCode(w) != OP_INVALIDOPCODE) { // opcode, e.g. OP_ADD or OP_1:
-          out.write(ScriptOpCodes.getOpCode(w))
-        }
-        else if (w.startsWith("OP_") && ScriptOpCodes.getOpCode(w.substring(3)) != OP_INVALIDOPCODE) out.write(ScriptOpCodes.getOpCode(w.substring(3)))
-        else throw new RuntimeException("Invalid word: '" + w + "'")
-      }
-      new Script(out.toByteArray)
-    }
-
-    private def parseScriptPubKeys(inputs: JsValue): mutable.Map[TransactionOutPoint, Script] = {
-      val scriptPubKeys = mutable.Map[TransactionOutPoint, Script]()
-      inputs.as[JsArray].value.foreach { input =>
-        val hash = input(0).as[String]
-        val index = input(1).as[Int]
-        val script = input(2).as[String]
-        val sha256Hash = Sha256Hash.wrap(HEX.decode(hash))
-        scriptPubKeys(new TransactionOutPoint(params, index, sha256Hash)) = parseScriptString(script)
-      }
-      scriptPubKeys
-    }
-
     private def parseTransactions(testData: JsValue): Array[Transaction] = {
       testData.as[Array[JsArray]].map(_.value).filter(_.size > 1).map {
         testData => {
-//          val scriptPubKeys = parseScriptPubKeys(testData(0))
           params.getDefaultSerializer.makeTransaction(HEX.decode(testData(1).as[String].toLowerCase))
         }
       }
