@@ -47,10 +47,10 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
   def fixture = new {
     val mockMemPoolWatcher = mock[MemPoolWatcherService]
     val mockWs = mock[WebSocketMock]
-    val wsActor = system.actorOf(MockWebsocketActor.props(mockWs))
+    val mockWsActor = system.actorOf(MockWebsocketActor.props(mockWs))
     val mockUser = mock[User]
     val mockUserManager = mock[UserManagerService]
-    val txWatchActor = system.actorOf(TxWatchActor.props(wsActor, mockMemPoolWatcher, mockUserManager))
+    val txWatchActor = system.actorOf(TxWatchActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
     val params = MainNetParams.get()
     class MockPeerGroup extends PeerGroup(params)
     val mockPeerGroup = mock[MockPeerGroup]
@@ -89,7 +89,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       val memPoolWatcher = new MemPoolWatcher(new PeerGroupSelection() { val peerGroup = f.mockPeerGroup })
       memPoolWatcher.addListener(f.txWatchActor)
 
-      val txWatchActor = system.actorOf(TxWatchActor.props(f.wsActor, memPoolWatcher, f.mockUserManager))
+      val txWatchActor = system.actorOf(TxWatchActor.props(f.mockWsActor, memPoolWatcher, f.mockUserManager))
 
       // Authenticate the user so that the actor is ready send updates.
       txWatchActor ! Auth("test", "test")
