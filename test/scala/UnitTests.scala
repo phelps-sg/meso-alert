@@ -2,11 +2,19 @@ import actors.TxWatchActor
 import actors.TxWatchActor.{Auth, TxUpdate}
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import play.api.libs.json.{JsArray, JsObject, JsPath, JsValue, Json, Reads, Writes}
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
-import org.bitcoinj.core.{Address, Coin, Transaction}
+import org.bitcoinj.core.Utils.HEX
+import org.bitcoinj.core.{Address, Coin, LegacyAddress, Sha256Hash, Transaction, TransactionInput, TransactionOutPoint, UnsafeByteArrayOutputStream, Utils}
 import org.bitcoinj.params.MainNetParams
+import org.bitcoinj.script.ScriptOpCodes.OP_INVALIDOPCODE
+import org.bitcoinj.script.{Script, ScriptOpCodes, ScriptPattern}
 import org.scalamock.matchers.ArgCapture.{CaptureAll, CaptureOne}
+
+import java.math.BigInteger
+import java.nio.charset.StandardCharsets
+import scala.collection.mutable
 //import com.google.common.util.concurrent.ListenableFuture
 import org.bitcoinj.core.PeerGroup
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
@@ -14,6 +22,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import scala.io.Source
 import services._
 
 //noinspection TypeAnnotation
@@ -51,6 +60,54 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
     val params = MainNetParams.get()
     class MockPeerGroup extends PeerGroup(params)
     val mockPeerGroup = mock[MockPeerGroup]
+    val transactions = parseTransactions(Json.parse(Source.fromResource("tx_valid.json").getLines.mkString))
+
+    private def parseScriptString(string: String) = {
+      val words = string.split("[ \\t\\n]")
+      val out = new UnsafeByteArrayOutputStream
+      for (w <- words if w != "") {
+        if (w.matches("^-?[0-9]*$")) { // Number
+          val v = w.toLong
+          if (v >= -1 && v <= 16) out.write(Script.encodeToOpN(v.toInt))
+          else Script.writeBytes(out, Utils.reverseBytes(Utils.encodeMPI(BigInteger.valueOf(v), false)))
+        }
+        else if (w.matches("^0x[0-9a-fA-F]*$")) { // Raw hex data, inserted NOT pushed onto stack:
+          out.write(HEX.decode(w.substring(2).toLowerCase))
+        }
+        else if (w.length >= 2 && w.startsWith("'") && w.endsWith("'")) { // Single-quoted string, pushed as data. NOTE: this is poor-man's
+          // parsing, spaces/tabs/newlines in single-quoted strings won't work.
+          Script.writeBytes(out, w.substring(1, w.length - 1).getBytes(StandardCharsets.UTF_8))
+        }
+        else if (ScriptOpCodes.getOpCode(w) != OP_INVALIDOPCODE) { // opcode, e.g. OP_ADD or OP_1:
+          out.write(ScriptOpCodes.getOpCode(w))
+        }
+        else if (w.startsWith("OP_") && ScriptOpCodes.getOpCode(w.substring(3)) != OP_INVALIDOPCODE) out.write(ScriptOpCodes.getOpCode(w.substring(3)))
+        else throw new RuntimeException("Invalid word: '" + w + "'")
+      }
+      new Script(out.toByteArray)
+    }
+
+    private def parseScriptPubKeys(inputs: JsValue): mutable.Map[TransactionOutPoint, Script] = {
+      val scriptPubKeys = mutable.Map[TransactionOutPoint, Script]()
+      inputs.as[JsArray].value.foreach { input =>
+        val hash = input(0).as[String]
+        val index = input(1).as[Int]
+        val script = input(2).as[String]
+        val sha256Hash = Sha256Hash.wrap(HEX.decode(hash))
+        scriptPubKeys(new TransactionOutPoint(params, index, sha256Hash)) = parseScriptString(script)
+      }
+      scriptPubKeys
+    }
+
+    private def parseTransactions(testData: JsValue): Array[Transaction] = {
+      testData.as[Array[JsArray]].map(_.value).filter(_.size > 1).map {
+        testData => {
+          val scriptPubKeys = parseScriptPubKeys(testData(0))
+          params.getDefaultSerializer.makeTransaction(HEX.decode(testData(1).as[String].toLowerCase))
+        }
+      }
+    }
+
   }
 
   "MemPoolWatcher" should {
@@ -107,6 +164,13 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       val value2 = 200L
       transaction.addOutput(Coin.valueOf(value2), Address.fromString(f.params, outputAddress2))
 
+      //noinspection SpellCheckingInspection
+//      val pubKeyProg = "76a91433e81a941e64cda12c6a299ed322ddbdd03f8d0e88ac"
+//      val pubKeyBytes = HEX.decode(pubKeyProg)
+//      val pubKey = new Script(pubKeyBytes)
+//      val inputAddress1 = LegacyAddress.fromPubKeyHash(f.params, ScriptPattern.extractHashFromP2PKH(pubKey)).toString
+//      transaction.addInput(new TransactionInput(f.params, transaction, pubKeyBytes))
+
       // Simulate a broadcast of the transaction from PeerGroup.
       listener.onTransaction(null, transaction)
       // We have to wait for the actors to process their messages.
@@ -114,8 +178,9 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
       val receivedTx = updateCapture.value
       //noinspection ZeroIndexToHead
-      receivedTx.outputs(0).address shouldBe outputAddress1
-      receivedTx.outputs(1).address shouldBe outputAddress2
+      receivedTx.outputs(0).address.get shouldBe outputAddress1
+      receivedTx.outputs(1).address.get shouldBe outputAddress2
+//      receivedTx.inputs(0).address shouldBe inputAddress1
       receivedTx.value shouldBe value1 + value2
     }
   }
