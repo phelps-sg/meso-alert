@@ -148,7 +148,6 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       val listener = listenerCapture.value
 
       // Configure a test bitcoinj transaction.
-//      val transaction: Transaction = new Transaction(f.params)
       val transaction1 = f.transactions.head
 
       // Simulate a broadcast of the transaction from PeerGroup.
