@@ -118,13 +118,13 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       val f = fixture
 
       // Configure user to not filter events.
-      (f.mockUser.filter _).expects(*).returning(true).once()
+      (f.mockUser.filter _).expects(*).returning(true).atLeastOnce()
       // The user will authenticate  successfully with id "test".
       (f.mockUserManager.authenticate _).expects("test").returning(f.mockUser)
 
-      // Capture the update message sent to the web socket for later verification.
-      val updateCapture = CaptureOne[TxUpdate]()
-      (f.mockWs.update _).expects(capture(updateCapture)).once()
+      // Capture the update messages sent to the web socket for later verification.
+      val updateCapture = CaptureAll[TxUpdate]()
+      (f.mockWs.update _).expects(capture(updateCapture)).atLeastOnce()
 
       // This is required for raw types (see https://scalamock.org/user-guide/advanced_topics/).
       implicit val d = new Defaultable[ListenableFuture[_]] {
@@ -149,7 +149,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
       // Configure a test bitcoinj transaction.
 //      val transaction: Transaction = new Transaction(f.params)
-      val transaction = f.transactions.head
+      val transaction1 = f.transactions.head
 
       // The first transaction output has a value of 100 Satoshi.
 
@@ -173,18 +173,39 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 //      transaction.addInput(new TransactionInput(f.params, transaction, pubKeyBytes))
 
       // Simulate a broadcast of the transaction from PeerGroup.
-      listener.onTransaction(null, transaction)
+      listener.onTransaction(null, transaction1)
       // We have to wait for the actors to process their messages.
       expectNoMessage()
 
-      val receivedTx = updateCapture.value
-      receivedTx.outputs.head.address.get shouldBe "1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"
-      receivedTx.value shouldBe 1000000
+      val receivedTx1 = updateCapture.value
+      receivedTx1.outputs.head.address.get shouldBe "1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"
+      receivedTx1.value shouldBe 1000000
+
+      val transaction2 = new Transaction(f.params)
+      // The second transaction output has a value of 100 Satoshi.
+
+      //noinspection SpellCheckingInspection
+      val outputAddress1 = "1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"
+      val value1 = 100L
+      transaction2.addOutput(Coin.valueOf(value1), Address.fromString(f.params, outputAddress1))
+
+      // The second transaction output has a value of 200 Satoshi.
+
+      //noinspection SpellCheckingInspection
+      val outputAddress2 = "1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"
+      val value2 = 200L
+      transaction2.addOutput(Coin.valueOf(value2), Address.fromString(f.params, outputAddress2))
+
+      // Simulate a broadcast of the transaction from PeerGroup.
+      listener.onTransaction(null, transaction2)
+      // We have to wait for the actors to process their messages.
+      expectNoMessage()
+
+      val receivedTx2 = updateCapture.value
       //noinspection ZeroIndexToHead
-//      receivedTx.outputs(0).address.get shouldBe outputAddress1
-//      receivedTx.outputs(1).address.get shouldBe outputAddress2
-//      receivedTx.inputs(0).address shouldBe inputAddress1
-//      receivedTx.value shouldBe value1 + value2
+      receivedTx2.outputs(0).address.get shouldBe outputAddress1
+      receivedTx2.outputs(1).address.get shouldBe outputAddress2
+      receivedTx2.value shouldBe value1 + value2
     }
   }
 
