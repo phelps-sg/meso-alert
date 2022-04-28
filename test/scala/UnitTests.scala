@@ -148,21 +148,22 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       val listener = listenerCapture.value
 
       // Configure a test bitcoinj transaction.
-      val transaction: Transaction = new Transaction(f.params)
+//      val transaction: Transaction = new Transaction(f.params)
+      val transaction = f.transactions.head
 
       // The first transaction output has a value of 100 Satoshi.
 
       //noinspection SpellCheckingInspection
-      val outputAddress1 = "1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"
-      val value1 = 100L
-      transaction.addOutput(Coin.valueOf(value1), Address.fromString(f.params, outputAddress1))
+//      val outputAddress1 = "1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"
+//      val value1 = 100L
+//      transaction.addOutput(Coin.valueOf(value1), Address.fromString(f.params, outputAddress1))
 
       // The second transaction output has a value of 200 Satoshi.
 
       //noinspection SpellCheckingInspection
-      val outputAddress2 = "1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"
-      val value2 = 200L
-      transaction.addOutput(Coin.valueOf(value2), Address.fromString(f.params, outputAddress2))
+//      val outputAddress2 = "1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"
+//      val value2 = 200L
+//      transaction.addOutput(Coin.valueOf(value2), Address.fromString(f.params, outputAddress2))
 
       //noinspection SpellCheckingInspection
 //      val pubKeyProg = "76a91433e81a941e64cda12c6a299ed322ddbdd03f8d0e88ac"
@@ -177,11 +178,13 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       expectNoMessage()
 
       val receivedTx = updateCapture.value
+      receivedTx.outputs.head.address.get shouldBe "1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"
+      receivedTx.value shouldBe 1000000
       //noinspection ZeroIndexToHead
-      receivedTx.outputs(0).address.get shouldBe outputAddress1
-      receivedTx.outputs(1).address.get shouldBe outputAddress2
+//      receivedTx.outputs(0).address.get shouldBe outputAddress1
+//      receivedTx.outputs(1).address.get shouldBe outputAddress2
 //      receivedTx.inputs(0).address shouldBe inputAddress1
-      receivedTx.value shouldBe value1 + value2
+//      receivedTx.value shouldBe value1 + value2
     }
   }
 
