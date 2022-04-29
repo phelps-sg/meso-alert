@@ -1,5 +1,6 @@
 package actors
 
+import actors.TxFilterActor.TxInputOutput
 import akka.actor.{Actor, Props}
 import monix.eval.Task
 import org.apache.commons.logging.LogFactory
@@ -21,10 +22,22 @@ class TxSlackActor(val hookUri: String) extends Actor {
 
   private val logger = LogFactory.getLog(classOf[TxSlackActor])
 
+  def linkToTxHash(hash: String) = s"<https://www.blockchain.com/btc/tx/$hash|$hash>"
+  def linkToAddress(address: String) = s"<https://www.blockchain.com/btc/address/$address|$address>"
+
+  def formatSatoshi(value: Long): String = (value / 100000000L).toString
+
+  def formatOutputAddresses(outputs: Seq[TxInputOutput]): String =
+    outputs.filterNot(_.address.isEmpty)
+      .map(output => linkToAddress(output.address.get))
+      .distinct
+      .mkString(", ")
+
   def message(tx: TxUpdate): String = {
-    s"New transaction ${tx.value / 100000000} BTC to " +
-      s"addresses ${tx.outputs.filterNot(_.address.isEmpty).map(_.address.get)}"
+    s"New transaction ${linkToTxHash(tx.hash)} with value ${formatSatoshi(tx.value)} BTC to " +
+      s"addresses ${formatOutputAddresses(tx.outputs)}"
   }
+
   override def receive: Receive = {
     case tx: TxUpdate =>
 
