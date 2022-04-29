@@ -2,13 +2,11 @@ package services
 
 import actors.TxWatchActor
 import akka.actor.ActorRef
-import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.io.BaseEncoding
 import com.google.inject.ImplementedBy
 import org.bitcoinj.core._
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.params.MainNetParams
-import org.bitcoinj.script.ScriptException
 import org.bitcoinj.utils.BriefLogFormatter
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
 import org.slf4j.{Logger, LoggerFactory}
@@ -19,7 +17,6 @@ import javax.inject.{Inject, Singleton}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 @ImplementedBy(classOf[MemPoolWatcher])
 trait MemPoolWatcherService {
