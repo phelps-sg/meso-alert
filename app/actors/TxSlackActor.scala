@@ -33,14 +33,11 @@ class TxSlackActor extends Actor {
         val r = basicRequest
           .contentType("application/json")
           .body(Json.stringify(Json.obj("text" -> Json.stringify(txUpdateWrites.writes(tx)))))
-//          .body(Json.stringify(Json.obj("text" -> "hello")))
-//          .body("{\"text\": \"hello\"}")
           .post(uri"https://hooks.slack.com/services/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")
 
         r.send(backend)
           .flatMap { response => Task(logger.info(s"""Got ${response.code} response, body:\n${response.body}""")) }
           .guarantee(backend.close())
-
       }
 
       import monix.execution.Scheduler.Implicits.global
@@ -50,7 +47,6 @@ class TxSlackActor extends Actor {
         case Success(_) => logger.info("Successfully posted message")
         case Failure(_) => logger.error("Failed")
       }
-//      postTask.runSyncUnsafe()
   }
 
 }
