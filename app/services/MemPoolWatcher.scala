@@ -29,18 +29,20 @@ trait MemPoolWatcherService {
 
 @ImplementedBy(classOf[MainNetPeerGroup])
 trait PeerGroupSelection {
+  val params: NetworkParameters
   val peerGroup: PeerGroup
 }
 
 @Singleton
 class MainNetPeerGroup extends PeerGroupSelection {
-  val peerGroup = new PeerGroup(MainNetParams.get)
+  val params: NetworkParameters = MainNetParams.get
+  val peerGroup = new PeerGroup(params)
 }
 
 @Singleton
 class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends MemPoolWatcherService {
   private val log: Logger = LoggerFactory.getLogger("mem-pool-watcher")
-  private val PARAMS: NetworkParameters = MainNetParams.get
+  implicit val params: NetworkParameters = peerGroupSelection.params
   private val NO_DEPS: util.List[Transaction] = Collections.emptyList
   private val counters: mutable.Map[String, Integer] = mutable.Map[String, Integer]().withDefaultValue(0)
   private val TOTAL_KEY: String = "TOTAL"
@@ -52,7 +54,7 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
 
   def run(): Unit = {
     peerGroup.setMaxConnections(32)
-    peerGroup.addPeerDiscovery(new DnsDiscovery(PARAMS))
+    peerGroup.addPeerDiscovery(new DnsDiscovery(params))
     peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
       val result: RiskAnalysis.Result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze
       incrementCounter(TOTAL_KEY)
@@ -75,51 +77,9 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
     }
   }
 
-  // https://bitcoin.stackexchange.com/questions/83481/bitcoinj-java-library-not-decoding-input-addresses-for-some-transactions
-  def address(input: TransactionInput): Option[String] = {
-    val chunks = input.getScriptSig.getChunks.asScala
-    if (chunks.isEmpty) {
-      Some(LegacyAddress.fromScriptHash(PARAMS, Utils.sha256hash160(input.getScriptBytes)).toString)
-    } else {
-      val pubKey = chunks.takeRight(1).head
-      val hash = Utils.sha256hash160(pubKey.data)
-      if (chunks.size == 2)
-        Some(LegacyAddress.fromPubKeyHash(PARAMS, hash).toString)
-      else
-        Some(SegwitAddress.fromHash(PARAMS, hash).toString)
-    }
-  }
-
-  def address(output: TransactionOutput): Option[String] = {
-    try {
-      Some(output.getScriptPubKey.getToAddress(PARAMS).toString)
-    } catch {
-      case _: ScriptException =>
-        None
-    }
-  }
-
-  def value(input: TransactionInput): Option[Long] =
-    if (input.getValue == null) None else Some(input.getValue.value)
-
-  def value(output: TransactionOutput): Option[Long] =
-    if (output.getValue == null) None else Some(output.getValue.value)
-
   def addListener(listener: ActorRef): Unit = {
-    peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
-      listener ! TxWatchActor.TxUpdate(
-        hash = tx.getTxId.toString,
-        value = tx.getOutputSum.value,
-        time = DateTime.now(),
-        isPending = tx.isPending,
-        inputs =
-          (for (input <- tx.getInputs.asScala)
-            yield TxWatchActor.TxInputOutput(address(input), value(input))).toSeq,
-        outputs =
-          (for (output <- tx.getOutputs.asScala)
-            yield TxWatchActor.TxInputOutput(address(output), value(output))).toSeq,
-      )
-    })
+    peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) =>
+      listener ! TxWatchActor.TxUpdate(tx))
   }
 
   private def incrementCounter(name: String): Unit = {

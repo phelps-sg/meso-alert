@@ -86,7 +86,10 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       (f.mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
         .expects(capture(listenerCapture)).atLeastOnce()
 
-      val memPoolWatcher = new MemPoolWatcher(new PeerGroupSelection() { val peerGroup = f.mockPeerGroup })
+      val memPoolWatcher = new MemPoolWatcher(new PeerGroupSelection() {
+        val params = f.params
+        val peerGroup = f.mockPeerGroup
+      })
       memPoolWatcher.addListener(f.txWatchActor)
 
       val txWatchActor = system.actorOf(TxWatchActor.props(f.mockWsActor, memPoolWatcher, f.mockUserManager))
