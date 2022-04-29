@@ -1,7 +1,8 @@
 package services
 
+import actors.TxUpdate
+
 import javax.inject.Singleton
-import actors.TxWatchActor.TxUpdate
 import com.google.inject.ImplementedBy
 
 case class InvalidCredentialsException() extends Exception

@@ -1,6 +1,6 @@
 package services
 
-import actors.TxWatchActor
+import actors.TxUpdate
 import akka.actor.ActorRef
 import com.google.common.io.BaseEncoding
 import com.google.inject.ImplementedBy
@@ -76,7 +76,7 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
 
   def addListener(listener: ActorRef): Unit = {
     peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) =>
-      listener ! TxWatchActor.TxUpdate(tx))
+      listener ! TxUpdate(tx))
   }
 
   private def incrementCounter(name: String): Unit = {

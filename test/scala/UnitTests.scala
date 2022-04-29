@@ -1,5 +1,5 @@
-import actors.TxWatchActor
-import actors.TxWatchActor.{Auth, TxUpdate}
+import actors.{TxWatchActor, TxUpdate}
+import actors.TxWatchActor.Auth
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.github.nscala_time.time.Imports.DateTime

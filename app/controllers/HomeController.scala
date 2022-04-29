@@ -1,17 +1,15 @@
 package controllers
 
-import actors.TxWatchActor
-import akka.NotUsed
+import actors.{TxUpdate, TxWatchActor}
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.ws.Message
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import play.api.Logger
-import play.api.libs.json.{JsValue, Json}
-import services.{MemPoolWatcherService, UserManagerService}
+import play.api.libs.json.Json
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
+import services.{MemPoolWatcherService, UserManagerService}
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,8 +29,8 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
 
   memPoolWatcher.startDaemon()
 
-  implicit val mft: MessageFlowTransformer[TxWatchActor.Auth, TxWatchActor.TxUpdate] =
-    MessageFlowTransformer.jsonMessageFlowTransformer[TxWatchActor.Auth, TxWatchActor.TxUpdate]
+  implicit val mft: MessageFlowTransformer[TxWatchActor.Auth, TxUpdate] =
+    MessageFlowTransformer.jsonMessageFlowTransformer[TxWatchActor.Auth, TxUpdate]
 
   /**
    * Create an Action to render an HTML page.
@@ -45,15 +43,15 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     Ok(views.html.index())
   }
 
-  def wsFutureFlow(request: RequestHeader): Future[Flow[TxWatchActor.Auth, TxWatchActor.TxUpdate, _]] = {
+  def wsFutureFlow(request: RequestHeader): Future[Flow[TxWatchActor.Auth, TxUpdate, _]] = {
     Future {
-      ActorFlow.actorRef[TxWatchActor.Auth, TxWatchActor.TxUpdate] {
+      ActorFlow.actorRef[TxWatchActor.Auth, TxUpdate] {
         out => TxWatchActor.props(out, memPoolWatcher, userManager)
       }
     }
   }
 
-  def websocket: WebSocket = WebSocket.acceptOrResult[TxWatchActor.Auth, TxWatchActor.TxUpdate] {
+  def websocket: WebSocket = WebSocket.acceptOrResult[TxWatchActor.Auth, TxUpdate] {
     case rh if sameOriginCheck(rh) =>
       wsFutureFlow(rh).map { flow =>
         Right(flow)
