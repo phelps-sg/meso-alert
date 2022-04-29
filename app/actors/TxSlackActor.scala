@@ -21,13 +21,17 @@ class TxSlackActor(val hookUri: String) extends Actor {
 
   private val logger = LogFactory.getLog(classOf[TxSlackActor])
 
+  def message(tx: TxUpdate): String = {
+    s"New transaction ${tx.value / 100000000} BTC to " +
+      s"addresses ${tx.outputs.filterNot(_.address.isEmpty).map(_.address.get)}"
+  }
   override def receive: Receive = {
     case tx: TxUpdate =>
 
       val postTask = AsyncHttpClientMonixBackend().flatMap { backend =>
         val r = basicRequest
           .contentType("application/json")
-          .body(Json.stringify(Json.obj("text" -> Json.stringify(txUpdateWrites.writes(tx)))))
+          .body(Json.stringify(Json.obj("text" -> message(tx))))
           .post(Uri(javaUri = new URI(hookUri)))
 
         r.send(backend)
