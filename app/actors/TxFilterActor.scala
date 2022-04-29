@@ -10,10 +10,10 @@ import services.{InvalidCredentialsException, MemPoolWatcherService, UserManager
 import scala.collection.immutable.ArraySeq
 
 //noinspection TypeAnnotation
-object TxWatchActor {
+object TxFilterActor {
 
   def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService): Props =
-    Props(new TxWatchActor(out, memPoolWatcher, userManager))
+    Props(new TxFilterActor(out, memPoolWatcher, userManager))
 
   case class TxInputOutput(address: Option[String], value: Option[Long])
 
@@ -45,17 +45,12 @@ object TxWatchActor {
 }
 
 //noinspection TypeAnnotation
-class TxWatchActor(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService) extends Actor {
+class TxFilterActor(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
+  extends AbstractTxUpdateActor(memPoolWatcher) {
 
-  private val logger: Logger = LoggerFactory.getLogger(classOf[TxWatchActor])
+  private val logger: Logger = LoggerFactory.getLogger(classOf[TxFilterActor])
 
-  import TxWatchActor._
-
-  def registerWithWatcher(): Unit = {
-    logger.info("Registering new mem pool listener... ")
-    memPoolWatcher.addListener(self)
-    logger.info("registration complete.")
-  }
+  import TxFilterActor._
 
   override def receive: Receive = unauthorized
 

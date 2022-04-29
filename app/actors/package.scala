@@ -1,13 +1,28 @@
-import actors.TxWatchActor.TxInputOutput
+import actors.TxFilterActor.TxInputOutput
+import akka.actor.Actor
 import com.github.nscala_time.time.Imports.DateTime
+import org.slf4j.{Logger, LoggerFactory}
 import org.bitcoinj.core.{LegacyAddress, NetworkParameters, SegwitAddress, Transaction, TransactionInput, TransactionOutput, Utils}
 import org.bitcoinj.script.ScriptException
 import play.api.libs.json.{JsObject, Json, Writes}
+import services.{MemPoolWatcher, MemPoolWatcherService}
 
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 //noinspection TypeAnnotation
 package object actors {
+
+  abstract class AbstractTxUpdateActor(val memPoolWatcher: MemPoolWatcherService) extends Actor {
+
+    private val logger = LoggerFactory.getLogger(classOf[TxUpdate])
+
+    def registerWithWatcher(): Unit = {
+      logger.info("Registering new mem pool listener... ")
+      memPoolWatcher.addListener(self)
+      logger.info("registration complete.")
+    }
+
+  }
 
   case class TxUpdate( hash: String,
                        value: Long,
@@ -27,10 +42,10 @@ package object actors {
         isPending = tx.isPending,
         inputs =
           (for (input <- tx.getInputs.asScala)
-            yield TxWatchActor.TxInputOutput(address(input), value(input))).toSeq,
+            yield TxFilterActor.TxInputOutput(address(input), value(input))).toSeq,
         outputs =
           (for (output <- tx.getOutputs.asScala)
-            yield TxWatchActor.TxInputOutput(address(output), value(output))).toSeq,
+            yield TxFilterActor.TxInputOutput(address(output), value(output))).toSeq,
       )
 
     // https://bitcoin.stackexchange.com/questions/83481/bitcoinj-java-library-not-decoding-input-addresses-for-some-transactions

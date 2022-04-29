@@ -1,7 +1,7 @@
 package controllers
 
-import actors.{TxUpdate, TxWatchActor}
-import akka.actor.ActorSystem
+import actors.{TxFilterActor, TxSlackActor, TxUpdate}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import play.api.Logger
@@ -27,10 +27,13 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
 
   val logger: Logger = play.api.Logger(getClass)
 
+  val slackActor: ActorRef = system.actorOf(TxSlackActor.props())
+  val slackWatchActor: ActorRef = system.actorOf(TxFilterActor.props(slackActor, memPoolWatcher, userManager))
+  slackWatchActor ! TxFilterActor.Auth("guest", "test")
   memPoolWatcher.startDaemon()
 
-  implicit val mft: MessageFlowTransformer[TxWatchActor.Auth, TxUpdate] =
-    MessageFlowTransformer.jsonMessageFlowTransformer[TxWatchActor.Auth, TxUpdate]
+  implicit val mft: MessageFlowTransformer[TxFilterActor.Auth, TxUpdate] =
+    MessageFlowTransformer.jsonMessageFlowTransformer[TxFilterActor.Auth, TxUpdate]
 
   /**
    * Create an Action to render an HTML page.
@@ -43,15 +46,15 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     Ok(views.html.index())
   }
 
-  def wsFutureFlow(request: RequestHeader): Future[Flow[TxWatchActor.Auth, TxUpdate, _]] = {
+  def wsFutureFlow(request: RequestHeader): Future[Flow[TxFilterActor.Auth, TxUpdate, _]] = {
     Future {
-      ActorFlow.actorRef[TxWatchActor.Auth, TxUpdate] {
-        out => TxWatchActor.props(out, memPoolWatcher, userManager)
+      ActorFlow.actorRef[TxFilterActor.Auth, TxUpdate] {
+        out => TxFilterActor.props(out, memPoolWatcher, userManager)
       }
     }
   }
 
-  def websocket: WebSocket = WebSocket.acceptOrResult[TxWatchActor.Auth, TxUpdate] {
+  def websocket: WebSocket = WebSocket.acceptOrResult[TxFilterActor.Auth, TxUpdate] {
     case rh if sameOriginCheck(rh) =>
       wsFutureFlow(rh).map { flow =>
         Right(flow)
