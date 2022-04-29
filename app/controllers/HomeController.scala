@@ -1,7 +1,7 @@
 package controllers
 
 import actors.{TxFilterActor, TxSlackActor, TxUpdate}
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import play.api.Logger
@@ -29,7 +29,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
 
   val slackActor: ActorRef =
     system.actorOf(
-      TxSlackActor.props("https://hooks.slack.com/services/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"))
+      TxSlackActor.props("https://hooks.slack.com/services/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"))
   val slackWatchActor: ActorRef = system.actorOf(TxFilterActor.props(slackActor, memPoolWatcher, userManager))
   slackWatchActor ! TxFilterActor.Auth("guest", "test")
   memPoolWatcher.startDaemon()
