@@ -21,7 +21,7 @@ class UserManager extends UserManagerService {
 
   val guest: User = new User("guest") {
     def filter(tx: TxUpdate): Boolean = {
-      tx.value > 1000000000
+      tx.value > 100000000000L
     }
   }
 
