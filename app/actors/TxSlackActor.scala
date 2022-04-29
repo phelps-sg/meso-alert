@@ -21,8 +21,6 @@ class TxSlackActor(val hookUri: String) extends Actor {
 
   private val logger = LogFactory.getLog(classOf[TxSlackActor])
 
-  case class SlackMessage(text: TxUpdate)
-
   override def receive: Receive = {
     case tx: TxUpdate =>
 
