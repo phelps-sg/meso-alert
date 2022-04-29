@@ -1,17 +1,16 @@
 package actors
 
-import services.{InvalidCredentialsException, MemPoolWatcherService, UserManagerService}
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
 import com.github.nscala_time.time.Imports.DateTime
-import org.bitcoinj.core.{Address, LegacyAddress, NetworkParameters, SegwitAddress, Transaction, TransactionInput, TransactionOutput, Utils}
+import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json.{JsObject, JsPath, Json, Reads, Writes}
+import play.api.libs.json._
+import services.{InvalidCredentialsException, MemPoolWatcherService, UserManagerService}
 
 import scala.collection.immutable.ArraySeq
-import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 //noinspection TypeAnnotation
