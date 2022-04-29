@@ -2,16 +2,12 @@ package actors
 
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
-import com.github.nscala_time.time.Imports.DateTime
-import org.bitcoinj.core._
-import org.bitcoinj.script.ScriptException
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import services.{InvalidCredentialsException, MemPoolWatcherService, UserManagerService}
 
 import scala.collection.immutable.ArraySeq
-import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 //noinspection TypeAnnotation
 object TxWatchActor {
