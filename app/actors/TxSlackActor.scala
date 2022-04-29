@@ -21,9 +21,8 @@ object TxSlackActor {
 class TxSlackActor(val hookUri: String) extends Actor {
 
   private val logger = LogFactory.getLog(classOf[TxSlackActor])
-
-  def linkToTxHash(hash: String) = s"<https://www.blockchain.com/btc/tx/$hash|$hash>"
-  def linkToAddress(address: String) = s"<https://www.blockchain.com/btc/address/$address|$address>"
+  def linkToTxHash(hash: String) = s"<https://www.blockchair.com/bitcoin/transaction/$hash|$hash>"
+  def linkToAddress(address: String) = s"<https://www.blockchair.com/bitcoin/address/$address|$address>"
 
   def formatSatoshi(value: Long): String = (value / 100000000L).toString
 
