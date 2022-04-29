@@ -1,13 +1,11 @@
 package actors
 
 import akka.actor.{Actor, Props}
-import sttp.client3._
-import sttp.client3.circe._
-import sttp.client3.asynchttpclient.monix._
-import io.circe.generic.auto._
 import monix.eval.Task
 import org.apache.commons.logging.LogFactory
 import play.api.libs.json.Json
+import sttp.client3._
+import sttp.client3.asynchttpclient.monix._
 import sttp.model.Uri
 
 import java.net.URI
