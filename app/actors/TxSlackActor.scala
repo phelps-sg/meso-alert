@@ -10,15 +10,16 @@ import org.apache.commons.logging.LogFactory
 import play.api.libs.json.Json
 import sttp.model.Uri
 
+import java.net.URI
 import scala.util.{Failure, Success}
 
 object TxSlackActor {
 
-  def props(): Props = Props(new TxSlackActor())
+  def props(hookUri: String): Props = Props(new TxSlackActor(hookUri))
 
 }
 
-class TxSlackActor extends Actor {
+class TxSlackActor(val hookUri: String) extends Actor {
 
   private val logger = LogFactory.getLog(classOf[TxSlackActor])
 
@@ -33,10 +34,10 @@ class TxSlackActor extends Actor {
         val r = basicRequest
           .contentType("application/json")
           .body(Json.stringify(Json.obj("text" -> Json.stringify(txUpdateWrites.writes(tx)))))
-          .post(uri"https://hooks.slack.com/services/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")
+          .post(Uri(javaUri = new URI(hookUri)))
 
         r.send(backend)
-          .flatMap { response => Task(logger.info(s"""Got ${response.code} response, body:\n${response.body}""")) }
+          .flatMap { response => Task(logger.debug(s"""Got ${response.code} response, body:\n${response.body}""")) }
           .guarantee(backend.close())
       }
 
@@ -44,8 +45,8 @@ class TxSlackActor extends Actor {
       val f = postTask.runToFuture
 
       f onComplete {
-        case Success(_) => logger.info("Successfully posted message")
-        case Failure(_) => logger.error("Failed")
+        case Success(_) => logger.debug("Successfully posted message")
+        case Failure(ex) => logger.warn(ex.getMessage)
       }
   }
 

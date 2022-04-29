@@ -27,7 +27,9 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
 
   val logger: Logger = play.api.Logger(getClass)
 
-  val slackActor: ActorRef = system.actorOf(TxSlackActor.props())
+  val slackActor: ActorRef =
+    system.actorOf(
+      TxSlackActor.props("https://hooks.slack.com/services/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"))
   val slackWatchActor: ActorRef = system.actorOf(TxFilterActor.props(slackActor, memPoolWatcher, userManager))
   slackWatchActor ! TxFilterActor.Auth("guest", "test")
   memPoolWatcher.startDaemon()
