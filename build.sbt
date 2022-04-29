@@ -18,7 +18,11 @@ libraryDependencies += "org.scalamock" %% "scalamock" % "5.2.0" % Test
 val AkkaVersion = "2.6.19"
 libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % Test
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.11" % Test
-
+libraryDependencies ++= List(
+  "com.softwaremill.sttp.client3" %% "async-http-client-backend-zio" % "3.5.2",
+  "com.softwaremill.sttp.client3" %% "circe" % "3.5.2",
+  "io.circe" %% "circe-generic" % "0.14.1"
+)
 // Adds additional packages into Twirl
 //TwirlKeys.templateImports += "com.mesonomics.controllers._"
 
