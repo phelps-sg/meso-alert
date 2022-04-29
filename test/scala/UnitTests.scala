@@ -134,7 +134,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       receivedTx2.outputs(1).address.get shouldBe outputAddress2
       receivedTx2.value shouldBe value1 + value2
 
-      // https://www.blockchain.com/btc/address/1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT
+      // https://www.blockchain.com/btc/tx/6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4
       val transaction3 = f.transactions(1)
       broadcastTransaction(transaction3)
 
@@ -148,6 +148,21 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       receivedTx3.outputs(0).address.get shouldBe "1H8ANdafjpqYntniT3Ddxh4xPBMCSz33pj"
       //noinspection SpellCheckingInspection
       receivedTx3.outputs(1).address.get shouldBe "1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"
+
+      // https://www.blockchain.com/btc/tx/73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259
+      val transaction4 = f.transactions(2)
+      broadcastTransaction(transaction4)
+
+      val receivedTx4 = updateCapture.value
+      receivedTx4.value shouldBe 923985
+      receivedTx4.inputs.size shouldBe 1
+      receivedTx4.outputs.size shouldBe 2
+      // See https://gitlab.com/mesonomics/meso-alert/-/issues/24
+//      receivedTx4.inputs(0).address.get shouldBe "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
+      //noinspection SpellCheckingInspection
+      receivedTx4.outputs(0).address.get shouldBe "1AyQnFZk9MbjLFXSWJ7euNbGhaNpjPvrSq"
+      //noinspection SpellCheckingInspection
+      receivedTx4.outputs(1).address.get shouldBe "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
     }
   }
 
