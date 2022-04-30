@@ -1,17 +1,15 @@
 package controllers
 
-import actors.TxWatchActor
-import akka.NotUsed
+import actors.{TxAuthActor, TxUpdate}
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.ws.Message
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import play.api.Logger
-import play.api.libs.json.{JsValue, Json}
-import services.{MemPoolWatcherService, UserManagerService}
+import play.api.libs.json.Json
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
+import services.{MemPoolWatcherService, SlackWebhooksManagerService, UserManagerService}
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -23,16 +21,18 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
                                val memPoolWatcher: MemPoolWatcherService,
-                               val userManager: UserManagerService)
+                               val userManager: UserManagerService,
+                               val slackWebHooksManager: SlackWebhooksManagerService)
                               (implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext)
   extends BaseController with SameOriginCheck {
 
   val logger: Logger = play.api.Logger(getClass)
 
-  memPoolWatcher.startDaemon()
+  memPoolWatcher.start()
+  slackWebHooksManager.start()
 
-  implicit val mft: MessageFlowTransformer[TxWatchActor.Auth, TxWatchActor.TxUpdate] =
-    MessageFlowTransformer.jsonMessageFlowTransformer[TxWatchActor.Auth, TxWatchActor.TxUpdate]
+  implicit val mft: MessageFlowTransformer[TxAuthActor.Auth, TxUpdate] =
+    MessageFlowTransformer.jsonMessageFlowTransformer[TxAuthActor.Auth, TxUpdate]
 
   /**
    * Create an Action to render an HTML page.
@@ -45,15 +45,15 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     Ok(views.html.index())
   }
 
-  def wsFutureFlow(request: RequestHeader): Future[Flow[TxWatchActor.Auth, TxWatchActor.TxUpdate, _]] = {
+  def wsFutureFlow(request: RequestHeader): Future[Flow[TxAuthActor.Auth, TxUpdate, _]] = {
     Future {
-      ActorFlow.actorRef[TxWatchActor.Auth, TxWatchActor.TxUpdate] {
-        out => TxWatchActor.props(out, memPoolWatcher, userManager)
+      ActorFlow.actorRef[TxAuthActor.Auth, TxUpdate] {
+        out => TxAuthActor.props(out, memPoolWatcher, userManager)
       }
     }
   }
 
-  def websocket: WebSocket = WebSocket.acceptOrResult[TxWatchActor.Auth, TxWatchActor.TxUpdate] {
+  def websocket: WebSocket = WebSocket.acceptOrResult[TxAuthActor.Auth, TxUpdate] {
     case rh if sameOriginCheck(rh) =>
       wsFutureFlow(rh).map { flow =>
         Right(flow)

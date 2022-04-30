@@ -1,7 +1,8 @@
 package services
 
+import actors.TxUpdate
+
 import javax.inject.Singleton
-import actors.TxWatchActor.TxUpdate
 import com.google.inject.ImplementedBy
 
 case class InvalidCredentialsException() extends Exception
@@ -20,7 +21,7 @@ class UserManager extends UserManagerService {
 
   val guest: User = new User("guest") {
     def filter(tx: TxUpdate): Boolean = {
-      tx.value > 10000000
+      tx.value > 50000000000L
     }
   }
 

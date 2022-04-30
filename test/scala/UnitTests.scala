@@ -1,5 +1,5 @@
-import actors.TxWatchActor
-import actors.TxWatchActor.{Auth, TxUpdate}
+import actors.{TxAuthActor, TxUpdate}
+import actors.TxAuthActor.Auth
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.github.nscala_time.time.Imports.DateTime
@@ -50,7 +50,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
     val mockWsActor = system.actorOf(MockWebsocketActor.props(mockWs))
     val mockUser = mock[User]
     val mockUserManager = mock[UserManagerService]
-    val txWatchActor = system.actorOf(TxWatchActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
+    val txWatchActor = system.actorOf(TxAuthActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
     val params = MainNetParams.get()
     class MockPeerGroup extends PeerGroup(params)
     val mockPeerGroup = mock[MockPeerGroup]
@@ -86,10 +86,13 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       (f.mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
         .expects(capture(listenerCapture)).atLeastOnce()
 
-      val memPoolWatcher = new MemPoolWatcher(new PeerGroupSelection() { val peerGroup = f.mockPeerGroup })
+      val memPoolWatcher = new MemPoolWatcher(new PeerGroupSelection() {
+        val params = f.params
+        val peerGroup = f.mockPeerGroup
+      })
       memPoolWatcher.addListener(f.txWatchActor)
 
-      val txWatchActor = system.actorOf(TxWatchActor.props(f.mockWsActor, memPoolWatcher, f.mockUserManager))
+      val txWatchActor = system.actorOf(TxAuthActor.props(f.mockWsActor, memPoolWatcher, f.mockUserManager))
 
       // Authenticate the user so that the actor is ready send updates.
       txWatchActor ! Auth("test", "test")
