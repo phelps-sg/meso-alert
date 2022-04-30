@@ -22,9 +22,9 @@ class SlackWebhooksManager @Inject() (memPoolWatcher: MemPoolWatcher, userManage
 
   def startWebhook(uri: URI): ActorRef = {
     val slackActor = system.actorOf(TxSlackActor.props(uri))
-    val slackWatchActor = system.actorOf(TxFilterActor.props(slackActor, memPoolWatcher, userManager))
-    slackWatchActor ! TxFilterActor.Auth("guest", "test")
-    slackWatchActor
+    val watchActor = system.actorOf(TxFilterActor.props(slackActor, memPoolWatcher, userManager))
+    watchActor ! TxFilterActor.Auth("guest", "test")
+    watchActor
   }
 
   def start(): Unit = {
