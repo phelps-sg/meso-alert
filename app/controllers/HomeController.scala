@@ -1,6 +1,8 @@
 package controllers
 
+import actors.TxAuthActor.Auth
 import actors.{TxAuthActor, TxUpdate}
+import actors.TxAuthActor._
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
@@ -31,8 +33,8 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   memPoolWatcher.start()
   slackWebHooksManager.start()
 
-  implicit val mft: MessageFlowTransformer[TxAuthActor.Auth, TxUpdate] =
-    MessageFlowTransformer.jsonMessageFlowTransformer[TxAuthActor.Auth, TxUpdate]
+  implicit val mft: MessageFlowTransformer[Auth, TxUpdate] =
+    MessageFlowTransformer.jsonMessageFlowTransformer[Auth, TxUpdate]
 
   /**
    * Create an Action to render an HTML page.

@@ -87,16 +87,17 @@ package object actors {
 
     def value(output: TransactionOutput): Option[Long] =
       if (output.getValue == null) None else Some(output.getValue.value)
+
+    implicit val txUpdateWrites = new Writes[TxUpdate] {
+      def writes(tx: TxUpdate): JsObject = Json.obj(fields =
+        "hash" -> tx.hash,
+        "value" -> tx.value,
+        "time" -> tx.time.toString(),
+        "isPending" -> tx.isPending,
+        "outputs" -> Json.arr(tx.outputs),
+        "inputs" -> Json.arr(tx.inputs),
+      )
+    }
   }
 
-  implicit val txUpdateWrites = new Writes[TxUpdate] {
-    def writes(tx: TxUpdate): JsObject = Json.obj(fields =
-      "hash" -> tx.hash,
-      "value" -> tx.value,
-      "time" -> tx.time.toString(),
-      "isPending" -> tx.isPending,
-      "outputs" -> Json.arr(tx.outputs),
-      "inputs" -> Json.arr(tx.inputs),
-    )
-  }
 }
