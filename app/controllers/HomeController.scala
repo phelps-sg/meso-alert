@@ -2,6 +2,7 @@ package controllers
 
 import actors.TxAuthActor.Auth
 import actors.{TxAuthActor, TxUpdate}
+import actors.TxAuthActor._
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
