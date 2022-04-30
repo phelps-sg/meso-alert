@@ -20,7 +20,7 @@ class SlackWebhooksManager @Inject() (memPoolWatcher: MemPoolWatcher, userManage
 
   val webHooks: Array[Webhook] = Array(
     Webhook(new URI("https://hooks.slack.com/services/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"),
-      threshold = 50000000000L),
+      threshold = 200000000000L),
   )
 
   def startWebhook(webhook: Webhook): ActorRef = {
