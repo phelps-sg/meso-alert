@@ -1,7 +1,7 @@
 package controllers
 
-import actors.{TxFilterActor, TxSlackActor, TxUpdate}
-import akka.actor.{ActorRef, ActorSystem}
+import actors.{TxFilterActor, TxUpdate}
+import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import play.api.Logger
@@ -9,7 +9,7 @@ import play.api.libs.json.Json
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
-import services.{MemPoolWatcherService, UserManagerService}
+import services.{MemPoolWatcherService, SlackWebhooksManager, UserManagerService}
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -21,18 +21,15 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
                                val memPoolWatcher: MemPoolWatcherService,
-                               val userManager: UserManagerService)
+                               val userManager: UserManagerService,
+                               val slackWebHooksManager: SlackWebhooksManager)
                               (implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext)
   extends BaseController with SameOriginCheck {
 
   val logger: Logger = play.api.Logger(getClass)
 
-  val slackActor: ActorRef =
-    system.actorOf(
-      TxSlackActor.props("https://hooks.slack.com/services/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"))
-  val slackWatchActor: ActorRef = system.actorOf(TxFilterActor.props(slackActor, memPoolWatcher, userManager))
-  slackWatchActor ! TxFilterActor.Auth("guest", "test")
   memPoolWatcher.startDaemon()
+  slackWebHooksManager.start()
 
   implicit val mft: MessageFlowTransformer[TxFilterActor.Auth, TxUpdate] =
     MessageFlowTransformer.jsonMessageFlowTransformer[TxFilterActor.Auth, TxUpdate]
