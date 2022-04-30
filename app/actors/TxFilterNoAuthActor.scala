@@ -4,7 +4,7 @@ import akka.actor.ActorRef
 import services.{MemPoolWatcherService, UserManagerService}
 
 class TxFilterNoAuthActor(val out: ActorRef, val filter: TxUpdate => Boolean,
-                          memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
+                          memPoolWatcher: MemPoolWatcherService)
   extends AbstractTxUpdateActor(memPoolWatcher) with TxForwardingActor {
 
   override def receive: Receive = {
