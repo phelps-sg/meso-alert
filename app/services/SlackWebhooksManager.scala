@@ -2,9 +2,15 @@ package services
 
 import actors.{TxFilterActor, TxSlackActor}
 import akka.actor.{ActorRef, ActorSystem}
+import com.google.inject.ImplementedBy
 
 import java.net.URI
 import javax.inject.{Inject, Singleton}
+
+@ImplementedBy(classOf[SlackWebhooksManager])
+trait SlackWebhooksManagerService {
+  def start(): Unit
+}
 
 @Singleton
 class SlackWebhooksManager @Inject() (memPoolWatcher: MemPoolWatcher, userManager: UserManager)

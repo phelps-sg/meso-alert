@@ -9,7 +9,7 @@ import play.api.libs.json.Json
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
-import services.{MemPoolWatcherService, SlackWebhooksManager, UserManagerService}
+import services.{MemPoolWatcherService, SlackWebhooksManagerService, UserManagerService}
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,7 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
                                val memPoolWatcher: MemPoolWatcherService,
                                val userManager: UserManagerService,
-                               val slackWebHooksManager: SlackWebhooksManager)
+                               val slackWebHooksManager: SlackWebhooksManagerService)
                               (implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext)
   extends BaseController with SameOriginCheck {
 
