@@ -13,10 +13,10 @@ import java.net.URI
 import scala.util.{Failure, Success}
 
 object TxSlackActor {
-  def props(hookUri: String): Props = Props(new TxSlackActor(hookUri))
+  def props(hookUri: URI): Props = Props(new TxSlackActor(hookUri))
 }
 
-class TxSlackActor(val hookUri: String) extends Actor {
+class TxSlackActor(val hookUri: URI) extends Actor {
 
   val blockChairBaseURL = "https://www.blockchair.com/bitcoin"
   private val logger = LogFactory.getLog(classOf[TxSlackActor])
@@ -45,7 +45,7 @@ class TxSlackActor(val hookUri: String) extends Actor {
         val r = basicRequest
           .contentType("application/json")
           .body(Json.stringify(Json.obj("text" -> message(tx))))
-          .post(Uri(javaUri = new URI(hookUri)))
+          .post(Uri(javaUri = hookUri))
 
         r.send(backend)
           .flatMap { response => Task(logger.debug(s"""Got ${response.code} response, body:\n${response.body}""")) }
