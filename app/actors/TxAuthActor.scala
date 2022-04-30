@@ -1,13 +1,11 @@
 package actors
 
-import akka.actor.{Actor, ActorRef, PoisonPill, Props}
+import akka.actor.{ActorRef, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import services.{InvalidCredentialsException, MemPoolWatcherService, UserManagerService}
-
-import scala.collection.immutable.ArraySeq
 
 //noinspection TypeAnnotation
 object TxAuthActor {
@@ -34,9 +32,18 @@ object TxAuthActor {
 
 }
 
+trait TxForwardingActor {
+
+  val out: ActorRef
+
+  def forward(tx: TxUpdate): Unit = {
+    out ! tx
+  }
+}
+
 //noinspection TypeAnnotation
-class TxAuthActor(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
-  extends AbstractTxUpdateActor(memPoolWatcher) {
+class TxAuthActor(val out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
+  extends AbstractTxUpdateActor(memPoolWatcher) with TxForwardingActor {
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[TxAuthActor])
 
@@ -64,7 +71,7 @@ class TxAuthActor(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userMana
 
       def authorized: Receive = deathHandler.orElse {
         case txUpdate: TxUpdate =>
-          if (user.filter(txUpdate)) out ! txUpdate
+          if (user.filter(txUpdate)) forward(txUpdate)
       }
 
       context.become(authorized)
