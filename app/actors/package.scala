@@ -34,6 +34,7 @@ package object actors {
       Json.obj(ArraySeq.unsafeWrapArray(addressField ++ valueField): _*)
     }
   }
+
   case class TxUpdate( hash: String,
                        value: Long,
                        time: DateTime,
