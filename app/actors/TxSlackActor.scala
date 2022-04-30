@@ -13,9 +13,7 @@ import java.net.URI
 import scala.util.{Failure, Success}
 
 object TxSlackActor {
-
   def props(hookUri: String): Props = Props(new TxSlackActor(hookUri))
-
 }
 
 class TxSlackActor(val hookUri: String) extends Actor {
