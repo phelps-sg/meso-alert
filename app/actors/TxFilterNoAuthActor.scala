@@ -12,6 +12,11 @@ class TxFilterNoAuthActor(val out: ActorRef, val filter: TxUpdate => Boolean,
                           memPoolWatcher: MemPoolWatcherService)
   extends AbstractTxUpdateActor(memPoolWatcher) with TxForwardingActor {
 
+  override def preStart(): Unit = {
+    super.preStart()
+    registerWithWatcher()
+  }
+
   override def receive: Receive = {
     case tx: TxUpdate => if (filter(tx)) forward(tx)
   }
