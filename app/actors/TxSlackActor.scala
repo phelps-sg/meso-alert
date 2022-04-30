@@ -28,8 +28,9 @@ class TxSlackActor(val hookUri: String) extends Actor {
 
   def formatOutputAddresses(outputs: Seq[TxInputOutput]): String =
     outputs.filterNot(_.address.isEmpty)
-      .map(output => linkToAddress(output.address.get))
+      .map(output => output.address.get)
       .distinct
+      .map(output => linkToAddress(output))
       .mkString(", ")
 
   def message(tx: TxUpdate): String = {
