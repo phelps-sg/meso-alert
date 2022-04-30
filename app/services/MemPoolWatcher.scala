@@ -21,7 +21,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[MemPoolWatcher])
 trait MemPoolWatcherService {
   def addListener(listener: ActorRef): Unit
-  def startDaemon(): Future[Unit]
+  def start(): Future[Unit]
 }
 
 @ImplementedBy(classOf[MainNetPeerGroup])
@@ -68,7 +68,7 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
     }
   }
 
-  def startDaemon(): Future[Unit] = {
+  def start(): Future[Unit] = {
     Future {
       run()
     }
