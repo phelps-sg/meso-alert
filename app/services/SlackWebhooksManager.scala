@@ -14,7 +14,7 @@ trait SlackWebhooksManagerService {
 
 @Singleton
 class SlackWebhooksManager @Inject() (memPoolWatcher: MemPoolWatcher, userManager: UserManager)
-                                     (implicit system: ActorSystem) {
+                                     (implicit system: ActorSystem) extends SlackWebhooksManagerService {
 
   case class Webhook(uri: URI, threshold: Long)
 
