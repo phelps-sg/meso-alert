@@ -1,7 +1,7 @@
 package actors
 
 import akka.actor.ActorRef
-import services.{MemPoolWatcherService, UserManagerService}
+import services.MemPoolWatcherService
 
 class TxFilterNoAuthActor(val out: ActorRef, val filter: TxUpdate => Boolean,
                           memPoolWatcher: MemPoolWatcherService)
