@@ -7,6 +7,7 @@ import org.bitcoinj.script.ScriptException
 import play.api.libs.json.{JsObject, Json, Writes}
 import services.{MemPoolWatcher, MemPoolWatcherService}
 
+import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 //noinspection TypeAnnotation
@@ -24,6 +25,15 @@ package object actors {
 
   }
 
+  implicit val txInputOutputWrites = new Writes[TxInputOutput] {
+    def writes(inpOut: TxInputOutput): JsObject = {
+      val addressField: Array[(String, Json.JsValueWrapper)] =
+        Array(inpOut.address).filterNot(_.isEmpty).map("address" -> _.get)
+      val valueField: Array[(String, Json.JsValueWrapper)] =
+        Array(inpOut.value).filterNot(_.isEmpty).map("value" -> _.get)
+      Json.obj(ArraySeq.unsafeWrapArray(addressField ++ valueField): _*)
+    }
+  }
   case class TxUpdate( hash: String,
                        value: Long,
                        time: DateTime,

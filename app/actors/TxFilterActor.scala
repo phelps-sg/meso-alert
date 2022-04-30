@@ -29,16 +29,6 @@ object TxFilterActor {
     )
   }
 
-  implicit val txInputOutputWrites = new Writes[TxInputOutput] {
-    def writes(inpOut: TxInputOutput): JsObject = {
-      val addressField: Array[(String, Json.JsValueWrapper)] =
-        Array(inpOut.address).filterNot(_.isEmpty).map("address" -> _.get)
-      val valueField: Array[(String, Json.JsValueWrapper)] =
-        Array(inpOut.value).filterNot(_.isEmpty).map("value" -> _.get)
-      Json.obj(ArraySeq.unsafeWrapArray(addressField ++ valueField): _*)
-    }
-  }
-
   implicit val authReads: Reads[Auth] =
     ((JsPath \ "id").read[String] and (JsPath \ "token").read[String])(Auth.apply _)
 
