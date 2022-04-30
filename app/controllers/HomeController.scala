@@ -1,8 +1,8 @@
 package controllers
 
-import actors.TxAuthActor.Auth
-import actors.{TxAuthActor, TxUpdate}
-import actors.TxAuthActor._
+import actors.TxFilterAuthActor.Auth
+import actors.{TxFilterAuthActor, TxUpdate}
+import actors.TxFilterAuthActor._
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
@@ -47,15 +47,15 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     Ok(views.html.index())
   }
 
-  def wsFutureFlow(request: RequestHeader): Future[Flow[TxAuthActor.Auth, TxUpdate, _]] = {
+  def wsFutureFlow(request: RequestHeader): Future[Flow[TxFilterAuthActor.Auth, TxUpdate, _]] = {
     Future {
-      ActorFlow.actorRef[TxAuthActor.Auth, TxUpdate] {
-        out => TxAuthActor.props(out, memPoolWatcher, userManager)
+      ActorFlow.actorRef[TxFilterAuthActor.Auth, TxUpdate] {
+        out => TxFilterAuthActor.props(out, memPoolWatcher, userManager)
       }
     }
   }
 
-  def websocket: WebSocket = WebSocket.acceptOrResult[TxAuthActor.Auth, TxUpdate] {
+  def websocket: WebSocket = WebSocket.acceptOrResult[TxFilterAuthActor.Auth, TxUpdate] {
     case rh if sameOriginCheck(rh) =>
       wsFutureFlow(rh).map { flow =>
         Right(flow)

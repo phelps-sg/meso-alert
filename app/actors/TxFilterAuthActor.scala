@@ -8,10 +8,10 @@ import play.api.libs.json._
 import services.{InvalidCredentialsException, MemPoolWatcherService, UserManagerService}
 
 //noinspection TypeAnnotation
-object TxAuthActor {
+object TxFilterAuthActor {
 
   def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService): Props =
-    Props(new TxAuthActor(out, memPoolWatcher, userManager))
+    Props(new TxFilterAuthActor(out, memPoolWatcher, userManager))
 
   case class TxInputOutput(address: Option[String], value: Option[Long])
 
@@ -32,22 +32,13 @@ object TxAuthActor {
 
 }
 
-trait TxForwardingActor {
-
-  val out: ActorRef
-
-  def forward(tx: TxUpdate): Unit = {
-    out ! tx
-  }
-}
-
 //noinspection TypeAnnotation
-class TxAuthActor(val out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
+class TxFilterAuthActor(val out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
   extends AbstractTxUpdateActor(memPoolWatcher) with TxForwardingActor {
 
-  private val logger: Logger = LoggerFactory.getLogger(classOf[TxAuthActor])
+  private val logger: Logger = LoggerFactory.getLogger(classOf[TxFilterAuthActor])
 
-  import TxAuthActor._
+  import TxFilterAuthActor._
 
   override def receive: Receive = unauthorized
 

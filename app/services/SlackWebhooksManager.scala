@@ -1,6 +1,6 @@
 package services
 
-import actors.{TxAuthActor, TxFilterNoAuthActor, TxSlackActor}
+import actors.{TxFilterAuthActor, TxFilterNoAuthActor, TxSlackActor}
 import akka.actor.{ActorRef, ActorSystem}
 import com.google.inject.ImplementedBy
 
