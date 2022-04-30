@@ -1,4 +1,4 @@
-import actors.TxAuthActor._
+import actors.TxFilterAuthActor._
 import akka.{Done, NotUsed}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
