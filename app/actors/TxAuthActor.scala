@@ -10,10 +10,10 @@ import services.{InvalidCredentialsException, MemPoolWatcherService, UserManager
 import scala.collection.immutable.ArraySeq
 
 //noinspection TypeAnnotation
-object TxFilterActor {
+object TxAuthActor {
 
   def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService): Props =
-    Props(new TxFilterActor(out, memPoolWatcher, userManager))
+    Props(new TxAuthActor(out, memPoolWatcher, userManager))
 
   case class TxInputOutput(address: Option[String], value: Option[Long])
 
@@ -35,12 +35,12 @@ object TxFilterActor {
 }
 
 //noinspection TypeAnnotation
-class TxFilterActor(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
+class TxAuthActor(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
   extends AbstractTxUpdateActor(memPoolWatcher) {
 
-  private val logger: Logger = LoggerFactory.getLogger(classOf[TxFilterActor])
+  private val logger: Logger = LoggerFactory.getLogger(classOf[TxAuthActor])
 
-  import TxFilterActor._
+  import TxAuthActor._
 
   override def receive: Receive = unauthorized
 

@@ -1,6 +1,6 @@
 package controllers
 
-import actors.{TxFilterActor, TxUpdate}
+import actors.{TxAuthActor, TxUpdate}
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
@@ -31,8 +31,8 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   memPoolWatcher.start()
   slackWebHooksManager.start()
 
-  implicit val mft: MessageFlowTransformer[TxFilterActor.Auth, TxUpdate] =
-    MessageFlowTransformer.jsonMessageFlowTransformer[TxFilterActor.Auth, TxUpdate]
+  implicit val mft: MessageFlowTransformer[TxAuthActor.Auth, TxUpdate] =
+    MessageFlowTransformer.jsonMessageFlowTransformer[TxAuthActor.Auth, TxUpdate]
 
   /**
    * Create an Action to render an HTML page.
@@ -45,15 +45,15 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     Ok(views.html.index())
   }
 
-  def wsFutureFlow(request: RequestHeader): Future[Flow[TxFilterActor.Auth, TxUpdate, _]] = {
+  def wsFutureFlow(request: RequestHeader): Future[Flow[TxAuthActor.Auth, TxUpdate, _]] = {
     Future {
-      ActorFlow.actorRef[TxFilterActor.Auth, TxUpdate] {
-        out => TxFilterActor.props(out, memPoolWatcher, userManager)
+      ActorFlow.actorRef[TxAuthActor.Auth, TxUpdate] {
+        out => TxAuthActor.props(out, memPoolWatcher, userManager)
       }
     }
   }
 
-  def websocket: WebSocket = WebSocket.acceptOrResult[TxFilterActor.Auth, TxUpdate] {
+  def websocket: WebSocket = WebSocket.acceptOrResult[TxAuthActor.Auth, TxUpdate] {
     case rh if sameOriginCheck(rh) =>
       wsFutureFlow(rh).map { flow =>
         Right(flow)

@@ -1,6 +1,6 @@
 package services
 
-import actors.{TxFilterActor, TxSlackActor}
+import actors.{TxAuthActor, TxSlackActor}
 import akka.actor.{ActorRef, ActorSystem}
 import com.google.inject.ImplementedBy
 
@@ -22,8 +22,8 @@ class SlackWebhooksManager @Inject() (memPoolWatcher: MemPoolWatcher, userManage
 
   def startWebhook(uri: URI): ActorRef = {
     val slackActor = system.actorOf(TxSlackActor.props(uri))
-    val watchActor = system.actorOf(TxFilterActor.props(slackActor, memPoolWatcher, userManager))
-    watchActor ! TxFilterActor.Auth("guest", "test")
+    val watchActor = system.actorOf(TxAuthActor.props(slackActor, memPoolWatcher, userManager))
+    watchActor ! TxAuthActor.Auth("guest", "test")
     watchActor
   }
 

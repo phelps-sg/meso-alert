@@ -1,6 +1,6 @@
 package actors
 
-import actors.TxFilterActor.TxInputOutput
+import actors.TxAuthActor.TxInputOutput
 import akka.actor.{Actor, Props}
 import monix.eval.Task
 import org.apache.commons.logging.LogFactory
