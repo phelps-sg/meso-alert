@@ -1,11 +1,11 @@
 import actors.TxAuthActor.TxInputOutput
 import akka.actor.Actor
 import com.github.nscala_time.time.Imports.DateTime
-import org.slf4j.{Logger, LoggerFactory}
-import org.bitcoinj.core.{LegacyAddress, NetworkParameters, SegwitAddress, Transaction, TransactionInput, TransactionOutput, Utils}
+import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
+import org.slf4j.LoggerFactory
 import play.api.libs.json.{JsObject, Json, Writes}
-import services.{MemPoolWatcher, MemPoolWatcherService}
+import services.MemPoolWatcherService
 
 import scala.collection.immutable.ArraySeq
 import scala.jdk.CollectionConverters.CollectionHasAsScala
