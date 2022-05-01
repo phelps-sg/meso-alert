@@ -1,7 +1,7 @@
 package services
 
-import actors.TxUpdate
-import akka.actor.ActorRef
+import actors.{MemPoolWatcherActor, TxUpdate}
+import akka.actor.{ActorRef, ActorSystem}
 import com.google.common.io.BaseEncoding
 import com.google.inject.ImplementedBy
 import org.bitcoinj.core._
@@ -37,7 +37,7 @@ class MainNetPeerGroup extends PeerGroupSelection {
 }
 
 @Singleton
-class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends MemPoolWatcherService {
+class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection)(implicit system: ActorSystem) extends MemPoolWatcherService {
   private val log: Logger = LoggerFactory.getLogger("mem-pool-watcher")
   implicit val params: NetworkParameters = peerGroupSelection.params
   private val NO_DEPS: util.List[Transaction] = Collections.emptyList
@@ -48,6 +48,7 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
   private val HEX: BaseEncoding = BaseEncoding.base16.lowerCase
   BriefLogFormatter.initVerbose()
   val peerGroup: PeerGroup = peerGroupSelection.peerGroup
+  val actor: ActorRef = system.actorOf(MemPoolWatcherActor.props(peerGroup))
 
   def startPeerGroup(): Unit = {
     peerGroup.setMaxConnections(32)
@@ -79,8 +80,7 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
   }
 
   def addListener(listener: ActorRef): Unit = {
-    peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) =>
-      listener ! TxUpdate(tx))
+    actor ! MemPoolWatcherActor.RegisterWatcher(listener)
   }
 
   private def incrementCounter(name: String): Unit = {
