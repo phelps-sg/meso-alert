@@ -49,7 +49,7 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
   BriefLogFormatter.initVerbose()
   val peerGroup: PeerGroup = peerGroupSelection.peerGroup
 
-  def run(): Unit = {
+  def startPeerGroup(): Unit = {
     peerGroup.setMaxConnections(32)
     peerGroup.addPeerDiscovery(new DnsDiscovery(params))
     peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
@@ -62,13 +62,17 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection) extends 
       }
     })
     peerGroup.start()
-    while (true) {
+  }
+
+  def run(): Unit = {
+   while (true) {
       Thread.sleep(STATISTICS_FREQUENCY_MS)
       printCounters()
     }
   }
 
   def start(): Future[Unit] = {
+    startPeerGroup()
     Future {
       run()
     }
