@@ -31,7 +31,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   val logger: Logger = play.api.Logger(getClass)
 
   memPoolWatcher.start()
-  slackWebHooksManager.start()
+//  slackWebHooksManager.start()
 
   implicit val mft: MessageFlowTransformer[Auth, TxUpdate] =
     MessageFlowTransformer.jsonMessageFlowTransformer[Auth, TxUpdate]
