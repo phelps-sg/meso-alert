@@ -1,5 +1,6 @@
 package controllers
 
+import actors.WebhooksActor.WebhookNotRegisteredException
 import akka.actor.ActorSystem
 import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents, Request}
 import play.api.libs.json._
@@ -22,6 +23,9 @@ class WebhooksController @Inject()(val controllerComponents: ControllerComponent
 
   def start: Action[UriDto] = Action.async(parse.json[UriDto]) { request =>
     slackWebHooksManager.start(request.body.uri).map(_ => Ok("Success"))
+      .recover {
+        case WebhookNotRegisteredException(uri) => NotFound(s"No web hook for $uri")
+      }
   }
 
   def stop: Action[UriDto] = Action.async(parse.json[UriDto]) { request =>

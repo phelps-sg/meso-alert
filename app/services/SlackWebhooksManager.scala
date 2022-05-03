@@ -1,7 +1,7 @@
 package services
 
 import actors.WebhooksActor
-import actors.WebhooksActor.{Register, Start, Started, Stop, Stopped, Webhook}
+import actors.WebhooksActor.{Register, Start, Started, Stop, Stopped, Webhook, WebhookNotRegisteredException}
 import akka.actor.typed.receptionist.Receptionist.Registered
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.{AskSupport, ask}
@@ -21,7 +21,7 @@ trait SlackWebhooksManagerService {
 }
 
 @Singleton
-class SlackWebhooksManager @Inject() (memPoolWatcher: MemPoolWatcher, userManager: UserManager)
+class SlackWebhooksManager @Inject() (memPoolWatcher: MemPoolWatcher)
                                      (implicit system: ActorSystem, executionContext: ExecutionContext)
   extends SlackWebhooksManagerService {
 
@@ -34,13 +34,14 @@ class SlackWebhooksManager @Inject() (memPoolWatcher: MemPoolWatcher, userManage
       threshold = 200000000000L),
   )
   for (hook <- webHooks) {
-    register(hook.uri.toString, hook.threshold).map(_ => start(hook.uri.toString))
-    start(hook.uri.toString)
+    register(hook.uri.toString, hook.threshold)
+      .map(_ => start(hook.uri.toString))
   }
 
   def start(uri: String): Future[Started] = {
     (actor ? Start(new URI(uri))).map {
       case x: Started => x
+      case ex: WebhookNotRegisteredException => throw ex
     }
   }
 

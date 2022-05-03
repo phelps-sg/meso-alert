@@ -20,6 +20,8 @@ object WebhooksActor {
   case class Stop(uri: URI)
   case class List()
 
+  case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
+
   def props(memPoolWatcher: MemPoolWatcherService): Props = Props(new WebhooksActor(memPoolWatcher))
 
   implicit val startWrites: Writes[Started] = new Writes[Started]() {
@@ -46,12 +48,16 @@ class WebhooksActor(val memPoolWatcher: MemPoolWatcherService) extends Actor {
       context.become(updated(webhooks = webhooks.filterNot(_._2 == hook), actors))
     case Start(uri) =>
       logger.debug(s"Received start request for $uri")
-      val hook = webhooks(uri)
-      logger.debug(s"hook = " + hook)
-      val slackActor = context.actorOf(TxSlackActor.props(uri))
-      val actor = context.actorOf(TxFilterNoAuthActor.props(slackActor, _.value >= hook.threshold, memPoolWatcher))
-      context.become(updated(webhooks, actors = actors + (uri-> actor)))
-      sender ! Started(hook)
+      if (webhooks contains uri) {
+        val hook = webhooks(uri)
+        logger.debug(s"hook = " + hook)
+        val slackActor = context.actorOf(TxSlackActor.props(uri))
+        val actor = context.actorOf(TxFilterNoAuthActor.props(slackActor, _.value >= hook.threshold, memPoolWatcher))
+        context.become(updated(webhooks, actors = actors + (uri -> actor)))
+        sender ! Started(hook)
+      } else {
+        sender ! WebhookNotRegisteredException(uri)
+      }
     case Stop(uri) =>
       actors(uri) ! Die
       sender ! Stopped(webhooks(uri))
