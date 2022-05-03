@@ -1,6 +1,6 @@
-import actors.{TxFilterAuthActor, TxUpdate, WebhooksActor}
 import actors.TxFilterAuthActor.Auth
-import actors.WebhooksActor.{Register, Webhook, WebhookNotRegisteredException}
+import actors.WebhooksActor.{Webhook, WebhookNotRegisteredException}
+import actors.{TxFilterAuthActor, TxUpdate, WebhooksActor}
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -9,28 +9,27 @@ import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
+import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
 import org.bitcoinj.params.MainNetParams
 import org.scalamock.matchers.ArgCapture.CaptureAll
-import play.api.libs.json.{JsArray, Json}
-import org.bitcoinj.core.PeerGroup
-import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import play.api.libs.json.{JsArray, Json}
 import services._
 
 import java.net.URI
-import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.io.Source
-import scala.util.Success
 
 //noinspection TypeAnnotation
 class UnitTests extends TestKit(ActorSystem("MySpec"))
   with Matchers
   with AnyWordSpecLike
   with MockFactory
+  with ScalaFutures
   with ImplicitSender {
 
   object MockWebsocketActor {
@@ -247,9 +246,8 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       "return WebhookNotRegistered when trying to start an unregistered hook" in {
         val f = fixture
         val future = f.webhooksActor ? WebhooksActor.Start(uri = new URI("http://test"))
-        val result = Await.ready(future, atMost = 1.second)
-        result.value.get match {
-          case Success(_: WebhookNotRegisteredException) =>
+        whenReady(future) {
+          case _: WebhookNotRegisteredException =>
             succeed
           case x =>
             fail(s"Received $x instead of WebhookNotRegisteredException")
@@ -260,9 +258,8 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
         val f = fixture
         val future = f.webhooksActor ?
           WebhooksActor.Register(Webhook(uri = new URI("http://test"), threshold = 100L))
-        val result = Await.ready(future, atMost = 1.second)
-        result.value.get match {
-          case Success(WebhooksActor.Registered(_)) =>
+        whenReady(future) {
+          case WebhooksActor.Registered(_) =>
             succeed
           case x =>
             fail(s"Received $x instead of Registered")

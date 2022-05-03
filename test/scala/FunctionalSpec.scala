@@ -1,22 +1,26 @@
 import actors.TxFilterAuthActor._
-import akka.{Done, NotUsed}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.Origin
 import akka.http.scaladsl.model.ws._
 import akka.stream.scaladsl._
+import akka.{Done, NotUsed}
 import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play._
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.{Helpers, TestServer}
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 import scala.util.{Failure, Success}
+
 
 //noinspection TypeAnnotation
 class FunctionalSpec extends PlaySpec with ScalaFutures {
+
+  implicit override val patienceConfig =
+    PatienceConfig(timeout = Span(10, Seconds), interval = Span(500, Millis))
 
   def fixture = new {
     val app = new GuiceApplicationBuilder().build()
@@ -56,21 +60,23 @@ class FunctionalSpec extends PlaySpec with ScalaFutures {
             .toMat(incoming)(Keep.both) // also keep the Future[Done]
             .run()
 
-        val connected = upgradeResponse.flatMap { upgrade =>
-          if (upgrade.response.status == StatusCodes.SwitchingProtocols)
-            fail("successfully upgraded connection without correct origin")
-          else
-            Future.successful(upgrade.response.status)
-        }
-
-        connected.onComplete {
-          case Success(_) => println("connected")
-          case Failure(ex) =>
-            ex.printStackTrace()
-        }
+//        val connected = upgradeResponse.flatMap { upgrade =>
+//          if (upgrade.response.status == StatusCodes.SwitchingProtocols)
+//            Future.failed(new RuntimeException("successfully upgraded connection without correct origin"))
+//          else
+//            Future.successful(upgrade.response.status)
+//        }
+//
+//        connected.onComplete {
+//          case Success(_) => println("connected")
+//          case Failure(ex) =>
+//            ex.printStackTrace()
+//        }
         closed.foreach(_ => println("closed"))
 
-        Await.result(connected, atMost = 1.minute)
+        whenReady(upgradeResponse) {
+          response => response mustNot equal (StatusCodes.SwitchingProtocols)
+        }
       }
     }
 
@@ -109,7 +115,10 @@ class FunctionalSpec extends PlaySpec with ScalaFutures {
             ex.printStackTrace()
         }
 
-        Await.result(connected, atMost = 1.minute)
+        whenReady(connected) {
+          _ => succeed
+        }
+
       }
     }
 
