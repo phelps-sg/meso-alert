@@ -241,8 +241,10 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
     "WebhooksActor" should {
 
+      // akka timeout
+      implicit val timeout = Timeout(1.second)
+
       "return WebhookNotRegistered when trying to start an unregistered hook" in {
-        implicit val timeout = Timeout(1.second)
         val f = fixture
         val future = f.webhooksActor ? WebhooksActor.Start(uri = new URI("http://test"))
         val result = Await.ready(future, atMost = 1.second)
@@ -251,6 +253,19 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
             succeed
           case x =>
             fail(s"Received $x instead of WebhookNotRegisteredException")
+        }
+      }
+
+      "return Registered when registering a hook" in {
+        val f = fixture
+        val future = f.webhooksActor ?
+          WebhooksActor.Register(Webhook(uri = new URI("http://test"), threshold = 100L))
+        val result = Await.ready(future, atMost = 1.second)
+        result.value.get match {
+          case Success(WebhooksActor.Registered(_)) =>
+            succeed
+          case x =>
+            fail(s"Received $x instead of Registered")
         }
       }
     }
