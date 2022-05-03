@@ -33,7 +33,7 @@ export PLAY_SECRET=<changeme>
 make -e docker-server-start
 ~~~
 
-### Client
+### Websocket client
 
 ~~~bash
 make client-start
