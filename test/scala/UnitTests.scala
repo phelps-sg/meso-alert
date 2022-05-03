@@ -254,7 +254,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
         }
       }
 
-      "return Registered when registering a hook" in {
+      "return Registered when registering a new hook" in {
         val f = fixture
         val future = f.webhooksActor ?
           WebhooksActor.Register(Webhook(uri = new URI("http://test"), threshold = 100L))
