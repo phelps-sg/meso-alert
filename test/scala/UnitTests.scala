@@ -258,30 +258,33 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
       "return Registered when registering a new hook" in {
         val f = fixture
-        val future = f.webhooksActor ?
-          WebhooksActor.Register(Webhook(uri = new URI("http://test"), threshold = 100L))
+        val hook = Webhook(uri = new URI("http://test"), threshold = 100L)
+        val future = f.webhooksActor ? WebhooksActor.Register(hook)
         whenReady(future) {
-          case WebhooksActor.Registered(_) =>
-            succeed
+          case WebhooksActor.Registered(x) =>
+            x shouldBe hook
           case x =>
             fail(s"Received $x instead of Registered")
         }
       }
 
-      "return Started when starting a hook" in {
+      "correctly register, start and stop a web hook" in {
         val f = fixture
+        (f.mockMemPoolWatcher.addListener _).expects(*).once()
         val uri = new URI("http://test")
         val hook = Webhook(uri, threshold = 100L)
-        val future = (f.webhooksActor ? WebhooksActor.Register(hook)).flatMap {
-          case _: WebhooksActor.Registered => f.webhooksActor ? WebhooksActor.Start(uri)
-          case x =>
-            fail(s"Received $x instead of Registered")
-        }
+        val future = for {
+          registered <- f.webhooksActor ? WebhooksActor.Register(hook)
+          started <- f.webhooksActor ? WebhooksActor.Start(uri)
+          stopped <- f.webhooksActor ? WebhooksActor.Stop(uri)
+        } yield (registered, started, stopped)
         whenReady(future) {
-          case WebhooksActor.Started(x) =>
+          case (WebhooksActor.Registered(x), WebhooksActor.Started(y), WebhooksActor.Stopped(z)) =>
             x shouldBe hook
+            y shouldBe hook
+            z shouldBe hook
           case x =>
-            fail(s"Received $x instead of Registered")
+            fail(s"Received $x")
         }
       }
     }
