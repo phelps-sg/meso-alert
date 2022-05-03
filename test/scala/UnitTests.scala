@@ -1,7 +1,10 @@
-import actors.{TxFilterAuthActor, TxUpdate}
+import actors.{TxFilterAuthActor, TxUpdate, WebhooksActor}
 import actors.TxFilterAuthActor.Auth
+import actors.WebhooksActor.{Register, Webhook, WebhookNotRegisteredException}
 import akka.actor.{Actor, ActorSystem, Props}
+import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import akka.util.Timeout
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
 import org.bitcoinj.core.Utils.HEX
@@ -17,7 +20,11 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import services._
 
+import java.net.URI
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
 import scala.io.Source
+import scala.util.Success
 
 //noinspection TypeAnnotation
 class UnitTests extends TestKit(ActorSystem("MySpec"))
@@ -50,13 +57,16 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
     val mockWsActor = system.actorOf(MockWebsocketActor.props(mockWs))
     val mockUser = mock[User]
     val mockUserManager = mock[UserManagerService]
+    val webhooksActor = system.actorOf(WebhooksActor.props(mockMemPoolWatcher))
     val txWatchActor = system.actorOf(TxFilterAuthActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
     val params = MainNetParams.get()
+
     class MockPeerGroup extends PeerGroup(params)
+
     val mockPeerGroup = mock[MockPeerGroup]
     val transactions = Json.parse(Source.fromResource("tx_valid.json").getLines.mkString)
-        .as[Array[JsArray]].map(_.value).filter(_.size > 1)
-        .map(testData => params.getDefaultSerializer.makeTransaction(HEX.decode(testData(1).as[String].toLowerCase)))
+      .as[Array[JsArray]].map(_.value).filter(_.size > 1)
+      .map(testData => params.getDefaultSerializer.makeTransaction(HEX.decode(testData(1).as[String].toLowerCase)))
   }
 
   //noinspection ZeroIndexToHead
@@ -161,7 +171,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       receivedTx4.inputs.size shouldBe 1
       receivedTx4.outputs.size shouldBe 2
       // See https://gitlab.com/mesonomics/meso-alert/-/issues/24
-//      receivedTx4.inputs(0).address.get shouldBe "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
+      //      receivedTx4.inputs(0).address.get shouldBe "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
       //noinspection SpellCheckingInspection
       receivedTx4.outputs(0).address.get shouldBe "1AyQnFZk9MbjLFXSWJ7euNbGhaNpjPvrSq"
       //noinspection SpellCheckingInspection
@@ -206,28 +216,45 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       f.txWatchActor ! tx
       expectNoMessage()
     }
-  }
 
-  "only provide updates according to the user's filter" in {
+    "only provide updates according to the user's filter" in {
 
-    val tx1 = TxUpdate("testHash1", 10, DateTime.now(), isPending = true, List(), List())
-    val tx2 = TxUpdate("testHash2", 1, DateTime.now(), isPending = true, List(), List())
+      val tx1 = TxUpdate("testHash1", 10, DateTime.now(), isPending = true, List(), List())
+      val tx2 = TxUpdate("testHash2", 1, DateTime.now(), isPending = true, List(), List())
 
-    val f = fixture
-    (f.mockUserManager.authenticate _).expects("test").returning(f.mockUser)
-    (f.mockMemPoolWatcher.addListener _).expects(*)
+      val f = fixture
+      (f.mockUserManager.authenticate _).expects("test").returning(f.mockUser)
+      (f.mockMemPoolWatcher.addListener _).expects(*)
 
-    f.txWatchActor ! Auth("test", "test")
-    expectNoMessage()
+      f.txWatchActor ! Auth("test", "test")
+      expectNoMessage()
 
-    (f.mockUser.filter _).expects(tx1).returning(true)
-    (f.mockWs.update _).expects(tx1).once()
-    f.txWatchActor ! tx1
-    expectNoMessage()
+      (f.mockUser.filter _).expects(tx1).returning(true)
+      (f.mockWs.update _).expects(tx1).once()
+      f.txWatchActor ! tx1
+      expectNoMessage()
 
-    (f.mockUser.filter _).expects(tx2).returning(false)
-    f.txWatchActor ! tx2
-    expectNoMessage()
+      (f.mockUser.filter _).expects(tx2).returning(false)
+      f.txWatchActor ! tx2
+      expectNoMessage()
+    }
+
+    "WebhooksActor" should {
+
+      "return WebhookNotRegistered when trying to start an unregistered hook" in {
+        implicit val timeout = Timeout(1.second)
+        val f = fixture
+        val future = f.webhooksActor ? WebhooksActor.Start(uri = new URI("http://test"))
+        val result = Await.ready(future, atMost = 1.second)
+        result.value.get match {
+          case Success(_: WebhookNotRegisteredException) =>
+            succeed
+          case x =>
+            fail(s"Received $x instead of WebhookNotRegisteredException")
+        }
+      }
+    }
+
   }
 
 }
