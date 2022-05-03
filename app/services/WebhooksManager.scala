@@ -1,12 +1,12 @@
 package services
 
 import actors.WebhooksActor
-import actors.WebhooksActor.{Register, Start, Started, Stop, Stopped, Webhook, WebhookNotRegisteredException}
-import akka.actor.typed.receptionist.Receptionist.Registered
+import actors.WebhooksActor.{Register, Registered, Start, Started, Stop, Stopped, Webhook, WebhookNotRegisteredException}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.google.inject.ImplementedBy
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.net.URI
 import javax.inject.{Inject, Singleton}
@@ -24,6 +24,8 @@ trait SlackWebhooksManagerService {
 class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcher)
                                (implicit system: ActorSystem, executionContext: ExecutionContext)
   extends SlackWebhooksManagerService {
+
+  val logger: Logger = LoggerFactory.getLogger(classOf[WebhooksManager])
 
   val actor: ActorRef = system.actorOf(WebhooksActor.props(memPoolWatcher))
 
