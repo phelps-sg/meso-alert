@@ -17,6 +17,7 @@ import org.scalamock.util.Defaultable
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.libs.json.{JsArray, Json}
 import services._
 
@@ -170,6 +171,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       receivedTx4.inputs.size shouldBe 1
       receivedTx4.outputs.size shouldBe 2
       // See https://gitlab.com/mesonomics/meso-alert/-/issues/24
+      //noinspection SpellCheckingInspection
       //      receivedTx4.inputs(0).address.get shouldBe "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
       //noinspection SpellCheckingInspection
       receivedTx4.outputs(0).address.get shouldBe "1AyQnFZk9MbjLFXSWJ7euNbGhaNpjPvrSq"
@@ -261,6 +263,23 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
         whenReady(future) {
           case WebhooksActor.Registered(_) =>
             succeed
+          case x =>
+            fail(s"Received $x instead of Registered")
+        }
+      }
+
+      "return Started when starting a hook" in {
+        val f = fixture
+        val uri = new URI("http://test")
+        val hook = Webhook(uri, threshold = 100L)
+        val future = (f.webhooksActor ? WebhooksActor.Register(hook)).flatMap {
+          case _: WebhooksActor.Registered => f.webhooksActor ? WebhooksActor.Start(uri)
+          case x =>
+            fail(s"Received $x instead of Registered")
+        }
+        whenReady(future) {
+          case WebhooksActor.Started(x) =>
+            x shouldBe hook
           case x =>
             fail(s"Received $x instead of Registered")
         }
