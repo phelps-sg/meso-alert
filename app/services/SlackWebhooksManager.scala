@@ -4,7 +4,7 @@ import actors.WebhooksActor
 import actors.WebhooksActor.{Register, Start, Started, Stop, Stopped, Webhook, WebhookNotRegisteredException}
 import akka.actor.typed.receptionist.Receptionist.Registered
 import akka.actor.{ActorRef, ActorSystem}
-import akka.pattern.{AskSupport, ask}
+import akka.pattern.ask
 import akka.util.Timeout
 import com.google.inject.ImplementedBy
 
@@ -15,9 +15,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[SlackWebhooksManager])
 trait SlackWebhooksManagerService {
-  def start(uri: String): Future[Started]
-  def stop(uri: String): Future[Stopped]
-  def register(uri: String, threshold: Long): Future[Registered]
+  def start(uri: URI): Future[Started]
+  def stop(uri: URI): Future[Stopped]
+  def register(hook: Webhook): Future[Registered]
 }
 
 @Singleton
@@ -34,25 +34,24 @@ class SlackWebhooksManager @Inject() (memPoolWatcher: MemPoolWatcher)
       threshold = 200000000000L),
   )
   for (hook <- webHooks) {
-    register(hook.uri.toString, hook.threshold)
-      .map(_ => start(hook.uri.toString))
+    register(hook).map(_ => start(hook.uri))
   }
 
-  def start(uri: String): Future[Started] = {
-    (actor ? Start(new URI(uri))).map {
+  def start(uri: URI): Future[Started] = {
+    (actor ? Start(uri)).map {
       case x: Started => x
       case ex: WebhookNotRegisteredException => throw ex
     }
   }
 
-  def stop(uri: String): Future[Stopped] = {
-    (actor ? Stop(new URI(uri))).map {
+  def stop(uri: URI): Future[Stopped] = {
+    (actor ? Stop(uri)).map {
       case x: Stopped => x
     }
   }
 
-  def register(uri: String, threshold: Long): Future[Registered] = {
-    (actor ? Register(Webhook(new URI(uri), threshold))).map {
+  def register(hook: Webhook): Future[Registered] = {
+    (actor ? Register(hook)).map {
       case x: Registered => x
     }
   }
