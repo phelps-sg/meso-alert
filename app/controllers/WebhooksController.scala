@@ -11,8 +11,6 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class WebhooksController @Inject()(val controllerComponents: ControllerComponents,
-                                   val memPoolWatcher: MemPoolWatcherService,
-                                   val userManager: UserManagerService,
                                    val slackWebHooksManager: SlackWebhooksManagerService)
                                   (implicit system: ActorSystem, ex: ExecutionContext) extends BaseController {
 
