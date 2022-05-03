@@ -35,16 +35,18 @@ make -e docker-server-start
 
 ### Websocket client
 
+To start the javascript websocket client:
+
 ~~~bash
 make client-start
 ~~~
 
 ### Managing Slack webhooks
 
-#### Registering a new webhook
-
-There is a REST API to manage 
+There is a REST API to manage
 [Slack webhooks](https://slack.com/intl/en-gb/help/articles/115005265063-Incoming-webhooks-for-Slack).
+
+#### Registering a new webhook
 
 The following example registers a new webhook with a threshold of 20000000.
 
