@@ -48,7 +48,7 @@ There is a REST API to manage
 
 #### Registering a new webhook
 
-The following example registers a new webhook with a threshold of 20000000.
+The following example registers a new webhook with a threshold of 20000000 Satoshi.
 
 ~~~bash
 curl -X POST http://localhost:9000/api/webhooks/register --data \
