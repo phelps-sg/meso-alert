@@ -38,3 +38,34 @@ make -e docker-server-start
 ~~~bash
 make client-start
 ~~~
+
+### Managing Slack webhooks
+
+#### Registering a new webhook
+
+There is a REST API to manage 
+[Slack webhooks](https://slack.com/intl/en-gb/help/articles/115005265063-Incoming-webhooks-for-Slack).
+
+The following example registers a new webhook with a threshold of 20000000.
+
+~~~bash
+curl -X POST http://localhost:9000/api/webhooks/register --data \
+'{"uri":"https://hooks.slack.com/services/TF4U7GH5F/B03D4N1KBV5/test", "threshold":20000000}' \
+-H 'Content-Type: application/json'
+~~~
+
+#### Starting a webhook
+
+~~~bash
+curl -X POST http://localhost:9000/api/webhooks/start --data \
+'{"uri":"https://hooks.slack.com/services/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"}' \
+-H 'Content-Type: application/json'
+~~~
+
+#### Stopping a webhook
+
+~~~bash
+curl -X POST http://localhost:9000/api/webhooks/stop --data \
+'{"uri":"https://hooks.slack.com/services/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"}' \
+-H 'Content-Type: application/json'
+~~~
