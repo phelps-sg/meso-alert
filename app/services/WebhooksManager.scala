@@ -13,7 +13,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 
-@ImplementedBy(classOf[SlackWebhooksManager])
+@ImplementedBy(classOf[WebhooksManager])
 trait SlackWebhooksManagerService {
   def start(uri: URI): Future[Started]
   def stop(uri: URI): Future[Stopped]
@@ -21,8 +21,8 @@ trait SlackWebhooksManagerService {
 }
 
 @Singleton
-class SlackWebhooksManager @Inject() (memPoolWatcher: MemPoolWatcher)
-                                     (implicit system: ActorSystem, executionContext: ExecutionContext)
+class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcher)
+                               (implicit system: ActorSystem, executionContext: ExecutionContext)
   extends SlackWebhooksManagerService {
 
   val actor: ActorRef = system.actorOf(WebhooksActor.props(memPoolWatcher))
