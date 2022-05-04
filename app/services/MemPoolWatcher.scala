@@ -48,7 +48,6 @@ class MemPoolWatcher @Inject()(peerGroupSelection: PeerGroupSelection)
   private val TOTAL_KEY: String = "TOTAL"
   private val START_MS: Long = System.currentTimeMillis
   private val STATISTICS_FREQUENCY_MS: Long = 1000 * 60
-  private val HEX: BaseEncoding = BaseEncoding.base16.lowerCase
   BriefLogFormatter.initVerbose()
   val peerGroup: PeerGroup = peerGroupSelection.peerGroup
   val actor: ActorRef = system.actorOf(MemPoolWatcherActor.props(peerGroup))
