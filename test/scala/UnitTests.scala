@@ -172,9 +172,9 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
         case TxUpdate(_, totalValue, _, _, Seq(
-                        TxInputOutput(Some("1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"), Some(x)),
-                        TxInputOutput(Some("1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"), Some(y)),
-                      ), Seq()) if totalValue == value1 + value2 && x == value1 && y == value2 =>
+                        TxInputOutput(Some("1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"), Some(100L)),
+                        TxInputOutput(Some("1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"), Some(200L)),
+                      ), Seq()) if totalValue == value1 + value2 =>
       }
 
       broadcastTransaction(f.transactions.head)
