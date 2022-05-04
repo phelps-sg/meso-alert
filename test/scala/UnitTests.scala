@@ -1,6 +1,6 @@
-import actors.TxFilterAuthActor.Auth
+import actors.TxFilterAuthActor.{Auth, TxInputOutput}
 import actors.WebhookManagerActor.{Webhook, WebhookNotRegisteredException}
-import actors.{HttpBackendSelection, TxFilterAuthActor, TxWebhookMessagingActor, TxUpdate, WebhookManagerActor}
+import actors.{HttpBackendSelection, TxFilterAuthActor, TxUpdate, TxWebhookMessagingActor, WebhookManagerActor}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -157,11 +157,10 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       // Configure a test bitcoinj transaction.
       val transaction1 = f.transactions.head
       broadcastTransaction(transaction1)
-
       val receivedTx1 = updateCapture.value
-      receivedTx1.outputs.size shouldBe 1
-      receivedTx1.outputs.head.address.get shouldBe "1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"
-      receivedTx1.value shouldBe 1000000
+      receivedTx1 should matchPattern {
+        case TxUpdate(_, 1000000, _, _, Seq(TxInputOutput(Some("1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"), _)), Seq(_)) =>
+      }
 
       val transaction2 = new Transaction(f.params)
 
@@ -178,42 +177,42 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       broadcastTransaction(transaction2)
 
       val receivedTx2 = updateCapture.value
-      receivedTx2.outputs.size shouldBe 2
-      receivedTx2.inputs.isEmpty shouldBe true
-      receivedTx2.outputs(0).address.get shouldBe outputAddress1
-      receivedTx2.outputs(1).address.get shouldBe outputAddress2
-      receivedTx2.value shouldBe value1 + value2
+      receivedTx2 should matchPattern {
+        // noinspection SpellCheckingInspection
+        case TxUpdate(_, totalValue, _, _, Seq(
+                            TxInputOutput(Some("1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"), Some(x)),
+                            TxInputOutput(Some("1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"), Some(y)),
+                      ), Seq()) if totalValue == value1+value2 && x == value1 && y == value2 =>
+      }
 
       // https://www.blockchain.com/btc/tx/6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4
       val transaction3 = f.transactions(1)
       broadcastTransaction(transaction3)
 
       val receivedTx3 = updateCapture.value
-      receivedTx3.inputs.size shouldBe 1
-      receivedTx3.outputs.size shouldBe 2
-      receivedTx3.value shouldBe 300000000
-      //noinspection SpellCheckingInspection
-      receivedTx3.inputs(0).address.get shouldBe "15vScfMHNrXN4QvWe54q5hwfVoYwG79CS1"
-      //noinspection SpellCheckingInspection
-      receivedTx3.outputs(0).address.get shouldBe "1H8ANdafjpqYntniT3Ddxh4xPBMCSz33pj"
-      //noinspection SpellCheckingInspection
-      receivedTx3.outputs(1).address.get shouldBe "1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"
+      receivedTx3 should matchPattern {
+        // noinspection SpellCheckingInspection
+        case TxUpdate(_, 300000000, _, _, Seq(
+                        TxInputOutput(Some("1H8ANdafjpqYntniT3Ddxh4xPBMCSz33pj"), _),
+                        TxInputOutput(Some("1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"), _)
+                      ), Seq(
+                        TxInputOutput(Some("15vScfMHNrXN4QvWe54q5hwfVoYwG79CS1"), _)
+                      )) =>
+      }
 
       // https://www.blockchain.com/btc/tx/73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259
       val transaction4 = f.transactions(2)
       broadcastTransaction(transaction4)
 
       val receivedTx4 = updateCapture.value
-      receivedTx4.value shouldBe 923985
-      receivedTx4.inputs.size shouldBe 1
-      receivedTx4.outputs.size shouldBe 2
-      // See https://gitlab.com/mesonomics/meso-alert/-/issues/24
-      //noinspection SpellCheckingInspection
-      //      receivedTx4.inputs(0).address.get shouldBe "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
-      //noinspection SpellCheckingInspection
-      receivedTx4.outputs(0).address.get shouldBe "1AyQnFZk9MbjLFXSWJ7euNbGhaNpjPvrSq"
-      //noinspection SpellCheckingInspection
-      receivedTx4.outputs(1).address.get shouldBe "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
+      receivedTx4 should matchPattern {
+        // noinspection SpellCheckingInspection
+        case TxUpdate(_, 923985, _, _, Seq(
+                        TxInputOutput(Some("1AyQnFZk9MbjLFXSWJ7euNbGhaNpjPvrSq"), _),
+                        TxInputOutput(Some("bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"), _)
+                        ), Seq(_)) =>
+      }
+
     }
   }
 
