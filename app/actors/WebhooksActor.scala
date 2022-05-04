@@ -2,11 +2,14 @@ package actors
 
 import actors.TxFilterAuthActor.Die
 import akka.actor.{Actor, ActorRef, Props}
+import com.google.inject.Inject
 import org.apache.commons.logging.LogFactory
+import play.api.libs.concurrent.InjectedActorSupport
 import play.api.libs.json.{JsObject, Json, Writes}
 import services.MemPoolWatcherService
 
-import java.net.URI
+import java.io.UnsupportedEncodingException
+import java.net.{URI, URLEncoder}
 
 object WebhooksActor {
 
@@ -22,7 +25,7 @@ object WebhooksActor {
 
   case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
 
-  def props(memPoolWatcher: MemPoolWatcherService): Props = Props(new WebhooksActor(memPoolWatcher))
+//  def props(memPoolWatcher: MemPoolWatcherService): Props = Props(new WebhooksActor(memPoolWatcher))
 
   implicit val startWrites: Writes[Started] = new Writes[Started]() {
     def writes(started: Started): JsObject = Json.obj(fields =
@@ -32,13 +35,24 @@ object WebhooksActor {
   }
 }
 
-class WebhooksActor(val memPoolWatcher: MemPoolWatcherService) extends Actor {
+class WebhooksActor @Inject() (val memPoolWatcher: MemPoolWatcherService,
+                               val backendSelection: HttpBackendSelection,
+                               val childFactory: TxSlackActor.Factory)
+  extends Actor with InjectedActorSupport {
 
   private val logger = LogFactory.getLog(classOf[WebhooksActor])
 
   import WebhooksActor._
 
   override def receive: Receive = updated(Map[URI, Webhook](), Map[URI, ActorRef]())
+
+  def encodeUrl(url: String): String =
+    try {
+      URLEncoder.encode(url, "UTF-8")
+    } catch {
+      case exception: UnsupportedEncodingException =>
+        "Problems while encoding " + exception.getMessage
+    }
 
   def updated(webhooks: Map[URI, Webhook], actors: Map[URI, ActorRef]): Receive = {
     case Register(hook) =>
@@ -51,7 +65,8 @@ class WebhooksActor(val memPoolWatcher: MemPoolWatcherService) extends Actor {
       if (webhooks contains uri) {
         val hook = webhooks(uri)
         logger.debug(s"hook = " + hook)
-        val slackActor = context.actorOf(TxSlackActor.props(uri))
+//        val slackActor = context.actorOf(backendSelection.props(uri))
+        val slackActor = injectedChild(create = childFactory(uri), name=encodeUrl(uri.toURL.toString))
         val actor = context.actorOf(TxFilterNoAuthActor.props(slackActor, _.value >= hook.threshold, memPoolWatcher))
         context.become(updated(webhooks, actors = actors + (uri -> actor)))
         sender ! Started(hook)

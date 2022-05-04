@@ -6,6 +6,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.google.inject.ImplementedBy
+import com.google.inject.name.Named
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.net.URI
@@ -21,19 +22,20 @@ trait SlackWebhooksManagerService {
 }
 
 @Singleton
-class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcher)
+class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcher, @Named("webhooks-actor") actor: ActorRef)
                                (implicit system: ActorSystem, executionContext: ExecutionContext)
   extends SlackWebhooksManagerService {
 
   val logger: Logger = LoggerFactory.getLogger(classOf[WebhooksManager])
 
-  val actor: ActorRef = system.actorOf(WebhooksActor.props(memPoolWatcher))
+//  val actor: ActorRef = system.actorOf(WebhooksActor.props(memPoolWatcher))
 
   implicit val timeout: Timeout = 1.minute
 
   val webHooks: Array[Webhook] = Array(
     Webhook(new URI("https://hooks.slack.com/services/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"),
-      threshold = 200000000000L),
+//      threshold = 200000000000L),
+    threshold = 2000000L),
   )
   for (hook <- webHooks) {
     register(hook).map(_ => start(hook.uri))

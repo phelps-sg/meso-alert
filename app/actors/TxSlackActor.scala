@@ -2,21 +2,44 @@ package actors
 
 import actors.TxFilterAuthActor.TxInputOutput
 import akka.actor.{Actor, Props}
+import com.google.inject.assistedinject.Assisted
+import com.google.inject.{ImplementedBy, Inject}
 import monix.eval.Task
 import org.apache.commons.logging.LogFactory
 import play.api.libs.json.Json
+import sttp.capabilities.WebSockets
+import sttp.capabilities.monix.MonixStreams
 import sttp.client3._
 import sttp.client3.asynchttpclient.monix._
 import sttp.model.Uri
 
+import javax.inject.Singleton
 import java.net.URI
 import scala.util.{Failure, Success}
 
-object TxSlackActor {
-  def props(hookUri: URI): Props = Props(new TxSlackActor(hookUri))
+@ImplementedBy(classOf[MonixBackend])
+trait HttpBackendSelection {
+  def backend(): Task[SttpBackend[Task, _]]
 }
 
-class TxSlackActor(val hookUri: URI) extends Actor {
+@Singleton
+class MonixBackend extends HttpBackendSelection {
+  def backend(): Task[SttpBackend[Task, MonixStreams with WebSockets]] = AsyncHttpClientMonixBackend()
+}
+
+object TxSlackActor {
+
+  trait Factory {
+    def apply(hookUri: URI): Actor
+  }
+}
+
+//object TxSlackActor {
+//  def props(hookUri: URI, backendSelection: HttpBackendSelection): Props =
+//    Props(new TxSlackActor(hookUri, backendSelection))
+//}
+
+class TxSlackActor @Inject() (backendSelection: HttpBackendSelection, @Assisted hookUri: URI)  extends Actor {
 
   val blockChairBaseURL = "https://www.blockchair.com/bitcoin"
   private val logger = LogFactory.getLog(classOf[TxSlackActor])
@@ -41,7 +64,7 @@ class TxSlackActor(val hookUri: URI) extends Actor {
   override def receive: Receive = {
     case tx: TxUpdate =>
 
-      val postTask = AsyncHttpClientMonixBackend().flatMap { backend =>
+      val postTask = backendSelection.backend().flatMap { backend =>
         val r = basicRequest
           .contentType("application/json")
           .body(Json.stringify(Json.obj("text" -> message(tx))))
