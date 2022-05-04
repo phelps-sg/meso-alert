@@ -67,9 +67,10 @@ class WebhookManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
       if (webhooks contains uri) {
         val hook = webhooks(uri)
         logger.debug(s"hook = " + hook)
-        val slackActor = injectedChild(create = childFactory(uri), name=encodeUrl(uri.toURL.toString))
-        val actor = context.actorOf(TxFilterNoAuthActor.props(slackActor, _.value >= hook.threshold, memPoolWatcher))
-        context.become(updated(webhooks, actors = actors + (uri -> actor)))
+        val webhookMessagingActor = injectedChild(create = childFactory(uri), name=encodeUrl(uri.toURL.toString))
+        val filteringActor =
+          context.actorOf(TxFilterNoAuthActor.props(webhookMessagingActor, _.value >= hook.threshold, memPoolWatcher))
+        context.become(updated(webhooks, actors = actors + (uri -> filteringActor)))
         sender ! Started(hook)
       } else {
         sender ! WebhookNotRegisteredException(uri)
