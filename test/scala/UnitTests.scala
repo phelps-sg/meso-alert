@@ -274,12 +274,13 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
       "return WebhookNotRegistered when trying to start an unregistered hook" in {
         val f = fixture
-       val future = f.webhooksActor ? WebhookManagerActor.Start(uri = new URI("http://test"))
+        val uri = new URI("http://test")
+        val future = f.webhooksActor ? WebhookManagerActor.Start(uri)
         whenReady(future) {
-          case _: WebhookNotRegisteredException =>
-            succeed
-          case x =>
-            fail(s"Received $x instead of WebhookNotRegisteredException")
+          result =>
+            result should matchPattern {
+              case WebhookNotRegisteredException(`uri`) =>
+            }
         }
       }
 
