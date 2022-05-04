@@ -31,7 +31,7 @@ import scala.concurrent.duration.DurationInt
 import scala.io.Source
 
 //noinspection TypeAnnotation
-class UnitTests extends TestKit(ActorSystem("MySpec"))
+class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   with Matchers
   with AnyWordSpecLike
   with MockFactory
