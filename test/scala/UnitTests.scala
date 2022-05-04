@@ -71,19 +71,20 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
   def fixture = new {
     implicit val timeout = Timeout(1.second)
-    val mockMemPoolWatcher = mock[MemPoolWatcherService]
-    val mockWs = mock[WebSocketMock]
-    val mockWsActor = system.actorOf(MockWebsocketActor.props(mockWs))
-    val mockUser = mock[User]
-    val mockUserManager = mock[UserManagerService]
+
+    lazy val mockMemPoolWatcher = mock[MemPoolWatcherService]
+    lazy val mockWs = mock[WebSocketMock]
+    lazy val mockWsActor = system.actorOf(MockWebsocketActor.props(mockWs))
+    lazy val mockUser = mock[User]
+    lazy val mockUserManager = mock[UserManagerService]
     //    val webhooksActor = system.actorOf(WebhooksActor.props(mockMemPoolWatcher))
-    val txWatchActor = system.actorOf(TxFilterAuthActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
+    lazy val txWatchActor = system.actorOf(TxFilterAuthActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
 
     val params = MainNetParams.get()
     class MockPeerGroup extends PeerGroup(params)
     val mockPeerGroup = mock[MockPeerGroup]
 
-    val transactions = Json.parse(Source.fromResource("tx_valid.json").getLines.mkString)
+    lazy val transactions = Json.parse(Source.fromResource("tx_valid.json").getLines.mkString)
       .as[Array[JsArray]].map(_.value).filter(_.size > 1)
       .map(testData => params.getDefaultSerializer.makeTransaction(HEX.decode(testData(1).as[String].toLowerCase)))
 
