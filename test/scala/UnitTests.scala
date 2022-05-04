@@ -267,7 +267,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       expectNoMessage()
     }
 
-    "WebhooksActor" should {
+    "WebhookManagerActor" should {
 
       // akka timeout
       implicit val timeout = Timeout(1.second)
