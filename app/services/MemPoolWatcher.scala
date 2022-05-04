@@ -37,7 +37,10 @@ class MainNetPeerGroup extends PeerGroupSelection {
 }
 
 @Singleton
-class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection)(implicit system: ActorSystem) extends MemPoolWatcherService {
+class MemPoolWatcher @Inject()(peerGroupSelection: PeerGroupSelection)
+                              (implicit system: ActorSystem)
+  extends MemPoolWatcherService {
+
   private val log: Logger = LoggerFactory.getLogger("mem-pool-watcher")
   implicit val params: NetworkParameters = peerGroupSelection.params
   private val NO_DEPS: util.List[Transaction] = Collections.emptyList
@@ -66,7 +69,7 @@ class MemPoolWatcher @Inject() (peerGroupSelection: PeerGroupSelection)(implicit
   }
 
   def run(): Unit = {
-   while (true) {
+    while (true) {
       Thread.sleep(STATISTICS_FREQUENCY_MS)
       printCounters()
     }
