@@ -157,8 +157,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       // Configure a test bitcoinj transaction.
       val transaction1 = f.transactions.head
       broadcastTransaction(transaction1)
-      val receivedTx1 = updateCapture.value
-      receivedTx1 should matchPattern {
+      updateCapture.value should matchPattern {
         case TxUpdate(_, 1000000, _, _, Seq(TxInputOutput(Some("1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"), _)), Seq(_)) =>
       }
 
@@ -176,8 +175,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
       broadcastTransaction(transaction2)
 
-      val receivedTx2 = updateCapture.value
-      receivedTx2 should matchPattern {
+      updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
         case TxUpdate(_, totalValue, _, _, Seq(
                             TxInputOutput(Some("1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"), Some(x)),
@@ -189,8 +187,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       val transaction3 = f.transactions(1)
       broadcastTransaction(transaction3)
 
-      val receivedTx3 = updateCapture.value
-      receivedTx3 should matchPattern {
+      updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
         case TxUpdate(_, 300000000, _, _, Seq(
                         TxInputOutput(Some("1H8ANdafjpqYntniT3Ddxh4xPBMCSz33pj"), _),
@@ -204,8 +201,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       val transaction4 = f.transactions(2)
       broadcastTransaction(transaction4)
 
-      val receivedTx4 = updateCapture.value
-      receivedTx4 should matchPattern {
+      updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
         case TxUpdate(_, 923985, _, _, Seq(
                         TxInputOutput(Some("1AyQnFZk9MbjLFXSWJ7euNbGhaNpjPvrSq"), _),
