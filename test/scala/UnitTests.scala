@@ -288,8 +288,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         val hook = Webhook(uri = new URI("http://test"), threshold = 100L)
         val future = f.webhooksActor ? WebhookManagerActor.Register(hook)
         whenReady(future) {
-          case WebhookManagerActor.Registered(x) =>
-            x shouldBe hook
+          case WebhookManagerActor.Registered(`hook`) =>
+            succeed
           case x =>
             fail(s"Received $x instead of Registered")
         }
@@ -306,8 +306,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           stopped <- f.webhooksActor ? WebhookManagerActor.Stop(uri)
         } yield (registered, started, stopped)
         whenReady(future) {
-          case (WebhookManagerActor.Registered(`hook`),
-                WebhookManagerActor.Started(`hook`),
+          case (WebhookManagerActor.Registered(`hook`), WebhookManagerActor.Started(`hook`),
                 WebhookManagerActor.Stopped(`hook`)) =>
             succeed
           case x =>
