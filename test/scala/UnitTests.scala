@@ -155,8 +155,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       }
 
       // Configure a test bitcoinj transaction.
-      val transaction1 = f.transactions.head
-      broadcastTransaction(transaction1)
+      broadcastTransaction(f.transactions.head)
       updateCapture.value should matchPattern {
         case TxUpdate(_, 1000000, _, _, Seq(TxInputOutput(Some("1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"), _)), Seq(_)) =>
       }
@@ -184,9 +183,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       }
 
       // https://www.blockchain.com/btc/tx/6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4
-      val transaction3 = f.transactions(1)
-      broadcastTransaction(transaction3)
-
+      broadcastTransaction(f.transactions(1))
       updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
         case TxUpdate(_, 300000000, _, _, Seq(
@@ -198,9 +195,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       }
 
       // https://www.blockchain.com/btc/tx/73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259
-      val transaction4 = f.transactions(2)
-      broadcastTransaction(transaction4)
-
+      broadcastTransaction(f.transactions(2))
       updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
         case TxUpdate(_, 923985, _, _, Seq(
