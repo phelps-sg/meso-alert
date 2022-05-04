@@ -78,19 +78,21 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
     val mockUserManager = mock[UserManagerService]
     //    val webhooksActor = system.actorOf(WebhooksActor.props(mockMemPoolWatcher))
     val txWatchActor = system.actorOf(TxFilterAuthActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
+
     val params = MainNetParams.get()
-
     class MockPeerGroup extends PeerGroup(params)
-
     val mockPeerGroup = mock[MockPeerGroup]
+
     val transactions = Json.parse(Source.fromResource("tx_valid.json").getLines.mkString)
       .as[Array[JsArray]].map(_.value).filter(_.size > 1)
       .map(testData => params.getDefaultSerializer.makeTransaction(HEX.decode(testData(1).as[String].toLowerCase)))
+
     val injector = new GuiceInjectorBuilder()
       .bindings(new TestModule)
       .overrides(inject.bind(classOf[ActorSystem]).toInstance(system))
       .overrides(inject.bind(classOf[MemPoolWatcherService]).toInstance(mockMemPoolWatcher))
       .build()
+
     lazy val webhooksActor: ActorRef = {
       system.actorOf(
         WebhooksActor.props(mockMemPoolWatcher,
