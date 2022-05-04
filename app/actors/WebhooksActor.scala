@@ -25,7 +25,9 @@ object WebhooksActor {
 
   case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
 
-//  def props(memPoolWatcher: MemPoolWatcherService): Props = Props(new WebhooksActor(memPoolWatcher))
+  def props(memPoolWatcher: MemPoolWatcherService, backendSelection: HttpBackendSelection,
+            childFactory: TxSlackActor.Factory): Props =
+    Props(new WebhooksActor(memPoolWatcher, backendSelection, childFactory))
 
   implicit val startWrites: Writes[Started] = new Writes[Started]() {
     def writes(started: Started): JsObject = Json.obj(fields =

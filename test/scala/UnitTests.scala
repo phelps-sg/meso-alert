@@ -1,12 +1,13 @@
 import actors.TxFilterAuthActor.Auth
 import actors.WebhooksActor.{Webhook, WebhookNotRegisteredException}
-import actors.{TxFilterAuthActor, TxUpdate, WebhooksActor}
-import akka.actor.{Actor, ActorSystem, Props}
+import actors.{HttpBackendSelection, TxFilterAuthActor, TxSlackActor, TxUpdate, WebhooksActor}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.inject.AbstractModule
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
@@ -14,14 +15,18 @@ import org.bitcoinj.params.MainNetParams
 import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
-import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.inject
+import play.api.inject.guice.GuiceInjectorBuilder
 import play.api.libs.json.{JsArray, Json}
+import play.libs.akka.AkkaGuiceSupport
 import services._
 
 import java.net.URI
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 import scala.io.Source
 
@@ -31,6 +36,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
   with AnyWordSpecLike
   with MockFactory
   with ScalaFutures
+  with BeforeAndAfterAll
   with ImplicitSender {
 
   object MockWebsocketActor {
@@ -51,13 +57,26 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
     }
   }
 
+  override def afterAll(): Unit = {
+    TestKit.shutdownActorSystem(system)
+  }
+
+  class TestModule extends AbstractModule with AkkaGuiceSupport {
+
+    override def configure(): Unit = {
+//      bindActor(classOf[WebhooksActor], "webhooks-actor")
+      bindActorFactory(classOf[TxSlackActor], classOf[TxSlackActor.Factory])
+    }
+  }
+
   def fixture = new {
+    implicit val timeout = Timeout(1.second)
     val mockMemPoolWatcher = mock[MemPoolWatcherService]
     val mockWs = mock[WebSocketMock]
     val mockWsActor = system.actorOf(MockWebsocketActor.props(mockWs))
     val mockUser = mock[User]
     val mockUserManager = mock[UserManagerService]
-    val webhooksActor = system.actorOf(WebhooksActor.props(mockMemPoolWatcher))
+    //    val webhooksActor = system.actorOf(WebhooksActor.props(mockMemPoolWatcher))
     val txWatchActor = system.actorOf(TxFilterAuthActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
     val params = MainNetParams.get()
 
@@ -67,6 +86,18 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
     val transactions = Json.parse(Source.fromResource("tx_valid.json").getLines.mkString)
       .as[Array[JsArray]].map(_.value).filter(_.size > 1)
       .map(testData => params.getDefaultSerializer.makeTransaction(HEX.decode(testData(1).as[String].toLowerCase)))
+    val injector = new GuiceInjectorBuilder()
+      .bindings(new TestModule)
+      .overrides(inject.bind(classOf[ActorSystem]).toInstance(system))
+      .overrides(inject.bind(classOf[MemPoolWatcherService]).toInstance(mockMemPoolWatcher))
+      .build()
+    lazy val webhooksActor: ActorRef = {
+      system.actorOf(
+        WebhooksActor.props(mockMemPoolWatcher,
+          injector.instanceOf[HttpBackendSelection],
+          injector.instanceOf[TxSlackActor.Factory])
+      )
+    }
   }
 
   //noinspection ZeroIndexToHead
@@ -247,7 +278,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
       "return WebhookNotRegistered when trying to start an unregistered hook" in {
         val f = fixture
-        val future = f.webhooksActor ? WebhooksActor.Start(uri = new URI("http://test"))
+       val future = f.webhooksActor ? WebhooksActor.Start(uri = new URI("http://test"))
         whenReady(future) {
           case _: WebhookNotRegisteredException =>
             succeed
