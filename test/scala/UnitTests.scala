@@ -172,8 +172,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
         case TxUpdate(_, totalValue, _, _, Seq(
-                        TxInputOutput(Some("1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"), Some(100L)),
-                        TxInputOutput(Some("1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"), Some(200L)),
+                        TxInputOutput(Some(`outputAddress1`), Some(`value1`)),
+                        TxInputOutput(Some(`outputAddress2`), Some(`value2`)),
                       ), Seq()) if totalValue == value1 + value2 =>
       }
 
@@ -306,10 +306,10 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           stopped <- f.webhooksActor ? WebhookManagerActor.Stop(uri)
         } yield (registered, started, stopped)
         whenReady(future) {
-          case (WebhookManagerActor.Registered(x), WebhookManagerActor.Started(y), WebhookManagerActor.Stopped(z)) =>
-            x shouldBe hook
-            y shouldBe hook
-            z shouldBe hook
+          case (WebhookManagerActor.Registered(`hook`),
+                WebhookManagerActor.Started(`hook`),
+                WebhookManagerActor.Stopped(`hook`)) =>
+            succeed
           case x =>
             fail(s"Received $x")
         }
