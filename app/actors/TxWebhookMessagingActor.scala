@@ -1,7 +1,7 @@
 package actors
 
 import actors.TxFilterAuthActor.TxInputOutput
-import akka.actor.{Actor, Props}
+import akka.actor.Actor
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{ImplementedBy, Inject}
 import monix.eval.Task
@@ -13,8 +13,8 @@ import sttp.client3._
 import sttp.client3.asynchttpclient.monix._
 import sttp.model.Uri
 
-import javax.inject.Singleton
 import java.net.URI
+import javax.inject.Singleton
 import scala.util.{Failure, Success}
 
 @ImplementedBy(classOf[MonixBackend])
@@ -33,11 +33,6 @@ object TxSlackActor {
     def apply(hookUri: URI): Actor
   }
 }
-
-//object TxSlackActor {
-//  def props(hookUri: URI, backendSelection: HttpBackendSelection): Props =
-//    Props(new TxSlackActor(hookUri, backendSelection))
-//}
 
 class TxSlackActor @Inject() (backendSelection: HttpBackendSelection, @Assisted hookUri: URI)  extends Actor {
 
