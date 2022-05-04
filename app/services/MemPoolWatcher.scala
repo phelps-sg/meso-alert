@@ -2,7 +2,6 @@ package services
 
 import actors.MemPoolWatcherActor
 import akka.actor.{ActorRef, ActorSystem}
-import com.google.common.io.BaseEncoding
 import com.google.inject.ImplementedBy
 import org.bitcoinj.core._
 import org.bitcoinj.net.discovery.DnsDiscovery
