@@ -28,8 +28,6 @@ class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcher, @Named("webhooks
 
   val logger: Logger = LoggerFactory.getLogger(classOf[WebhooksManager])
 
-//  val actor: ActorRef = system.actorOf(WebhooksActor.props(memPoolWatcher))
-
   implicit val timeout: Timeout = 1.minute
 
   val webHooks: Array[Webhook] = Array(
