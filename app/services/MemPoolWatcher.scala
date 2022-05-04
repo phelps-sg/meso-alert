@@ -1,6 +1,6 @@
 package services
 
-import actors.{MemPoolWatcherActor, TxUpdate}
+import actors.MemPoolWatcherActor
 import akka.actor.{ActorRef, ActorSystem}
 import com.google.common.io.BaseEncoding
 import com.google.inject.ImplementedBy
