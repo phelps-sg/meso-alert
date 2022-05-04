@@ -39,12 +39,12 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   with BeforeAndAfterAll
   with ImplicitSender {
 
-  object MockWebsocketActor {
-    def props(mock: WebSocketMock) = Props(new MockWebsocketActor(mock))
-  }
-
   trait WebSocketMock {
     def update(tx: TxUpdate): Unit
+  }
+
+  object MockWebsocketActor {
+    def props(mock: WebSocketMock) = Props(new MockWebsocketActor(mock))
   }
 
   class MockWebsocketActor(val mock: WebSocketMock) extends Actor {
@@ -57,16 +57,16 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
   }
 
-  override def afterAll(): Unit = {
-    TestKit.shutdownActorSystem(system)
-  }
-
   class TestModule extends AbstractModule with AkkaGuiceSupport {
 
     override def configure(): Unit = {
 //      bindActor(classOf[WebhooksActor], "webhooks-actor")
       bindActorFactory(classOf[TxWebhookMessagingActor], classOf[TxWebhookMessagingActor.Factory])
     }
+  }
+
+  override def afterAll(): Unit = {
+    TestKit.shutdownActorSystem(system)
   }
 
   def fixture = new {
