@@ -27,17 +27,17 @@ class MonixBackend extends HttpBackendSelection {
   def backend(): Task[SttpBackend[Task, MonixStreams with WebSockets]] = AsyncHttpClientMonixBackend()
 }
 
-object TxSlackActor {
+object TxWebhookMessagingActor {
 
   trait Factory {
     def apply(hookUri: URI): Actor
   }
 }
 
-class TxSlackActor @Inject() (backendSelection: HttpBackendSelection, @Assisted hookUri: URI)  extends Actor {
+class TxWebhookMessagingActor @Inject()(backendSelection: HttpBackendSelection, @Assisted hookUri: URI)  extends Actor {
 
   val blockChairBaseURL = "https://www.blockchair.com/bitcoin"
-  private val logger = LogFactory.getLog(classOf[TxSlackActor])
+  private val logger = LogFactory.getLog(classOf[TxWebhookMessagingActor])
 
   def linkToTxHash(hash: String) = s"<$blockChairBaseURL/transaction/$hash|$hash>"
   def linkToAddress(address: String) = s"<$blockChairBaseURL/address/$address|$address>"

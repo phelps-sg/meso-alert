@@ -1,6 +1,6 @@
 import actors.TxFilterAuthActor.Auth
 import actors.WebhookManagerActor.{Webhook, WebhookNotRegisteredException}
-import actors.{HttpBackendSelection, TxFilterAuthActor, TxSlackActor, TxUpdate, WebhookManagerActor}
+import actors.{HttpBackendSelection, TxFilterAuthActor, TxWebhookMessagingActor, TxUpdate, WebhookManagerActor}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -65,7 +65,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
     override def configure(): Unit = {
 //      bindActor(classOf[WebhooksActor], "webhooks-actor")
-      bindActorFactory(classOf[TxSlackActor], classOf[TxSlackActor.Factory])
+      bindActorFactory(classOf[TxWebhookMessagingActor], classOf[TxWebhookMessagingActor.Factory])
     }
   }
 
@@ -101,7 +101,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       system.actorOf(
         WebhookManagerActor.props(mockMemPoolWatcher,
           injector.instanceOf[HttpBackendSelection],
-          injector.instanceOf[TxSlackActor.Factory])
+          injector.instanceOf[TxWebhookMessagingActor.Factory])
       )
     }
   }

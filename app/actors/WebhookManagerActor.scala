@@ -26,7 +26,7 @@ object WebhookManagerActor {
   case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
 
   def props(memPoolWatcher: MemPoolWatcherService, backendSelection: HttpBackendSelection,
-            childFactory: TxSlackActor.Factory): Props =
+            childFactory: TxWebhookMessagingActor.Factory): Props =
     Props(new WebhookManagerActor(memPoolWatcher, backendSelection, childFactory))
 
   implicit val startWrites: Writes[Started] = new Writes[Started]() {
@@ -39,7 +39,7 @@ object WebhookManagerActor {
 
 class WebhookManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
                                     val backendSelection: HttpBackendSelection,
-                                    val childFactory: TxSlackActor.Factory)
+                                    val childFactory: TxWebhookMessagingActor.Factory)
   extends Actor with InjectedActorSupport {
 
   private val logger = LogFactory.getLog(classOf[WebhookManagerActor])
