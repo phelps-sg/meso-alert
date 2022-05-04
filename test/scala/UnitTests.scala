@@ -70,15 +70,13 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
   }
 
   def fixture = new {
+
     implicit val timeout = Timeout(1.second)
 
     lazy val mockMemPoolWatcher = mock[MemPoolWatcherService]
     lazy val mockWs = mock[WebSocketMock]
-    lazy val mockWsActor = system.actorOf(MockWebsocketActor.props(mockWs))
     lazy val mockUser = mock[User]
     lazy val mockUserManager = mock[UserManagerService]
-    //    val webhooksActor = system.actorOf(WebhooksActor.props(mockMemPoolWatcher))
-    lazy val txWatchActor = system.actorOf(TxFilterAuthActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
 
     val params = MainNetParams.get()
     class MockPeerGroup extends PeerGroup(params)
@@ -94,7 +92,12 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       .overrides(inject.bind(classOf[MemPoolWatcherService]).toInstance(mockMemPoolWatcher))
       .build()
 
-    lazy val webhooksActor: ActorRef = {
+    lazy val mockWsActor = system.actorOf(MockWebsocketActor.props(mockWs))
+
+    lazy val txWatchActor =
+      system.actorOf(TxFilterAuthActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
+
+    lazy val webhooksActor = {
       system.actorOf(
         WebhooksActor.props(mockMemPoolWatcher,
           injector.instanceOf[HttpBackendSelection],
