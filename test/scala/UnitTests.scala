@@ -1,6 +1,6 @@
 import actors.TxFilterAuthActor.Auth
-import actors.WebhooksActor.{Webhook, WebhookNotRegisteredException}
-import actors.{HttpBackendSelection, TxFilterAuthActor, TxSlackActor, TxUpdate, WebhooksActor}
+import actors.WebhookManagerActor.{Webhook, WebhookNotRegisteredException}
+import actors.{HttpBackendSelection, TxFilterAuthActor, TxSlackActor, TxUpdate, WebhookManagerActor}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -99,7 +99,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
     lazy val webhooksActor = {
       system.actorOf(
-        WebhooksActor.props(mockMemPoolWatcher,
+        WebhookManagerActor.props(mockMemPoolWatcher,
           injector.instanceOf[HttpBackendSelection],
           injector.instanceOf[TxSlackActor.Factory])
       )
@@ -284,7 +284,7 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
 
       "return WebhookNotRegistered when trying to start an unregistered hook" in {
         val f = fixture
-       val future = f.webhooksActor ? WebhooksActor.Start(uri = new URI("http://test"))
+       val future = f.webhooksActor ? WebhookManagerActor.Start(uri = new URI("http://test"))
         whenReady(future) {
           case _: WebhookNotRegisteredException =>
             succeed
@@ -296,9 +296,9 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
       "return Registered when registering a new hook" in {
         val f = fixture
         val hook = Webhook(uri = new URI("http://test"), threshold = 100L)
-        val future = f.webhooksActor ? WebhooksActor.Register(hook)
+        val future = f.webhooksActor ? WebhookManagerActor.Register(hook)
         whenReady(future) {
-          case WebhooksActor.Registered(x) =>
+          case WebhookManagerActor.Registered(x) =>
             x shouldBe hook
           case x =>
             fail(s"Received $x instead of Registered")
@@ -311,12 +311,12 @@ class UnitTests extends TestKit(ActorSystem("MySpec"))
         val uri = new URI("http://test")
         val hook = Webhook(uri, threshold = 100L)
         val future = for {
-          registered <- f.webhooksActor ? WebhooksActor.Register(hook)
-          started <- f.webhooksActor ? WebhooksActor.Start(uri)
-          stopped <- f.webhooksActor ? WebhooksActor.Stop(uri)
+          registered <- f.webhooksActor ? WebhookManagerActor.Register(hook)
+          started <- f.webhooksActor ? WebhookManagerActor.Start(uri)
+          stopped <- f.webhooksActor ? WebhookManagerActor.Stop(uri)
         } yield (registered, started, stopped)
         whenReady(future) {
-          case (WebhooksActor.Registered(x), WebhooksActor.Started(y), WebhooksActor.Stopped(z)) =>
+          case (WebhookManagerActor.Registered(x), WebhookManagerActor.Started(y), WebhookManagerActor.Stopped(z)) =>
             x shouldBe hook
             y shouldBe hook
             z shouldBe hook

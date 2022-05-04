@@ -11,7 +11,7 @@ import services.MemPoolWatcherService
 import java.io.UnsupportedEncodingException
 import java.net.{URI, URLEncoder}
 
-object WebhooksActor {
+object WebhookManagerActor {
 
   case class Webhook(uri: URI, threshold: Long)
   case class Register(hook: Webhook)
@@ -27,7 +27,7 @@ object WebhooksActor {
 
   def props(memPoolWatcher: MemPoolWatcherService, backendSelection: HttpBackendSelection,
             childFactory: TxSlackActor.Factory): Props =
-    Props(new WebhooksActor(memPoolWatcher, backendSelection, childFactory))
+    Props(new WebhookManagerActor(memPoolWatcher, backendSelection, childFactory))
 
   implicit val startWrites: Writes[Started] = new Writes[Started]() {
     def writes(started: Started): JsObject = Json.obj(fields =
@@ -37,14 +37,14 @@ object WebhooksActor {
   }
 }
 
-class WebhooksActor @Inject() (val memPoolWatcher: MemPoolWatcherService,
-                               val backendSelection: HttpBackendSelection,
-                               val childFactory: TxSlackActor.Factory)
+class WebhookManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
+                                    val backendSelection: HttpBackendSelection,
+                                    val childFactory: TxSlackActor.Factory)
   extends Actor with InjectedActorSupport {
 
-  private val logger = LogFactory.getLog(classOf[WebhooksActor])
+  private val logger = LogFactory.getLog(classOf[WebhookManagerActor])
 
-  import WebhooksActor._
+  import WebhookManagerActor._
 
   override def receive: Receive = updated(Map[URI, Webhook](), Map[URI, ActorRef]())
 

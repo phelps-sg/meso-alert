@@ -1,6 +1,6 @@
 package controllers
 
-import actors.WebhooksActor.{Webhook, WebhookNotRegisteredException}
+import actors.WebhookManagerActor.{Webhook, WebhookNotRegisteredException}
 import akka.actor.ActorSystem
 import play.api.libs.json._
 import play.api.mvc.{Action, BaseController, ControllerComponents}

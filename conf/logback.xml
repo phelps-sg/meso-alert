@@ -33,7 +33,7 @@
 
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
-  <logger name="actors.WebhooksActor" level="DEBUG" />
+  <logger name="actors.WebhookManagerActor" level="DEBUG" />
 
   <root level="INFO">
     <appender-ref ref="ASYNCFILE" />
