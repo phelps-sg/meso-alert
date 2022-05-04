@@ -1,7 +1,7 @@
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
 import actors.WebhookManagerActor.{Webhook, WebhookNotRegisteredException}
 import actors.{HttpBackendSelection, TxFilterAuthActor, TxUpdate, TxWebhookMessagingActor, WebhookManagerActor}
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
@@ -155,31 +155,31 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       }
 
       // Configure a test bitcoinj transaction.
-      broadcastTransaction(f.transactions.head)
-      updateCapture.value should matchPattern {
-        case TxUpdate(_, 1000000, _, _, Seq(TxInputOutput(Some("1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"), _)), Seq(_)) =>
-      }
-
-      val transaction2 = new Transaction(f.params)
+      val transaction = new Transaction(f.params)
 
       //noinspection SpellCheckingInspection
       val outputAddress1 = "1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"
       val value1 = 100L
-      transaction2.addOutput(Coin.valueOf(value1), Address.fromString(f.params, outputAddress1))
+      transaction.addOutput(Coin.valueOf(value1), Address.fromString(f.params, outputAddress1))
 
       //noinspection SpellCheckingInspection
       val outputAddress2 = "1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"
       val value2 = 200L
-      transaction2.addOutput(Coin.valueOf(value2), Address.fromString(f.params, outputAddress2))
+      transaction.addOutput(Coin.valueOf(value2), Address.fromString(f.params, outputAddress2))
 
-      broadcastTransaction(transaction2)
+      broadcastTransaction(transaction)
 
       updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
         case TxUpdate(_, totalValue, _, _, Seq(
-                            TxInputOutput(Some("1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"), Some(x)),
-                            TxInputOutput(Some("1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"), Some(y)),
-                      ), Seq()) if totalValue == value1+value2 && x == value1 && y == value2 =>
+                        TxInputOutput(Some("1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"), Some(x)),
+                        TxInputOutput(Some("1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"), Some(y)),
+                      ), Seq()) if totalValue == value1 + value2 && x == value1 && y == value2 =>
+      }
+
+      broadcastTransaction(f.transactions.head)
+      updateCapture.value should matchPattern {
+        case TxUpdate(_, 1000000, _, _, Seq(TxInputOutput(Some("1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"), _)), Seq(_)) =>
       }
 
       // https://www.blockchain.com/btc/tx/6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4
