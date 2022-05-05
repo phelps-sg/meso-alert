@@ -6,3 +6,12 @@ scalatest:
   stage: test
   script:
     - make sbt-test
+
+deploy:
+  image:
+    name: bitnami/kubectl:latest
+    entrypoint: ['']
+  script:
+    - kubectl config get-contexts
+    - kubectl config use-context mesonomics/meso-alert:meso-alert-k8agent
+    - kubectl get pods
