@@ -1,16 +1,24 @@
 package actors
 
 import actors.TxFilterAuthActor.Die
-import akka.actor.{ActorRef, PoisonPill, Props}
+import akka.actor.{Actor, ActorRef, PoisonPill, Props}
+import com.google.inject.Inject
+import com.google.inject.assistedinject.Assisted
 import services.MemPoolWatcherService
 
 object TxFilterNoAuthActor {
+
+  trait Factory {
+    def apply(out: ActorRef, filter: TxUpdate => Boolean): Actor
+  }
+
   case class Die()
+
   def props(out: ActorRef, filter: TxUpdate => Boolean, memPoolWatcher: MemPoolWatcherService): Props =
     Props(new TxFilterNoAuthActor(out, filter, memPoolWatcher))
 }
 
-class TxFilterNoAuthActor(val out: ActorRef, val filter: TxUpdate => Boolean,
+class TxFilterNoAuthActor @Inject() (@Assisted val out: ActorRef, @Assisted val filter: TxUpdate => Boolean,
                           memPoolWatcher: MemPoolWatcherService)
   extends AbstractTxUpdateActor(memPoolWatcher) with TxForwardingActor {
 

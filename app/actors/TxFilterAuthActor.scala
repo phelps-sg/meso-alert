@@ -1,7 +1,9 @@
 package actors
 
-import akka.actor.{ActorRef, PoisonPill, Props}
+import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
+import com.google.inject.Inject
+import com.google.inject.assistedinject.Assisted
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
@@ -9,6 +11,10 @@ import services.{InvalidCredentialsException, MemPoolWatcherService, UserManager
 
 //noinspection TypeAnnotation
 object TxFilterAuthActor {
+
+  trait Factory {
+    def apply(out: ActorRef): Actor
+  }
 
   def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService): Props =
     Props(new TxFilterAuthActor(out, memPoolWatcher, userManager))
@@ -33,7 +39,7 @@ object TxFilterAuthActor {
 }
 
 //noinspection TypeAnnotation
-class TxFilterAuthActor(val out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
+class TxFilterAuthActor @Inject() (@Assisted val out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
   extends AbstractTxUpdateActor(memPoolWatcher) with TxForwardingActor {
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[TxFilterAuthActor])

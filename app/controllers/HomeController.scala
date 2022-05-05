@@ -1,12 +1,12 @@
 package controllers
 
-import actors.TxFilterAuthActor.Auth
+import actors.TxFilterAuthActor.{Auth, _}
 import actors.{TxFilterAuthActor, TxUpdate}
-import actors.TxFilterAuthActor._
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Props}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import play.api.Logger
+import play.api.libs.concurrent.InjectedActorSupport
 import play.api.libs.json.Json
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
@@ -24,9 +24,10 @@ import scala.concurrent.{ExecutionContext, Future}
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
                                val memPoolWatcher: MemPoolWatcherService,
                                val userManager: UserManagerService,
-                               val slackWebHooksManager: SlackWebhooksManagerService)
+                               val slackWebHooksManager: SlackWebhooksManagerService,
+                               val actorFactory: TxFilterAuthActor.Factory)
                               (implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext)
-  extends BaseController with SameOriginCheck {
+  extends BaseController with SameOriginCheck with InjectedActorSupport {
 
   val logger: Logger = play.api.Logger(getClass)
 
@@ -50,7 +51,8 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   def wsFutureFlow(request: RequestHeader): Future[Flow[TxFilterAuthActor.Auth, TxUpdate, _]] = {
     Future {
       ActorFlow.actorRef[TxFilterAuthActor.Auth, TxUpdate] {
-        out => TxFilterAuthActor.props(out, memPoolWatcher, userManager)
+            out => Props(actorFactory(out))
+//        out => TxFilterAuthActor.props(out, memPoolWatcher, userManager)
       }
     }
   }

@@ -1,6 +1,6 @@
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
 import actors.WebhookManagerActor.{Webhook, WebhookNotRegisteredException}
-import actors.{HttpBackendSelection, TxFilterAuthActor, TxUpdate, TxWebhookMessagingActor, WebhookManagerActor}
+import actors.{HttpBackendSelection, TxFilterAuthActor, TxFilterNoAuthActor, TxUpdate, TxWebhookMessagingActor, WebhookManagerActor}
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -62,6 +62,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     override def configure(): Unit = {
 //      bindActor(classOf[WebhooksActor], "webhooks-actor")
       bindActorFactory(classOf[TxWebhookMessagingActor], classOf[TxWebhookMessagingActor.Factory])
+      bindActorFactory(classOf[TxFilterAuthActor], classOf[TxFilterAuthActor.Factory])
+      bindActorFactory(classOf[TxFilterNoAuthActor], classOf[TxFilterNoAuthActor.Factory])
     }
   }
 
@@ -101,7 +103,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       system.actorOf(
         WebhookManagerActor.props(mockMemPoolWatcher,
           injector.instanceOf[HttpBackendSelection],
-          injector.instanceOf[TxWebhookMessagingActor.Factory])
+          injector.instanceOf[TxWebhookMessagingActor.Factory],
+          injector.instanceOf[TxFilterNoAuthActor.Factory])
       )
     }
   }

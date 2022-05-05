@@ -26,8 +26,9 @@ object WebhookManagerActor {
   case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
 
   def props(memPoolWatcher: MemPoolWatcherService, backendSelection: HttpBackendSelection,
-            childFactory: TxWebhookMessagingActor.Factory): Props =
-    Props(new WebhookManagerActor(memPoolWatcher, backendSelection, childFactory))
+            messagingActorFactory: TxWebhookMessagingActor.Factory,
+            filteringActorFactory: TxFilterNoAuthActor.Factory): Props =
+    Props(new WebhookManagerActor(memPoolWatcher, backendSelection, messagingActorFactory, filteringActorFactory))
 
   implicit val startWrites: Writes[Started] = new Writes[Started]() {
     def writes(started: Started): JsObject = Json.obj(fields =
@@ -39,7 +40,8 @@ object WebhookManagerActor {
 
 class WebhookManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
                                     val backendSelection: HttpBackendSelection,
-                                    val messagingActorFactory: TxWebhookMessagingActor.Factory)
+                                    val messagingActorFactory: TxWebhookMessagingActor.Factory,
+                                    val filteringActorFactory: TxFilterNoAuthActor.Factory)
   extends Actor with InjectedActorSupport {
 
   private val logger = LogFactory.getLog(classOf[WebhookManagerActor])
@@ -67,9 +69,13 @@ class WebhookManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
       if (webhooks contains uri) {
         val hook = webhooks(uri)
         logger.debug(s"hook = " + hook)
-        val webhookMessagingActor = injectedChild(create = messagingActorFactory(uri), name=encodeUrl(uri.toURL.toString))
+        val actorId = encodeUrl(uri.toURL.toString)
+        val webhookMessagingActor = injectedChild(create = messagingActorFactory(uri),
+          name = s"webhook-messenger-$actorId")
         val filteringActor =
-          context.actorOf(TxFilterNoAuthActor.props(webhookMessagingActor, _.value >= hook.threshold, memPoolWatcher))
+//          context.actorOf(TxFilterNoAuthActor.props(webhookMessagingActor, _.value >= hook.threshold, memPoolWatcher))
+          injectedChild(create = filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
+            name = s"webhook-filter-$actorId")
         context.become(updated(webhooks, actors = actors + (uri -> filteringActor)))
         sender ! Started(hook)
       } else {
