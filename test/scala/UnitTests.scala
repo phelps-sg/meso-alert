@@ -189,7 +189,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       broadcastTransaction(f.transactions(1))
       updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
-        case TxUpdate(_, 300000000, _, _, Seq(
+        case TxUpdate("6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4", 300000000, _, _, Seq(
                         TxInputOutput(Some("1H8ANdafjpqYntniT3Ddxh4xPBMCSz33pj"), _),
                         TxInputOutput(Some("1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"), _)
                       ), Seq(
@@ -201,10 +201,12 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       broadcastTransaction(f.transactions(2))
       updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
-        case TxUpdate(_, 923985, _, _, Seq(
+        case TxUpdate("73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259", 923985, _, _,
+                      Seq(
                         TxInputOutput(Some("1AyQnFZk9MbjLFXSWJ7euNbGhaNpjPvrSq"), _),
                         TxInputOutput(Some("bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"), _)
-                        ), Seq(_)) =>
+                      ),
+                      Seq(_)) =>
       }
 
     }
