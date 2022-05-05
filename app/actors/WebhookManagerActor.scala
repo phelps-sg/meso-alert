@@ -39,7 +39,7 @@ object WebhookManagerActor {
 
 class WebhookManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
                                     val backendSelection: HttpBackendSelection,
-                                    val childFactory: TxWebhookMessagingActor.Factory)
+                                    val messagingActorFactory: TxWebhookMessagingActor.Factory)
   extends Actor with InjectedActorSupport {
 
   private val logger = LogFactory.getLog(classOf[WebhookManagerActor])
@@ -67,7 +67,7 @@ class WebhookManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
       if (webhooks contains uri) {
         val hook = webhooks(uri)
         logger.debug(s"hook = " + hook)
-        val webhookMessagingActor = injectedChild(create = childFactory(uri), name=encodeUrl(uri.toURL.toString))
+        val webhookMessagingActor = injectedChild(create = messagingActorFactory(uri), name=encodeUrl(uri.toURL.toString))
         val filteringActor =
           context.actorOf(TxFilterNoAuthActor.props(webhookMessagingActor, _.value >= hook.threshold, memPoolWatcher))
         context.become(updated(webhooks, actors = actors + (uri -> filteringActor)))
