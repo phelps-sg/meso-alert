@@ -50,13 +50,7 @@ class WebhookManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
 
   override def receive: Receive = updated(Map[URI, Webhook](), Map[URI, ActorRef]())
 
-  def encodeUrl(url: String): String =
-    try {
-      URLEncoder.encode(url, "UTF-8")
-    } catch {
-      case exception: UnsupportedEncodingException =>
-        "Problems while encoding " + exception.getMessage
-    }
+  def encodeUrl(url: String): String = URLEncoder.encode(url, "UTF-8")
 
   def updated(webhooks: Map[URI, Webhook], actors: Map[URI, ActorRef]): Receive = {
     case Register(hook) =>
