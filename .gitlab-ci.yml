@@ -17,8 +17,7 @@ docker:
   stage: test
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - export PLAY_SECRET=changeme
-    - make docker-build
+    - export PLAY_SECRET=changeme; cd docker; docker-compose up --no-start --build
     - make docker-push
   only:
     - master
