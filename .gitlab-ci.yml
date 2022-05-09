@@ -15,3 +15,5 @@ deploy:
     - kubectl config get-contexts
     - kubectl config use-context mesonomics/meso-alert:meso-alert-k8agent
     - kubectl get pods
+  only:
+    - master
