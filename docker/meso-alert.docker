@@ -3,9 +3,6 @@ MAINTAINER sphelps@sphelps.net version: 0.1
 
 ARG play_secret
 
-RUN apt-get update && \
-     apt-get install -y docker docker.io
-
 ADD ./target /root/target
 ADD ./docker/project-setup.sh /tmp/project-setup.sh
 ADD ./docker/start-play.sh /root/start-play.sh
