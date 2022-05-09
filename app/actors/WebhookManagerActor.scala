@@ -8,7 +8,6 @@ import play.api.libs.concurrent.InjectedActorSupport
 import play.api.libs.json.{JsObject, Json, Writes}
 import services.MemPoolWatcherService
 
-import java.io.UnsupportedEncodingException
 import java.net.{URI, URLEncoder}
 
 object WebhookManagerActor {
