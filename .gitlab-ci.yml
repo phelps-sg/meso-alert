@@ -22,7 +22,7 @@ docker:
     - cd docker
     - docker-compose up --no-start --build
     - cd ..
-    - make docker-push
+    - docker push registry.gitlab.com/mesonomics/meso-alert/play-server
   only:
     - master
 
