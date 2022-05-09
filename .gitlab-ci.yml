@@ -5,7 +5,7 @@ stages:
   - deploy
 
 image:
-  name: registry.gitlab.com/mesonomics/meso-alert/play-server
+  name: registry.gitlab.com/mesonomics/meso-alert/ci
   entrypoint: [""]
 
 scalatest:

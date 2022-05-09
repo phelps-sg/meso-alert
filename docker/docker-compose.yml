@@ -11,3 +11,6 @@ services:
       dockerfile: ./docker/meso-alert.docker
       args:
         play_secret: ${PLAY_SECRET}
+  meso-alert-ci:
+    image: registry.gitlab.com/mesonomics/meso-alert/ci
+    container_name: meso-alert-ci
