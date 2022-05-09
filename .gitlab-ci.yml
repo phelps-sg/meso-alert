@@ -1,3 +1,9 @@
+stages:
+  - build
+  - test
+  - push
+  - deploy
+
 image:
   name: registry.gitlab.com/mesonomics/meso-alert/play-server
   entrypoint: [""]
@@ -7,13 +13,25 @@ scalatest:
   script:
     - make sbt-test
 
-deploy:
+docker:
+  stage: test
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - export PLAY_SECRET=changeme
+    - make docker-build
+    - make docker-push
+  only:
+    - master
+
+k8:
+  stage: deploy
   image:
     name: bitnami/kubectl:latest
     entrypoint: ['']
   script:
     - kubectl config get-contexts
     - kubectl config use-context mesonomics/meso-alert:meso-alert-k8agent
-    - kubectl get pods
+    - kubectl apply -f k8/deployment.yaml
+    - kubectl apply -f k8/service.yaml
   only:
     - master
