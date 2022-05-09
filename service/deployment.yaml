@@ -1,0 +1,26 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meso-alert-deployment
+  labels:
+    app.kubernetes.io/name: meso-alert
+spec:
+   selector:
+      matchLabels:
+         app: meso-alert
+   template:
+      metadata:
+         labels:
+            app: meso-alert
+      spec:
+        containers:
+          - name: meso-alert
+            image: registry.gitlab.com/mesonomics/meso-alert/play-server
+            ports:
+              - containerPort: 9000
+                name: websocket
+                protocol: TCP
+        imagePullSecrets:
+           - name: regcred
+
