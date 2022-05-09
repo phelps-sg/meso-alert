@@ -16,7 +16,8 @@ spec:
       spec:
         containers:
           - name: meso-alert
-            image: registry.gitlab.com/mesonomics/meso-alert/play-server
+            image: registry.gitlab.com/mesonomics/meso-alert/play-server:latest
+            imagePullPolicy: "Always"
             ports:
               - containerPort: 9000
                 name: websocket
