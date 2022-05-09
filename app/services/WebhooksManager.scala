@@ -32,7 +32,8 @@ class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcher, @Named("webhooks
 
   val webHooks: Array[Webhook] = Array(
     Webhook(new URI("https://hooks.slack.com/services/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"),
-      threshold = 200000000000L),
+//      threshold = 20000000L),
+    threshold = 200000000000L),
   )
   for (hook <- webHooks) {
     register(hook).map(_ => start(hook.uri))
