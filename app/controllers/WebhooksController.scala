@@ -4,7 +4,7 @@ import actors.WebhookManagerActor.{Webhook, WebhookNotRegisteredException}
 import akka.actor.ActorSystem
 import play.api.libs.json._
 import play.api.mvc.{Action, BaseController, ControllerComponents}
-import services.{MemPoolWatcherService, SlackWebhooksManagerService, UserManagerService}
+import services.SlackWebhooksManagerService
 
 import java.net.URI
 import javax.inject.Inject
