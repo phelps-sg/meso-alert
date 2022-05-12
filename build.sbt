@@ -26,7 +26,8 @@ libraryDependencies ++= List(
 )
 libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.3.3",
-  "com.typesafe.slick" %% "slick-hikaricp" % "3.3.3"
+  "com.typesafe.slick" %% "slick-hikaricp" % "3.3.3",
+  "org.postgresql" % "postgresql" % "42.3.4"
 )
 // Adds additional packages into Twirl
 //TwirlKeys.templateImports += "com.mesonomics.controllers._"
