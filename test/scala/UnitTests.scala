@@ -302,20 +302,23 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       }
 
       "correctly register, start and stop a web hook" in {
+        import WebhookManagerActor._
         val f = fixture
         (f.mockMemPoolWatcher.addListener _).expects(*).once()
         val uri = new URI("http://test")
         val hook = Webhook(uri, threshold = 100L)
         val future = for {
-          registered <- f.webhooksActor ? WebhookManagerActor.Register(hook)
-          started <- f.webhooksActor ? WebhookManagerActor.Start(uri)
-          stopped <- f.webhooksActor ? WebhookManagerActor.Stop(uri)
-        } yield (registered, started, stopped)
+          registered <- f.webhooksActor ? Register(hook)
+          started <- f.webhooksActor ? Start(uri)
+          stopped <- f.webhooksActor ? Stop(uri)
+          restarted <- f.webhooksActor ? Start(uri)
+          finalStop <- f.webhooksActor ? Stop(uri)
+        } yield (registered, started, stopped, restarted, finalStop)
         whenReady(future) {
           result =>
             result should matchPattern {
-              case (WebhookManagerActor.Registered(`hook`), WebhookManagerActor.Started(`hook`),
-                      WebhookManagerActor.Stopped(`hook`)) =>
+              case (Registered(`hook`), Started(`hook`), Stopped(`hook`), Started(`hook`),
+                      Stopped(`hook`)) =>
             }
         }
       }
