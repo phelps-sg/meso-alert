@@ -1,7 +1,6 @@
 package actors
 
-import actors.TxFilterAuthActor.Die
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import com.google.inject.Inject
 import org.apache.commons.logging.LogFactory
 import play.api.libs.concurrent.InjectedActorSupport
@@ -47,11 +46,11 @@ class WebhookManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
 
   import WebhookManagerActor._
 
-  override def receive: Receive = updated(Map[URI, Webhook](), Map[URI, ActorRef]())
+  override def receive: Receive = updated(Map[URI, Webhook](), Map[URI, Seq[ActorRef]]())
 
   def encodeUrl(url: String): String = URLEncoder.encode(url, "UTF-8")
 
-  def updated(webhooks: Map[URI, Webhook], actors: Map[URI, ActorRef]): Receive = {
+  def updated(webhooks: Map[URI, Webhook], actors: Map[URI, Seq[ActorRef]]): Receive = {
     case Register(hook) =>
       context.become(updated(webhooks = webhooks + (hook.uri -> hook), actors))
       sender ! Registered(hook)
@@ -68,13 +67,13 @@ class WebhookManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
         val filteringActor =
           injectedChild(filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
                          name = s"webhook-filter-$actorId")
-        context.become(updated(webhooks, actors = actors + (uri -> filteringActor)))
+        context.become(updated(webhooks, actors = actors + (uri -> Array(webhookMessagingActor, filteringActor))))
         sender ! Started(hook)
       } else {
         sender ! WebhookNotRegisteredException(uri)
       }
     case Stop(uri) =>
-      actors(uri) ! Die
+      actors(uri).foreach(_ ! PoisonPill)
       sender ! Stopped(webhooks(uri))
     case List =>
       sender ! webhooks
