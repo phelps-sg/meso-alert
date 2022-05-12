@@ -27,6 +27,7 @@ import services._
 
 import java.net.URI
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.io.Source
 
@@ -311,6 +312,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           registered <- f.webhooksActor ? Register(hook)
           started <- f.webhooksActor ? Start(uri)
           stopped <- f.webhooksActor ? Stop(uri)
+          _ <- Future { expectNoMessage() }
           restarted <- f.webhooksActor ? Start(uri)
           finalStop <- f.webhooksActor ? Stop(uri)
         } yield (registered, started, stopped, restarted, finalStop)
