@@ -1,5 +1,6 @@
 name := """meso-alert"""
 organization := "com.mesonomics"
+maintainer := "steve@symbiotica.ai"
 
 version := "1.0-SNAPSHOT"
 
