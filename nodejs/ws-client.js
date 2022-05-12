@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 
 const options = {origin: 'localhost:9000'}
-const socket = new WebSocket('ws://greyarea:9000/ws', options);
+const socket = new WebSocket('ws://localhost:9000/ws', options);
 
 socket.onopen = function() {
   console.info('[open] Connection established');
