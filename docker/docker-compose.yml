@@ -22,7 +22,7 @@ services:
 
   postgres-db:
     container_name: postgres-db
-    image: postgres:latest
+    image: postgres:14.2
     restart: always
     environment:
       POSTGRES_USER: meso-alert
