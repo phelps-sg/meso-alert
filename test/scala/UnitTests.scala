@@ -302,7 +302,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         }
       }
 
-      "correctly register, start and stop a web hook" in {
+      "correctly register, start, stop and restart a web hook" in {
         import WebhookManagerActor._
         val f = fixture
         (f.mockMemPoolWatcher.addListener _).expects(*).twice()

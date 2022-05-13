@@ -1,6 +1,5 @@
 package services
 
-import actors.WebhookManagerActor
 import actors.WebhookManagerActor.{Register, Registered, Start, Started, Stop, Stopped, Webhook, WebhookNotRegisteredException}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask

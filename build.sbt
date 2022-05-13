@@ -24,6 +24,11 @@ libraryDependencies ++= List(
   "com.softwaremill.sttp.client3" %% "circe" % "3.5.2",
   "io.circe" %% "circe-generic" % "0.14.1"
 )
+libraryDependencies ++= Seq(
+  "com.typesafe.slick" %% "slick" % "3.3.3",
+  "com.typesafe.slick" %% "slick-hikaricp" % "3.3.3",
+  "org.postgresql" % "postgresql" % "42.3.4"
+)
 // Adds additional packages into Twirl
 //TwirlKeys.templateImports += "com.mesonomics.controllers._"
 
