@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meso-alert-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: meso-alert-postgres
+  template:
+    metadata:
+      labels:
+        app: meso-alert-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:14.2
+          imagePullPolicy: "IfNotPresent"
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: meso-alert-postgres-config
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgredb
+      volumes:
+        - name: postgredb
+          persistentVolumeClaim:
+            claimName: meso-alert-postgres-pv-claim
