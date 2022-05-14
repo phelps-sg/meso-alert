@@ -52,7 +52,7 @@ The following example registers a new webhook with a threshold of 20000000 Satos
 
 ~~~bash
 curl -X POST http://localhost:9000/api/webhooks/register --data \
-'{"uri":"https://hooks.slack.com/services/TF4U7GH5F/B03D4N1KBV5/test", "threshold":20000000}' \
+'{"uri":"https://hooks.slack.com/services/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", "threshold":20000000}' \
 -H 'Content-Type: application/json'
 ~~~
 
