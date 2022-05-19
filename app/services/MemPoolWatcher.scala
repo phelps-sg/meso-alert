@@ -12,7 +12,7 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import java.util
 import java.util.Collections
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Provider, Singleton}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -20,19 +20,19 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[MemPoolWatcher])
 trait MemPoolWatcherService {
   def addListener(listener: ActorRef): Unit
-  def start(): Future[Unit]
+  def init(): Future[Unit]
 }
 
 @ImplementedBy(classOf[MainNetPeerGroup])
-trait PeerGroupSelection {
+trait PeerGroupSelection extends Provider[PeerGroup] {
   val params: NetworkParameters
-  val peerGroup: PeerGroup
+  val get: PeerGroup
 }
 
 @Singleton
 class MainNetPeerGroup extends PeerGroupSelection {
   val params: NetworkParameters = MainNetParams.get
-  val peerGroup = new PeerGroup(params)
+  lazy val get = new PeerGroup(params)
 }
 
 @Singleton
@@ -48,7 +48,7 @@ class MemPoolWatcher @Inject()(peerGroupSelection: PeerGroupSelection)
   private val START_MS: Long = System.currentTimeMillis
   private val STATISTICS_FREQUENCY_MS: Long = 1000 * 60
   BriefLogFormatter.initVerbose()
-  val peerGroup: PeerGroup = peerGroupSelection.peerGroup
+  val peerGroup: PeerGroup = peerGroupSelection.get
   val actor: ActorRef = system.actorOf(MemPoolWatcherActor.props(peerGroup))
 
   def startPeerGroup(): Unit = {
@@ -66,16 +66,21 @@ class MemPoolWatcher @Inject()(peerGroupSelection: PeerGroupSelection)
     peerGroup.start()
   }
 
-  def run(): Unit = {
-    while (true) {
-      Thread.sleep(STATISTICS_FREQUENCY_MS)
-      printCounters()
+  def run(): Future[Unit] = {
+    Future {
+      while (true) {
+        Thread.sleep(STATISTICS_FREQUENCY_MS)
+        printCounters()
+      }
     }
   }
 
-  def start(): Future[Unit] = {
-    startPeerGroup()
+  def init(): Future[Unit] = {
     Future {
+      log.info("Starting peer group... ")
+      startPeerGroup()
+      log.info("Peer group started.")
+      log.info("Launching stats watcher... ")
       run()
     }
   }
