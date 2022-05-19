@@ -8,7 +8,6 @@ import com.google.inject.ImplementedBy
 import com.google.inject.name.Named
 import dao.{Webhook, WebhookDao}
 import org.slf4j.{Logger, LoggerFactory}
-import slick.jdbc.JdbcBackend.Database
 
 import java.net.URI
 import javax.inject.{Inject, Singleton}
