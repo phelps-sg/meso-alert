@@ -10,10 +10,11 @@ data:
   POSTGRES_PASSWORD: th0rnxtc
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: meso-alert-postgres
 spec:
+  serviceName: "meso-alert-postgres"
   replicas: 1
   selector:
     matchLabels:
