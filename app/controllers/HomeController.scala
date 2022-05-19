@@ -15,6 +15,7 @@ import services.{MemPoolWatcherService, SlackWebhooksManagerService, UserManager
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -31,8 +32,17 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
 
   val logger: Logger = play.api.Logger(getClass)
 
-  memPoolWatcher.start()
-//  slackWebHooksManager.start()
+  private val init = for {
+    _ <- memPoolWatcher.init()
+    _ <- slackWebHooksManager.init()
+  } yield ()
+
+  init.onComplete{
+    case Success(_) => logger.info("Initialisation complete.")
+    case Failure(ex) =>
+      logger.error(s"Initialisation failed with ${ex.getMessage}")
+      ex.printStackTrace()
+  }
 
   implicit val mft: MessageFlowTransformer[Auth, TxUpdate] =
     MessageFlowTransformer.jsonMessageFlowTransformer[Auth, TxUpdate]

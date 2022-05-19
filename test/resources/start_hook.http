@@ -1,0 +1,4 @@
+POST http://localhost:9000/api/webhooks/start
+Content-Type: application/json
+
+{"uri":"https://hooks.slack.com/services/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"}

@@ -1,7 +1,8 @@
 package controllers
 
-import actors.WebhookManagerActor.{Webhook, WebhookNotRegisteredException}
+import actors.WebhooksManagerActor.WebhookNotRegisteredException
 import akka.actor.ActorSystem
+import dao.Webhook
 import play.api.libs.json._
 import play.api.mvc.{Action, BaseController, ControllerComponents}
 import services.SlackWebhooksManagerService

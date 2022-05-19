@@ -1,6 +1,6 @@
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
-import actors.WebhookManagerActor.{Webhook, WebhookNotRegisteredException}
-import actors.{HttpBackendSelection, TxFilterAuthActor, TxFilterNoAuthActor, TxUpdate, TxWebhookMessagingActor, WebhookManagerActor}
+import actors.WebhooksManagerActor.{Registered, Started, Stopped, WebhookNotRegisteredException}
+import actors.{HttpBackendSelection, TxFilterAuthActor, TxFilterNoAuthActor, TxUpdate, TxWebhookMessagingActor, WebhooksManagerActor}
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -8,6 +8,7 @@ import akka.util.Timeout
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
+import dao.{Webhook, WebhookDao}
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
@@ -18,27 +19,42 @@ import org.scalamock.util.Defaultable
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject
 import play.api.inject.guice.GuiceInjectorBuilder
 import play.api.libs.json.{JsArray, Json}
 import play.libs.akka.AkkaGuiceSupport
 import services._
+import slick.BtcPostgresProfile.api._
+import slick.dbio.DBIO
+import slick.jdbc.JdbcBackend
+import slick.jdbc.JdbcBackend.Database
+import slick.{DatabaseExecutionContext, Tables, jdbc}
 
 import java.net.URI
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import javax.inject.Provider
+import scala.collection.mutable
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, Future}
 import scala.io.Source
 
 //noinspection TypeAnnotation
 class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
-  with Matchers
   with AnyWordSpecLike
+  with PostgresContainer
+  with Matchers
   with MockFactory
   with ScalaFutures
   with BeforeAndAfterAll
   with ImplicitSender {
+
+  // akka timeout
+  implicit val akkaTimeout = Timeout(5.seconds)
+
+  // whenReady timeout
+  implicit override val patienceConfig =
+    PatienceConfig(timeout = Span(20, Seconds), interval = Span(5, Millis))
 
   trait WebSocketMock {
     def update(tx: TxUpdate): Unit
@@ -58,9 +74,42 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
   }
 
+  trait WebhookManagerMock {
+    def start(uri: URI): Unit
+    def register(hook: Webhook): Unit
+    def stop(uri: URI): Unit
+  }
+
+  object MockWebhookManagerActor {
+    def props(mock: WebhookManagerMock) = Props(new MockWebhookManagerActor(mock))
+  }
+
+  class MockWebhookManagerActor(val mock: WebhookManagerMock) extends Actor {
+    val hooks = mutable.Map[URI, Webhook]()
+    override def receive: Receive = {
+      case WebhooksManagerActor.Start(uri) =>
+        mock.start(uri)
+        sender ! Started(hooks(uri))
+      case WebhooksManagerActor.Register(hook) =>
+        mock.register(hook)
+        hooks(hook.uri) = hook
+        sender ! Registered(hook)
+      case WebhooksManagerActor.Stop(uri) =>
+        mock.stop(uri)
+        sender ! Stopped(hooks(uri))
+      case x =>
+        fail(s"unrecognized message: $x")
+    }
+  }
+
+  lazy val db: JdbcBackend.Database = database.asInstanceOf[JdbcBackend.Database]
+
   class TestModule extends AbstractModule with AkkaGuiceSupport {
 
     override def configure(): Unit = {
+      bind(classOf[Database]).toProvider(new Provider[Database] {
+        val get: jdbc.JdbcBackend.Database = db
+      })
 //      bindActor(classOf[WebhooksActor], "webhooks-actor")
       bindActorFactory(classOf[TxWebhookMessagingActor], classOf[TxWebhookMessagingActor.Factory])
       bindActorFactory(classOf[TxFilterAuthActor], classOf[TxFilterAuthActor.Factory])
@@ -74,7 +123,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   def fixture = new {
 
-    implicit val timeout = Timeout(1.second)
+    implicit val timeout = Timeout(10.seconds)
 
     lazy val mockMemPoolWatcher = mock[MemPoolWatcherService]
     lazy val mockWs = mock[WebSocketMock]
@@ -93,7 +142,10 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       .bindings(new TestModule)
       .overrides(inject.bind(classOf[ActorSystem]).toInstance(system))
       .overrides(inject.bind(classOf[MemPoolWatcherService]).toInstance(mockMemPoolWatcher))
+//      .overrides(inject.bind(classOf[WebhookDao]).toInstance(webhookDao))
       .build()
+
+    lazy val webhookDao = injector.instanceOf[WebhookDao]
 
     lazy val mockWsActor = system.actorOf(MockWebsocketActor.props(mockWs))
 
@@ -102,12 +154,21 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
     lazy val webhooksActor = {
       system.actorOf(
-        WebhookManagerActor.props(mockMemPoolWatcher,
+        WebhooksManagerActor.props(mockMemPoolWatcher,
           injector.instanceOf[HttpBackendSelection],
           injector.instanceOf[TxWebhookMessagingActor.Factory],
-          injector.instanceOf[TxFilterNoAuthActor.Factory])
+          injector.instanceOf[TxFilterNoAuthActor.Factory],
+          injector.instanceOf[WebhookDao],
+          injector.instanceOf[DatabaseExecutionContext]
+        )
       )
     }
+
+    lazy val webhookManagerMock = mock[WebhookManagerMock]
+    lazy val mockWebhookManagerActor = system.actorOf(MockWebhookManagerActor.props(webhookManagerMock))
+    lazy val webhooksManager = new WebhooksManager(
+      mockMemPoolWatcher,
+      webhookDao = webhookDao, actor = mockWebhookManagerActor)
   }
 
   //noinspection ZeroIndexToHead
@@ -139,7 +200,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
       val memPoolWatcher = new MemPoolWatcher(new PeerGroupSelection() {
         val params = f.params
-        val peerGroup = f.mockPeerGroup
+        lazy val  get = f.mockPeerGroup
       })
       memPoolWatcher.addListener(f.txWatchActor)
 
@@ -273,59 +334,93 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       expectNoMessage()
     }
 
+    "WebhooksManager" should {
+
+      "register and start all hooks stored in the database on initialisation" in {
+
+        val f = fixture
+
+        val hook1 = Webhook(new URI("http://test1"), 10)
+        val hook2 = Webhook(new URI("http://test2"), 20)
+
+        (f.webhookManagerMock.register _).expects(hook1).returning(Registered(hook1))
+        (f.webhookManagerMock.register _).expects(hook2).returning(Registered(hook2))
+
+        (f.webhookManagerMock.start _).expects(hook1.uri).returning(Started(hook1))
+        (f.webhookManagerMock.start _).expects(hook2.uri).returning(Started(hook2))
+
+        val init = for {
+          _ <- database.run(
+            DBIO.seq(
+              Tables.schema.create,
+              Tables.webhooks += hook1,
+              Tables.webhooks += hook2
+            )
+          )
+          _ <- f.webhooksManager.register(hook1)
+          _ <- f.webhooksManager.register(hook2)
+          response <- f.webhooksManager.init()
+        } yield response
+
+        whenReady(init) { _ => succeed }
+      }
+    }
+
     "WebhookManagerActor" should {
 
-      // akka timeout
-      implicit val timeout = Timeout(1.second)
+      def afterDbInit[T](fn: Unit => Future[T]): Future[T] = {
+        for {
+          _ <- db.run(DBIO.seq(Tables.schema.drop, Tables.schema.create))
+          response <- fn()
+        } yield response
+      }
 
       "return WebhookNotRegistered when trying to start an unregistered hook" in {
         val f = fixture
         val uri = new URI("http://test")
-        val future = f.webhooksActor ? WebhookManagerActor.Start(uri)
-        whenReady(future) {
-          result =>
-            result should matchPattern {
-              case WebhookNotRegisteredException(`uri`) =>
-            }
-        }
+        afterDbInit(_ => f.webhooksActor ? WebhooksManagerActor.Start(uri))
+          .futureValue should matchPattern { case WebhookNotRegisteredException(`uri`) => }
       }
 
-      "return Registered when registering a new hook" in {
+      "return Registered and record a new hook in the database when registering a new hook" in {
         val f = fixture
         val hook = Webhook(uri = new URI("http://test"), threshold = 100L)
-        val future = f.webhooksActor ? WebhookManagerActor.Register(hook)
-        whenReady(future) {
+        whenReady(afterDbInit(
+          _ => for {
+            response <- f.webhooksActor ? WebhooksManagerActor.Register(hook)
+            contents <- db.run(Tables.webhooks.result)
+          } yield (response, contents)
+        )) {
           result =>
             result should matchPattern {
-              case WebhookManagerActor.Registered(`hook`) =>
+              case (WebhooksManagerActor.Registered(`hook`), Seq(`hook`)) =>
             }
         }
       }
 
       "correctly register, start, stop and restart a web hook" in {
-        import WebhookManagerActor._
+        import WebhooksManagerActor._
         val f = fixture
         (f.mockMemPoolWatcher.addListener _).expects(*).twice()
         val uri = new URI("http://test")
         val hook = Webhook(uri, threshold = 100L)
-        val future = for {
+        afterDbInit(_ => for {
           registered <- f.webhooksActor ? Register(hook)
           started <- f.webhooksActor ? Start(uri)
           stopped <- f.webhooksActor ? Stop(uri)
-          _ <- Future { expectNoMessage() }
+          _ <- Future {
+            expectNoMessage()
+          }
           restarted <- f.webhooksActor ? Start(uri)
           finalStop <- f.webhooksActor ? Stop(uri)
-        } yield (registered, started, stopped, restarted, finalStop)
-        whenReady(future) {
-          result =>
-            result should matchPattern {
-              case (Registered(`hook`), Started(`hook`), Stopped(`hook`), Started(`hook`),
-                      Stopped(`hook`)) =>
-            }
+        } yield (registered, started, stopped, restarted, finalStop))
+          .futureValue should matchPattern {
+          case (Registered(`hook`), Started(`hook`), Stopped(`hook`),
+          Started(`hook`), Stopped(`hook`)) =>
         }
       }
-
     }
+
 
   }
 

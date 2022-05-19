@@ -1,13 +1,23 @@
-import actors.{TxFilterAuthActor, TxFilterNoAuthActor, TxWebhookMessagingActor, WebhookManagerActor}
+import actors.{TxFilterAuthActor, TxFilterNoAuthActor, TxWebhookMessagingActor, WebhooksManagerActor}
 import com.google.inject.AbstractModule
+import com.typesafe.config.Config
 import play.libs.akka.AkkaGuiceSupport
+import slick.jdbc.JdbcBackend.Database
+
+import javax.inject.{Inject, Provider, Singleton}
 
 class Module extends AbstractModule with AkkaGuiceSupport {
 
   override def configure(): Unit = {
-    bindActor(classOf[WebhookManagerActor], "webhooks-actor")
+    bind(classOf[Database]).toProvider(classOf[DatabaseProvider])
+    bindActor(classOf[WebhooksManagerActor], "webhooks-actor")
     bindActorFactory(classOf[TxWebhookMessagingActor], classOf[TxWebhookMessagingActor.Factory])
     bindActorFactory(classOf[TxFilterAuthActor], classOf[TxFilterAuthActor.Factory])
     bindActorFactory(classOf[TxFilterNoAuthActor], classOf[TxFilterNoAuthActor.Factory])
   }
+}
+
+@Singleton
+class DatabaseProvider @Inject() (config: Config) extends Provider[Database] {
+  lazy val get = Database.forConfig("meso-alert.db", config)
 }

@@ -12,6 +12,7 @@ services:
       dockerfile: ./docker/meso-alert.docker
       args:
         play_secret: ${PLAY_SECRET}
+        postgres_password: ${POSTGRES_PASSWORD}
 
   meso-alert-ci:
     image: registry.gitlab.com/mesonomics/meso-alert/ci
