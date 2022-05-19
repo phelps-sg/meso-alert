@@ -35,8 +35,8 @@ import slick.{DatabaseExecutionContext, Tables, jdbc}
 import java.net.URI
 import javax.inject.Provider
 import scala.collection.mutable
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Future}
 import scala.io.Source
 
 //noinspection TypeAnnotation
