@@ -385,17 +385,12 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       "return Registered and record a new hook in the database when registering a new hook" in {
         val f = fixture
         val hook = Webhook(uri = new URI("http://test"), threshold = 100L)
-        whenReady(afterDbInit(
+        afterDbInit(
           _ => for {
             response <- f.webhooksActor ? WebhooksManagerActor.Register(hook)
             contents <- db.run(Tables.webhooks.result)
           } yield (response, contents)
-        )) {
-          result =>
-            result should matchPattern {
-              case (WebhooksManagerActor.Registered(`hook`), Seq(`hook`)) =>
-            }
-        }
+        ).futureValue should matchPattern { case (WebhooksManagerActor.Registered(`hook`), Seq(`hook`)) => }
       }
 
       "correctly register, start, stop and restart a web hook" in {
