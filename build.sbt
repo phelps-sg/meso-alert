@@ -20,8 +20,8 @@ val AkkaVersion = "2.6.19"
 libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % Test
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.12" % Test
 libraryDependencies ++= List(
-  "com.softwaremill.sttp.client3" %% "async-http-client-backend-monix" % "3.5.2",
-  "com.softwaremill.sttp.client3" %% "circe" % "3.5.2",
+  "com.softwaremill.sttp.client3" %% "async-http-client-backend-monix" % "3.6.1",
+  "com.softwaremill.sttp.client3" %% "circe" % "3.6.1",
   "io.circe" %% "circe-generic" % "0.14.1"
 )
 libraryDependencies ++= Seq(
