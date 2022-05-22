@@ -393,6 +393,15 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         ).futureValue should matchPattern { case (WebhooksManagerActor.Registered(`hook`), Seq(`hook`)) => }
       }
 
+      "return an exception when stopping a hook that is not started" in {
+        val f = fixture
+        val uri = new URI("http://test")
+        afterDbInit(_ => for {
+          stopped <- f.webhooksActor ? WebhooksManagerActor.Stop(uri)
+        } yield stopped)
+          .futureValue should matchPattern { case WebhooksManagerActor.WebhookNotStartedException(`uri`) => }
+      }
+
       "correctly register, start, stop and restart a web hook" in {
         import WebhooksManagerActor._
         val f = fixture

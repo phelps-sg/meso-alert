@@ -26,6 +26,7 @@ object WebhooksManagerActor {
   case class List()
 
   case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
+  case class WebhookNotStartedException(uri: URI) extends Exception(s"No webhook started for $uri")
 
   def props(memPoolWatcher: MemPoolWatcherService, backendSelection: HttpBackendSelection,
             messagingActorFactory: TxWebhookMessagingActor.Factory,
@@ -89,8 +90,12 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
       })
 
     case Stop(uri) =>
-      actors.get(uri).foreach(_ ! PoisonPill)
-      withHookFor(uri, hook => Stopped(hook))
+      if (actors contains uri) {
+        actors.get(uri).foreach(_ ! PoisonPill)
+        withHookFor(uri, hook => Stopped(hook))
+      } else {
+        sender ! WebhookNotStartedException(uri)
+      }
 
   }
 
