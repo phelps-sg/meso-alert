@@ -30,7 +30,17 @@ package object dao {
 
     def init(): Future[Unit] = db.run(Tables.webhooks.schema.createIfNotExists)
 
-    def insert(hook: Webhook): Future[Int] = db.run(Tables.webhooks += hook)
+    def insert(hook: Webhook): Future[Int] = {
+      for {
+        n: Int <- db.run(Tables.webhooks.filter(_.url === hook.uri.toString).size.result)
+        result <-
+          if (n > 0) {
+            Future { 0 }
+          } else {
+            db.run(Tables.webhooks += hook)
+          }
+      } yield result
+    }
 
     def all(): Future[Seq[Webhook]] = db.run(Tables.webhooks.result)
 

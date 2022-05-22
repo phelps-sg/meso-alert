@@ -11,6 +11,7 @@ import services.MemPoolWatcherService
 import slick.DatabaseExecutionContext
 
 import java.net.{URI, URLEncoder}
+import java.sql.SQLException
 import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.ExecutionContext
 
@@ -27,6 +28,7 @@ object WebhooksManagerActor {
 
   case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
   case class WebhookNotStartedException(uri: URI) extends Exception(s"No webhook started for $uri")
+  case class WebhookAlreadyRegisteredException(uri: URI) extends Exception(s"Webhook already registered for $uri")
 
   def props(memPoolWatcher: MemPoolWatcherService, backendSelection: HttpBackendSelection,
             messagingActorFactory: TxWebhookMessagingActor.Factory,
@@ -73,7 +75,10 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
   override def receive: Receive = {
 
     case Register(hook) =>
-      webhookDao.insert(hook).map(_ => Registered(hook)).pipeTo(sender)
+        webhookDao.insert(hook).map {
+          case 0 => WebhookAlreadyRegisteredException(hook.uri)
+          case x => Registered(hook)
+        }.pipeTo(sender)
 
     case Start(uri) =>
       logger.debug(s"Received start request for $uri")
