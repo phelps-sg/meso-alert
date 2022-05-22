@@ -370,7 +370,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
       def afterDbInit[T](fn: Unit => Future[T]): Future[T] = {
         for {
-          _ <- db.run(DBIO.seq(Tables.schema.drop, Tables.schema.create))
+          _ <- database.run(DBIO.seq(Tables.schema.dropIfExists, Tables.schema.create))
           response <- fn()
         } yield response
       }
