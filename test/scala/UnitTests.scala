@@ -388,8 +388,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         afterDbInit(
           _ => for {
             response <- f.webhooksActor ? WebhooksManagerActor.Register(hook)
-            contents <- db.run(Tables.webhooks.result)
-          } yield (response, contents)
+            dbContents <- db.run(Tables.webhooks.result)
+          } yield (response, dbContents)
         ).futureValue should matchPattern { case (WebhooksManagerActor.Registered(`hook`), Seq(`hook`)) => }
       }
 
