@@ -65,7 +65,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   }
 
   class MockWebsocketActor(val mock: WebSocketMock) extends Actor {
-
     override def receive: Receive = {
       case tx: TxUpdate =>
         mock.update(tx)
@@ -105,7 +104,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   lazy val db: JdbcBackend.Database = database.asInstanceOf[JdbcBackend.Database]
 
   class TestModule extends AbstractModule with AkkaGuiceSupport {
-
     override def configure(): Unit = {
       bind(classOf[Database]).toProvider(new Provider[Database] {
         val get: jdbc.JdbcBackend.Database = db
@@ -386,12 +384,12 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       "return Registered and record a new hook in the database when registering a new hook" in {
         val f = fixture
         val hook = Webhook(uri = new URI("http://test"), threshold = 100L)
-        afterDbInit(
+        afterDbInit {
           for {
             response <- f.webhooksActor ? WebhooksManagerActor.Register(hook)
             dbContents <- db.run(Tables.webhooks.result)
           } yield (response, dbContents)
-        ).futureValue should matchPattern { case (WebhooksManagerActor.Registered(`hook`), Seq(`hook`)) => }
+        }.futureValue should matchPattern { case (WebhooksManagerActor.Registered(`hook`), Seq(`hook`)) => }
       }
 
       "return an exception when stopping a hook that is not started" in {
