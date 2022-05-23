@@ -380,7 +380,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         val uri = new URI("http://test")
         afterDbInit {
           f.webhooksActor ? WebhooksManagerActor.Start(uri)
-        } .futureValue should matchPattern { case WebhookNotRegisteredException(`uri`) => }
+        }.futureValue should matchPattern { case WebhookNotRegisteredException(`uri`) => }
       }
 
       "return Registered and record a new hook in the database when registering a new hook" in {
