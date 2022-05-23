@@ -398,9 +398,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         val f = fixture
         val uri = new URI("http://test")
         afterDbInit {
-          for {
-            stopped <- f.webhooksActor ? WebhooksManagerActor.Stop(uri)
-          } yield stopped
+          f.webhooksActor ? WebhooksManagerActor.Stop(uri)
         }.futureValue should matchPattern { case WebhooksManagerActor.WebhookNotStartedException(`uri`) => }
       }
 
