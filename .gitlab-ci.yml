@@ -1,6 +1,5 @@
 variables:
-  VAULT_SERVER_URL: https://vault-cluster.vault.03c4f565-02ef-4d3f-9f32-4447b76c5947.aws.hashicorp.cloud:8200
-  VAULT_AUTH_ROLE: meso-alert-production
+  VAULT_SERVER_URL: "https://vault-cluster.vault.03c4f565-02ef-4d3f-9f32-4447b76c5947.aws.hashicorp.cloud:8200"
 
 stages:
   - build
