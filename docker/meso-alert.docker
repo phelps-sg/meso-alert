@@ -1,13 +1,8 @@
 FROM registry.gitlab.com/mesonomics/spark-bitcoin-graph/mesonomics-sdk-base
 MAINTAINER sphelps@sphelps.net version: 0.1
 
-ARG play_secret
-ARG postgres_password
-
 ADD ./target /root/target
 ADD ./docker/project-setup.sh /tmp/project-setup.sh
 ADD ./docker/start-play.sh /root/start-play.sh
-
-RUN /tmp/project-setup.sh $play_secret $postgres_password
 
 ENTRYPOINT ["/root/start-play.sh"]
