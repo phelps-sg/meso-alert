@@ -4,4 +4,6 @@ MAINTAINER sphelps@sphelps.net version: 0.1
 ADD ./target /root/target
 ADD ./docker/start-play.sh /root/start-play.sh
 
+RUN mkdir -p /etc/secrets/play /etc/secrets/postgres
+
 ENTRYPOINT ["/root/start-play.sh"]
