@@ -6,8 +6,8 @@ cd /root
 
 ls -lR /etc/secrets
 
-PLAY_KEY=$(cat /etc/secrets/play/secret)
-POSTGRES_PASSWORD=$(cat /etc/secrets/postgres/password | base64)
+PLAY_KEY=$(cat /etc/secrets/play/secret | base64)
+POSTGRES_PASSWORD=$(cat /etc/secrets/postgres/password)
 
 cat <<EOF > application-production.conf
 play.http.secret.key="${PLAY_KEY}"
