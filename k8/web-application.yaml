@@ -41,5 +41,20 @@ spec:
             - containerPort: 9000
               name: websocket
               protocol: TCP
+          volumeMounts:
+            - name: postgres-cred
+              mountPath: "/etc/secrets/postgres"
+              readOnly: true
+            - name: play-secret
+              mountPath: "/etc/secrets/play"
+              readOnly: true
+      volumes:
+        - name: postgres-cred
+          secret:
+            secretName: meso-alert-postgres-password
+        - name: play-secret
+          secret:
+            secretName: meso-alert-play-secret
+
       imagePullSecrets:
         - name: regcred

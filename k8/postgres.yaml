@@ -7,7 +7,6 @@ metadata:
 data:
   POSTGRES_DB: meso-alert
   POSTGRES_USER: meso-alert
-  POSTGRES_PASSWORD: th0rnxtc
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -32,6 +31,13 @@ spec:
           envFrom:
             - configMapRef:
                 name: meso-alert-postgres-config
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: meso-alert-postgres-password
+                  key: password
+                  optional: false
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: postgredb
