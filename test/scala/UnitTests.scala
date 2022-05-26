@@ -147,7 +147,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       .bindings(new TestModule)
       .overrides(inject.bind(classOf[ActorSystem]).toInstance(system))
       .overrides(inject.bind(classOf[MemPoolWatcherService]).toInstance(mockMemPoolWatcher))
-//      .overrides(inject.bind(classOf[WebhookDao]).toInstance(webhookDao))
       .build()
 
     lazy val webhookDao = injector.instanceOf[WebhookDao]
