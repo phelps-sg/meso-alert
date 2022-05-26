@@ -119,6 +119,13 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     TestKit.shutdownActorSystem(system)
   }
 
+  def afterDbInit[T](fn: => Future[T]): Future[T] = {
+    for {
+      _ <- database.run(DBIO.seq(Tables.schema.dropIfExists, Tables.schema.create))
+      response <- fn
+    } yield response
+  }
+
   def fixture = new {
 
     implicit val timeout = Timeout(10.seconds)
@@ -366,13 +373,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
     "WebhookManagerActor" should {
 
-      def afterDbInit[T](fn: => Future[T]): Future[T] = {
-        for {
-          _ <- database.run(DBIO.seq(Tables.schema.dropIfExists, Tables.schema.create))
-          response <- fn
-        } yield response
-      }
-
       "return WebhookNotRegistered when trying to start an unregistered hook" in {
         val f = fixture
         val uri = new URI("http://test")
@@ -434,7 +434,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         }
       }
     }
-
 
   }
 
