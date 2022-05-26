@@ -10,7 +10,7 @@ PLAY_KEY=$(cat /etc/secrets/play/secret)
 POSTGRES_PASSWORD=$(cat /etc/secrets/postgres/password)
 
 cat <<EOF > application-production.conf
-play.http.secret.key='${PLAY_KEY}'
+play.http.secret.key="${PLAY_KEY}"
 play.filters.disabled+=play.filters.hosts.AllowedHostsFilter
 
 meso-alert.db = {
