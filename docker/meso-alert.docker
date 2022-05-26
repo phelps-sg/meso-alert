@@ -2,7 +2,6 @@ FROM registry.gitlab.com/mesonomics/spark-bitcoin-graph/mesonomics-sdk-base
 MAINTAINER sphelps@sphelps.net version: 0.1
 
 ADD ./target /root/target
-ADD ./docker/project-setup.sh /tmp/project-setup.sh
 ADD ./docker/start-play.sh /root/start-play.sh
 
 ENTRYPOINT ["/root/start-play.sh"]
