@@ -34,6 +34,7 @@ k8:
     entrypoint: ['']
   script:
     - kubectl config use-context mesonomics/meso-alert:meso-alert-k8agent
+    - kubectl apply -f k8/sealed-secrets.yaml
     - kubectl apply -f k8/web-application.yaml
     - kubectl apply -f k8/postgres.yaml
     - kubectl rollout restart deployment/meso-alert-deployment
