@@ -4,6 +4,8 @@
 
 cd /root
 
+ls -l /etc/secrets
+
 PLAY_KEY=$(cat /etc/secrets/play/secret)
 POSTGRES_PASSWORD=$(cat /etc/secrets/postgres/password)
 
