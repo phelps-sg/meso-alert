@@ -35,8 +35,8 @@ import slick.{DatabaseExecutionContext, Tables, jdbc}
 import java.net.URI
 import javax.inject.Provider
 import scala.collection.mutable
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Future}
 import scala.io.Source
 
 //noinspection TypeAnnotation
@@ -65,7 +65,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   }
 
   class MockWebsocketActor(val mock: WebSocketMock) extends Actor {
-
     override def receive: Receive = {
       case tx: TxUpdate =>
         mock.update(tx)
@@ -105,7 +104,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   lazy val db: JdbcBackend.Database = database.asInstanceOf[JdbcBackend.Database]
 
   class TestModule extends AbstractModule with AkkaGuiceSupport {
-
     override def configure(): Unit = {
       bind(classOf[Database]).toProvider(new Provider[Database] {
         val get: jdbc.JdbcBackend.Database = db
@@ -368,34 +366,50 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
     "WebhookManagerActor" should {
 
-      def afterDbInit[T](fn: Unit => Future[T]): Future[T] = {
+      def afterDbInit[T](fn: => Future[T]): Future[T] = {
         for {
-          _ <- db.run(DBIO.seq(Tables.schema.drop, Tables.schema.create))
-          response <- fn()
+          _ <- database.run(DBIO.seq(Tables.schema.dropIfExists, Tables.schema.create))
+          response <- fn
         } yield response
       }
 
       "return WebhookNotRegistered when trying to start an unregistered hook" in {
         val f = fixture
         val uri = new URI("http://test")
-        afterDbInit(_ => f.webhooksActor ? WebhooksManagerActor.Start(uri))
-          .futureValue should matchPattern { case WebhookNotRegisteredException(`uri`) => }
+        afterDbInit {
+          f.webhooksActor ? WebhooksManagerActor.Start(uri)
+        }.futureValue should matchPattern { case WebhookNotRegisteredException(`uri`) => }
       }
 
       "return Registered and record a new hook in the database when registering a new hook" in {
         val f = fixture
         val hook = Webhook(uri = new URI("http://test"), threshold = 100L)
-        whenReady(afterDbInit(
-          _ => for {
+        afterDbInit {
+          for {
             response <- f.webhooksActor ? WebhooksManagerActor.Register(hook)
-            contents <- db.run(Tables.webhooks.result)
-          } yield (response, contents)
-        )) {
-          result =>
-            result should matchPattern {
-              case (WebhooksManagerActor.Registered(`hook`), Seq(`hook`)) =>
-            }
-        }
+            dbContents <- db.run(Tables.webhooks.result)
+          } yield (response, dbContents)
+        }.futureValue should matchPattern { case (WebhooksManagerActor.Registered(`hook`), Seq(`hook`)) => }
+      }
+
+      "return an exception when stopping a hook that is not started" in {
+        val f = fixture
+        val uri = new URI("http://test")
+        afterDbInit {
+          f.webhooksActor ? WebhooksManagerActor.Stop(uri)
+        }.futureValue should matchPattern { case WebhooksManagerActor.WebhookNotStartedException(`uri`) => }
+      }
+
+      "return an exception when registering a pre-existing hook" in {
+        val f = fixture
+        val uri = new URI("http://test")
+        val hook = Webhook(uri, 10)
+        afterDbInit {
+          for {
+            _ <- db.run(Tables.webhooks += hook)
+            registered <- f.webhooksActor ? WebhooksManagerActor.Register(hook)
+          } yield registered
+        }.futureValue should matchPattern { case WebhooksManagerActor.WebhookAlreadyRegisteredException(`uri`) => }
       }
 
       "correctly register, start, stop and restart a web hook" in {
@@ -404,19 +418,19 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         (f.mockMemPoolWatcher.addListener _).expects(*).twice()
         val uri = new URI("http://test")
         val hook = Webhook(uri, threshold = 100L)
-        afterDbInit(_ => for {
-          registered <- f.webhooksActor ? Register(hook)
-          started <- f.webhooksActor ? Start(uri)
-          stopped <- f.webhooksActor ? Stop(uri)
-          _ <- Future {
-            expectNoMessage()
-          }
-          restarted <- f.webhooksActor ? Start(uri)
-          finalStop <- f.webhooksActor ? Stop(uri)
-        } yield (registered, started, stopped, restarted, finalStop))
-          .futureValue should matchPattern {
-          case (Registered(`hook`), Started(`hook`), Stopped(`hook`),
-          Started(`hook`), Stopped(`hook`)) =>
+        afterDbInit {
+          for {
+            registered <- f.webhooksActor ? Register(hook)
+            started <- f.webhooksActor ? Start(uri)
+            stopped <- f.webhooksActor ? Stop(uri)
+            _ <- Future {
+              expectNoMessage()
+            }
+            restarted <- f.webhooksActor ? Start(uri)
+            finalStop <- f.webhooksActor ? Stop(uri)
+          } yield (registered, started, stopped, restarted, finalStop)
+        }.futureValue should matchPattern {
+          case (Registered(`hook`), Started(`hook`), Stopped(`hook`), Started(`hook`), Stopped(`hook`)) =>
         }
       }
     }

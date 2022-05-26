@@ -29,6 +29,7 @@ make sbt-run
 To build and run the server in production mode, from the project root directory run:
 
 ~~~bash
+export POSTGRES_PASSWORD=<changeme>
 export PLAY_SECRET=<changeme>
 make -e docker-server-start
 ~~~

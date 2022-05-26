@@ -16,7 +16,7 @@ object Tables {
   def toWebhook(tuple: (String, Long)): Webhook = Webhook(new URI(tuple._1), tuple._2)
 
   class Webhooks(tag: Tag) extends Table[Webhook](tag, "webhooks") {
-    def url = column[String]("url")
+    def url = column[String]("url", O.PrimaryKey)
     def threshold = column[Long]("threshold")
     def * = (url, threshold) <> (
       h => Webhook(new URI(h._1), h._2),

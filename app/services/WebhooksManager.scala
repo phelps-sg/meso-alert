@@ -8,7 +8,6 @@ import com.google.inject.ImplementedBy
 import com.google.inject.name.Named
 import dao.{Webhook, WebhookDao}
 import org.slf4j.{Logger, LoggerFactory}
-import slick.jdbc.JdbcBackend.Database
 
 import java.net.URI
 import javax.inject.{Inject, Singleton}
@@ -34,11 +33,6 @@ class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcherService,
   val logger: Logger = LoggerFactory.getLogger(classOf[WebhooksManager])
 
   implicit val timeout: Timeout = 1.minute
-
-//  val webHooks: Array[Webhook] = Array(
-//    Webhook(new URI("https://hooks.slack.com/services/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"),
-//    threshold = 200000000000L),
-//  )
 
   def init(): Future[Seq[Started]] = {
 
