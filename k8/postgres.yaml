@@ -72,11 +72,8 @@ metadata:
     app: meso-alert-postgres
 spec:
   type: NodePort
-  externalIPs:
-    - 192.168.1.101
   ports:
-    - port: 5441
-      targetPort: 5432
+    - port: 5432
       protocol: TCP
   selector:
     app: meso-alert-postgres
