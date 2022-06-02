@@ -91,7 +91,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
     case Start(uri) =>
       logger.debug(s"Received start request for $uri")
       ensuring(!(actors contains uri), {
-        withHookFor(uri, { hook =>
+        withHookFor(uri, hook => {
           self ! CreateActors(uri, hook)
           Started(hook)
         })
