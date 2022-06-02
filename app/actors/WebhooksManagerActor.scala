@@ -58,7 +58,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
 
   implicit val ec: ExecutionContext = databaseExecutionContext
 
-  val actors: java.util.concurrent.ConcurrentHashMap[URI, Array[ActorRef]] = new ConcurrentHashMap()
+  var actors: Map[URI, Array[ActorRef]] = Map()
 
   import WebhooksManagerActor._
 
@@ -96,14 +96,14 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
 
     case Stop(uri) =>
       if (actors.keySet contains uri) {
-        actors.get(uri).foreach(_ ! PoisonPill)
+        actors(uri).foreach(_ ! PoisonPill)
         withHookFor(uri, hook => Stopped(hook))
       } else {
         sender ! WebhookNotStartedException(uri)
       }
 
     case NewActors(uri, newActors) =>
-      actors.put(uri, newActors)
+      actors += uri -> newActors
 
   }
 
