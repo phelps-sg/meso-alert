@@ -76,7 +76,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
     sender ! Failure(ex)
   }
 
-  def ensuring(condition: => Boolean, block: => Unit, ex: => Exception): Unit = {
+  def provided(condition: => Boolean, block: => Unit, ex: => Exception): Unit = {
     if (condition) block else fail(ex)
   }
 
@@ -90,13 +90,13 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
 
     case Start(uri) =>
       logger.debug(s"Received start request for $uri")
-      ensuring(!(actors contains uri), withHookFor(uri, hook => {
+      provided(!(actors contains uri), withHookFor(uri, hook => {
           self ! CreateActors(uri, hook)
           Started(hook)
         }), WebhookAlreadyStartedException(uri))
 
     case Stop(uri) =>
-      ensuring (actors contains uri, {
+      provided (actors contains uri, {
         actors(uri).foreach(_ ! PoisonPill)
         actors -= uri
         withHookFor(uri, hook => Stopped(hook))
