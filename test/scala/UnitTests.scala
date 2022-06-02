@@ -1,5 +1,5 @@
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
-import actors.WebhooksManagerActor.{Registered, Started, Stopped, WebhookNotRegisteredException}
+import actors.WebhooksManagerActor.{Registered, Started, Stopped, WebhookAlreadyRegisteredException, WebhookNotRegisteredException, WebhookNotStartedException}
 import actors.{HttpBackendSelection, TxFilterAuthActor, TxFilterNoAuthActor, TxUpdate, TxWebhookMessagingActor, WebhooksManagerActor}
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.pattern.ask
@@ -38,6 +38,7 @@ import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.io.Source
+import scala.util.{Failure, Success}
 
 //noinspection TypeAnnotation
 class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
@@ -88,14 +89,14 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     override def receive: Receive = {
       case WebhooksManagerActor.Start(uri) =>
         mock.start(uri)
-        sender ! Started(hooks(uri))
+        sender ! Success(Started(hooks(uri)))
       case WebhooksManagerActor.Register(hook) =>
         mock.register(hook)
         hooks(hook.uri) = hook
-        sender ! Registered(hook)
+        sender ! Success(Registered(hook))
       case WebhooksManagerActor.Stop(uri) =>
         mock.stop(uri)
-        sender ! Stopped(hooks(uri))
+        sender ! Success(Stopped(hooks(uri)))
       case x =>
         fail(s"unrecognized message: $x")
     }
@@ -347,11 +348,11 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         val hook1 = Webhook(new URI("http://test1"), 10)
         val hook2 = Webhook(new URI("http://test2"), 20)
 
-        (f.webhookManagerMock.register _).expects(hook1).returning(Registered(hook1))
-        (f.webhookManagerMock.register _).expects(hook2).returning(Registered(hook2))
+        (f.webhookManagerMock.register _).expects(hook1).returning(Success(Registered(hook1)))
+        (f.webhookManagerMock.register _).expects(hook2).returning(Success(Registered(hook2)))
 
-        (f.webhookManagerMock.start _).expects(hook1.uri).returning(Started(hook1))
-        (f.webhookManagerMock.start _).expects(hook2.uri).returning(Started(hook2))
+        (f.webhookManagerMock.start _).expects(hook1.uri).returning(Success(Started(hook1)))
+        (f.webhookManagerMock.start _).expects(hook2.uri).returning(Success(Started(hook2)))
 
         val init = for {
           _ <- database.run(
@@ -377,7 +378,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         val uri = new URI("http://test")
         afterDbInit {
           f.webhooksActor ? WebhooksManagerActor.Start(uri)
-        }.futureValue should matchPattern { case WebhookNotRegisteredException(`uri`) => }
+        }.futureValue should matchPattern { case Failure(WebhookNotRegisteredException(`uri`)) => }
       }
 
       "return Registered and record a new hook in the database when registering a new hook" in {
@@ -388,7 +389,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
             response <- f.webhooksActor ? WebhooksManagerActor.Register(hook)
             dbContents <- db.run(Tables.webhooks.result)
           } yield (response, dbContents)
-        }.futureValue should matchPattern { case (WebhooksManagerActor.Registered(`hook`), Seq(`hook`)) => }
+        }.futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
       }
 
       "return an exception when stopping a hook that is not started" in {
@@ -396,7 +397,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         val uri = new URI("http://test")
         afterDbInit {
           f.webhooksActor ? WebhooksManagerActor.Stop(uri)
-        }.futureValue should matchPattern { case WebhooksManagerActor.WebhookNotStartedException(`uri`) => }
+        }.futureValue should matchPattern { case Failure(WebhookNotStartedException(`uri`)) => }
       }
 
       "return an exception when registering a pre-existing hook" in {
@@ -408,7 +409,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
             _ <- db.run(Tables.webhooks += hook)
             registered <- f.webhooksActor ? WebhooksManagerActor.Register(hook)
           } yield registered
-        }.futureValue should matchPattern { case WebhooksManagerActor.WebhookAlreadyRegisteredException(`uri`) => }
+        }.futureValue should matchPattern { case Failure(WebhookAlreadyRegisteredException(`uri`)) => }
       }
 
       "correctly register, start, stop and restart a web hook" in {
@@ -429,7 +430,12 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
             finalStop <- f.webhooksActor ? Stop(uri)
           } yield (registered, started, stopped, restarted, finalStop)
         }.futureValue should matchPattern {
-          case (Registered(`hook`), Started(`hook`), Stopped(`hook`), Started(`hook`), Stopped(`hook`)) =>
+          case (
+            Success(Registered(`hook`)),
+            Success(Started(`hook`)),
+            Success(Stopped(`hook`)),
+            Success(Started(`hook`)),
+            Success(Stopped(`hook`))) =>
         }
       }
     }

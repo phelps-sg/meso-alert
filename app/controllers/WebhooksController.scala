@@ -10,6 +10,7 @@ import services.SlackWebhooksManagerService
 import java.net.URI
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
 class WebhooksController @Inject()(val controllerComponents: ControllerComponents,
                                    val slackWebHooksManager: SlackWebhooksManagerService)
@@ -22,18 +23,25 @@ class WebhooksController @Inject()(val controllerComponents: ControllerComponent
   implicit val hookJson: OFormat[HookDto] = Json.format[HookDto]
 
   def start: Action[UriDto] = Action.async(parse.json[UriDto]) { request =>
-    slackWebHooksManager.start(new URI(request.body.uri)).map(_ => Ok("Success"))
-      .recover {
-        case WebhookNotRegisteredException(uri) => NotFound(s"No web hook for $uri")
-      }
+    slackWebHooksManager.start(new URI(request.body.uri)).map {
+      case Success(_) => Ok("Success")
+      case Failure(WebhookNotRegisteredException(uri)) => NotFound(s"No web hook for $uri")
+      case Failure(ex) => ServiceUnavailable(ex.getMessage)
+    }
   }
 
   def stop: Action[UriDto] = Action.async(parse.json[UriDto]) { request =>
-    slackWebHooksManager.stop(new URI(request.body.uri)).map(_ => Ok("Success"))
+    slackWebHooksManager.stop(new URI(request.body.uri)).map {
+      case Success(_) => Ok("Success")
+      case Failure(ex) => ServiceUnavailable(ex.getMessage)
+    }
   }
 
   def register: Action[HookDto] = Action.async(parse.json[HookDto]) { request =>
-    slackWebHooksManager.register(Webhook(new URI(request.body.uri), request.body.threshold)).map(_ => Ok("Success"))
+    slackWebHooksManager.register(Webhook(new URI(request.body.uri), request.body.threshold)).map {
+      case Success(_) => Ok("Success")
+      case Failure(ex) => ServiceUnavailable(ex.getMessage)
+    }
   }
 
 }

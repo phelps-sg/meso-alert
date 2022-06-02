@@ -12,6 +12,7 @@ import slick.DatabaseExecutionContext
 
 import java.net.{URI, URLEncoder}
 import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
 object WebhooksManagerActor {
 
@@ -66,7 +67,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
     logger.debug(s"Querying hook for uri ${uri.toString}")
     webhookDao.forUri(uri).map({
       case Some(hook) => fn(hook)
-      case None => WebhookNotRegisteredException(uri)
+      case None => Failure(WebhookNotRegisteredException(uri))
     }).pipeTo(sender)
   }
 
@@ -74,8 +75,8 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
 
     case Register(hook) =>
         webhookDao.insert(hook).map {
-          case 0 => WebhookAlreadyRegisteredException(hook.uri)
-          case x => Registered(hook)
+          case 0 => Failure(WebhookAlreadyRegisteredException(hook.uri))
+          case x => Success(Registered(hook))
         }.pipeTo(sender)
 
     case Start(uri) =>
@@ -89,16 +90,16 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
               injectedChild(filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
                 name = s"webhook-filter-$actorId")
             self ! NewActors(uri, Array(webhookMessagingActor, filteringActor))
-            Started(hook)
+            Success(Started(hook))
       })
 
     case Stop(uri) =>
       if (actors.keySet contains uri) {
         actors(uri).foreach(_ ! PoisonPill)
         actors -= uri
-        withHookFor(uri, hook => Stopped(hook))
+        withHookFor(uri, hook => Success(Stopped(hook)))
       } else {
-        sender ! WebhookNotStartedException(uri)
+        sender ! Failure(WebhookNotStartedException(uri))
       }
 
     case NewActors(uri, newActors) =>

@@ -13,14 +13,15 @@ import java.net.URI
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.reflect.ClassTag
+import scala.util.{Failure, Success, Try}
 
 @ImplementedBy(classOf[WebhooksManager])
 trait SlackWebhooksManagerService {
-  def init(): Future[Seq[Started]]
-  def start(uri: URI): Future[Started]
-  def stop(uri: URI): Future[Stopped]
-  def register(hook: Webhook): Future[Registered]
+  def init(): Future[Seq[Try[Started]]]
+  def start(uri: URI): Future[Try[Started]]
+  def stop(uri: URI): Future[Try[Stopped]]
+  def register(hook: Webhook): Future[Try[Registered]]
 }
 
 @Singleton
@@ -34,7 +35,7 @@ class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcherService,
 
   implicit val timeout: Timeout = 1.minute
 
-  def init(): Future[Seq[Started]] = {
+  def init(): Future[Seq[Try[Started]]] = {
 
     val initFuture = for {
       _ <- webhookDao.init()
@@ -50,23 +51,24 @@ class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcherService,
     initFuture
   }
 
-  def start(uri: URI): Future[Started] = {
-    (actor ? Start(uri)).map {
-      case x: Started => x
-      case ex: WebhookNotRegisteredException => throw ex
+  def sendAndReceive[A, B: ClassTag](message: A): Future[Try[B]] = {
+    (actor ? message).map {
+      case x: Try[B] => x
+      case x =>
+        throw new RuntimeException(s"Unexpected type in response from actor: $x")
     }
   }
 
-  def stop(uri: URI): Future[Stopped] = {
-    (actor ? Stop(uri)).map {
-      case x: Stopped => x
-    }
+  def start(uri: URI): Future[Try[Started]] = {
+    sendAndReceive(Start(uri))
   }
 
-  def register(hook: Webhook): Future[Registered] = {
-    (actor ? Register(hook)).map {
-      case x: Registered => x
-    }
+  def stop(uri: URI): Future[Try[Stopped]] = {
+    sendAndReceive(Stop(uri))
+  }
+
+  def register(hook: Webhook): Future[Try[Registered]] = {
+    sendAndReceive(Register(hook))
   }
 
 }
