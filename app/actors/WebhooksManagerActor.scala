@@ -28,6 +28,7 @@ object WebhooksManagerActor {
   case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
   case class WebhookNotStartedException(uri: URI) extends Exception(s"No webhook started for $uri")
   case class WebhookAlreadyRegisteredException(uri: URI) extends Exception(s"Webhook already registered for $uri")
+  case class WebhookAlreadyStartedException(uri: URI) extends Exception(s"Webhook already started for $uri")
 
   def props(memPoolWatcher: MemPoolWatcherService, backendSelection: HttpBackendSelection,
             messagingActorFactory: TxWebhookMessagingActor.Factory,
@@ -71,6 +72,14 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
     }).pipeTo(sender)
   }
 
+  def fail(ex: Exception): Unit = {
+    sender ! Failure(ex)
+  }
+
+  def ensuring(condition: => Boolean, block: => Unit, ex: => Exception): Unit = {
+    if (condition) block else fail(ex)
+  }
+
   override def receive: Receive = {
 
     case Register(hook) =>
@@ -81,26 +90,26 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
 
     case Start(uri) =>
       logger.debug(s"Received start request for $uri")
-      withHookFor(uri, {
-        hook =>
-          val actorId = encodeUrl(uri.toURL.toString)
-          val webhookMessagingActor =
-            injectedChild(messagingActorFactory(uri), name = s"webhook-messenger-$actorId")
-          val filteringActor =
-            injectedChild(filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
-              name = s"webhook-filter-$actorId")
-          self ! NewActors(uri, Array(webhookMessagingActor, filteringActor))
-          Success(Started(hook))
-      })
+      ensuring (!(actors contains uri), {
+        withHookFor(uri, {
+          hook =>
+            val actorId = encodeUrl(uri.toURL.toString)
+            val webhookMessagingActor =
+              injectedChild(messagingActorFactory(uri), name = s"webhook-messenger-$actorId")
+            val filteringActor =
+              injectedChild(filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
+                name = s"webhook-filter-$actorId")
+            self ! NewActors(uri, Array(webhookMessagingActor, filteringActor))
+            Success(Started(hook))
+        })
+      }, WebhookAlreadyStartedException(uri))
 
     case Stop(uri) =>
-      if (actors contains uri) {
+      ensuring (actors contains uri, {
         actors(uri).foreach(_ ! PoisonPill)
         actors -= uri
         withHookFor(uri, hook => Success(Stopped(hook)))
-      } else {
-        sender ! Failure(WebhookNotStartedException(uri))
-      }
+      }, WebhookNotStartedException(uri))
 
     case NewActors(uri, newActors) =>
       actors += uri -> newActors
