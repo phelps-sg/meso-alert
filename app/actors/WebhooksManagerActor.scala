@@ -85,7 +85,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
     case Register(hook) =>
       webhookDao.insert(hook).map {
         case 0 => Failure(WebhookAlreadyRegisteredException(hook.uri))
-        case x => Success(Registered(hook))
+        case _ => Success(Registered(hook))
       }.pipeTo(sender)
 
     case Start(uri) =>
