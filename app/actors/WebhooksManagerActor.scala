@@ -83,14 +83,14 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
       logger.debug(s"Received start request for $uri")
       withHookFor(uri, {
         hook =>
-            val actorId = encodeUrl(uri.toURL.toString)
-            val webhookMessagingActor =
-              injectedChild(messagingActorFactory(uri), name = s"webhook-messenger-$actorId")
-            val filteringActor =
-              injectedChild(filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
-                name = s"webhook-filter-$actorId")
-            self ! NewActors(uri, Array(webhookMessagingActor, filteringActor))
-            Success(Started(hook))
+          val actorId = encodeUrl(uri.toURL.toString)
+          val webhookMessagingActor =
+            injectedChild(messagingActorFactory(uri), name = s"webhook-messenger-$actorId")
+          val filteringActor =
+            injectedChild(filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
+              name = s"webhook-filter-$actorId")
+          self ! NewActors(uri, Array(webhookMessagingActor, filteringActor))
+          Success(Started(hook))
       })
 
     case Stop(uri) =>
