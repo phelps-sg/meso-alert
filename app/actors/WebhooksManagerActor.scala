@@ -97,6 +97,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
     case Stop(uri) =>
       if (actors.keySet contains uri) {
         actors(uri).foreach(_ ! PoisonPill)
+        actors -= uri
         withHookFor(uri, hook => Stopped(hook))
       } else {
         sender ! WebhookNotStartedException(uri)
