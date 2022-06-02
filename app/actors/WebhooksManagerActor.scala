@@ -23,7 +23,7 @@ object WebhooksManagerActor {
   case class Registered(hook: Webhook)
   case class Start(uri: URI)
   case class Stop(uri: URI)
-  case class NewActors(uri: URI, actors: Array[ActorRef])
+  case class CreateActors(uri: URI, hook: Webhook)
 
   case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
   case class WebhookNotStartedException(uri: URI) extends Exception(s"No webhook started for $uri")
@@ -93,13 +93,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
       ensuring (!(actors contains uri), {
         withHookFor(uri, {
           hook =>
-            val actorId = encodeUrl(uri.toURL.toString)
-            val webhookMessagingActor =
-              injectedChild(messagingActorFactory(uri), name = s"webhook-messenger-$actorId")
-            val filteringActor =
-              injectedChild(filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
-                name = s"webhook-filter-$actorId")
-            self ! NewActors(uri, Array(webhookMessagingActor, filteringActor))
+           self ! CreateActors(uri, hook)
             Started(hook)
         })
       }, WebhookAlreadyStartedException(uri))
@@ -111,8 +105,14 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
         withHookFor(uri, hook => Stopped(hook))
       }, WebhookNotStartedException(uri))
 
-    case NewActors(uri, newActors) =>
-      actors += uri -> newActors
+    case CreateActors(uri, hook) =>
+      val actorId = encodeUrl(uri.toURL.toString)
+      val webhookMessagingActor =
+        injectedChild(messagingActorFactory(uri), name = s"webhook-messenger-$actorId")
+      val filteringActor =
+        injectedChild(filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
+          name = s"webhook-filter-$actorId")
+      actors += uri -> Array(webhookMessagingActor, filteringActor)
 
   }
 
