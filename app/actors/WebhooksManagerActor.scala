@@ -11,8 +11,6 @@ import services.MemPoolWatcherService
 import slick.DatabaseExecutionContext
 
 import java.net.{URI, URLEncoder}
-import java.sql.SQLException
-import java.util.concurrent.ConcurrentHashMap
 import scala.concurrent.ExecutionContext
 
 object WebhooksManagerActor {
