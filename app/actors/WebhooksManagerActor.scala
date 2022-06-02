@@ -24,6 +24,7 @@ object WebhooksManagerActor {
   case class Registered(hook: Webhook)
   case class Start(uri: URI)
   case class Stop(uri: URI)
+  case class NewActors(uri: URI, actors: Array[ActorRef])
 
   case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
   case class WebhookNotStartedException(uri: URI) extends Exception(s"No webhook started for $uri")
@@ -89,7 +90,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
             val filteringActor =
               injectedChild(filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
                 name = s"webhook-filter-$actorId")
-            actors.put(uri, Array(webhookMessagingActor, filteringActor))
+            self ! NewActors(uri, Array(webhookMessagingActor, filteringActor))
             Started(hook)
       })
 
@@ -100,6 +101,9 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
       } else {
         sender ! WebhookNotStartedException(uri)
       }
+
+    case NewActors(uri, newActors) =>
+      actors.put(uri, newActors)
 
   }
 
