@@ -67,7 +67,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
   def withHookFor[R](uri: URI, fn: Webhook => R): Unit = {
     logger.debug(s"Querying hook for uri ${uri.toString}")
     webhookDao.forUri(uri).map({
-      case Some(hook) => fn(hook)
+      case Some(hook) => Success(fn(hook))
       case None => Failure(WebhookNotRegisteredException(uri))
     }).pipeTo(sender)
   }
@@ -100,7 +100,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
               injectedChild(filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
                 name = s"webhook-filter-$actorId")
             self ! NewActors(uri, Array(webhookMessagingActor, filteringActor))
-            Success(Started(hook))
+            Started(hook)
         })
       }, WebhookAlreadyStartedException(uri))
 
@@ -108,7 +108,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
       ensuring (actors contains uri, {
         actors(uri).foreach(_ ! PoisonPill)
         actors -= uri
-        withHookFor(uri, hook => Success(Stopped(hook)))
+        withHookFor(uri, hook => Stopped(hook))
       }, WebhookNotStartedException(uri))
 
     case NewActors(uri, newActors) =>
