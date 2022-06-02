@@ -24,7 +24,6 @@ object WebhooksManagerActor {
   case class Registered(hook: Webhook)
   case class Start(uri: URI)
   case class Stop(uri: URI)
-  case class List()
 
   case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
   case class WebhookNotStartedException(uri: URI) extends Exception(s"No webhook started for $uri")
