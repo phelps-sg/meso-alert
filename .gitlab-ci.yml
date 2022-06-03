@@ -19,7 +19,7 @@ docker:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - make -e sbt-build
     - cd docker
-    - docker-compose up --no-start --build
+    - docker-compose up --no-start --build play-server
     - cd ..
     - docker push registry.gitlab.com/mesonomics/meso-alert/play-server
   only:
