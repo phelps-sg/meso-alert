@@ -43,6 +43,9 @@ docker-push: docker-build
 docker-server-start: docker-build
 	$(EXPORT_ENV); cd docker; sudo -E docker-compose up
 
+docker-db-start:
+	$(EXPORT_ENV); cd docker; sudo -E docker-compose up postgres-db
+
 nodejs-install:
 	$(NVM_INIT); nvm install --lts
 
