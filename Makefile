@@ -53,7 +53,7 @@ docker-db-start: dir-postgres-create
 	$(EXPORT_ENV); cd docker; sudo -E docker-compose up -d postgres-db
 
 nodejs-install:
-	$(NVM_INIT); nvm install --lts
+	$(NVM_INIT); nvm install 16.15.0
 
 client-install: nodejs-install
 	$(NVM_INIT); cd nodejs; npm install
