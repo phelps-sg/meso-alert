@@ -18,9 +18,9 @@ trait PostgresContainer extends ForAllTestContainer { // with BeforeAndAfter wit
 
   override val container: PostgreSQLContainer = PostgreSQLContainer(
 //    dockerImageNameOverride = "postgres:14.2",
-    databaseName = "btc-test",
-    username = "btc",
-    password = "btc")
+    databaseName = "meso-alert-test",
+    username = "meso-alert-test",
+    password = "meso-alert-test")
 
   implicit def database: BtcPostgresProfile.backend.DatabaseDef = {
     logger.info(s"Returning database definition from url ${container.jdbcUrl}")

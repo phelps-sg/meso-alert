@@ -8,6 +8,8 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.13.8"
 
+Test / javaOptions += "-Dconfig.file=test/resources/application.test.conf"
+
 libraryDependencies += guice
 libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.11"
