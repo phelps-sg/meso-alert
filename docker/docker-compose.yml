@@ -26,11 +26,7 @@ services:
       POSTGRES_USER: meso-alert
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: meso-alert
-      PGDATA: /data/1/meso-alert
     volumes:
-      - postgres-db-data:/data/fast/1/meso-alert
+      - /data/1/meso-alert-db:/var/lib/postgresql/data
     ports:
-      - "5436:5432"
-
-volumes:
-    postgres-db-data:
+      - "${POSTGRES_PORT}:5432"

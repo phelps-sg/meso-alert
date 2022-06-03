@@ -1,15 +1,18 @@
-# https://www.playframework.com/documentation/latest/Configuration
-#play.filters.disabled+=play.filters.hosts.AllowedHostsFilter
+#!/bin/bash
+
+. docker/.env
+
+cat <<EOF > ./conf/application.conf
 
 meso-alert.db = {
   connectionPool = "HikariCP" //use HikariCP for our connection pool
   dataSourceClass = "org.postgresql.ds.PGSimpleDataSource"
   properties = {
     serverName = "localhost"
-    portNumber = "5436"
+    portNumber = "${POSTGRES_PORT}"
     databaseName = "meso-alert"
     user = "meso-alert"
-    password = "th0rnxtc"
+    password = "${POSTGRES_PASSWORD}"
   }
   numThreads = 6
   queueSize = 50000
@@ -22,3 +25,4 @@ database.dispatcher {
     fixed-pool-size = 6
   }
 }
+EOF

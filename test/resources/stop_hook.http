@@ -1,4 +1,4 @@
 POST http://localhost:9000/api/webhooks/stop
 Content-Type: application/json
 
-{"uri":"https://hooks.slack.com/services/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"}
+{"uri":"https://hooks.slack.com/services/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"}

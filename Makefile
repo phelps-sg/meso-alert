@@ -28,7 +28,10 @@ nvm-install:
 
 install-dev: curl-install sdkman-install sbt-install docker-install nvm-install
 
-sbt-run:
+staging-config:
+	bin/staging-config.sh
+
+sbt-run: staging-config docker-db-start
 	$(SDK_INIT); sbt run
 
 sbt-test:
@@ -43,8 +46,11 @@ docker-push: docker-build
 docker-server-start: docker-build
 	$(EXPORT_ENV); cd docker; sudo -E docker-compose up
 
-docker-db-start:
-	$(EXPORT_ENV); cd docker; sudo -E docker-compose up postgres-db
+dir-postgres-create:
+	sudo mkdir -p /data/1/meso-alert-db
+
+docker-db-start: dir-postgres-create
+	$(EXPORT_ENV); cd docker; sudo -E docker-compose up -d postgres-db
 
 nodejs-install:
 	$(NVM_INIT); nvm install --lts

@@ -16,6 +16,18 @@ Ensure that docker is logged into the container registry:
 docker login registry.gitlab.com
 ~~~
 
+## Configuration
+
+Run the following in a shell from the project root directory, replacing <password> with the 
+postgres password you wish to use for the local staging database:
+
+~~~bash
+cat << EOF > docker/.env
+POSTGRES_PASSWORD=<password>
+POSTGRES_PORT=5436
+EOF
+~~~
+
 ## Running
 
 ### Server

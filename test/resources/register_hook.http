@@ -1,4 +1,4 @@
-POST http://192.168.1.101:9000/api/webhooks/register
+POST http://localhost:9000/api/webhooks/register
 Content-Type: application/json
 
-{"uri":"https://hooks.slack.com/services/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", "threshold":20000000}
+{"uri":"https://hooks.slack.com/services/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", "threshold":500000000}

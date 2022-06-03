@@ -8,3 +8,5 @@ target
 /.settings
 /RUNNING_PID
 /nodejs/node_modules/
+/conf/application.conf
+/docker/.env
