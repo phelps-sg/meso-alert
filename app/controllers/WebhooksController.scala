@@ -4,12 +4,12 @@ import actors.WebhooksManagerActor.WebhookNotRegisteredException
 import akka.actor.ActorSystem
 import dao.Webhook
 import play.api.libs.json._
-import play.api.mvc.{Action, BaseController, ControllerComponents}
+import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.SlackWebhooksManagerService
 
 import java.net.URI
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 class WebhooksController @Inject()(val controllerComponents: ControllerComponents,
@@ -22,22 +22,19 @@ class WebhooksController @Inject()(val controllerComponents: ControllerComponent
   implicit val uriJson: OFormat[UriDto] = Json.format[UriDto]
   implicit val hookJson: OFormat[HookDto] = Json.format[HookDto]
 
+  def checkEx[T](f: Future[T]): Future[Result] =
+    f.map(_ => Ok("Success")).recover { case ex => ServiceUnavailable(ex.getMessage)}
+
   def start: Action[UriDto] = Action.async(parse.json[UriDto]) { request =>
-    slackWebHooksManager.start(new URI(request.body.uri))
-      .map { _ => Ok("Success") }
-      .recover { case ex => ServiceUnavailable(ex.getMessage) }
+    checkEx(slackWebHooksManager.start(new URI(request.body.uri)))
   }
 
   def stop: Action[UriDto] = Action.async(parse.json[UriDto]) { request =>
-    slackWebHooksManager.stop(new URI(request.body.uri))
-      .map { _ => Ok("Success") }
-      .recover { case ex => ServiceUnavailable(ex.getMessage) }
+    checkEx(slackWebHooksManager.stop(new URI(request.body.uri)))
   }
 
   def register: Action[HookDto] = Action.async(parse.json[HookDto]) { request =>
-    slackWebHooksManager.register(Webhook(new URI(request.body.uri), request.body.threshold))
-      .map { _ => Ok("Success") }
-      .recover { case ex => ServiceUnavailable(ex.getMessage) }
+    checkEx(slackWebHooksManager.register(Webhook(new URI(request.body.uri), request.body.threshold)))
   }
 
 }
