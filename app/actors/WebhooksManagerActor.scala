@@ -66,10 +66,10 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
 
   def withHookFor[R](uri: URI, fn: Webhook => R): Unit = {
     logger.debug(s"Querying hook for uri ${uri.toString}")
-    webhookDao.forUri(uri).map({
+    webhookDao.forUri(uri) map {
       case Some(hook) => Success(fn(hook))
       case None => Failure(WebhookNotRegisteredException(uri))
-    }).pipeTo(sender)
+    } pipeTo sender
   }
 
   def fail(ex: Exception): Unit = {
@@ -83,10 +83,10 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
   override def receive: Receive = {
 
     case Register(hook) =>
-      webhookDao.insert(hook).map {
+      webhookDao.insert(hook) map {
         case 0 => Failure(WebhookAlreadyRegisteredException(hook.uri))
         case _ => Success(Registered(hook))
-      }.pipeTo(sender)
+      } pipeTo sender
 
     case Start(uri) =>
       logger.debug(s"Received start request for $uri")
