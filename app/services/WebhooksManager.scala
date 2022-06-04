@@ -51,25 +51,15 @@ class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcherService,
     initFuture
   }
 
-  def start(uri: URI): Future[Started] = {
-    (actor ? Start(uri)).map {
-      case Success(Started(hook)) => Started(hook)
+  def sendAndReceive[T, R](message: T): Future[R] = {
+    (actor ? message).map {
+      case Success(x: R) => x
       case Failure(ex) => throw ex
     }
   }
 
-  def stop(uri: URI): Future[Stopped] = {
-    (actor ? Stop(uri)).map {
-      case Success(Stopped(hook)) => Stopped(hook)
-      case Failure(ex) => throw ex
-    }
-  }
-
-  def register(hook: Webhook): Future[Registered] = {
-    (actor ? Register(hook)).map {
-      case Success(Registered(hook)) => Registered(hook)
-      case Failure(ex) => throw ex
-    }
-  }
+  def start(uri: URI): Future[Started] = sendAndReceive(Start(uri))
+  def stop(uri: URI): Future[Stopped] = sendAndReceive(Stop(uri))
+  def register(hook: Webhook): Future[Registered] = sendAndReceive(Register(hook))
 
 }
