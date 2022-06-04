@@ -52,7 +52,7 @@ class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcherService,
   }
 
   def sendAndReceive[T, R](message: T): Future[R] = {
-    (actor ? message).map {
+    (actor ? message) map {
       case Success(x: R) => x
       case Failure(ex) => throw ex
     }
