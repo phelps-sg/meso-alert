@@ -3,7 +3,7 @@ package actors
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.pattern.pipe
 import com.google.inject.Inject
-import dao.{Webhook, WebhookDao}
+import dao.{DuplicateWebhookException, Webhook, WebhookDao}
 import org.apache.commons.logging.LogFactory
 import play.api.libs.concurrent.InjectedActorSupport
 import play.api.libs.json.{JsObject, Json, Writes}
@@ -84,8 +84,9 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
 
     case Register(hook) =>
       webhookDao.insert(hook) map {
-        case 0 => Failure(WebhookAlreadyRegisteredException(hook.uri))
-        case _ => Success(Registered(hook))
+        _ => Success(Registered(hook))
+      } recover {
+        case DuplicateWebhookException(_) => Failure(WebhookAlreadyRegisteredException(hook.uri))
       } pipeTo sender
 
     case Start(uri) =>

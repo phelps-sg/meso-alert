@@ -10,6 +10,7 @@ import scala.concurrent.Future
 package object dao {
 
   case class Webhook(uri: URI, threshold: Long)
+  case class DuplicateWebhookException(uri: URI) extends Exception(s"A webhook already exists with uri $uri")
 
   @ImplementedBy(classOf[SlickWebhookDao])
   trait WebhookDao {
@@ -35,7 +36,7 @@ package object dao {
         n: Int <- db.run(Tables.webhooks.filter(_.url === hook.uri.toString).size.result)
         result <-
           if (n > 0) {
-            Future { 0 }
+            throw DuplicateWebhookException(hook.uri)
           } else {
             db.run(Tables.webhooks += hook)
           }
