@@ -1,6 +1,5 @@
 package controllers
 
-import actors.WebhooksManagerActor.WebhookNotRegisteredException
 import akka.actor.ActorSystem
 import dao.Webhook
 import play.api.libs.json._
@@ -10,7 +9,6 @@ import services.SlackWebhooksManagerService
 import java.net.URI
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 
 class WebhooksController @Inject()(val controllerComponents: ControllerComponents,
                                    val slackWebHooksManager: SlackWebhooksManagerService)
