@@ -67,7 +67,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
   implicit class HookURI(uri: URI) {
     def withHook[R](fn: Webhook => R): Unit = {
       logger.debug(s"Querying hook for uri ${uri.toString}")
-      webhookDao findWebHookFor uri map {
+      webhookDao.findWebHookFor(uri) map {
         case Some(hook) => Success(fn(hook))
         case None => Failure(WebhookNotRegisteredException(uri))
       } pipeTo sender
