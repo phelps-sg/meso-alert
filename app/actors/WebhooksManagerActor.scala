@@ -64,12 +64,14 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
 
   def encodeUrl(url: String): String = URLEncoder.encode(url, "UTF-8")
 
-  def withHookFor[R](uri: URI, fn: Webhook => R): Unit = {
-    logger.debug(s"Querying hook for uri ${uri.toString}")
-    webhookDao.forUri(uri) map {
-      case Some(hook) => Success(fn(hook))
-      case None => Failure(WebhookNotRegisteredException(uri))
-    } pipeTo sender
+  implicit class HookURI(uri: URI) {
+    def withHook[R](fn: Webhook => R): Unit = {
+      logger.debug(s"Querying hook for uri ${uri.toString}")
+      webhookDao findWebHookFor uri map {
+        case Some(hook) => Success(fn(hook))
+        case None => Failure(WebhookNotRegisteredException(uri))
+      } pipeTo sender
+    }
   }
 
   def fail(ex: Exception): Unit = {
@@ -83,15 +85,15 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
   override def receive: Receive = {
 
     case Register(hook) =>
-      webhookDao.insert(hook) map {
-        _ => Success(Registered(hook))
+      webhookDao insert hook map {
+        Success(_)
       } recover {
         case DuplicateWebhookException(_) => Failure(WebhookAlreadyRegisteredException(hook.uri))
       } pipeTo sender
 
     case Start(uri) =>
       logger.debug(s"Received start request for $uri")
-      provided(!(actors contains uri), withHookFor(uri, hook => {
+      provided(!(actors contains uri), uri withHook (hook => {
         self ! CreateActors(uri, hook)
         Started(hook)
       }), WebhookAlreadyStartedException(uri))
@@ -100,7 +102,7 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
       provided (actors contains uri, {
         actors(uri).foreach(_ ! PoisonPill)
         actors -= uri
-        withHookFor(uri, hook => Stopped(hook))
+        uri withHook (hook => Stopped(hook))
       }, WebhookNotStartedException(uri))
 
     case CreateActors(uri, hook) =>
