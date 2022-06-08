@@ -16,7 +16,7 @@ package object dao {
   trait WebhookDao {
     def init(): Future[Unit]
     def all(): Future[Seq[Webhook]]
-    def forUri(uri: URI): Future[Option[Webhook]]
+    def findWebHookFor(uri: URI): Future[Option[Webhook]]
     def insert(hook: Webhook): Future[Int]
   }
 
@@ -45,7 +45,7 @@ package object dao {
 
     def all(): Future[Seq[Webhook]] = db.run(Tables.webhooks.result)
 
-    def forUri(uri: URI): Future[Option[Webhook]] = {
+    def findWebHookFor(uri: URI): Future[Option[Webhook]] = {
       logger.debug(s"Querying for ${uri.toString}")
       db.run(Tables.webhooks.filter(_.url === uri.toString).result).map {
         case Seq(result) => Some(result)
