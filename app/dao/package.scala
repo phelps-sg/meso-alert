@@ -24,6 +24,13 @@ package object dao {
     def insert(hook: Webhook): Future[Int]
   }
 
+  trait SlackAlertDao {
+    def init(): Future[Unit]
+    def all(): Future[Seq[SlackAlert]]
+    def findSlackAlertFor(channelId: String): Future[Option[SlackAlert]]
+    def insertOrUpdate(alert: SlackAlert): Future[Unit]
+  }
+
   @Singleton
   class SlickWebhookDao @Inject() (val db: Database,
                                    val databaseExecutionContext: DatabaseExecutionContext)
