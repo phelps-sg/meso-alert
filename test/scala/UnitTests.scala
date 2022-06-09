@@ -1,5 +1,5 @@
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
-import actors.{HttpBackendSelection, TxFilterAuthActor, TxFilterNoAuthActor, TxUpdate, TxWebhookMessagingActor, WebhooksManagerActor}
+import actors.{HttpBackendSelection, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxUpdate, TxWebhookMessagingActor, WebhooksManagerActor}
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -87,14 +87,14 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     import actors.WebhooksManagerActor._
     val hooks = mutable.Map[URI, Webhook]()
     override def receive: Receive = {
-      case WebhooksManagerActor.Start(uri: URI) =>
+      case Start(uri: URI) =>
         mock.start(uri)
         sender ! Success(Started(hooks(uri)))
-      case WebhooksManagerActor.Register(hook: Webhook) =>
+      case Register(hook: Webhook) =>
         mock.register(hook)
         hooks(hook.uri) = hook
         sender ! Success(Registered(hook))
-      case WebhooksManagerActor.Stop(uri: URI) =>
+      case Stop(uri: URI) =>
         mock.stop(uri)
         sender ! Success(Stopped(hooks(uri)))
       case x =>
@@ -400,7 +400,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         val f = fixture
         val uri = new URI("http://test")
         afterDbInit {
-          f.webhooksActor ? WebhooksManagerActor.Stop(uri)
+          f.webhooksActor ? Stop(uri)
         }.futureValue should matchPattern { case Failure(WebhookNotStartedException(`uri`)) => }
       }
 

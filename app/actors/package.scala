@@ -13,6 +13,14 @@ import scala.jdk.CollectionConverters.CollectionHasAsScala
 //noinspection TypeAnnotation
 package object actors {
 
+  case class Register[X](hook: X)
+  case class Unregister[X](hook: X)
+  case class Started[X](hook: X)
+  case class Stopped[X](hook: X)
+  case class Registered[X](hook: X)
+  case class Start[X](uri: X)
+  case class Stop[X](uri: X)
+
   abstract class AbstractTxUpdateActor(val memPoolWatcher: MemPoolWatcherService) extends Actor {
 
     private val logger = LoggerFactory.getLogger(classOf[TxUpdate])

@@ -1,4 +1,4 @@
-import actors.WebhooksManagerActor.{Registered, Started, Stopped}
+import actors.{Registered, Started, Stopped}
 import dao.Webhook
 
 import scala.concurrent.Future

@@ -1,6 +1,6 @@
 package services
 
-import actors.WebhooksManagerActor.{Register, Registered, Start, Started, Stop, Stopped}
+import actors.{Register, Registered, Start, Started, Stop, Stopped}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout

@@ -16,13 +16,6 @@ import scala.util.{Failure, Success}
 
 object WebhooksManagerActor {
 
-  case class Register[X](hook: X)
-  case class Unregister[X](hook: X)
-  case class Started[X](hook: X)
-  case class Stopped[X](hook: X)
-  case class Registered[X](hook: X)
-  case class Start[X](uri: X)
-  case class Stop[X](uri: X)
 
   case class CreateActors(uri: URI, hook: Webhook)
 
