@@ -85,8 +85,8 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
   override def receive: Receive = {
 
     case Register(hook) =>
-      webhookDao insert hook map {
-        Success(_)
+      webhookDao.insert(hook) map {
+        _ => Success(Registered(hook))
       } recover {
         case DuplicateWebhookException(_) => Failure(WebhookAlreadyRegisteredException(hook.uri))
       } pipeTo sender
