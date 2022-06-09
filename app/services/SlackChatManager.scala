@@ -5,7 +5,7 @@ import dao.{SlackChannel, SlackChatHook}
 
 import scala.concurrent.Future
 
-trait SlackChatManagerService extends HooksManagerService[SlackChatHook, SlackChannel]
+trait SlackChatHookManagerService extends HooksManagerService[SlackChatHook, SlackChannel]
 
 //class SlackChatManager extends SlackChatManagerService {
 //  override def init(): Future[Seq[WebhooksManagerActor.Started[SlackChatHook]]] = ???
