@@ -1,6 +1,6 @@
 package services
 
-import actors.WebhooksManagerActor.{Register, Registered, Start, Started, Stop, Stopped, WebhookNotRegisteredException}
+import actors.WebhooksManagerActor.{Register, Registered, Start, Started, Stop, Stopped}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -13,16 +13,10 @@ import java.net.URI
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.ClassTag
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 @ImplementedBy(classOf[WebhooksManager])
-trait SlackWebhooksManagerService {
-  def init(): Future[Seq[Started]]
-  def start(uri: URI): Future[Started]
-  def stop(uri: URI): Future[Stopped]
-  def register(hook: Webhook): Future[Registered]
-}
+trait SlackWebhooksManagerService extends HooksManagerService[Webhook, URI]
 
 @Singleton
 class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcherService,
@@ -35,7 +29,7 @@ class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcherService,
 
   implicit val timeout: Timeout = 1.minute
 
-  def init(): Future[Seq[Started]] = {
+  def init(): Future[Seq[Started[Webhook]]] = {
 
     val initFuture = for {
       _ <- webhookDao.init()
@@ -58,8 +52,8 @@ class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcherService,
     }
   }
 
-  def start(uri: URI): Future[Started] = sendAndReceive(Start(uri))
-  def stop(uri: URI): Future[Stopped] = sendAndReceive(Stop(uri))
-  def register(hook: Webhook): Future[Registered] = sendAndReceive(Register(hook))
+  def start(uri: URI): Future[Started[Webhook]] = sendAndReceive(Start(uri))
+  def stop(uri: URI): Future[Stopped[Webhook]] = sendAndReceive(Stop(uri))
+  def register(hook: Webhook): Future[Registered[Webhook]] = sendAndReceive(Register(hook))
 
 }

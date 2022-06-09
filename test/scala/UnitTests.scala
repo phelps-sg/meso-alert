@@ -87,14 +87,14 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     import actors.WebhooksManagerActor._
     val hooks = mutable.Map[URI, Webhook]()
     override def receive: Receive = {
-      case WebhooksManagerActor.Start(uri) =>
+      case WebhooksManagerActor.Start(uri: URI) =>
         mock.start(uri)
         sender ! Success(Started(hooks(uri)))
-      case WebhooksManagerActor.Register(hook) =>
+      case WebhooksManagerActor.Register(hook: Webhook) =>
         mock.register(hook)
         hooks(hook.uri) = hook
         sender ! Success(Registered(hook))
-      case WebhooksManagerActor.Stop(uri) =>
+      case WebhooksManagerActor.Stop(uri: URI) =>
         mock.stop(uri)
         sender ! Success(Stopped(hooks(uri)))
       case x =>

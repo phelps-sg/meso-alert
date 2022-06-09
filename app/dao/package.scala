@@ -13,7 +13,8 @@ package object dao {
     val threshold: Long
   }
   case class Webhook(uri: URI, threshold: Long) extends HasThreshold
-  case class SlackAlert(channelId: String, threshold: Long) extends HasThreshold
+  case class SlackChannel(id: String)
+  case class SlackChatHook(channel: SlackChannel, threshold: Long) extends HasThreshold
   case class DuplicateWebhookException(uri: URI) extends Exception(s"A webhook already exists with uri $uri")
 
   @ImplementedBy(classOf[SlickWebhookDao])
@@ -26,9 +27,9 @@ package object dao {
 
   trait SlackAlertDao {
     def init(): Future[Unit]
-    def all(): Future[Seq[SlackAlert]]
-    def findSlackAlertFor(channelId: String): Future[Option[SlackAlert]]
-    def insertOrUpdate(alert: SlackAlert): Future[Unit]
+    def all(): Future[Seq[SlackChatHook]]
+    def findSlackAlertFor(channelId: String): Future[Option[SlackChatHook]]
+    def insertOrUpdate(alert: SlackChatHook): Future[Unit]
   }
 
   @Singleton

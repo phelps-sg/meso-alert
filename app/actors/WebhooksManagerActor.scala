@@ -16,13 +16,14 @@ import scala.util.{Failure, Success}
 
 object WebhooksManagerActor {
 
-  case class Register(hook: Webhook)
-  case class Unregister(hook: Webhook)
-  case class Started(hook: Webhook)
-  case class Stopped(hook: Webhook)
-  case class Registered(hook: Webhook)
-  case class Start(uri: URI)
-  case class Stop(uri: URI)
+  case class Register[X](hook: X)
+  case class Unregister[X](hook: X)
+  case class Started[X](hook: X)
+  case class Stopped[X](hook: X)
+  case class Registered[X](hook: X)
+  case class Start[X](uri: X)
+  case class Stop[X](uri: X)
+
   case class CreateActors(uri: URI, hook: Webhook)
 
   case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
@@ -38,8 +39,8 @@ object WebhooksManagerActor {
     Props(new WebhooksManagerActor(memPoolWatcher, backendSelection, messagingActorFactory, filteringActorFactory,
       webhookDao, databaseExecutionContext))
 
-  implicit val startWrites: Writes[Started] = new Writes[Started]() {
-    def writes(started: Started): JsObject = Json.obj(fields =
+  implicit val startWrites: Writes[Started[Webhook]] = new Writes[Started[Webhook]]() {
+    def writes(started: Started[Webhook]): JsObject = Json.obj(fields =
         "uri" -> started.hook.uri,
         "threshold" -> started.hook.threshold
     )
@@ -84,21 +85,21 @@ class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
 
   override def receive: Receive = {
 
-    case Register(hook) =>
+    case Register(hook: Webhook) =>
       webhookDao.insert(hook) map {
         _ => Success(Registered(hook))
       } recover {
         case DuplicateWebhookException(_) => Failure(WebhookAlreadyRegisteredException(hook.uri))
       } pipeTo sender
 
-    case Start(uri) =>
+    case Start(uri: URI) =>
       logger.debug(s"Received start request for $uri")
       provided(!(actors contains uri), uri withHook (hook => {
         self ! CreateActors(uri, hook)
         Started(hook)
       }), WebhookAlreadyStartedException(uri))
 
-    case Stop(uri) =>
+    case Stop(uri: URI) =>
       provided (actors contains uri, {
         actors(uri).foreach(_ ! PoisonPill)
         actors -= uri
