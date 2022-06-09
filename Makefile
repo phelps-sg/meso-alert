@@ -3,6 +3,8 @@ SHELL=/bin/bash
 SDK_INIT=source ~/.sdkman/bin/sdkman-init.sh
 NVM_INIT=source ~/.nvm/nvm.sh
 
+JAVA_VERSION=11.0.12-open
+
 EXPORT_ENV=export PLAY_SECRET=$(PLAY_SECRET)
 
 docker-build: sbt-build
@@ -20,13 +22,16 @@ docker-install: apt-update
 sdkman-install:
 	curl -s "https://get.sdkman.io" | bash
 
+jdk-install:
+	$(SDK_INIT); sdk install java $(JAVA_VERSION); sdk default java 11.0.12-open
+
 sbt-install:
 	$(SDK_INIT); sdk install sbt
 
 nvm-install:
 	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 
-install-dev: curl-install sdkman-install sbt-install docker-install nvm-install
+install-dev: curl-install sdkman-install jdk-install sbt-install docker-install nvm-install
 
 staging-config:
 	bin/staging-config.sh
