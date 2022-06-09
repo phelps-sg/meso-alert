@@ -2,6 +2,7 @@ package controllers
 
 import akka.actor.ActorSystem
 import dao.Webhook
+import org.slf4j.LoggerFactory
 import play.api.libs.json._
 import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.SlackWebhooksManagerService
@@ -13,6 +14,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class WebhooksController @Inject()(val controllerComponents: ControllerComponents,
                                    val slackWebHooksManager: SlackWebhooksManagerService)
                                   (implicit system: ActorSystem, ex: ExecutionContext) extends BaseController {
+
+  private val logger = LoggerFactory.getLogger(classOf[WebhooksController])
 
   case class UriDto(uri: String)
   case class HookDto(uri: String, threshold: Long)
