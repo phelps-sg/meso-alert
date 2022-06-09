@@ -9,7 +9,11 @@ import scala.concurrent.Future
 
 package object dao {
 
-  case class Webhook(uri: URI, threshold: Long)
+  trait HasThreshold {
+    val threshold: Long
+  }
+  case class Webhook(uri: URI, threshold: Long) extends HasThreshold
+  case class SlackAlert(channelId: String, threshold: Long) extends HasThreshold
   case class DuplicateWebhookException(uri: URI) extends Exception(s"A webhook already exists with uri $uri")
 
   @ImplementedBy(classOf[SlickWebhookDao])
