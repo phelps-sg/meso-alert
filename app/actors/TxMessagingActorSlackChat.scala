@@ -14,6 +14,13 @@ import slick.SlackChatExecutionContext
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
+object TxMessagingActorWeb {
+
+  trait Factory extends HookActorFactory[SlackChannel] {
+    def apply(channel: SlackChannel): Actor
+  }
+}
+
 class TxMessagingActorSlackChat @Inject()(config : Configuration, sce: SlackChatExecutionContext,
                                           @Assisted channel: SlackChannel) extends Actor {
 
