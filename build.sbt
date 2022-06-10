@@ -34,6 +34,11 @@ libraryDependencies ++= Seq(
   "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.7" % "test",
   "com.dimafeng" %% "testcontainers-scala-postgresql" % "0.40.7" % "test"
 )
+libraryDependencies ++= List(
+  "com.slack.api" % "bolt" % "1.22.1",
+  "com.slack.api" % "bolt-servlet" %  "1.22.1",
+  "com.slack.api" % "bolt-jetty" %  "1.22.1",
+)
 // Adds additional packages into Twirl
 //TwirlKeys.templateImports += "com.mesonomics.controllers._"
 
