@@ -73,6 +73,7 @@ package object dao {
     }
 
   }
+
   @Singleton
   class SlickSlackChatDao @Inject() (val db: Database,
                                       val databaseExecutionContext: DatabaseExecutionContext)
