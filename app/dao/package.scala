@@ -12,9 +12,12 @@ package object dao {
   trait HasThreshold {
     val threshold: Long
   }
-  case class Webhook(uri: URI, threshold: Long) extends HasThreshold
+
   case class SlackChannel(id: String)
+
+  case class Webhook(uri: URI, threshold: Long) extends HasThreshold
   case class SlackChatHook(channel: SlackChannel, threshold: Long) extends HasThreshold
+
   case class DuplicateHookException[X](uri: X) extends Exception(s"A hook already exists with key $uri")
 
   trait HookDao[X, Y] {
