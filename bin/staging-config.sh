@@ -8,7 +8,7 @@ play.filters.hosts {
   allowed = [".ngrok.io", "localhost:9000"]
 }
 
-slack.bot_token = ${SLACK_BOT_TOKEN}
+slack.botToken = ${SLACK_BOT_TOKEN}
 
 meso-alert.db = {
   connectionPool = "HikariCP" //use HikariCP for our connection pool

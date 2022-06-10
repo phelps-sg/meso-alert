@@ -22,7 +22,7 @@ class TxMessagingActorSlackChatHook @Inject()(config : Configuration, sce: Slack
   private val logger = LoggerFactory.getLogger(classOf[TxMessagingActorSlackChatHook])
 
   private val slack = Slack.getInstance()
-  private val methods = slack.methods(config.get[String]("slack.bot_token"))
+  private val methods = slack.methods(config.get[String]("slack.botToken"))
 
   def sendMessage(channelId: String, message: String): Future[ChatPostMessageResponse] = {
 
