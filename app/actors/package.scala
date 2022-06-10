@@ -2,7 +2,7 @@ import actors.TxFilterAuthActor.TxInputOutput
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
 import com.github.nscala_time.time.Imports.DateTime
-import dao.{DuplicateHookException, HasThreshold, HookDao}
+import dao.{DuplicateHookException, HookWithThreshold, HookDao}
 import org.apache.commons.logging.LogFactory
 import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
@@ -199,7 +199,7 @@ package object actors {
           uri withHook (hook => Stopped(hook))
         }, HookNotStartedException(uri))
 
-      case CreateActors(uri: X, hook: HasThreshold) =>
+      case CreateActors(uri: X, hook: HookWithThreshold) =>
         val actorId = encodeKey(uri)
         val webhookMessagingActor =
           injectedChild(messagingActorFactory(uri), name = s"$hookTypePrefix-messenger-$actorId")
