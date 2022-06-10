@@ -24,6 +24,7 @@ postgres password you wish to use for the local staging database:
 ~~~bash
 cat << EOF > docker/.env
 POSTGRES_PASSWORD=<password>
+SLACK_BOT_TOKEN=<obtain from slack app>
 POSTGRES_PORT=5436
 EOF
 ~~~
