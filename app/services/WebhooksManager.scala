@@ -17,8 +17,7 @@ trait SlackWebhooksManagerService extends HooksManagerService[Webhook, URI]
 
 
 @Singleton
-class WebhooksManager @Inject()(memPoolWatcher: MemPoolWatcherService,
-                                val webhookDao: WebhookDao,
+class WebhooksManager @Inject()(val webhookDao: WebhookDao,
                                 @Named("webhooks-actor") val actor: ActorRef)
                                (implicit val system: ActorSystem, val executionContext: ExecutionContext)
   extends SlackWebhooksManagerService with HooksManager[URI, Webhook] {

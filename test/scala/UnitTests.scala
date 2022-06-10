@@ -171,7 +171,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     lazy val webhookManagerMock = mock[WebhookManagerMock]
     lazy val mockWebhookManagerActor = system.actorOf(MockWebhookManagerActor.props(webhookManagerMock))
     lazy val webhooksManager = new WebhooksManager(
-      mockMemPoolWatcher,
       webhookDao = webhookDao, actor = mockWebhookManagerActor)
   }
 
