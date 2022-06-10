@@ -1,17 +1,12 @@
 package actors
 
-import akka.actor.{Actor, ActorRef, PoisonPill, Props}
+import akka.actor.Props
 import com.google.inject.Inject
-import dao.{DuplicateWebhookException, HasThreshold, HookDao, Webhook, WebhookDao}
-import org.apache.commons.logging.LogFactory
-import play.api.libs.concurrent.InjectedActorSupport
+import dao.{Webhook, WebhookDao}
 import play.api.libs.json.{JsObject, Json, Writes}
-import services.MemPoolWatcherService
 import slick.DatabaseExecutionContext
 
 import java.net.{URI, URLEncoder}
-import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
 
 object WebhooksManagerActor {
 
