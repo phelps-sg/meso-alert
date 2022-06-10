@@ -14,12 +14,12 @@ import slick.SlackChatExecutionContext
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-class TxSlackChatHookMessagingActor @Inject()(config : Configuration, sce: SlackChatExecutionContext,
+class TxMessagingActorSlackChatHook @Inject()(config : Configuration, sce: SlackChatExecutionContext,
                                               @Assisted channel: SlackChannel) extends Actor {
 
   implicit val executionContext: SlackChatExecutionContext = sce
 
-  private val logger = LoggerFactory.getLogger(classOf[TxSlackChatHookMessagingActor])
+  private val logger = LoggerFactory.getLogger(classOf[TxMessagingActorSlackChatHook])
 
   private val slack = Slack.getInstance()
   private val methods = slack.methods(config.get[String]("slackToken"))
