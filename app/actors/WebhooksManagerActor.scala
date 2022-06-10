@@ -1,6 +1,6 @@
 package actors
 
-import actors.WebhooksManagerActor.WebhookNotRegisteredException
+import actors.WebhooksManagerActor.HookNotRegisteredException
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.pattern.pipe
 import com.google.inject.Inject
@@ -20,10 +20,10 @@ object WebhooksManagerActor {
 
   case class CreateActors(uri: URI, hook: Webhook)
 
-  case class WebhookNotRegisteredException[X](uri: X) extends Exception(s"No webhook registered for $uri")
-  case class WebhookNotStartedException[X](uri: X) extends Exception(s"No webhook started for $uri")
-  case class WebhookAlreadyRegisteredException[X](uri: X) extends Exception(s"Webhook already registered for $uri")
-  case class WebhookAlreadyStartedException[X](uri: X) extends Exception(s"Webhook already started for $uri")
+  case class HookNotRegisteredException[X](uri: X) extends Exception(s"No webhook registered for $uri")
+  case class HookNotStartedException[X](uri: X) extends Exception(s"No webhook started for $uri")
+  case class HookAlreadyRegisteredException[X](uri: X) extends Exception(s"Webhook already registered for $uri")
+  case class HookAlreadyStartedException[X](uri: X) extends Exception(s"Webhook already started for $uri")
 
   def props(messagingActorFactory: TxWebhookMessagingActor.Factory,
             filteringActorFactory: TxFilterNoAuthActor.Factory,
@@ -49,11 +49,11 @@ trait HooksManagerActor[X, Y] extends Actor with InjectedActorSupport {
 
   def encodeUrl(url: String): String = URLEncoder.encode(url, "UTF-8")
 
-  implicit class HookURI(uri: X) {
+  implicit class HookFor(key: X) {
     def withHook[R](fn: Y => R): Unit = {
-      dao.find(uri) map {
+      dao.find(key) map {
         case Some(hook) => Success(fn(hook))
-        case None => Failure(WebhookNotRegisteredException(uri))
+        case None => Failure(HookNotRegisteredException(key))
       } pipeTo sender
     }
   }
@@ -80,7 +80,7 @@ class WebhooksManagerActor @Inject()(val messagingActorFactory: TxWebhookMessagi
       logger.debug(s"Querying hook for uri ${uri.toString}")
       webhookDao.find(uri) map {
         case Some(hook) => Success(fn(hook))
-        case None => Failure(WebhookNotRegisteredException(uri))
+        case None => Failure(HookNotRegisteredException(uri))
       } pipeTo sender
     }
   }
@@ -99,7 +99,7 @@ class WebhooksManagerActor @Inject()(val messagingActorFactory: TxWebhookMessagi
       webhookDao.insert(hook) map {
         _ => Success(Registered(hook))
       } recover {
-        case DuplicateWebhookException(_) => Failure(WebhookAlreadyRegisteredException(hook.uri))
+        case DuplicateWebhookException(_) => Failure(HookAlreadyRegisteredException(hook.uri))
       } pipeTo sender
 
     case Start(uri: URI) =>
@@ -107,14 +107,14 @@ class WebhooksManagerActor @Inject()(val messagingActorFactory: TxWebhookMessagi
       provided(!(actors contains uri), uri withHook (hook => {
         self ! CreateActors(uri, hook)
         Started(hook)
-      }), WebhookAlreadyStartedException(uri))
+      }), HookAlreadyStartedException(uri))
 
     case Stop(uri: URI) =>
       provided (actors contains uri, {
         actors(uri).foreach(_ ! PoisonPill)
         actors -= uri
         uri withHook (hook => Stopped(hook))
-      }, WebhookNotStartedException(uri))
+      }, HookNotStartedException(uri))
 
     case CreateActors(uri, hook) =>
       val actorId = encodeUrl(uri.toURL.toString)

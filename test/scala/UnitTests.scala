@@ -381,7 +381,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         val uri = new URI("http://test")
         afterDbInit {
           f.webhooksActor ? Start(uri)
-        }.futureValue should matchPattern { case Failure(WebhookNotRegisteredException(`uri`)) => }
+        }.futureValue should matchPattern { case Failure(HookNotRegisteredException(`uri`)) => }
       }
 
       "return Registered and record a new hook in the database when registering a new hook" in {
@@ -400,7 +400,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         val uri = new URI("http://test")
         afterDbInit {
           f.webhooksActor ? Stop(uri)
-        }.futureValue should matchPattern { case Failure(WebhookNotStartedException(`uri`)) => }
+        }.futureValue should matchPattern { case Failure(HookNotStartedException(`uri`)) => }
       }
 
       "return an exception when registering a pre-existing hook" in {
@@ -412,7 +412,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
             _ <- db.run(Tables.webhooks += hook)
             registered <- f.webhooksActor ? Register(hook)
           } yield registered
-        }.futureValue should matchPattern { case Failure(WebhookAlreadyRegisteredException(`uri`)) => }
+        }.futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`uri`)) => }
       }
 
       "return an exception when starting a hook that has already been started" in {
@@ -425,7 +425,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
             started <- f.webhooksActor ? Start(hook.uri)
             error <- f.webhooksActor ? Start(hook.uri)
           } yield error
-        }.futureValue should matchPattern { case Failure(WebhookAlreadyStartedException(`uri`)) => }
+        }.futureValue should matchPattern { case Failure(HookAlreadyStartedException(`uri`)) => }
       }
 
       "correctly register, start, stop and restart a web hook" in {
