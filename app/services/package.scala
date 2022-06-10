@@ -16,7 +16,7 @@ package object services {
     def init(): Future[Seq[Started[X]]]
     def start(key: Y): Future[Started[X]]
     def stop(key: Y): Future[Stopped[X]]
-    def register(hook: Webhook): Future[Registered[X]]
+    def register(hook: X): Future[Registered[X]]
   }
 
   trait HooksManager[X, Y] {
