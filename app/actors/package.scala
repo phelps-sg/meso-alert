@@ -199,14 +199,14 @@ package object actors {
           uri withHook (hook => Stopped(hook))
         }, HookNotStartedException(uri))
 
-      case CreateActors(uri: X, hook: HookWithThreshold) =>
-        val actorId = encodeKey(uri)
-        val webhookMessagingActor =
-          injectedChild(messagingActorFactory(uri), name = s"$hookTypePrefix-messenger-$actorId")
+      case CreateActors(key: X, hook: HookWithThreshold) =>
+        val actorId = encodeKey(key)
+        val messagingActor =
+          injectedChild(messagingActorFactory(key), name = s"$hookTypePrefix-messenger-$actorId")
         val filteringActor =
-          injectedChild(filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
+          injectedChild(filteringActorFactory(messagingActor, _.value >= hook.threshold),
             name = s"$hookTypePrefix-filter-$actorId")
-        actors += uri -> Array(webhookMessagingActor, filteringActor)
+        actors += key -> Array(messagingActor, filteringActor)
 
     }
 
