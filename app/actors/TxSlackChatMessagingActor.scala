@@ -12,6 +12,7 @@ import play.api.Configuration
 import slick.SlackChatExecutionContext
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 class TxSlackChatMessagingActor @Inject() (config : Configuration, sce: SlackChatExecutionContext,
                                            @Assisted channel: SlackChannel) extends Actor {
@@ -24,10 +25,21 @@ class TxSlackChatMessagingActor @Inject() (config : Configuration, sce: SlackCha
   private val methods = slack.methods(config.get[String]("slackToken"))
 
   def sendMessage(channelId: String, message: String): Future[ChatPostMessageResponse] = {
+
     val request = ChatPostMessageRequest.builder.channel(channelId).text(message).build
-    Future {
+
+    val f = Future {
       methods.chatPostMessage(request)
     }
+
+    f.onComplete {
+      case Success(_) => logger.info(s"Successfully posted message $message to $channelId")
+      case Failure(ex) =>
+        logger.error(s"Could not post message $message to $channelId: ${ex.getMessage}")
+        ex.printStackTrace()
+    }
+
+    f
   }
 
   override def receive: Receive = {
