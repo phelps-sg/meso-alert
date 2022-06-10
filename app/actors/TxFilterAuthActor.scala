@@ -39,8 +39,9 @@ object TxFilterAuthActor {
 }
 
 //noinspection TypeAnnotation
-class TxFilterAuthActor @Inject() (@Assisted val out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
-  extends AbstractTxUpdateActor(memPoolWatcher) with TxForwardingActor {
+class TxFilterAuthActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: MemPoolWatcherService,
+                                  userManager: UserManagerService)
+  extends TxUpdateActor with TxForwardingActor {
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[TxFilterAuthActor])
 

@@ -38,7 +38,9 @@ package object actors {
   case class Start[X](uri: X)
   case class Stop[X](uri: X)
 
-  abstract class AbstractTxUpdateActor(val memPoolWatcher: MemPoolWatcherService) extends Actor {
+  trait TxUpdateActor extends Actor {
+
+    val memPoolWatcher: MemPoolWatcherService
 
     private val logger = LoggerFactory.getLogger(classOf[TxUpdate])
 

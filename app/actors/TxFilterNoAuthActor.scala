@@ -19,8 +19,8 @@ object TxFilterNoAuthActor {
 }
 
 class TxFilterNoAuthActor @Inject() (@Assisted val out: ActorRef, @Assisted val filter: TxUpdate => Boolean,
-                          memPoolWatcher: MemPoolWatcherService)
-  extends AbstractTxUpdateActor(memPoolWatcher) with TxForwardingActor {
+                                     val memPoolWatcher: MemPoolWatcherService)
+  extends TxUpdateActor with TxForwardingActor {
 
   override def preStart(): Unit = {
     super.preStart()
