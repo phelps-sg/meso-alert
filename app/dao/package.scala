@@ -25,19 +25,9 @@ package object dao {
   }
 
   @ImplementedBy(classOf[SlickWebhookDao])
-  trait WebhookDao extends HookDao[URI, Webhook] {
-//    def init(): Future[Unit]
-//    def all(): Future[Seq[Webhook]]
-//    def findWebHookFor(uri: URI): Future[Option[Webhook]]
-//    def insert(hook: Webhook): Future[Int]
-  }
+  trait WebhookDao extends HookDao[URI, Webhook]
 
-  trait SlackAlertDao extends HookDao[SlackChannel, SlackChatHook] {
-//    def init(): Future[Unit]
-//    def all(): Future[Seq[SlackChatHook]]
-//    def findSlackAlertFor(channelId: String): Future[Option[SlackChatHook]]
-//    def insertOrUpdate(alert: SlackChatHook): Future[Unit]
-  }
+  trait SlackAlertDao extends HookDao[SlackChannel, SlackChatHook]
 
   @Singleton
   class SlickWebhookDao @Inject() (val db: Database,
