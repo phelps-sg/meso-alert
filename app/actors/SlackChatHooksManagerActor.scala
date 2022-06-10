@@ -30,5 +30,5 @@ class SlackChatHooksManagerActor @Inject()(val messagingActorFactory: TxMessagin
   extends HooksManagerActor[SlackChannel, SlackChatHook] {
 
   override def encodeKey(channel: SlackChannel): String = URLEncoder.encode(channel.id, "UTF-8")
-  override def hookTypePrefix: String = "webhook"
+  override def hookTypePrefix: String = "slack-chat-hook"
 }
