@@ -30,7 +30,9 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
     val channel = SlackChannel(channelId)
 
     command match {
+
       case "/alert" =>
+
         args.toLongOption match {
 
           case Some(amount) =>
@@ -42,7 +44,7 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
 
             f recover {
               case HookAlreadyRegisteredException(_) =>
-                ServiceUnavailable("Alerts already registered for this channel")
+                Ok("Alerts already registered for this channel")
             } map {
               _ => Ok("Success")
             }
@@ -51,6 +53,7 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
             Future {
               Ok(s"Invalid amount $args")
             }
+
         }
     }
 
