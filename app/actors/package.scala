@@ -77,13 +77,9 @@ package object actors {
     s"New transaction ${linkToTxHash(tx.hash)} with value ${formatSatoshi(tx.value)} BTC to " +
       s"addresses ${formatOutputAddresses(tx.outputs)}"
   }
-  case class TxUpdate( hash: String,
-                       value: Long,
-                       time: DateTime,
-                       isPending: Boolean,
-                       outputs: Seq[TxInputOutput],
-                       inputs: Seq[TxInputOutput],
-                     )
+
+  case class TxUpdate(hash: String, value: Long, time: DateTime, isPending: Boolean,
+                       outputs: Seq[TxInputOutput], inputs: Seq[TxInputOutput])
 
   object TxUpdate {
 
