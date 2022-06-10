@@ -1,13 +1,11 @@
 package actors
 
-import com.slack.api.Slack
-import com.slack.api.methods.MethodsClient
-import com.slack.api.methods.SlackApiException
-import com.slack.api.methods.request.chat.ChatPostMessageRequest
-import com.slack.api.methods.response.chat.ChatPostMessageResponse
 import akka.actor.Actor
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
+import com.slack.api.Slack
+import com.slack.api.methods.request.chat.ChatPostMessageRequest
+import com.slack.api.methods.response.chat.ChatPostMessageResponse
 import dao.SlackChannel
 import org.slf4j.LoggerFactory
 import play.api.Configuration
