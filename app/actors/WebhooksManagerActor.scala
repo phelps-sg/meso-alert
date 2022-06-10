@@ -1,9 +1,10 @@
 package actors
 
+import actors.WebhooksManagerActor.WebhookNotRegisteredException
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import akka.pattern.pipe
 import com.google.inject.Inject
-import dao.{DuplicateWebhookException, Webhook, WebhookDao}
+import dao.{DuplicateWebhookException, HookDao, Webhook, WebhookDao}
 import org.apache.commons.logging.LogFactory
 import play.api.libs.concurrent.InjectedActorSupport
 import play.api.libs.json.{JsObject, Json, Writes}
@@ -19,10 +20,10 @@ object WebhooksManagerActor {
 
   case class CreateActors(uri: URI, hook: Webhook)
 
-  case class WebhookNotRegisteredException(uri: URI) extends Exception(s"No webhook registered for $uri")
-  case class WebhookNotStartedException(uri: URI) extends Exception(s"No webhook started for $uri")
-  case class WebhookAlreadyRegisteredException(uri: URI) extends Exception(s"Webhook already registered for $uri")
-  case class WebhookAlreadyStartedException(uri: URI) extends Exception(s"Webhook already started for $uri")
+  case class WebhookNotRegisteredException[X](uri: X) extends Exception(s"No webhook registered for $uri")
+  case class WebhookNotStartedException[X](uri: X) extends Exception(s"No webhook started for $uri")
+  case class WebhookAlreadyRegisteredException[X](uri: X) extends Exception(s"Webhook already registered for $uri")
+  case class WebhookAlreadyStartedException[X](uri: X) extends Exception(s"Webhook already started for $uri")
 
   def props(messagingActorFactory: TxWebhookMessagingActor.Factory,
             filteringActorFactory: TxFilterNoAuthActor.Factory,
@@ -35,6 +36,26 @@ object WebhooksManagerActor {
         "uri" -> started.hook.uri,
         "threshold" -> started.hook.threshold
     )
+  }
+}
+
+trait HooksManagerActor[X, Y] extends Actor with InjectedActorSupport {
+  val dao: HookDao[X, Y]
+  val messagingActorFactory: TxWebhookMessagingActor.Factory
+  val filteringActorFactory: TxFilterNoAuthActor.Factory
+  val databaseExecutionContext: DatabaseExecutionContext
+
+  implicit val ec: ExecutionContext = databaseExecutionContext
+
+  def encodeUrl(url: String): String = URLEncoder.encode(url, "UTF-8")
+
+  implicit class HookURI(uri: X) {
+    def withHook[R](fn: Y => R): Unit = {
+      dao.find(uri) map {
+        case Some(hook) => Success(fn(hook))
+        case None => Failure(WebhookNotRegisteredException(uri))
+      } pipeTo sender
+    }
   }
 }
 
