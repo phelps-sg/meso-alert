@@ -412,7 +412,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
             _ <- db.run(Tables.webhooks += hook)
             registered <- f.webhooksActor ? Register(hook)
           } yield registered
-        }.futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`uri`)) => }
+        }.futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
       }
 
       "return an exception when starting a hook that has already been started" in {

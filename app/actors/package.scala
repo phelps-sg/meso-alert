@@ -13,6 +13,10 @@ import scala.jdk.CollectionConverters.CollectionHasAsScala
 //noinspection TypeAnnotation
 package object actors {
 
+  trait HookActorFactory[X] {
+    def apply(x: X): Actor
+  }
+
   case class Register[X](hook: X)
   case class Unregister[X](hook: X)
   case class Started[X](hook: X)
