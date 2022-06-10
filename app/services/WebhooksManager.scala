@@ -10,7 +10,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @ImplementedBy(classOf[WebhooksManager])
-trait SlackWebhooksManagerService extends HooksManagerService[Webhook, URI]
+trait SlackWebhooksManagerService extends HooksManagerService[URI, Webhook]
 
 @Singleton
 class WebhooksManager @Inject()(val hookDao: WebhookDao,

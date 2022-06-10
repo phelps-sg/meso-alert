@@ -13,10 +13,10 @@ import scala.util.{Failure, Success}
 package object services {
 
   trait HooksManagerService[X, Y] {
-    def init(): Future[Seq[Started[X]]]
-    def start(key: Y): Future[Started[X]]
-    def stop(key: Y): Future[Stopped[X]]
-    def register(hook: X): Future[Registered[X]]
+    def init(): Future[Seq[Started[Y]]]
+    def start(key: X): Future[Started[Y]]
+    def stop(key: X): Future[Stopped[Y]]
+    def register(hook: Y): Future[Registered[Y]]
   }
 
   trait HooksManager[X, Y] {
