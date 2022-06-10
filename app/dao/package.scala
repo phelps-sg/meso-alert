@@ -17,19 +17,26 @@ package object dao {
   case class SlackChatHook(channel: SlackChannel, threshold: Long) extends HasThreshold
   case class DuplicateWebhookException(uri: URI) extends Exception(s"A webhook already exists with uri $uri")
 
-  @ImplementedBy(classOf[SlickWebhookDao])
-  trait WebhookDao {
+  trait HookDao[X, Y] {
     def init(): Future[Unit]
-    def all(): Future[Seq[Webhook]]
-    def findWebHookFor(uri: URI): Future[Option[Webhook]]
-    def insert(hook: Webhook): Future[Int]
+    def all(): Future[Seq[Y]]
+    def find(uri: X): Future[Option[Y]]
+    def insert(hook: Y): Future[Int]
   }
 
-  trait SlackAlertDao {
-    def init(): Future[Unit]
-    def all(): Future[Seq[SlackChatHook]]
-    def findSlackAlertFor(channelId: String): Future[Option[SlackChatHook]]
-    def insertOrUpdate(alert: SlackChatHook): Future[Unit]
+  @ImplementedBy(classOf[SlickWebhookDao])
+  trait WebhookDao extends HookDao[URI, Webhook] {
+//    def init(): Future[Unit]
+//    def all(): Future[Seq[Webhook]]
+//    def findWebHookFor(uri: URI): Future[Option[Webhook]]
+//    def insert(hook: Webhook): Future[Int]
+  }
+
+  trait SlackAlertDao extends HookDao[SlackChannel, SlackChatHook] {
+//    def init(): Future[Unit]
+//    def all(): Future[Seq[SlackChatHook]]
+//    def findSlackAlertFor(channelId: String): Future[Option[SlackChatHook]]
+//    def insertOrUpdate(alert: SlackChatHook): Future[Unit]
   }
 
   @Singleton
@@ -57,7 +64,7 @@ package object dao {
 
     def all(): Future[Seq[Webhook]] = db.run(Tables.webhooks.result)
 
-    def findWebHookFor(uri: URI): Future[Option[Webhook]] = {
+    def find(uri: URI): Future[Option[Webhook]] = {
       logger.debug(s"Querying for ${uri.toString}")
       db.run(Tables.webhooks.filter(_.url === uri.toString).result).map {
         case Seq(result) => Some(result)

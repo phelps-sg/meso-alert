@@ -57,7 +57,7 @@ class WebhooksManagerActor @Inject()(val messagingActorFactory: TxWebhookMessagi
   implicit class HookURI(uri: URI) {
     def withHook[R](fn: Webhook => R): Unit = {
       logger.debug(s"Querying hook for uri ${uri.toString}")
-      webhookDao.findWebHookFor(uri) map {
+      webhookDao.find(uri) map {
         case Some(hook) => Success(fn(hook))
         case None => Failure(WebhookNotRegisteredException(uri))
       } pipeTo sender
