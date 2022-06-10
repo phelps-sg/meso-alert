@@ -28,34 +28,16 @@ class MonixBackend extends HttpBackendSelection {
 }
 
 
-object TxWebhookMessagingActor {
+object TxMessagingActorWeb {
 
   trait Factory extends HookActorFactory[URI] {
     def apply(hookUri: URI): Actor
   }
 }
 
-class TxWebhookMessagingActor @Inject()(backendSelection: HttpBackendSelection, @Assisted hookUri: URI)  extends Actor {
+class TxMessagingActorWeb @Inject()(backendSelection: HttpBackendSelection, @Assisted hookUri: URI)  extends Actor {
 
-  val blockChairBaseURL = "https://www.blockchair.com/bitcoin"
-  private val logger = LogFactory.getLog(classOf[TxWebhookMessagingActor])
-
-  def linkToTxHash(hash: String) = s"<$blockChairBaseURL/transaction/$hash|$hash>"
-  def linkToAddress(address: String) = s"<$blockChairBaseURL/address/$address|$address>"
-
-  def formatSatoshi(value: Long): String = (value / 100000000L).toString
-
-  def formatOutputAddresses(outputs: Seq[TxInputOutput]): String =
-    outputs.filterNot(_.address.isEmpty)
-      .map(output => output.address.get)
-      .distinct
-      .map(output => linkToAddress(output))
-      .mkString(", ")
-
-  def message(tx: TxUpdate): String = {
-    s"New transaction ${linkToTxHash(tx.hash)} with value ${formatSatoshi(tx.value)} BTC to " +
-      s"addresses ${formatOutputAddresses(tx.outputs)}"
-  }
+  private val logger = LogFactory.getLog(classOf[TxMessagingActorWeb])
 
   override def receive: Receive = {
     case tx: TxUpdate =>

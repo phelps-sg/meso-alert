@@ -10,7 +10,7 @@ import java.net.{URI, URLEncoder}
 
 object WebhooksManagerActor {
 
-  def props(messagingActorFactory: TxWebhookMessagingActor.Factory,
+  def props(messagingActorFactory: TxMessagingActorWeb.Factory,
             filteringActorFactory: TxFilterNoAuthActor.Factory,
             webhookDao: WebhookDao,
             databaseExecutionContext: DatabaseExecutionContext): Props =
@@ -24,7 +24,7 @@ object WebhooksManagerActor {
   }
 }
 
-class WebhooksManagerActor @Inject()(val messagingActorFactory: TxWebhookMessagingActor.Factory,
+class WebhooksManagerActor @Inject()(val messagingActorFactory: TxMessagingActorWeb.Factory,
                                      val filteringActorFactory: TxFilterNoAuthActor.Factory,
                                      val dao: WebhookDao,
                                      val databaseExecutionContext: DatabaseExecutionContext)

@@ -1,5 +1,5 @@
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
-import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HttpBackendSelection, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxUpdate, TxWebhookMessagingActor, WebhooksManagerActor}
+import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HttpBackendSelection, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxUpdate, TxMessagingActorWeb, WebhooksManagerActor}
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -110,7 +110,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         val get: jdbc.JdbcBackend.Database = db
       })
 //      bindActor(classOf[WebhooksActor], "webhooks-actor")
-      bindActorFactory(classOf[TxWebhookMessagingActor], classOf[TxWebhookMessagingActor.Factory])
+      bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
       bindActorFactory(classOf[TxFilterAuthActor], classOf[TxFilterAuthActor.Factory])
       bindActorFactory(classOf[TxFilterNoAuthActor], classOf[TxFilterNoAuthActor.Factory])
     }
@@ -160,7 +160,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     lazy val webhooksActor = {
       system.actorOf(
         WebhooksManagerActor.props(
-          injector.instanceOf[TxWebhookMessagingActor.Factory],
+          injector.instanceOf[TxMessagingActorWeb.Factory],
           injector.instanceOf[TxFilterNoAuthActor.Factory],
           injector.instanceOf[WebhookDao],
           injector.instanceOf[DatabaseExecutionContext]
@@ -170,9 +170,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
     lazy val webhookManagerMock = mock[WebhookManagerMock]
     lazy val mockWebhookManagerActor = system.actorOf(MockWebhookManagerActor.props(webhookManagerMock))
-    lazy val webhooksManager = new WebhooksManager(
-      mockMemPoolWatcher,
-      webhookDao = webhookDao, actor = mockWebhookManagerActor)
+    lazy val webhooksManager = new WebhooksManager(webhookDao, actor = mockWebhookManagerActor)
   }
 
   //noinspection ZeroIndexToHead

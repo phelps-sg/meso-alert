@@ -2,7 +2,7 @@ import actors.TxFilterAuthActor.TxInputOutput
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
 import com.github.nscala_time.time.Imports.DateTime
-import dao.{DuplicateWebhookException, HasThreshold, HookDao}
+import dao.{DuplicateHookException, HookWithThreshold, HookDao}
 import org.apache.commons.logging.LogFactory
 import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
@@ -60,13 +60,26 @@ package object actors {
     }
   }
 
-  case class TxUpdate( hash: String,
-                       value: Long,
-                       time: DateTime,
-                       isPending: Boolean,
-                       outputs: Seq[TxInputOutput],
-                       inputs: Seq[TxInputOutput],
-                     )
+  val blockChairBaseURL = "https://www.blockchair.com/bitcoin"
+  def linkToTxHash(hash: String) = s"<$blockChairBaseURL/transaction/$hash|$hash>"
+  def linkToAddress(address: String) = s"<$blockChairBaseURL/address/$address|$address>"
+
+  def formatSatoshi(value: Long): String = (value / 100000000L).toString
+
+  def formatOutputAddresses(outputs: Seq[TxInputOutput]): String =
+    outputs.filterNot(_.address.isEmpty)
+      .map(output => output.address.get)
+      .distinct
+      .map(output => linkToAddress(output))
+      .mkString(", ")
+
+  def message(tx: TxUpdate): String = {
+    s"New transaction ${linkToTxHash(tx.hash)} with value ${formatSatoshi(tx.value)} BTC to " +
+      s"addresses ${formatOutputAddresses(tx.outputs)}"
+  }
+
+  case class TxUpdate(hash: String, value: Long, time: DateTime, isPending: Boolean,
+                       outputs: Seq[TxInputOutput], inputs: Seq[TxInputOutput])
 
   object TxUpdate {
 
@@ -165,7 +178,7 @@ package object actors {
         dao.insert(hook) map {
           _ => Success(Registered(hook))
         } recover {
-          case DuplicateWebhookException(_) => Failure(HookAlreadyRegisteredException(hook))
+          case DuplicateHookException(_) => Failure(HookAlreadyRegisteredException(hook))
         } pipeTo sender
 
       case Start(uri: X) =>
@@ -182,14 +195,14 @@ package object actors {
           uri withHook (hook => Stopped(hook))
         }, HookNotStartedException(uri))
 
-      case CreateActors(uri: X, hook: HasThreshold) =>
-        val actorId = encodeKey(uri)
-        val webhookMessagingActor =
-          injectedChild(messagingActorFactory(uri), name = s"$hookTypePrefix-messenger-$actorId")
+      case CreateActors(key: X, hook: HookWithThreshold) =>
+        val actorId = encodeKey(key)
+        val messagingActor =
+          injectedChild(messagingActorFactory(key), name = s"$hookTypePrefix-messenger-$actorId")
         val filteringActor =
-          injectedChild(filteringActorFactory(webhookMessagingActor, _.value >= hook.threshold),
+          injectedChild(filteringActorFactory(messagingActor, _.value >= hook.threshold),
             name = s"$hookTypePrefix-filter-$actorId")
-        actors += uri -> Array(webhookMessagingActor, filteringActor)
+        actors += key -> Array(messagingActor, filteringActor)
 
     }
 

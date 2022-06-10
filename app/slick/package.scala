@@ -9,4 +9,8 @@ package object slick {
     extends CustomExecutionContext(system, "database.dispatcher") {
   }
 
+  @Singleton
+  class SlackChatExecutionContext @Inject()(system: ActorSystem)
+    extends CustomExecutionContext(system, "slackChat.dispatcher")
+
 }

@@ -1,4 +1,4 @@
-import actors.{TxFilterAuthActor, TxFilterNoAuthActor, TxWebhookMessagingActor, WebhooksManagerActor}
+import actors.{TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb, WebhooksManagerActor, SlackChatHooksManagerActor}
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import play.libs.akka.AkkaGuiceSupport
@@ -11,7 +11,9 @@ class Module extends AbstractModule with AkkaGuiceSupport {
   override def configure(): Unit = {
     bind(classOf[Database]).toProvider(classOf[DatabaseProvider])
     bindActor(classOf[WebhooksManagerActor], "webhooks-actor")
-    bindActorFactory(classOf[TxWebhookMessagingActor], classOf[TxWebhookMessagingActor.Factory])
+    bindActor(classOf[SlackChatHooksManagerActor], "slack-hooks-actor")
+    bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
+    bindActorFactory(classOf[TxMessagingActorSlackChat], classOf[TxMessagingActorSlackChat.Factory])
     bindActorFactory(classOf[TxFilterAuthActor], classOf[TxFilterAuthActor.Factory])
     bindActorFactory(classOf[TxFilterNoAuthActor], classOf[TxFilterNoAuthActor.Factory])
   }
