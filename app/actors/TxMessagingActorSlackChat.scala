@@ -14,7 +14,7 @@ import slick.SlackChatExecutionContext
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
-object TxMessagingActorWeb {
+object TxMessagingActorSlackChat  {
 
   trait Factory extends HookActorFactory[SlackChannel] {
     def apply(channel: SlackChannel): Actor
