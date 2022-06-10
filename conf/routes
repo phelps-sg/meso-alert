@@ -12,3 +12,4 @@ GET     /ws                         controllers.HomeController.websocket
 POST    /api/webhooks/start         controllers.WebhooksController.start
 POST    /api/webhooks/stop          controllers.WebhooksController.stop
 POST    /api/webhooks/register      controllers.WebhooksController.register
+POST    /api/slack/slash            controllers.SlackController.slashCommand

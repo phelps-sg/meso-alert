@@ -4,6 +4,10 @@
 
 cat <<EOF > ./conf/application.conf
 
+play.filters.hosts {
+  allowed = [".ngrok.io", "localhost:9000"]
+}
+
 meso-alert.db = {
   connectionPool = "HikariCP" //use HikariCP for our connection pool
   dataSourceClass = "org.postgresql.ds.PGSimpleDataSource"

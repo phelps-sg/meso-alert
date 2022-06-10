@@ -9,16 +9,25 @@ import scala.concurrent.Future
 
 package object dao {
 
-  case class Webhook(uri: URI, threshold: Long)
+  trait HasThreshold {
+    val threshold: Long
+  }
+  case class Webhook(uri: URI, threshold: Long) extends HasThreshold
+  case class SlackChannel(id: String)
+  case class SlackChatHook(channel: SlackChannel, threshold: Long) extends HasThreshold
   case class DuplicateWebhookException(uri: URI) extends Exception(s"A webhook already exists with uri $uri")
 
-  @ImplementedBy(classOf[SlickWebhookDao])
-  trait WebhookDao {
+  trait HookDao[X, Y] {
     def init(): Future[Unit]
-    def all(): Future[Seq[Webhook]]
-    def forUri(uri: URI): Future[Option[Webhook]]
-    def insert(hook: Webhook): Future[Int]
+    def all(): Future[Seq[Y]]
+    def find(uri: X): Future[Option[Y]]
+    def insert(hook: Y): Future[Int]
   }
+
+  @ImplementedBy(classOf[SlickWebhookDao])
+  trait WebhookDao extends HookDao[URI, Webhook]
+
+  trait SlackAlertDao extends HookDao[SlackChannel, SlackChatHook]
 
   @Singleton
   class SlickWebhookDao @Inject() (val db: Database,
@@ -45,7 +54,7 @@ package object dao {
 
     def all(): Future[Seq[Webhook]] = db.run(Tables.webhooks.result)
 
-    def forUri(uri: URI): Future[Option[Webhook]] = {
+    def find(uri: URI): Future[Option[Webhook]] = {
       logger.debug(s"Querying for ${uri.toString}")
       db.run(Tables.webhooks.filter(_.url === uri.toString).result).map {
         case Seq(result) => Some(result)
