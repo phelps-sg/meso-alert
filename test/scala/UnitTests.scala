@@ -1,5 +1,5 @@
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
-import actors.{HttpBackendSelection, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxUpdate, TxWebhookMessagingActor, WebhooksManagerActor}
+import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HttpBackendSelection, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxUpdate, TxWebhookMessagingActor, WebhooksManagerActor}
 import akka.actor.{Actor, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
