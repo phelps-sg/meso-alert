@@ -24,13 +24,11 @@ object WebhooksManagerActor {
   case class WebhookAlreadyRegisteredException(uri: URI) extends Exception(s"Webhook already registered for $uri")
   case class WebhookAlreadyStartedException(uri: URI) extends Exception(s"Webhook already started for $uri")
 
-  def props(memPoolWatcher: MemPoolWatcherService, backendSelection: HttpBackendSelection,
-            messagingActorFactory: TxWebhookMessagingActor.Factory,
+  def props(messagingActorFactory: TxWebhookMessagingActor.Factory,
             filteringActorFactory: TxFilterNoAuthActor.Factory,
             webhookDao: WebhookDao,
             databaseExecutionContext: DatabaseExecutionContext): Props =
-    Props(new WebhooksManagerActor(memPoolWatcher, backendSelection, messagingActorFactory, filteringActorFactory,
-      webhookDao, databaseExecutionContext))
+    Props(new WebhooksManagerActor(messagingActorFactory, filteringActorFactory, webhookDao, databaseExecutionContext))
 
   implicit val startWrites: Writes[Started[Webhook]] = new Writes[Started[Webhook]]() {
     def writes(started: Started[Webhook]): JsObject = Json.obj(fields =
@@ -40,9 +38,7 @@ object WebhooksManagerActor {
   }
 }
 
-class WebhooksManagerActor @Inject()(val memPoolWatcher: MemPoolWatcherService,
-                                     val backendSelection: HttpBackendSelection,
-                                     val messagingActorFactory: TxWebhookMessagingActor.Factory,
+class WebhooksManagerActor @Inject()(val messagingActorFactory: TxWebhookMessagingActor.Factory,
                                      val filteringActorFactory: TxFilterNoAuthActor.Factory,
                                      val webhookDao: WebhookDao,
                                      val databaseExecutionContext: DatabaseExecutionContext)

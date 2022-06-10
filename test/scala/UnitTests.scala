@@ -159,8 +159,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
     lazy val webhooksActor = {
       system.actorOf(
-        WebhooksManagerActor.props(mockMemPoolWatcher,
-          injector.instanceOf[HttpBackendSelection],
+        WebhooksManagerActor.props(
           injector.instanceOf[TxWebhookMessagingActor.Factory],
           injector.instanceOf[TxFilterNoAuthActor.Factory],
           injector.instanceOf[WebhookDao],
