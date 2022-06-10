@@ -3,6 +3,7 @@ package actors
 import akka.actor.Props
 import com.google.inject.Inject
 import dao.{Webhook, WebhookDao}
+import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.json.{JsObject, Json, Writes}
 import slick.DatabaseExecutionContext
 
@@ -30,6 +31,7 @@ class WebhooksManagerActor @Inject()(val messagingActorFactory: TxMessagingActor
                                      val databaseExecutionContext: DatabaseExecutionContext)
   extends HooksManagerActor[URI, Webhook] {
 
+  override val logger: Logger = LoggerFactory.getLogger(classOf[WebhooksManagerActor])
   override val hookTypePrefix: String = "webhook"
   override def encodeKey(uri: URI): String = URLEncoder.encode(uri.toString, "UTF-8")
 }

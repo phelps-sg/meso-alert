@@ -2,11 +2,11 @@ import actors.TxFilterAuthActor.TxInputOutput
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
 import com.github.nscala_time.time.Imports.DateTime
-import dao.{DuplicateHookException, HookWithThreshold, HookDao}
+import dao.{DuplicateHookException, HookDao, HookWithThreshold}
 import org.apache.commons.logging.LogFactory
 import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.concurrent.InjectedActorSupport
 import play.api.libs.json.{JsObject, Json, Writes}
 import services.MemPoolWatcherService
@@ -143,8 +143,7 @@ package object actors {
 
   trait HooksManagerActor[X, Y] extends Actor with InjectedActorSupport {
 
-    private val logger = LogFactory.getLog(classOf[HooksManagerActor[X, Y]])
-
+    val logger: Logger
     val dao: HookDao[X, Y]
     val messagingActorFactory: HookActorFactory[X]
     val filteringActorFactory: TxFilterNoAuthActor.Factory
