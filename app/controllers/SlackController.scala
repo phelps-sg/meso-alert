@@ -1,22 +1,59 @@
 package controllers
 
+import actors.HookAlreadyRegisteredException
+import akka.actor.ActorSystem
+import dao.{SlackChannel, SlackChatHook}
 import org.slf4j.LoggerFactory
 import play.api.mvc.{Action, BaseController, ControllerComponents}
+import services.SlackChatHooksManager
 
 import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
 
-class SlackController @Inject() (val controllerComponents: ControllerComponents) extends BaseController {
+class SlackController @Inject()(val controllerComponents: ControllerComponents,
+                                val hooksManager: SlackChatHooksManager)
+                               (implicit system: ActorSystem, ex: ExecutionContext) extends BaseController {
 
   private val logger = LoggerFactory.getLogger(classOf[SlackController])
 
-  def slashCommand: Action[Map[String, Seq[String]]] = Action(parse.formUrlEncoded) { request =>
+  def slashCommand: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { request =>
+
     logger.debug("received slash command")
     request.body.foreach { x => logger.debug(s"${x._1} = ${x._2}") }
-    logger.info(s"userId = ${request.body("user_id")}")
-    logger.info(s"userName = ${request.body("user_name")}")
-    logger.info(s"channelName = ${request.body("channel_name")}")
-    logger.info(s"channelId = ${request.body("channel_id")}")
-    Ok("Success")
+
+    def param(key: String): String =
+      request.body(key).head
+
+    val channelId = param("channel_id")
+    val command = param("command")
+    val args = param("text")
+    val channel = SlackChannel(channelId)
+
+    command match {
+      case "/alert" =>
+        args.toLongOption match {
+
+          case Some(amount) =>
+
+            val f = for {
+              _ <- hooksManager.register(SlackChatHook(channel, amount))
+              started <- hooksManager.start(channel)
+            } yield started
+
+            f recover {
+              case HookAlreadyRegisteredException(_) =>
+                ServiceUnavailable("Alerts already registered for this channel")
+            } map {
+              _ => Ok("Success")
+            }
+
+          case None =>
+            Future {
+              Ok(s"Invalid amount $args")
+            }
+        }
+    }
+
   }
 
 }
