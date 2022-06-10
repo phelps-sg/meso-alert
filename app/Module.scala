@@ -1,4 +1,4 @@
-import actors.{TxFilterAuthActor, TxFilterNoAuthActor, TxWebhookMessagingActor, WebhooksManagerActor}
+import actors.{TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorWeb, WebhooksManagerActor}
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import play.libs.akka.AkkaGuiceSupport
@@ -11,7 +11,7 @@ class Module extends AbstractModule with AkkaGuiceSupport {
   override def configure(): Unit = {
     bind(classOf[Database]).toProvider(classOf[DatabaseProvider])
     bindActor(classOf[WebhooksManagerActor], "webhooks-actor")
-    bindActorFactory(classOf[TxWebhookMessagingActor], classOf[TxWebhookMessagingActor.Factory])
+    bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
     bindActorFactory(classOf[TxFilterAuthActor], classOf[TxFilterAuthActor.Factory])
     bindActorFactory(classOf[TxFilterNoAuthActor], classOf[TxFilterNoAuthActor.Factory])
   }
