@@ -149,12 +149,12 @@ package object actors {
     val messagingActorFactory: HookActorFactory[X]
     val filteringActorFactory: TxFilterNoAuthActor.Factory
     val databaseExecutionContext: DatabaseExecutionContext
+    val hookTypePrefix: String
 
     var actors: Map[X, Array[ActorRef]] = Map()
 
     implicit val ec: ExecutionContext = databaseExecutionContext
 
-    def hookTypePrefix: String
     def encodeKey(key: X): String
 
     implicit class HookFor(key: X) {

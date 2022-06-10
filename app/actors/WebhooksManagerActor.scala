@@ -30,6 +30,6 @@ class WebhooksManagerActor @Inject()(val messagingActorFactory: TxMessagingActor
                                      val databaseExecutionContext: DatabaseExecutionContext)
   extends HooksManagerActor[URI, Webhook] {
 
+  override val hookTypePrefix: String = "webhook"
   override def encodeKey(uri: URI): String = URLEncoder.encode(uri.toString, "UTF-8")
-  override def hookTypePrefix: String = "webhook"
 }
