@@ -26,7 +26,16 @@ database.dispatcher {
   executor = "thread-pool-executor"
   throughput = 1
   thread-pool-executor {
-    fixed-pool-size = 6
+    fixed-pool-size = 2
   }
 }
+
+slackChat.dispatcher {
+  executor = "thread-pool-executor"
+  throughput = 1
+  thread-pool-executor {
+    fixed-pool-size = 2
+  }
+}
+
 EOF
