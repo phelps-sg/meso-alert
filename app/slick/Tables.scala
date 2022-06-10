@@ -1,6 +1,6 @@
 package slick
 
-import dao.Webhook
+import dao.{SlackChannel, SlackChatHook, Webhook}
 
 import java.net.URI
 
@@ -25,8 +25,19 @@ object Tables {
       }
     )
   }
-
   val webhooks = TableQuery[Webhooks]
 
-  val schema = webhooks.schema
+  class SlackChatHooks(tag: Tag) extends Table[SlackChatHook](tag, "slack_chat_hooks") {
+    def channel_id = column[String]("channel_id", O.PrimaryKey)
+    def threshold = column[Long]("threshold")
+    def * = (channel_id, threshold) <> (
+      h => SlackChatHook(SlackChannel(h._1), h._2),
+      (h: SlackChatHook) => {
+        Some(h.channel.id, h.threshold)
+      }
+    )
+  }
+  val slackChatHooks = TableQuery[SlackChatHooks]
+
+  val schema = webhooks.schema ++ slackChatHooks.schema
 }
