@@ -28,16 +28,16 @@ class MonixBackend extends HttpBackendSelection {
 }
 
 
-object TxWebhookMessagingActor {
+object TxMessagingActorWeb {
 
   trait Factory extends HookActorFactory[URI] {
     def apply(hookUri: URI): Actor
   }
 }
 
-class TxWebhookMessagingActor @Inject()(backendSelection: HttpBackendSelection, @Assisted hookUri: URI)  extends Actor {
+class TxMessagingActorWeb @Inject()(backendSelection: HttpBackendSelection, @Assisted hookUri: URI)  extends Actor {
 
-  private val logger = LogFactory.getLog(classOf[TxWebhookMessagingActor])
+  private val logger = LogFactory.getLog(classOf[TxMessagingActorWeb])
 
   override def receive: Receive = {
     case tx: TxUpdate =>
