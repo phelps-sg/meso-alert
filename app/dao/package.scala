@@ -1,10 +1,9 @@
-import com.google.inject.{ImplementedBy, Inject, Singleton}
-import org.slf4j.{Logger, LoggerFactory}
+import com.google.inject.ImplementedBy
+import org.slf4j.Logger
 import slick.BtcPostgresProfile.api._
+import slick.DatabaseExecutionContext
 import slick.dbio.Effect
-import slick.{BtcPostgresProfile, DatabaseExecutionContext, Tables}
 import slick.jdbc.JdbcBackend.Database
-import slick.lifted.AbstractTable
 import slick.sql.FixedSqlAction
 
 import java.net.URI
