@@ -23,6 +23,7 @@ package object dao {
   trait HookDao[X, Y] {
     def init(): Future[Unit]
     def all(): Future[Seq[Y]]
+    def allKeys(): Future[Seq[X]]
     def find(uri: X): Future[Option[Y]]
     def insert(hook: Y): Future[Int]
   }
@@ -57,6 +58,9 @@ package object dao {
     }
 
     def all(): Future[Seq[Webhook]] = db.run(Tables.webhooks.result)
+    def allKeys(): Future[Seq[URI]] = db.run(Tables.webhooks.map(_.url).result) map {
+      _.map(new URI(_))
+    }
 
     def find(uri: URI): Future[Option[Webhook]] = {
       logger.debug(s"Querying for ${uri.toString}")
@@ -93,6 +97,9 @@ package object dao {
     }
 
     def all(): Future[Seq[SlackChatHook]] = db.run(Tables.slackChatHooks.result)
+    def allKeys(): Future[Seq[SlackChannel]] = db.run(Tables.slackChatHooks.map(_.channel_id).result) map {
+      _.map(SlackChannel)
+    }
 
     def find(channel: SlackChannel): Future[Option[SlackChatHook]] = {
       db.run(Tables.slackChatHooks.filter(_.channel_id === channel.id).result).map {
