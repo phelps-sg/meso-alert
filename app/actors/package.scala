@@ -2,7 +2,7 @@ import actors.TxFilterAuthActor.TxInputOutput
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
 import com.github.nscala_time.time.Imports.DateTime
-import dao.{DuplicateWebhookException, HasThreshold, HookDao}
+import dao.{DuplicateHookException, HasThreshold, HookDao}
 import org.apache.commons.logging.LogFactory
 import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
@@ -182,7 +182,7 @@ package object actors {
         dao.insert(hook) map {
           _ => Success(Registered(hook))
         } recover {
-          case DuplicateWebhookException(_) => Failure(HookAlreadyRegisteredException(hook))
+          case DuplicateHookException(_) => Failure(HookAlreadyRegisteredException(hook))
         } pipeTo sender
 
       case Start(uri: X) =>

@@ -15,7 +15,7 @@ package object dao {
   case class Webhook(uri: URI, threshold: Long) extends HasThreshold
   case class SlackChannel(id: String)
   case class SlackChatHook(channel: SlackChannel, threshold: Long) extends HasThreshold
-  case class DuplicateWebhookException(uri: URI) extends Exception(s"A webhook already exists with uri $uri")
+  case class DuplicateHookException[X](uri: X) extends Exception(s"A hook already exists with key $uri")
 
   trait HookDao[X, Y] {
     def init(): Future[Unit]
@@ -27,7 +27,8 @@ package object dao {
   @ImplementedBy(classOf[SlickWebhookDao])
   trait WebhookDao extends HookDao[URI, Webhook]
 
-  trait SlackAlertDao extends HookDao[SlackChannel, SlackChatHook]
+  @ImplementedBy(classOf[SlickSlackChatDao])
+  trait SlackChatHookDao extends HookDao[SlackChannel, SlackChatHook]
 
   @Singleton
   class SlickWebhookDao @Inject() (val db: Database,
@@ -45,7 +46,7 @@ package object dao {
         n: Int <- db.run(Tables.webhooks.filter(_.url === hook.uri.toString).size.result)
         result <-
           if (n > 0) {
-            throw DuplicateWebhookException(hook.uri)
+            throw DuplicateHookException(hook.uri)
           } else {
             db.run(Tables.webhooks += hook)
           }
@@ -65,5 +66,39 @@ package object dao {
     }
 
   }
+  @Singleton
+  class SlickSlackChatDao @Inject() (val db: Database,
+                                      val databaseExecutionContext: DatabaseExecutionContext)
+    extends SlackChatHookDao {
 
+    implicit val ec: DatabaseExecutionContext = databaseExecutionContext
+
+    val logger: Logger = LoggerFactory.getLogger(classOf[SlickWebhookDao])
+
+    def init(): Future[Unit] = db.run(Tables.slackChatHooks.schema.createIfNotExists)
+
+    def insert(hook: SlackChatHook): Future[Int] = {
+      for {
+        n: Int <- db.run(Tables.slackChatHooks.filter(_.channel_id === hook.channel.id).size.result)
+        result <-
+          if (n > 0) {
+            throw DuplicateHookException(hook.channel)
+          } else {
+            db.run(Tables.slackChatHooks += hook)
+          }
+      } yield result
+    }
+
+    def all(): Future[Seq[SlackChatHook]] = db.run(Tables.slackChatHooks.result)
+
+    def find(channel: SlackChannel): Future[Option[SlackChatHook]] = {
+      db.run(Tables.slackChatHooks.filter(_.channel_id === channel.id).result).map {
+        case Seq(result) => Some(result)
+        case Seq() => None
+        case _ =>
+          throw new RuntimeException(s"Multiple results returned for channel ${channel.id}")
+      }
+    }
+
+  }
 }
