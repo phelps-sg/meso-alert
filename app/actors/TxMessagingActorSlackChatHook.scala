@@ -44,7 +44,7 @@ class TxMessagingActorSlackChatHook @Inject()(config : Configuration, sce: Slack
 
   override def receive: Receive = {
     case tx: TxUpdate =>
-      logger.debug("Received $tx")
+      logger.debug(s"Received $tx")
       sendMessage(channel.id, message(tx))
   }
 }
