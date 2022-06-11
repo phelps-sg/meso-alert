@@ -38,10 +38,10 @@ package object actors {
   case class Start[X](uri: X)
   case class Stop[X](uri: X)
 
-  trait TxUpdateActor extends Actor {
+  trait TxUpdateActor {
 
+    val self: ActorRef
     val memPoolWatcher: MemPoolWatcherService
-
     val logger: Logger
 
     def registerWithWatcher(): Unit = {

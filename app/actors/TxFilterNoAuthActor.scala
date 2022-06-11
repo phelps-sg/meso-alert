@@ -21,7 +21,7 @@ object TxFilterNoAuthActor {
 
 class TxFilterNoAuthActor @Inject() (@Assisted val out: ActorRef, @Assisted val filter: TxUpdate => Boolean,
                                      val memPoolWatcher: MemPoolWatcherService)
-  extends TxUpdateActor with TxForwardingActor {
+  extends Actor with TxUpdateActor with TxForwardingActor {
 
   override val logger: Logger = LoggerFactory.getLogger(classOf[TxFilterNoAuthActor])
 
