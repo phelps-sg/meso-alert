@@ -2,7 +2,7 @@ import actors.TxFilterAuthActor.TxInputOutput
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
 import com.github.nscala_time.time.Imports.DateTime
-import dao.{DuplicateHookException, HookDao, HookWithThreshold}
+import dao.{DuplicateHookException, HookDao, Filter, ThresholdFilter}
 import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
 import org.slf4j.Logger
@@ -195,12 +195,12 @@ package object actors {
           uri withHook (hook => Stopped(hook))
         }, HookNotStartedException(uri))
 
-      case CreateActors(key: X, hook: HookWithThreshold) =>
+      case CreateActors(key: X, hook: Filter) =>
         val actorId = encodeKey(key)
         val messagingActor =
           injectedChild(messagingActorFactory(key), name = s"$hookTypePrefix-messenger-$actorId")
         val filteringActor =
-          injectedChild(filteringActorFactory(messagingActor, _.value >= hook.threshold),
+          injectedChild(filteringActorFactory(messagingActor, hook.filter),
             name = s"$hookTypePrefix-filter-$actorId")
         actors += key -> Array(messagingActor, filteringActor)
 

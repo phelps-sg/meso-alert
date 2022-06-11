@@ -1,3 +1,4 @@
+import actors.TxUpdate
 import com.google.inject.ImplementedBy
 
 import java.net.URI
@@ -5,8 +6,13 @@ import scala.concurrent.Future
 
 package object dao {
 
-  trait HookWithThreshold {
+  trait Filter {
+    def filter(tx: TxUpdate): Boolean
+  }
+
+  trait ThresholdFilter extends Filter {
     val threshold: Long
+    def filter(tx: TxUpdate): Boolean = tx.value >= threshold
   }
 
   trait HookDao[X, Y] {
@@ -18,8 +24,8 @@ package object dao {
   }
 
   case class SlackChannel(id: String)
-  case class Webhook(uri: URI, threshold: Long) extends HookWithThreshold
-  case class SlackChatHook(channel: SlackChannel, threshold: Long) extends HookWithThreshold
+  case class Webhook(uri: URI, threshold: Long) extends ThresholdFilter
+  case class SlackChatHook(channel: SlackChannel, threshold: Long) extends ThresholdFilter
   case class DuplicateHookException[X](uri: X) extends Exception(s"A hook already exists with key $uri")
 
   @ImplementedBy(classOf[SlickWebhookDao])
