@@ -20,13 +20,13 @@ trait SlickHookDao[X, Y] {
   val lookupKeyQuery: X => Query[_, Y, Seq]
   val insertHookQuery: Y => FixedSqlAction[Int, NoStream, Effect.Write]
 
-  def find(uri: X): Future[Option[Y]] = {
-    logger.debug(s"Querying for ${uri.toString}")
-    db.run(lookupKeyQuery(uri).result).map {
+  def find(key: X): Future[Option[Y]] = {
+    logger.debug(s"Querying for ${key.toString}")
+    db.run(lookupKeyQuery(key).result).map {
       case Seq(result) => Some(result)
       case Seq() => None
       case _ =>
-        throw new RuntimeException(s"Multiple results returned for uri ${uri.toString}")
+        throw new RuntimeException(s"Multiple results returned for uri ${key.toString}")
     }
   }
 
