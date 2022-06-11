@@ -84,7 +84,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   }
 
   class MockWebhookManagerActor(val mock: WebhookManagerMock) extends Actor {
-    import actors.WebhooksManagerActor._
     val hooks = mutable.Map[URI, Webhook]()
     override def receive: Receive = {
       case Start(uri: URI) =>
@@ -338,8 +337,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
     "WebhooksManager" should {
 
-      import WebhooksManagerActor._
-
       "register and start all hooks stored in the database on initialisation" in {
 
         val f = fixture
@@ -371,8 +368,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
 
     "WebhookManagerActor" should {
-
-      import WebhooksManagerActor._
 
       "return WebhookNotRegistered when trying to start an unregistered hook" in {
         val f = fixture
