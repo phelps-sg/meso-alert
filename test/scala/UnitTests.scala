@@ -138,8 +138,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     class MockPeerGroup extends PeerGroup(mainNetParams)
     val mockPeerGroup = mock[MockPeerGroup]
 
-    def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]): CallHandler[_] = {
-      f.never()
+    def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]): ch.Derived = {
+      ch.never()
     }
     memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
   }
@@ -335,12 +335,13 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
     trait TestFixtures extends MemPoolWatcherFixtures
       with WebSocketFixtures with ActorGuiceFixtures with UserFixtures with TxWatchActorFixtures {
-      override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]): CallHandler[_] =
+      override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]) = {
         f.never()
+      }
     }
 
     trait TestFixturesAtLeastOneSubscriber extends TestFixtures {
-      override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]): CallHandler[_] = {
+      override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]) = {
         f.atLeastOnce()
       }
     }
@@ -438,7 +439,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     trait TestFixtures extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookActorFixtures
 
     trait TestFixturesTwoSubscribers extends TestFixtures with MemPoolGuiceFixtures {
-      override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]): CallHandler[_] = {
+      override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]) = {
         f.twice()
       }
     }
