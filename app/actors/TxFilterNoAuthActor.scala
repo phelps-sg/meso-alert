@@ -4,6 +4,7 @@ import actors.TxFilterAuthActor.Die
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
+import org.slf4j.{Logger, LoggerFactory}
 import services.MemPoolWatcherService
 
 object TxFilterNoAuthActor {
@@ -21,6 +22,8 @@ object TxFilterNoAuthActor {
 class TxFilterNoAuthActor @Inject() (@Assisted val out: ActorRef, @Assisted val filter: TxUpdate => Boolean,
                                      val memPoolWatcher: MemPoolWatcherService)
   extends TxUpdateActor with TxForwardingActor {
+
+  override val logger: Logger = LoggerFactory.getLogger(classOf[TxFilterNoAuthActor])
 
   override def preStart(): Unit = {
     super.preStart()

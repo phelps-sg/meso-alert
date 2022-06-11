@@ -43,7 +43,7 @@ class TxFilterAuthActor @Inject()(@Assisted val out: ActorRef, val memPoolWatche
                                   userManager: UserManagerService)
   extends TxUpdateActor with TxForwardingActor {
 
-  private val logger: Logger = LoggerFactory.getLogger(classOf[TxFilterAuthActor])
+  override val logger: Logger = LoggerFactory.getLogger(classOf[TxFilterAuthActor])
 
   import TxFilterAuthActor._
 

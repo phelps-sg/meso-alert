@@ -42,7 +42,7 @@ package object actors {
 
     val memPoolWatcher: MemPoolWatcherService
 
-    private val logger = LoggerFactory.getLogger(classOf[TxUpdate])
+    val logger: Logger //= LoggerFactory.getLogger(classOf[TxUpdate])
 
     def registerWithWatcher(): Unit = {
       logger.info("Registering new mem pool listener... ")
