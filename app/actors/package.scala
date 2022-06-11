@@ -3,10 +3,9 @@ import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
 import com.github.nscala_time.time.Imports.DateTime
 import dao.{DuplicateHookException, HookDao, HookWithThreshold}
-import org.apache.commons.logging.LogFactory
 import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.Logger
 import play.api.libs.concurrent.InjectedActorSupport
 import play.api.libs.json.{JsObject, Json, Writes}
 import services.MemPoolWatcherService
