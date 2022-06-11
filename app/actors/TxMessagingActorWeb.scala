@@ -1,6 +1,5 @@
 package actors
 
-import actors.TxFilterAuthActor.TxInputOutput
 import akka.actor.Actor
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{ImplementedBy, Inject}
