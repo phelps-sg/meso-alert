@@ -188,7 +188,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val mockWsActor: ActorRef
     val mockMemPoolWatcher: MemPoolWatcherService
     val mockUserManager: UserManagerService
-    lazy val txWatchActor =
+    val txWatchActor =
       system.actorOf(TxFilterAuthActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
   }
 
