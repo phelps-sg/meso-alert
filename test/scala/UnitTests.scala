@@ -12,6 +12,7 @@ import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
 import org.bitcoinj.params.MainNetParams
+import org.scalamock.handlers.{CallHandler, CallHandler1}
 import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
@@ -76,7 +77,9 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   trait WebhookManagerMock {
     def start(uri: URI): Unit
+
     def register(hook: Webhook): Unit
+
     def stop(uri: URI): Unit
   }
 
@@ -86,6 +89,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   class MockWebhookManagerActor(val mock: WebhookManagerMock) extends Actor {
     val hooks = mutable.Map[URI, Webhook]()
+
     override def receive: Receive = {
       case Start(uri: URI) =>
         mock.start(uri)
@@ -109,7 +113,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       bind(classOf[Database]).toProvider(new Provider[Database] {
         val get: jdbc.JdbcBackend.Database = db
       })
-//      bindActor(classOf[WebhooksActor], "webhooks-actor")
+      //      bindActor(classOf[WebhooksActor], "webhooks-actor")
       bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
       bindActorFactory(classOf[TxFilterAuthActor], classOf[TxFilterAuthActor.Factory])
       bindActorFactory(classOf[TxFilterNoAuthActor], classOf[TxFilterNoAuthActor.Factory])
@@ -129,10 +133,15 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   trait MemPoolWatcherFixtures {
     val mockMemPoolWatcher = mock[MemPoolWatcherService]
-    (mockMemPoolWatcher.addListener _).expects(*).anyNumberOfTimes()
     val mainNetParams = MainNetParams.get()
+
     class MockPeerGroup extends PeerGroup(mainNetParams)
     val mockPeerGroup = mock[MockPeerGroup]
+
+    def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]): CallHandler[_] = {
+      f.never()
+    }
+    memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
   }
 
   trait TransactionFixtures {
@@ -151,11 +160,13 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     def builder = new GuiceInjectorBuilder()
       .bindings(new TestModule)
       .overrides(inject.bind(classOf[ActorSystem]).toInstance(system))
+
     val injector = builder.build()
   }
 
   trait MemPoolGuiceFixtures extends ActorGuiceFixtures {
     val mockMemPoolWatcher: MemPoolWatcherService
+
     override def builder = super.builder
       .overrides(inject.bind(classOf[MemPoolWatcherService]).toInstance(mockMemPoolWatcher))
   }
@@ -188,6 +199,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val mockWsActor: ActorRef
     val mockMemPoolWatcher: MemPoolWatcherService
     val mockUserManager: UserManagerService
+
     val txWatchActor =
       system.actorOf(TxFilterAuthActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
   }
@@ -243,7 +255,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
       val memPoolWatcher = new MemPoolWatcher(new PeerGroupSelection() {
         val params = mainNetParams
-        lazy val  get = mockPeerGroup
+        lazy val get = mockPeerGroup
       })
 
       val txWatchActor =
@@ -282,9 +294,9 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
         case TxUpdate(_, totalValue, _, _, Seq(
-                        TxInputOutput(Some(`outputAddress1`), Some(`value1`)),
-                        TxInputOutput(Some(`outputAddress2`), Some(`value2`)),
-                      ), Seq()) if totalValue == value1 + value2 =>
+        TxInputOutput(Some(`outputAddress1`), Some(`value1`)),
+        TxInputOutput(Some(`outputAddress2`), Some(`value2`)),
+        ), Seq()) if totalValue == value1 + value2 =>
       }
 
       broadcastTransaction(transactions.head)
@@ -297,11 +309,11 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
         case TxUpdate("6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4", 300000000, _, _, Seq(
-                        TxInputOutput(Some("1H8ANdafjpqYntniT3Ddxh4xPBMCSz33pj"), _),
-                        TxInputOutput(Some("1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"), _)
-                      ), Seq(
-                        TxInputOutput(Some("15vScfMHNrXN4QvWe54q5hwfVoYwG79CS1"), _)
-                      )) =>
+        TxInputOutput(Some("1H8ANdafjpqYntniT3Ddxh4xPBMCSz33pj"), _),
+        TxInputOutput(Some("1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"), _)
+        ), Seq(
+        TxInputOutput(Some("15vScfMHNrXN4QvWe54q5hwfVoYwG79CS1"), _)
+        )) =>
       }
 
       // https://www.blockchain.com/btc/tx/73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259
@@ -309,11 +321,11 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
         case TxUpdate("73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259", 923985, _, _,
-                      Seq(
-                        TxInputOutput(Some("1AyQnFZk9MbjLFXSWJ7euNbGhaNpjPvrSq"), _),
-                        TxInputOutput(Some("bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"), _)
-                      ),
-                      Seq(_)) =>
+        Seq(
+        TxInputOutput(Some("1AyQnFZk9MbjLFXSWJ7euNbGhaNpjPvrSq"), _),
+        TxInputOutput(Some("bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"), _)
+        ),
+        Seq(_)) =>
       }
 
     }
@@ -321,10 +333,19 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "TxWatchActor" should {
 
-      trait TestFixtures extends MemPoolWatcherFixtures with WebSocketFixtures with ActorGuiceFixtures with UserFixtures
-        with TxWatchActorFixtures
+    trait TestFixtures extends MemPoolWatcherFixtures with WebSocketFixtures with ActorGuiceFixtures with UserFixtures
+      with TxWatchActorFixtures {
+      override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]): CallHandler[_] =
+        f.never()
+    }
 
-      "provide updates when user is authenticated" in new TestFixtures {
+    trait TestFixturesAtLeastOneSubscriber extends TestFixtures {
+      override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]): CallHandler[_] = {
+        f.atLeastOnce()
+      }
+    }
+
+    "provide updates when user is authenticated" in new TestFixturesAtLeastOneSubscriber {
 
       val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List(), List())
 
@@ -357,13 +378,13 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       expectNoMessage()
     }
 
-    "only provide updates according to the user's filter" in new TestFixtures {
+    "only provide updates according to the user's filter" in new TestFixturesAtLeastOneSubscriber {
 
       val tx1 = TxUpdate("testHash1", 10, DateTime.now(), isPending = true, List(), List())
       val tx2 = TxUpdate("testHash2", 1, DateTime.now(), isPending = true, List(), List())
 
       (mockUserManager.authenticate _).expects("test").returning(mockUser)
-//      (mockMemPoolWatcher.addListener _).expects(*)
+      //      (mockMemPoolWatcher.addListener _).expects(*)
 
       txWatchActor ! Auth("test", "test")
       expectNoMessage()
@@ -377,117 +398,122 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       txWatchActor ! tx2
       expectNoMessage()
     }
+  }
 
-    "WebhooksManager" should {
+  "WebhooksManager" should {
 
-      trait TestFixtures extends ActorGuiceFixtures
-        with WebhookDaoFixtures with WebhookActorFixtures with WebhookManagerFixtures
+    trait TestFixtures extends ActorGuiceFixtures
+      with WebhookDaoFixtures with WebhookActorFixtures with WebhookManagerFixtures
 
-      "register and start all hooks stored in the database on initialisation" in new TestFixtures {
+    "register and start all hooks stored in the database on initialisation" in new TestFixtures {
 
-        val hook1 = Webhook(new URI("http://test1"), 10)
-        val hook2 = Webhook(new URI("http://test2"), 20)
+      val hook1 = Webhook(new URI("http://test1"), 10)
+      val hook2 = Webhook(new URI("http://test2"), 20)
 
-        (webhookManagerMock.register _).expects(hook1).returning(Success(Registered(hook1)))
-        (webhookManagerMock.register _).expects(hook2).returning(Success(Registered(hook2)))
+      (webhookManagerMock.register _).expects(hook1).returning(Success(Registered(hook1)))
+      (webhookManagerMock.register _).expects(hook2).returning(Success(Registered(hook2)))
 
-        (webhookManagerMock.start _).expects(hook1.uri).returning(Success(Started(hook1)))
-        (webhookManagerMock.start _).expects(hook2.uri).returning(Success(Started(hook2)))
+      (webhookManagerMock.start _).expects(hook1.uri).returning(Success(Started(hook1)))
+      (webhookManagerMock.start _).expects(hook2.uri).returning(Success(Started(hook2)))
 
-        val init = for {
-          _ <- database.run(
-            DBIO.seq(
-              Tables.schema.create,
-              Tables.webhooks += hook1,
-              Tables.webhooks += hook2
-            )
+      val init = for {
+        _ <- database.run(
+          DBIO.seq(
+            Tables.schema.create,
+            Tables.webhooks += hook1,
+            Tables.webhooks += hook2
           )
-          _ <- webhooksManager.register(hook1)
-          _ <- webhooksManager.register(hook2)
-          response <- webhooksManager.init()
-        } yield response
+        )
+        _ <- webhooksManager.register(hook1)
+        _ <- webhooksManager.register(hook2)
+        response <- webhooksManager.init()
+      } yield response
 
-        whenReady(init) { _ => succeed }
+      whenReady(init) { _ => succeed }
+    }
+  }
+
+  "WebhookManagerActor" should {
+
+    trait TestFixtures extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookActorFixtures
+
+    trait TestFixturesTwoSubscribers extends TestFixtures with MemPoolGuiceFixtures {
+      override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]): CallHandler[_] = {
+        f.twice()
       }
     }
 
-    "WebhookManagerActor" should {
-
-      trait TestFixtures extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookActorFixtures
-
-      "return WebhookNotRegistered when trying to start an unregistered hook" in new TestFixtures {
-        val uri = new URI("http://test")
-        afterDbInit {
-          webhooksActor ? Start(uri)
-        }.futureValue should matchPattern { case Failure(HookNotRegisteredException(`uri`)) => }
-      }
-
-      "return Registered and record a new hook in the database when registering a new hook" in new TestFixtures {
-        val hook = Webhook(uri = new URI("http://test"), threshold = 100L)
-        afterDbInit {
-          for {
-            response <- webhooksActor ? Register(hook)
-            dbContents <- db.run(Tables.webhooks.result)
-          } yield (response, dbContents)
-        }.futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
-      }
-
-      "return an exception when stopping a hook that is not started" in new TestFixtures {
-        val uri = new URI("http://test")
-        afterDbInit {
-          webhooksActor ? Stop(uri)
-        }.futureValue should matchPattern { case Failure(HookNotStartedException(`uri`)) => }
-      }
-
-      "return an exception when registering a pre-existing hook" in new TestFixtures {
-        val uri = new URI("http://test")
-        val hook = Webhook(uri, 10)
-        afterDbInit {
-          for {
-            _ <- db.run(Tables.webhooks += hook)
-            registered <- webhooksActor ? Register(hook)
-          } yield registered
-        }.futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
-      }
-
-      "return an exception when starting a hook that has already been started" in new TestFixtures {
-        val uri = new URI("http://test")
-        val hook = Webhook(uri, 10)
-        afterDbInit {
-          for {
-            registered <- webhooksActor ? Register(hook)
-            started <- webhooksActor ? Start(hook.uri)
-            error <- webhooksActor ? Start(hook.uri)
-          } yield error
-        }.futureValue should matchPattern { case Failure(HookAlreadyStartedException(`uri`)) => }
-      }
-
-      "correctly register, start, stop and restart a web hook" in new TestFixtures {
-//        (mockMemPoolWatcher.addListener _).expects(*).twice()
-        val uri = new URI("http://test")
-        val hook = Webhook(uri, threshold = 100L)
-        afterDbInit {
-          for {
-            registered <- webhooksActor ? Register(hook)
-            started <- webhooksActor ? Start(uri)
-            stopped <- webhooksActor ? Stop(uri)
-            _ <- Future {
-              expectNoMessage()
-            }
-            restarted <- webhooksActor ? Start(uri)
-            finalStop <- webhooksActor ? Stop(uri)
-          } yield (registered, started, stopped, restarted, finalStop)
-        }.futureValue should matchPattern {
-          case (
-            Success(Registered(`hook`)),
-            Success(Started(`hook`)),
-            Success(Stopped(`hook`)),
-            Success(Started(`hook`)),
-            Success(Stopped(`hook`))) =>
-        }
-      }
+    "return WebhookNotRegistered when trying to start an unregistered hook" in new TestFixtures {
+      val uri = new URI("http://test")
+      afterDbInit {
+        webhooksActor ? Start(uri)
+      }.futureValue should matchPattern { case Failure(HookNotRegisteredException(`uri`)) => }
     }
 
+    "return Registered and record a new hook in the database when registering a new hook" in new TestFixtures {
+      val hook = Webhook(uri = new URI("http://test"), threshold = 100L)
+      afterDbInit {
+        for {
+          response <- webhooksActor ? Register(hook)
+          dbContents <- db.run(Tables.webhooks.result)
+        } yield (response, dbContents)
+      }.futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
+    }
+
+    "return an exception when stopping a hook that is not started" in new TestFixtures {
+      val uri = new URI("http://test")
+      afterDbInit {
+        webhooksActor ? Stop(uri)
+      }.futureValue should matchPattern { case Failure(HookNotStartedException(`uri`)) => }
+    }
+
+    "return an exception when registering a pre-existing hook" in new TestFixtures {
+      val uri = new URI("http://test")
+      val hook = Webhook(uri, 10)
+      afterDbInit {
+        for {
+          _ <- db.run(Tables.webhooks += hook)
+          registered <- webhooksActor ? Register(hook)
+        } yield registered
+      }.futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
+    }
+
+    "return an exception when starting a hook that has already been started" in new TestFixtures {
+      val uri = new URI("http://test")
+      val hook = Webhook(uri, 10)
+      afterDbInit {
+        for {
+          registered <- webhooksActor ? Register(hook)
+          started <- webhooksActor ? Start(hook.uri)
+          error <- webhooksActor ? Start(hook.uri)
+        } yield error
+      }.futureValue should matchPattern { case Failure(HookAlreadyStartedException(`uri`)) => }
+    }
+
+    "correctly register, start, stop and restart a web hook" in new TestFixturesTwoSubscribers {
+//              (mockMemPoolWatcher.addListener _).expects(*).twice()
+      val uri = new URI("http://test")
+      val hook = Webhook(uri, threshold = 100L)
+      afterDbInit {
+        for {
+          registered <- webhooksActor ? Register(hook)
+          started <- webhooksActor ? Start(uri)
+          stopped <- webhooksActor ? Stop(uri)
+          _ <- Future {
+            expectNoMessage()
+          }
+          restarted <- webhooksActor ? Start(uri)
+          finalStop <- webhooksActor ? Stop(uri)
+        } yield (registered, started, stopped, restarted, finalStop)
+      }.futureValue should matchPattern {
+        case (
+          Success(Registered(`hook`)),
+          Success(Started(`hook`)),
+          Success(Stopped(`hook`)),
+          Success(Started(`hook`)),
+          Success(Stopped(`hook`))) =>
+      }
+    }
   }
 
 }
