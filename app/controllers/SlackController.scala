@@ -21,8 +21,7 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
     logger.debug("received slash command")
     request.body.foreach { x => logger.debug(s"${x._1} = ${x._2}") }
 
-    def param(key: String): String =
-      request.body(key).head
+    def param(key: String): String = request.body(key).head
 
     val channelId = param("channel_id")
     val command = param("command")
@@ -30,29 +29,20 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
     val channel = SlackChannel(channelId)
 
     command match {
-
       case "/alert" =>
-
         args.toLongOption match {
 
           case Some(amount) =>
-
             val f = for {
               _ <- hooksManager.register(SlackChatHook(channel, amount))
               started <- hooksManager.start(channel)
             } yield started
-
             f recover {
               case HookAlreadyRegisteredException(_) =>
                 Ok("Alerts already registered for this channel")
-            } map {
-              _ => Ok("Success")
-            }
+            } map { _ => Ok("Success") }
 
-          case None =>
-            Future {
-              Ok(s"Invalid amount $args")
-            }
+          case None => Future { Ok(s"Invalid amount $args") }
 
         }
     }
