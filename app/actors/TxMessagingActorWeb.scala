@@ -26,7 +26,6 @@ class MonixBackend extends HttpBackendSelection {
   def backend(): Task[SttpBackend[Task, MonixStreams with WebSockets]] = AsyncHttpClientMonixBackend()
 }
 
-
 object TxMessagingActorWeb {
 
   trait Factory extends HookActorFactory[URI] {
