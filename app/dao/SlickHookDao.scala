@@ -10,15 +10,16 @@ import slick.sql.FixedSqlAction
 import scala.concurrent.Future
 
 trait SlickHookDao[X, Y] {
+
+  val logger: Logger
   val db: Database
   val databaseExecutionContext: DatabaseExecutionContext
-  val logger: Logger
-  implicit val ec: DatabaseExecutionContext = databaseExecutionContext
-
   val table: TableQuery[_]
   val lookupHookQuery: Y => Query[_, Y, Seq]
   val lookupKeyQuery: X => Query[_, Y, Seq]
   val insertHookQuery: Y => FixedSqlAction[Int, NoStream, Effect.Write]
+
+  implicit val ec: DatabaseExecutionContext = databaseExecutionContext
 
   def find(key: X): Future[Option[Y]] = {
     logger.debug(s"Querying for ${key.toString}")
