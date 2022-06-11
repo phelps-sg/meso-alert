@@ -56,7 +56,9 @@ class TxMessagingActorWeb @Inject()(backendSelection: HttpBackendSelection, @Ass
 
       f onComplete {
         case Success(_) => logger.debug("Successfully posted message")
-        case Failure(ex) => logger.warn(ex.getMessage)
+        case Failure(ex) =>
+          logger.error(ex.getMessage)
+          ex.printStackTrace()
       }
   }
 
