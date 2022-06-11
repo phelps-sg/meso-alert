@@ -334,19 +334,15 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   "TxWatchActor" should {
 
     trait TestFixtures extends MemPoolWatcherFixtures
-      with WebSocketFixtures with ActorGuiceFixtures with UserFixtures with TxWatchActorFixtures {
+      with WebSocketFixtures with ActorGuiceFixtures with UserFixtures with TxWatchActorFixtures
+
+    trait TestFixturesOneSubscriber extends TestFixtures {
       override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]) = {
-        f.never()
+        f.once()
       }
     }
 
-    trait TestFixturesAtLeastOneSubscriber extends TestFixtures {
-      override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]) = {
-        f.atLeastOnce()
-      }
-    }
-
-    "provide updates when user is authenticated" in new TestFixturesAtLeastOneSubscriber {
+    "provide updates when user is authenticated" in new TestFixturesOneSubscriber {
 
       val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List(), List())
 
@@ -379,7 +375,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       expectNoMessage()
     }
 
-    "only provide updates according to the user's filter" in new TestFixturesAtLeastOneSubscriber {
+    "only provide updates according to the user's filter" in new TestFixturesOneSubscriber {
 
       val tx1 = TxUpdate("testHash1", 10, DateTime.now(), isPending = true, List(), List())
       val tx2 = TxUpdate("testHash2", 1, DateTime.now(), isPending = true, List(), List())
