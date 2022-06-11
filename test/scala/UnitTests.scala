@@ -333,8 +333,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "TxWatchActor" should {
 
-    trait TestFixtures extends MemPoolWatcherFixtures with WebSocketFixtures with ActorGuiceFixtures with UserFixtures
-      with TxWatchActorFixtures {
+    trait TestFixtures extends MemPoolWatcherFixtures
+      with WebSocketFixtures with ActorGuiceFixtures with UserFixtures with TxWatchActorFixtures {
       override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]): CallHandler[_] =
         f.never()
     }
