@@ -1,5 +1,5 @@
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
-import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorWeb, TxUpdate, WebhooksManagerActor}
+import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorWeb, TxUpdate, HooksManagerActorWeb}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -180,7 +180,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val injector: Injector
     val webhooksActor = {
       system.actorOf(
-        WebhooksManagerActor.props(
+        HooksManagerActorWeb.props(
           injector.instanceOf[TxMessagingActorWeb.Factory],
           injector.instanceOf[TxFilterNoAuthActor.Factory],
           injector.instanceOf[WebhookDao],
@@ -215,7 +215,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val injector: Injector
     val webhooksActor = {
       system.actorOf(
-        WebhooksManagerActor.props(
+        HooksManagerActorWeb.props(
           injector.instanceOf[TxMessagingActorWeb.Factory],
           injector.instanceOf[TxFilterNoAuthActor.Factory],
           injector.instanceOf[WebhookDao],

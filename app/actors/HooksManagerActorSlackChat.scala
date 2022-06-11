@@ -8,13 +8,13 @@ import slick.DatabaseExecutionContext
 
 import java.net.URLEncoder
 
-object SlackChatHooksManagerActor {
+object HooksManagerActorSlackChat {
 
   def props(messagingActorFactory: TxMessagingActorSlackChat.Factory,
             filteringActorFactory: TxFilterNoAuthActor.Factory,
             slackChatHookDao: SlackChatHookDao,
             databaseExecutionContext: DatabaseExecutionContext): Props =
-    Props(new SlackChatHooksManagerActor(messagingActorFactory, filteringActorFactory, slackChatHookDao, databaseExecutionContext))
+    Props(new HooksManagerActorSlackChat(messagingActorFactory, filteringActorFactory, slackChatHookDao, databaseExecutionContext))
 
 //  implicit val startWrites: Writes[Started[Webhook]] = new Writes[Started[Webhook]]() {
 //    def writes(started: Started[Webhook]): JsObject = Json.obj(fields =
@@ -24,13 +24,13 @@ object SlackChatHooksManagerActor {
 //  }
 }
 
-class SlackChatHooksManagerActor @Inject()(val messagingActorFactory: TxMessagingActorSlackChat.Factory,
-                                      val filteringActorFactory: TxFilterNoAuthActor.Factory,
-                                      val dao: SlackChatHookDao,
-                                      val databaseExecutionContext: DatabaseExecutionContext)
+class HooksManagerActorSlackChat @Inject()(val messagingActorFactory: TxMessagingActorSlackChat.Factory,
+                                           val filteringActorFactory: TxFilterNoAuthActor.Factory,
+                                           val dao: SlackChatHookDao,
+                                           val databaseExecutionContext: DatabaseExecutionContext)
   extends HooksManagerActor[SlackChannel, SlackChatHook] {
 
-  override val logger: Logger = LoggerFactory.getLogger(classOf[SlackChatHooksManagerActor])
+  override val logger: Logger = LoggerFactory.getLogger(classOf[HooksManagerActorSlackChat])
   override val hookTypePrefix: String = "slack-chat-hook"
   override def encodeKey(channel: SlackChannel): String = URLEncoder.encode(channel.id, "UTF-8")
 }
