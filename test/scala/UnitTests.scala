@@ -337,8 +337,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       with WebSocketFixtures with ActorGuiceFixtures with UserFixtures with TxWatchActorFixtures
 
     trait TestFixturesOneSubscriber extends TestFixtures {
-      override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]) = {
-        f.once()
+      override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
+        ch.once()
       }
     }
 
@@ -435,8 +435,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     trait TestFixtures extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookActorFixtures
 
     trait TestFixturesTwoSubscribers extends TestFixtures with MemPoolGuiceFixtures {
-      override def memPoolWatcherExpectations(f: CallHandler1[ActorRef, Unit]) = {
-        f.twice()
+      override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
+        ch.twice()
       }
     }
 
