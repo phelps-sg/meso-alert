@@ -1,9 +1,8 @@
 import actors.{Register, Registered, Start, Started, Stop, Stopped}
 import akka.actor.{ActorRef, ActorSystem}
-import akka.util.Timeout
-import dao.{HookDao, Webhook, WebhookDao}
 import akka.pattern.ask
 import akka.util.Timeout
+import dao.HookDao
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.DurationInt

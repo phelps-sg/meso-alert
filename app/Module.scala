@@ -1,4 +1,4 @@
-import actors.{TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb, HooksManagerActorWeb, HooksManagerActorSlackChat}
+import actors.{HooksManagerActorSlackChat, HooksManagerActorWeb, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb}
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import play.libs.akka.AkkaGuiceSupport

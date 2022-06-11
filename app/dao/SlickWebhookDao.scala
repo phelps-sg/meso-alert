@@ -2,9 +2,9 @@ package dao
 
 import com.google.inject.{Inject, Singleton}
 import org.slf4j.{Logger, LoggerFactory}
-import slick.{DatabaseExecutionContext, Tables}
-import slick.jdbc.JdbcBackend.Database
 import slick.BtcPostgresProfile.api._
+import slick.jdbc.JdbcBackend.Database
+import slick.{DatabaseExecutionContext, Tables}
 
 import java.net.URI
 import scala.concurrent.Future

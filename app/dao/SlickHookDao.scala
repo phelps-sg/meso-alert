@@ -1,10 +1,10 @@
 package dao
 
 import org.slf4j.Logger
+import slick.BtcPostgresProfile.api._
 import slick.DatabaseExecutionContext
 import slick.dbio.Effect
 import slick.jdbc.JdbcBackend.Database
-import slick.BtcPostgresProfile.api._
 import slick.sql.FixedSqlAction
 
 import scala.concurrent.Future

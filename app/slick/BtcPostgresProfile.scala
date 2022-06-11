@@ -2,9 +2,6 @@ package slick
 
 import com.github.tminglei.slickpg.ExPostgresProfile
 import slick.basic.Capability
-import slick.basic.Capability
-
-import scala.collection.mutable
 
 trait BtcPostgresProfile extends ExPostgresProfile { // with PgArraySupport {
 

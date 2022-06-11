@@ -1,15 +1,13 @@
 package scala
 
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
-import org.awaitility.Awaitility.await
-import org.awaitility.scala.AwaitilitySupport
-import org.scalatest.{BeforeAndAfter, Suite}
+import org.scalatest.Suite
 import org.slf4j.{Logger, LoggerFactory}
+import slick.BtcPostgresProfile
 import slick.BtcPostgresProfile.api._
-import slick.{BtcPostgresProfile, Tables}
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 trait PostgresContainer extends ForAllTestContainer { // with BeforeAndAfter with AwaitilitySupport {
   self: Suite =>
