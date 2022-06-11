@@ -5,13 +5,13 @@ import akka.actor.ActorSystem
 import dao.{SlackChannel, SlackChatHook}
 import org.slf4j.LoggerFactory
 import play.api.mvc.{Action, BaseController, ControllerComponents}
-import services.SlackChatHooksManager
+import services.HooksManagerSlackChat
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class SlackController @Inject()(val controllerComponents: ControllerComponents,
-                                val hooksManager: SlackChatHooksManager)
+                                val hooksManager: HooksManagerSlackChat)
                                (implicit system: ActorSystem, ex: ExecutionContext) extends BaseController {
 
   private val logger = LoggerFactory.getLogger(classOf[SlackController])

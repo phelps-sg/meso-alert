@@ -11,7 +11,7 @@ import play.api.libs.json.Json
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
-import services.{MemPoolWatcherService, WebhooksManagerService, UserManagerService}
+import services.{MemPoolWatcherService, HooksManagerWebService, UserManagerService}
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -25,7 +25,7 @@ import scala.util.{Failure, Success}
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
                                val memPoolWatcher: MemPoolWatcherService,
                                val userManager: UserManagerService,
-                               val slackWebHooksManager: WebhooksManagerService,
+                               val slackWebHooksManager: HooksManagerWebService,
                                val actorFactory: TxFilterAuthActor.Factory)
                               (implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext)
   extends BaseController with SameOriginCheck with InjectedActorSupport {

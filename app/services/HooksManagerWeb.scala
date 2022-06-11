@@ -9,11 +9,11 @@ import java.net.URI
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
-@ImplementedBy(classOf[WebhooksManager])
-trait WebhooksManagerService extends HooksManagerService[URI, Webhook]
+@ImplementedBy(classOf[HooksManagerWeb])
+trait HooksManagerWebService extends HooksManagerService[URI, Webhook]
 
 @Singleton
-class WebhooksManager @Inject()(val hookDao: WebhookDao,
+class HooksManagerWeb @Inject()(val hookDao: WebhookDao,
                                 @Named("webhooks-actor") val actor: ActorRef)
                                (implicit val system: ActorSystem, val executionContext: ExecutionContext)
-  extends WebhooksManagerService with HooksManager[URI, Webhook]
+  extends HooksManagerWebService with HooksManager[URI, Webhook]

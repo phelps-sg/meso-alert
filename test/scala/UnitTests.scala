@@ -208,7 +208,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val webhookDao: WebhookDao
     val webhookManagerMock = mock[WebhookManagerMock]
     val mockWebhookManagerActor = system.actorOf(MockWebhookManagerActor.props(webhookManagerMock))
-    val webhooksManager = new WebhooksManager(webhookDao, actor = mockWebhookManagerActor)
+    val webhooksManager = new HooksManagerWeb(webhookDao, actor = mockWebhookManagerActor)
   }
 
   trait WebhooksActorFixtures {
