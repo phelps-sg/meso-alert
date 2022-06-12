@@ -23,13 +23,13 @@ package object actors {
   case class HookAlreadyRegisteredException[Y](hook: Y) extends Exception(s"Webhook already registered with same key as $hook")
   case class HookAlreadyStartedException[X](uri: X) extends Exception(s"Webhook already started for $uri")
 
-  case class Register[X](hook: X)
-  case class Unregister[X](hook: X)
-  case class Started[X](hook: X)
-  case class Stopped[X](hook: X)
-  case class Registered[X](hook: X)
-  case class Start[X](uri: X)
-  case class Stop[X](uri: X)
+  case class Register[Y](hook: Y)
+  case class Unregister[Y](hook: Y)
+  case class Started[Y](hook: Y)
+  case class Stopped[Y](hook: Y)
+  case class Registered[Y](hook: Y)
+  case class Start[X](key: X)
+  case class Stop[X](key: X)
 
   trait TxUpdateActor {
     val self: ActorRef
