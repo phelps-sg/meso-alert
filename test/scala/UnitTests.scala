@@ -381,7 +381,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       val tx2 = TxUpdate("testHash2", 1, DateTime.now(), isPending = true, List(), List())
 
       (mockUserManager.authenticate _).expects("test").returning(mockUser)
-      //      (mockMemPoolWatcher.addListener _).expects(*)
 
       txWatchActor ! Auth("test", "test")
       expectNoMessage()
@@ -488,7 +487,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
 
     "correctly register, start, stop and restart a web hook" in new TestFixturesTwoSubscribers {
-//              (mockMemPoolWatcher.addListener _).expects(*).twice()
       val uri = new URI("http://test")
       val hook = Webhook(uri, threshold = 100L)
       afterDbInit {
