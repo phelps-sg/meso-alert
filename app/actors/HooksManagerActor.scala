@@ -74,6 +74,9 @@ trait HooksManagerActor[X, Y] extends Actor with InjectedActorSupport {
           name = s"$hookTypePrefix-filter-$actorId")
       actors += key -> Array(messagingActor, filteringActor)
 
+    case CreateActors(key: X, _) =>
+      logger.error(s"Not starting child actors; unrecognized hook type")
+
   }
 
 }
