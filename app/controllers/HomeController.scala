@@ -25,7 +25,7 @@ import scala.util.{Failure, Success}
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
                                val memPoolWatcher: MemPoolWatcherService,
                                val userManager: UserManagerService,
-                               val slackWebHooksManager: HooksManagerWebService,
+                               val webHooksManager: HooksManagerWebService,
                                val actorFactory: TxFilterAuthActor.Factory)
                               (implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext)
   extends BaseController with SameOriginCheck with InjectedActorSupport {
@@ -34,7 +34,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
 
   private val init = for {
     _ <- memPoolWatcher.init()
-    _ <- slackWebHooksManager.init()
+    _ <- webHooksManager.init()
   } yield ()
 
   init.onComplete{
