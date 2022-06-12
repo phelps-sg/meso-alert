@@ -32,7 +32,6 @@ package object actors {
   case class Stop[X](uri: X)
 
   trait TxUpdateActor {
-
     val self: ActorRef
     val memPoolWatcher: MemPoolWatcherService
     val logger: Logger
@@ -42,7 +41,6 @@ package object actors {
       memPoolWatcher.addListener(self)
       logger.info("registration complete.")
     }
-
   }
 
   implicit val txInputOutputWrites = new Writes[TxInputOutput] {
