@@ -54,4 +54,9 @@ class TxMessagingActorSlackChat @Inject()(config : Configuration, sce: SlackChat
       logger.debug(s"Received $tx")
       sendMessage(channel.id, message(tx))
   }
+
+  override def postStop(): Unit = {
+    logger.debug("Terminating actor")
+    super.postStop()
+  }
 }

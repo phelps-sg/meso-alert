@@ -58,15 +58,18 @@ trait HooksManagerActor[X, Y] extends Actor with InjectedActorSupport {
         Started(hook)
       }), HookAlreadyStartedException(uri))
 
-    case Stop(uri: X) =>
-      provided (actors contains uri, {
-        actors(uri).foreach(_ ! PoisonPill)
-        actors -= uri
-        uri withHook (hook => Stopped(hook))
-      }, HookNotStartedException(uri))
+    case Stop(key: X) =>
+      logger.debug(s"Stopping actor with key $key")
+      provided (actors contains key, {
+        actors(key).foreach(_ ! PoisonPill)
+        actors -= key
+        key withHook (hook => Stopped(hook))
+      }, HookNotStartedException(key))
 
     case CreateActors(key: X, hook: Filter) =>
+      logger.debug(s"Creating child actors for key $key and hook $hook")
       val actorId = encodeKey(key)
+      logger.debug(s"actorId = $actorId")
       val messagingActor =
         injectedChild(messagingActorFactory(key), name = s"$hookTypePrefix-messenger-$actorId")
       val filteringActor =
