@@ -77,9 +77,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   trait WebhookManagerMock {
     def start(uri: URI): Unit
-
     def register(hook: Webhook): Unit
-
     def stop(uri: URI): Unit
   }
 
@@ -178,7 +176,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   trait WebhookActorFixtures {
     val injector: Injector
-    val webhooksActor = {
+
+    val hooksActor = {
       system.actorOf(
         HooksManagerActorWeb.props(
           injector.instanceOf[TxMessagingActorWeb.Factory],
@@ -188,6 +187,40 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         )
       )
     }
+    val key = new URI("http://test")
+    val hook = Webhook(key, threshold = 100L)
+  }
+
+  trait HookActorTestLogic {
+    val hooksActor: ActorRef
+    val hook: Any
+    val key: Any
+
+    def registerStartStopRestartStop() = {
+      afterDbInit {
+        for {
+          registered <- hooksActor ? Register(hook)
+          started <- hooksActor ? Start(key)
+          stopped <- hooksActor ? Stop(key)
+          _ <- Future {
+            expectNoMessage()
+          }
+          restarted <- hooksActor ? Start(key)
+          finalStop <- hooksActor ? Stop(key)
+        } yield (registered, started, stopped, restarted, finalStop)
+      }
+    }
+
+    def registerStartStart() = {
+      afterDbInit {
+        for {
+          registered <- hooksActor ? Register(hook)
+          started <- hooksActor ? Start(key)
+          error <- hooksActor ? Start(key)
+        } yield error
+      }
+    }
+
   }
 
   trait UserFixtures {
@@ -213,7 +246,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   trait WebhooksActorFixtures {
     val injector: Injector
-    val webhooksActor = {
+    val hooksActor = {
       system.actorOf(
         HooksManagerActorWeb.props(
           injector.instanceOf[TxMessagingActorWeb.Factory],
@@ -431,7 +464,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "WebhookManagerActor" should {
 
-    trait TestFixtures extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookActorFixtures
+    trait TestFixtures
+      extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookActorFixtures with HookActorTestLogic
 
     trait TestFixturesTwoSubscribers extends TestFixtures with MemPoolGuiceFixtures {
       override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
@@ -440,67 +474,41 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
 
     "return WebhookNotRegistered when trying to start an unregistered hook" in new TestFixtures {
-      val uri = new URI("http://test")
       afterDbInit {
-        webhooksActor ? Start(uri)
-      }.futureValue should matchPattern { case Failure(HookNotRegisteredException(`uri`)) => }
+        hooksActor ? Start(key)
+      }.futureValue should matchPattern { case Failure(HookNotRegisteredException(`key`)) => }
     }
 
     "return Registered and record a new hook in the database when registering a new hook" in new TestFixtures {
-      val hook = Webhook(uri = new URI("http://test"), threshold = 100L)
       afterDbInit {
         for {
-          response <- webhooksActor ? Register(hook)
+          response <- hooksActor ? Register(hook)
           dbContents <- db.run(Tables.webhooks.result)
         } yield (response, dbContents)
       }.futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
     }
 
     "return an exception when stopping a hook that is not started" in new TestFixtures {
-      val uri = new URI("http://test")
       afterDbInit {
-        webhooksActor ? Stop(uri)
-      }.futureValue should matchPattern { case Failure(HookNotStartedException(`uri`)) => }
+        hooksActor ? Stop(key)
+      }.futureValue should matchPattern { case Failure(HookNotStartedException(`key`)) => }
     }
 
     "return an exception when registering a pre-existing hook" in new TestFixtures {
-      val uri = new URI("http://test")
-      val hook = Webhook(uri, 10)
       afterDbInit {
         for {
           _ <- db.run(Tables.webhooks += hook)
-          registered <- webhooksActor ? Register(hook)
+          registered <- hooksActor ? Register(hook)
         } yield registered
       }.futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
     }
 
     "return an exception when starting a hook that has already been started" in new TestFixtures {
-      val uri = new URI("http://test")
-      val hook = Webhook(uri, 10)
-      afterDbInit {
-        for {
-          registered <- webhooksActor ? Register(hook)
-          started <- webhooksActor ? Start(hook.uri)
-          error <- webhooksActor ? Start(hook.uri)
-        } yield error
-      }.futureValue should matchPattern { case Failure(HookAlreadyStartedException(`uri`)) => }
+      registerStartStart().futureValue should matchPattern { case Failure(HookAlreadyStartedException(`key`)) => }
     }
 
     "correctly register, start, stop and restart a web hook" in new TestFixturesTwoSubscribers {
-      val uri = new URI("http://test")
-      val hook = Webhook(uri, threshold = 100L)
-      afterDbInit {
-        for {
-          registered <- webhooksActor ? Register(hook)
-          started <- webhooksActor ? Start(uri)
-          stopped <- webhooksActor ? Stop(uri)
-          _ <- Future {
-            expectNoMessage()
-          }
-          restarted <- webhooksActor ? Start(uri)
-          finalStop <- webhooksActor ? Stop(uri)
-        } yield (registered, started, stopped, restarted, finalStop)
-      }.futureValue should matchPattern {
+      registerStartStopRestartStop().futureValue should matchPattern {
         case (
           Success(Registered(`hook`)),
           Success(Started(`hook`)),
