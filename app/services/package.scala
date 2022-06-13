@@ -11,6 +11,23 @@ import scala.util.{Failure, Success}
 
 package object services {
 
+  implicit val timeout: Timeout = 1.minute
+
+  trait ActorBackend {
+
+    val actor: ActorRef
+    val executionContext: ExecutionContext
+
+    implicit val ec: ExecutionContext = executionContext
+
+    def sendAndReceive[T, R](message: T): Future[R] = {
+      (actor ? message) map {
+        case Success(x: R) => x
+        case Failure(ex) => throw ex
+      }
+    }
+  }
+
   trait HooksManagerService[X, Y] {
     def init(): Future[Seq[Started[Y]]]
     def start(key: X): Future[Started[Y]]
@@ -18,7 +35,7 @@ package object services {
     def register(hook: Y): Future[Registered[Y]]
   }
 
-  trait HooksManager[X, Y] {
+  trait HooksManager[X, Y] extends ActorBackend {
 
     private val logger = LoggerFactory.getLogger(classOf[HooksManager[X, Y]])
 
@@ -27,8 +44,6 @@ package object services {
 
     implicit val system: ActorSystem
     implicit val executionContext: ExecutionContext
-
-    implicit val timeout: Timeout = 1.minute
 
     def init(): Future[Seq[Started[Y]]] = {
 
@@ -46,15 +61,10 @@ package object services {
       initFuture
     }
 
-    def sendAndReceive[T, R](message: T): Future[R] = {
-      (actor ? message) map {
-        case Success(x: R) => x
-        case Failure(ex) => throw ex
-      }
-    }
-
     def start(key: X): Future[Started[Y]] = sendAndReceive(Start(key))
+
     def stop(key: X): Future[Stopped[Y]] = sendAndReceive(Stop(key))
+
     def register(hook: Y): Future[Registered[Y]] = sendAndReceive(Register(hook))
   }
 }

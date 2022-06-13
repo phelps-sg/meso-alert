@@ -1,4 +1,4 @@
-import actors.{HooksManagerActorSlackChat, HooksManagerActorWeb, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb}
+import actors.{HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb}
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import play.libs.akka.AkkaGuiceSupport
@@ -12,6 +12,7 @@ class Module extends AbstractModule with AkkaGuiceSupport {
     bind(classOf[Database]).toProvider(classOf[DatabaseProvider])
     bindActor(classOf[HooksManagerActorWeb], "webhooks-actor")
     bindActor(classOf[HooksManagerActorSlackChat], "slack-hooks-actor")
+    bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")
     bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
     bindActorFactory(classOf[TxMessagingActorSlackChat], classOf[TxMessagingActorSlackChat.Factory])
     bindActorFactory(classOf[TxFilterAuthActor], classOf[TxFilterAuthActor.Factory])

@@ -1,5 +1,6 @@
+import actors.MemPoolWatcherActor.StartPeerGroup
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
-import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate}
+import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -36,9 +37,10 @@ import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 import slick.{DatabaseExecutionContext, Tables, jdbc}
 
 import java.net.URI
+import java.util.concurrent.Executors
 import javax.inject.Provider
 import scala.collection.mutable
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.DurationInt
 import scala.io.Source
 import scala.util.{Failure, Success}
@@ -109,10 +111,13 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   lazy val db: JdbcBackend.Database = database.asInstanceOf[JdbcBackend.Database]
 
   class TestModule extends AbstractModule with AkkaGuiceSupport {
+    val testExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
     override def configure(): Unit = {
       bind(classOf[Database]).toProvider(new Provider[Database] {
         val get: jdbc.JdbcBackend.Database = db
       })
+      bind(classOf[ExecutionContext]).toInstance(testExecutionContext)
+      bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")
       //      bindActor(classOf[WebhooksActor], "webhooks-actor")
       bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
       bindActorFactory(classOf[TxMessagingActorSlackChat], classOf[TxMessagingActorSlackChat.Factory])
@@ -344,10 +349,12 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       (mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
         .expects(capture(listenerCapture)).atLeastOnce()
 
-      val memPoolWatcher = new MemPoolWatcher(new PeerGroupSelection() {
+      val pgs = new PeerGroupSelection() {
         val params = mainNetParams
         lazy val get = mockPeerGroup
-      })
+      }
+      val memPoolWatcherActor = system.actorOf(MemPoolWatcherActor.props(pgs, injector.instanceOf[DatabaseExecutionContext]))
+      val memPoolWatcher = new MemPoolWatcher(memPoolWatcherActor)
 
       val txWatchActor =
         system.actorOf(TxFilterAuthActor.props(mockWsActor, memPoolWatcher, mockUserManager))

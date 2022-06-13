@@ -1,26 +1,21 @@
 package services
 
-import actors.MemPoolWatcherActor
+import actors.Started
 import akka.actor.{ActorRef, ActorSystem}
 import com.google.inject.ImplementedBy
+import com.google.inject.name.Named
 import org.bitcoinj.core._
-import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.utils.BriefLogFormatter
-import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
 import org.slf4j.{Logger, LoggerFactory}
 
-import java.util
-import java.util.Collections
 import javax.inject.{Inject, Provider, Singleton}
-import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[MemPoolWatcher])
 trait MemPoolWatcherService {
   def addListener(listener: ActorRef): Unit
-  def init(): Future[Unit]
+  def init(): Future[Started[PeerGroup]]
 }
 
 @ImplementedBy(classOf[MainNetPeerGroup])
@@ -36,34 +31,17 @@ class MainNetPeerGroup extends PeerGroupSelection {
 }
 
 @Singleton
-class MemPoolWatcher @Inject()(peerGroupSelection: PeerGroupSelection)
-                              (implicit system: ActorSystem)
-  extends MemPoolWatcherService {
+class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
+                              (implicit system: ActorSystem, implicit val executionContext: ExecutionContext)
+  extends MemPoolWatcherService with ActorBackend {
 
-  private val log: Logger = LoggerFactory.getLogger("mem-pool-watcher")
-  implicit val params: NetworkParameters = peerGroupSelection.params
-  private val NO_DEPS: util.List[Transaction] = Collections.emptyList
-  private val counters: mutable.Map[String, Integer] = mutable.Map[String, Integer]().withDefaultValue(0)
-  private val TOTAL_KEY: String = "TOTAL"
-  private val START_MS: Long = System.currentTimeMillis
-  private val STATISTICS_FREQUENCY_MS: Long = 1000 * 60
-  BriefLogFormatter.initVerbose()
-  val peerGroup: PeerGroup = peerGroupSelection.get
-  val actor: ActorRef = system.actorOf(MemPoolWatcherActor.props(peerGroup))
+  private val logger: Logger = LoggerFactory.getLogger(classOf[MemPoolWatcher])
+  private val STATISTICS_FREQUENCY_MS: Long = 1000
 
-  def startPeerGroup(): Unit = {
-    peerGroup.setMaxConnections(32)
-    peerGroup.addPeerDiscovery(new DnsDiscovery(params))
-    peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => {
-      val result: RiskAnalysis.Result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze
-      incrementCounter(TOTAL_KEY)
-      log.debug("tx {} result {}", tx.getTxId, result)
-      incrementCounter(result.name)
-      if (result eq RiskAnalysis.Result.NON_STANDARD) {
-        incrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
-      }
-    })
-    peerGroup.start()
+  import actors.MemPoolWatcherActor._
+
+  def startPeerGroup(): Future[Started[PeerGroup]] = {
+    sendAndReceive(StartPeerGroup())
   }
 
   def run(): Future[Unit] = {
@@ -75,29 +53,20 @@ class MemPoolWatcher @Inject()(peerGroupSelection: PeerGroupSelection)
     }
   }
 
-  def init(): Future[Unit] = {
-    Future {
-      log.info("Starting peer group... ")
-      startPeerGroup()
-      log.info("Peer group started.")
-      log.info("Launching stats watcher... ")
-      run()
-    }
+  def init(): Future[Started[PeerGroup]] = {
+    logger.info("Starting peer group... ")
+    BriefLogFormatter.initVerbose()
+    for {
+      started <- startPeerGroup()
+      _ <- Future { run() }
+    } yield started
   }
 
   def addListener(listener: ActorRef): Unit = {
-    actor ! MemPoolWatcherActor.RegisterWatcher(listener)
+    actor ! RegisterWatcher(listener)
   }
 
-  private def incrementCounter(name: String): Unit = {
-    counters(name) += 1
-  }
-
-  //noinspection RedundantBlock
   private def printCounters(): Unit = {
-    log.info(f"Runtime: ${(System.currentTimeMillis - START_MS) / 1000 / 60}%d minutes")
-    for ((key, value) <- counters) {
-      log.info(f"  $key%-40s${value}%6d  (${value.asInstanceOf[Int] * 100 / counters(TOTAL_KEY)}%d%% of total)")
-    }
+    actor ! LogCounters()
   }
 }
