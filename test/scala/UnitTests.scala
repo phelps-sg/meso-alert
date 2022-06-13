@@ -1,5 +1,5 @@
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
-import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorWeb, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorWeb, TxUpdate}
+import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -7,7 +7,8 @@ import akka.util.Timeout
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
-import dao.{Webhook, WebhookDao}
+import com.typesafe.config.ConfigFactory
+import dao.{SlackChannel, SlackChatHook, SlackChatHookDao, Webhook, WebhookDao}
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
@@ -21,7 +22,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
-import play.api.inject
+import play.api.{Configuration, inject}
 import play.api.inject.Injector
 import play.api.inject.guice.GuiceInjectorBuilder
 import play.api.libs.json.{JsArray, Json}
@@ -114,6 +115,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       })
       //      bindActor(classOf[WebhooksActor], "webhooks-actor")
       bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
+      bindActorFactory(classOf[TxMessagingActorSlackChat], classOf[TxMessagingActorSlackChat.Factory])
       bindActorFactory(classOf[TxFilterAuthActor], classOf[TxFilterAuthActor.Factory])
       bindActorFactory(classOf[TxFilterNoAuthActor], classOf[TxFilterNoAuthActor.Factory])
     }
@@ -156,8 +158,10 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   }
 
   trait ActorGuiceFixtures {
+    val config = Configuration(ConfigFactory.load("application.test.conf"))
     def builder = new GuiceInjectorBuilder()
       .bindings(new TestModule)
+      .overrides(inject.bind(classOf[Configuration]).toInstance(config))
       .overrides(inject.bind(classOf[ActorSystem]).toInstance(system))
 
     val injector = builder.build()
@@ -194,26 +198,45 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val queryHooks = Tables.webhooks.result
   }
 
-  trait HookActorTestLogic {
+  trait SlackChatActorFixtures {
+    val injector: Injector
+
+    val hooksActor = {
+      system.actorOf(
+        HooksManagerActorSlackChat.props(
+          injector.instanceOf[TxMessagingActorSlackChat.Factory],
+          injector.instanceOf[TxFilterNoAuthActor.Factory],
+          injector.instanceOf[SlackChatHookDao],
+          injector.instanceOf[DatabaseExecutionContext]
+        )
+      )
+    }
+    val key = SlackChannel("http://test")
+    val hook = SlackChatHook(key, threshold = 100L)
+    val insertHook = Tables.slackChatHooks += hook
+    val queryHooks = Tables.slackChatHooks.result
+  }
+
+  trait HookActorTestLogic[Y] {
     val hooksActor: ActorRef
     val hook: Any
     val key: Any
     val insertHook: FixedSqlAction[Int, NoStream, Effect.Write]
-    val queryHooks: FixedSqlStreamingAction[Seq[_], _, Effect.Read]
+    val queryHooks: FixedSqlStreamingAction[Seq[Y], Y, Effect.Read]
 
-    def stop() = {
+    def stopHook() = {
       afterDbInit {
         hooksActor ? Stop(key)
       }
     }
 
-    def start() = {
+    def startHook() = {
       afterDbInit {
         hooksActor ? Start(key)
       }
     }
 
-    def registerExisting() = {
+    def registerExistingHook() = {
       afterDbInit {
         for {
           _ <- db.run(insertHook)
@@ -222,7 +245,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       }
     }
 
-    def register() = {
+    def registerHook() = {
       afterDbInit {
         for {
           response <- hooksActor ? Register(hook)
@@ -238,7 +261,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           started <- hooksActor ? Start(key)
           stopped <- hooksActor ? Stop(key)
           _ <- Future {
-            expectNoMessage()
+            expectNoMessage(200.millis)  // Wait for child actors to die
           }
           restarted <- hooksActor ? Start(key)
           finalStop <- hooksActor ? Stop(key)
@@ -497,10 +520,11 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
   }
 
-  "WebhookManagerActor" should {
+  "SlackChatManagerActor" should {
 
     trait TestFixtures
-      extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookActorFixtures with HookActorTestLogic
+      extends MemPoolWatcherFixtures with ActorGuiceFixtures
+        with SlackChatActorFixtures with HookActorTestLogic[SlackChatHook]
 
     trait TestFixturesTwoSubscribers extends TestFixtures with MemPoolGuiceFixtures {
       override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
@@ -509,19 +533,62 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
 
     "return WebhookNotRegistered when trying to start an unregistered hook" in new TestFixtures {
-      start().futureValue should matchPattern { case Failure(HookNotRegisteredException(`key`)) => }
+      startHook().futureValue should matchPattern { case Failure(HookNotRegisteredException(`key`)) => }
     }
 
     "return Registered and record a new hook in the database when registering a new hook" in new TestFixtures {
-      register().futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
+      registerHook().futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
     }
 
     "return an exception when stopping a hook that is not started" in new TestFixtures {
-      stop().futureValue should matchPattern { case Failure(HookNotStartedException(`key`)) => }
+      stopHook().futureValue should matchPattern { case Failure(HookNotStartedException(`key`)) => }
     }
 
     "return an exception when registering a pre-existing hook" in new TestFixtures {
-      registerExisting().futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
+      registerExistingHook().futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
+    }
+
+    "return an exception when starting a hook that has already been started" in new TestFixtures {
+      registerStartStart().futureValue should matchPattern { case Failure(HookAlreadyStartedException(`key`)) => }
+    }
+
+    "correctly register, start, stop and restart a web hook" in new TestFixturesTwoSubscribers {
+      registerStartStopRestartStop().futureValue should matchPattern {
+        case (
+          Success(Registered(`hook`)),
+          Success(Started(`hook`)),
+          Success(Stopped(`hook`)),
+          Success(Started(`hook`)),
+          Success(Stopped(`hook`))) =>
+      }
+    }
+  }
+
+  "WebhookManagerActor" should {
+
+    trait TestFixtures
+      extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookActorFixtures with HookActorTestLogic[Webhook]
+
+    trait TestFixturesTwoSubscribers extends TestFixtures with MemPoolGuiceFixtures {
+      override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
+        ch.twice()
+      }
+    }
+
+    "return WebhookNotRegistered when trying to start an unregistered hook" in new TestFixtures {
+      startHook().futureValue should matchPattern { case Failure(HookNotRegisteredException(`key`)) => }
+    }
+
+    "return Registered and record a new hook in the database when registering a new hook" in new TestFixtures {
+      registerHook().futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
+    }
+
+    "return an exception when stopping a hook that is not started" in new TestFixtures {
+      stopHook().futureValue should matchPattern { case Failure(HookNotStartedException(`key`)) => }
+    }
+
+    "return an exception when registering a pre-existing hook" in new TestFixtures {
+      registerExistingHook().futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
     }
 
     "return an exception when starting a hook that has already been started" in new TestFixtures {
