@@ -41,7 +41,7 @@ class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
   import actors.MemPoolWatcherActor._
 
   def startPeerGroup(): Future[Started[PeerGroup]] = {
-    sendAndReceive(StartPeerGroup())
+    sendAndReceive(StartPeerGroup)
   }
 
   def run(): Future[Unit] = {
@@ -67,6 +67,6 @@ class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
   }
 
   private def printCounters(): Unit = {
-    actor ! LogCounters()
+    actor ! LogCounters
   }
 }

@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.{Actor, ActorRef, Props}
 import akka.pattern.pipe
-import com.google.inject.Inject
+import com.google.inject.{Inject, Singleton}
 import org.bitcoinj.core.{NetworkParameters, Peer, Transaction}
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
@@ -18,11 +18,11 @@ import scala.util.{Failure, Success}
 object MemPoolWatcherActor {
 
   case class RegisterWatcher(listener: ActorRef)
-  case class StartPeerGroup()
+  case object StartPeerGroup
   case class PeerGroupAlreadyStartedException() extends Exception("Peer group already started")
   case class NewTransaction(tx: Transaction)
   case class IncrementCounter(key: String)
-  case class LogCounters()
+  case object LogCounters
 
   def props(peerGroupSelection: PeerGroupSelection, databaseExecutionContext: DatabaseExecutionContext): Props =
     Props(new MemPoolWatcherActor(peerGroupSelection, databaseExecutionContext))
@@ -58,7 +58,7 @@ class MemPoolWatcherActor @Inject() (val peerGroupSelection: PeerGroupSelection,
       if (result eq RiskAnalysis.Result.NON_STANDARD)
         self ! IncrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
 
-    case StartPeerGroup() =>
+    case StartPeerGroup =>
 
       logger.debug("Received start peer group request.")
 
@@ -82,7 +82,7 @@ class MemPoolWatcherActor @Inject() (val peerGroupSelection: PeerGroupSelection,
           sender ! Failure(PeerGroupAlreadyStartedException())
       }
 
-    case LogCounters() =>
+    case LogCounters =>
       logger.debug("logging counters")
       logger.info(f"Runtime: ${(System.currentTimeMillis - startTime.get) / 1000 / 60}%d minutes")
       for ((key, value) <- counters) {
