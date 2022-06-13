@@ -28,9 +28,10 @@ import play.api.libs.json.{JsArray, Json}
 import play.libs.akka.AkkaGuiceSupport
 import services._
 import slick.BtcPostgresProfile.api._
-import slick.dbio.DBIO
+import slick.dbio.{DBIO, Effect}
 import slick.jdbc.JdbcBackend
 import slick.jdbc.JdbcBackend.Database
+import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 import slick.{DatabaseExecutionContext, Tables, jdbc}
 
 import java.net.URI
@@ -189,12 +190,46 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
     val key = new URI("http://test")
     val hook = Webhook(key, threshold = 100L)
+    val insertHook = Tables.webhooks += hook
+    val queryHooks = Tables.webhooks.result
   }
 
   trait HookActorTestLogic {
     val hooksActor: ActorRef
     val hook: Any
     val key: Any
+    val insertHook: FixedSqlAction[Int, NoStream, Effect.Write]
+    val queryHooks: FixedSqlStreamingAction[Seq[_], _, Effect.Read]
+
+    def stop() = {
+      afterDbInit {
+        hooksActor ? Stop(key)
+      }
+    }
+
+    def start() = {
+      afterDbInit {
+        hooksActor ? Start(key)
+      }
+    }
+
+    def registerExisting() = {
+      afterDbInit {
+        for {
+          _ <- db.run(insertHook)
+          registered <- hooksActor ? Register(hook)
+        } yield registered
+      }
+    }
+
+    def register() = {
+      afterDbInit {
+        for {
+          response <- hooksActor ? Register(hook)
+          dbContents <- db.run(queryHooks)
+        } yield (response, dbContents)
+      }
+    }
 
     def registerStartStopRestartStop() = {
       afterDbInit {
@@ -474,33 +509,19 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
 
     "return WebhookNotRegistered when trying to start an unregistered hook" in new TestFixtures {
-      afterDbInit {
-        hooksActor ? Start(key)
-      }.futureValue should matchPattern { case Failure(HookNotRegisteredException(`key`)) => }
+      start().futureValue should matchPattern { case Failure(HookNotRegisteredException(`key`)) => }
     }
 
     "return Registered and record a new hook in the database when registering a new hook" in new TestFixtures {
-      afterDbInit {
-        for {
-          response <- hooksActor ? Register(hook)
-          dbContents <- db.run(Tables.webhooks.result)
-        } yield (response, dbContents)
-      }.futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
+      register().futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
     }
 
     "return an exception when stopping a hook that is not started" in new TestFixtures {
-      afterDbInit {
-        hooksActor ? Stop(key)
-      }.futureValue should matchPattern { case Failure(HookNotStartedException(`key`)) => }
+      stop().futureValue should matchPattern { case Failure(HookNotStartedException(`key`)) => }
     }
 
     "return an exception when registering a pre-existing hook" in new TestFixtures {
-      afterDbInit {
-        for {
-          _ <- db.run(Tables.webhooks += hook)
-          registered <- hooksActor ? Register(hook)
-        } yield registered
-      }.futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
+      registerExisting().futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
     }
 
     "return an exception when starting a hook that has already been started" in new TestFixtures {
