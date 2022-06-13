@@ -19,7 +19,7 @@ package object dao {
     def init(): Future[Unit]
     def all(): Future[Seq[Y]]
     def allKeys(): Future[Seq[X]]
-    def find(uri: X): Future[Option[Y]]
+    def find(key: X): Future[Option[Y]]
     def insert(hook: Y): Future[Int]
   }
 
