@@ -14,7 +14,7 @@ features:
       description: Pause active alerts for this channel
       should_escape: false
     - command: /resume-alerts
-      url: https://symbitoica.mesonomics.com:6000/api/slack/slash
+      url: https://symbiotica.mesonomics.com:6000/api/slack/slash
       description: Resume alerts for this channel
       should_escape: false
 oauth_config:
