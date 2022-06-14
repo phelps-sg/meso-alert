@@ -1,4 +1,3 @@
-import actors.MemPoolWatcherActor.StartPeerGroup
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
 import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
@@ -9,7 +8,7 @@ import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
 import com.typesafe.config.ConfigFactory
-import dao.{SlackChannel, SlackChatHook, SlackChatHookDao, Webhook, WebhookDao}
+import dao._
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
@@ -23,10 +22,10 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
-import play.api.{Configuration, inject}
 import play.api.inject.Injector
 import play.api.inject.guice.GuiceInjectorBuilder
 import play.api.libs.json.{JsArray, Json}
+import play.api.{Configuration, inject}
 import play.libs.akka.AkkaGuiceSupport
 import services._
 import slick.BtcPostgresProfile.api._
@@ -40,8 +39,8 @@ import java.net.URI
 import java.util.concurrent.Executors
 import javax.inject.Provider
 import scala.collection.mutable
-import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
 import scala.util.{Failure, Success}
 
@@ -148,6 +147,19 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       ch.never()
     }
     memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
+  }
+
+  trait MemPoolWatcherActorFixtures {
+    val mainNetParams: MainNetParams
+    val mockPeerGroup: PeerGroup
+    val injector: Injector
+
+    val pgs = new PeerGroupSelection() {
+      val params = mainNetParams
+      lazy val get = mockPeerGroup
+    }
+    val memPoolWatcherActor = system.actorOf(MemPoolWatcherActor.props(pgs, injector.instanceOf[DatabaseExecutionContext]))
+    val memPoolWatcher = new MemPoolWatcher(memPoolWatcherActor)
   }
 
   trait TransactionFixtures {
@@ -318,7 +330,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   //noinspection ZeroIndexToHead
   "MemPoolWatcher" should {
 
-    trait TextFixtures extends MemPoolWatcherFixtures
+    trait TextFixtures extends MemPoolWatcherFixtures with MemPoolWatcherActorFixtures
       with WebSocketFixtures with ActorGuiceFixtures with UserFixtures with TransactionFixtures
 
     "send the correct TxUpdate message when a transaction update is received from " +
@@ -343,12 +355,12 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       (mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
         .expects(capture(listenerCapture)).atLeastOnce()
 
-      val pgs = new PeerGroupSelection() {
-        val params = mainNetParams
-        lazy val get = mockPeerGroup
-      }
-      val memPoolWatcherActor = system.actorOf(MemPoolWatcherActor.props(pgs, injector.instanceOf[DatabaseExecutionContext]))
-      val memPoolWatcher = new MemPoolWatcher(memPoolWatcherActor)
+//      val pgs = new PeerGroupSelection() {
+//        val params = mainNetParams
+//        lazy val get = mockPeerGroup
+//      }
+//      val memPoolWatcherActor = system.actorOf(MemPoolWatcherActor.props(pgs, injector.instanceOf[DatabaseExecutionContext]))
+//      val memPoolWatcher = new MemPoolWatcher(memPoolWatcherActor)
 
       val txWatchActor =
         system.actorOf(TxFilterAuthActor.props(mockWsActor, memPoolWatcher, mockUserManager))
