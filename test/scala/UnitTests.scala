@@ -330,8 +330,9 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   //noinspection ZeroIndexToHead
   "MemPoolWatcher" should {
 
-    trait TextFixtures extends MemPoolWatcherFixtures with MemPoolWatcherActorFixtures
-      with WebSocketFixtures with ActorGuiceFixtures with UserFixtures with TransactionFixtures
+    trait TextFixtures extends MemPoolWatcherFixtures
+      with WebSocketFixtures with ActorGuiceFixtures with MemPoolWatcherActorFixtures with UserFixtures
+      with TransactionFixtures
 
     "send the correct TxUpdate message when a transaction update is received from " +
       "the bitcoinj peer group" in new TextFixtures {
