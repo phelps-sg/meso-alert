@@ -1,4 +1,4 @@
-import actors.MemPoolWatcherActor.StartPeerGroup
+import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
 import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
@@ -330,18 +330,30 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "MemPoolWatcherActor" should {
 
-    trait TextFixtures extends MemPoolWatcherFixtures with ActorGuiceFixtures with MemPoolWatcherActorFixtures
-
-    "return a successful acknowledgement when initialising the peer group" in new TextFixtures {
+    trait TestFixtures extends MemPoolWatcherFixtures with ActorGuiceFixtures with MemPoolWatcherActorFixtures {
       (mockPeerGroup.start _).expects().once()
       (mockPeerGroup.setMaxConnections _).expects(*).once()
       (mockPeerGroup.addPeerDiscovery _).expects(*).once()
       (mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener)).expects(*).once()
+    }
+
+    "return a successful acknowledgement when initialising the peer group" in new TestFixtures {
       (for {
         started <- memPoolWatcherActor ? StartPeerGroup
         _ <- Future { expectNoMessage() }
       } yield started)
         .futureValue should matchPattern { case Success(Started(_: PeerGroup)) => }
+    }
+
+    "return an error when initialising an already-initialised peer group" in new TestFixtures  {
+      (for {
+        started <- memPoolWatcherActor ? StartPeerGroup
+        error <- memPoolWatcherActor ? StartPeerGroup
+        _ <- Future { expectNoMessage() }
+      } yield (started, error))
+        .futureValue should matchPattern {
+        case (Success(Started(_: PeerGroup)), Failure(PeerGroupAlreadyStartedException)) =>
+      }
     }
 
   }
@@ -565,6 +577,12 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       }
     }
 
+    trait TestFixturesOneSubscriber extends TestFixtures {
+      override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
+        ch.once()
+      }
+    }
+
     "return WebhookNotRegistered when trying to start an unregistered hook" in new TestFixtures {
       startHook().futureValue should matchPattern { case Failure(HookNotRegisteredException(`key`)) => }
     }
@@ -581,7 +599,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       registerExistingHook().futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
     }
 
-    "return an exception when starting a hook that has already been started" in new TestFixtures {
+    "return an exception when starting a hook that has already been started" in new TestFixturesOneSubscriber {
       registerStartStart().futureValue should matchPattern { case Failure(HookAlreadyStartedException(`key`)) => }
     }
 
@@ -608,6 +626,12 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       }
     }
 
+    trait TestFixturesOneSubscriber extends TestFixtures with ActorGuiceFixtures {
+      override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
+        ch.once()
+      }
+    }
+
     "return WebhookNotRegistered when trying to start an unregistered hook" in new TestFixtures {
       startHook().futureValue should matchPattern { case Failure(HookNotRegisteredException(`key`)) => }
     }
@@ -624,7 +648,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       registerExistingHook().futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
     }
 
-    "return an exception when starting a hook that has already been started" in new TestFixtures {
+    "return an exception when starting a hook that has already been started" in new TestFixturesOneSubscriber {
       registerStartStart().futureValue should matchPattern { case Failure(HookAlreadyStartedException(`key`)) => }
     }
 
