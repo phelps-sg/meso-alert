@@ -173,13 +173,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val injector = builder.build()
   }
 
-//  trait MemPoolGuiceFixtures extends ActorGuiceFixtures {
-//    val mockMemPoolWatcher: MemPoolWatcherService
-//
-//    override def builder = super.builder
-//      .overrides(inject.bind(classOf[MemPoolWatcherService]).toInstance(mockMemPoolWatcher))
-//  }
-
   trait WebhookDaoFixtures {
     val injector: Injector
     val webhookDao = injector.instanceOf[WebhookDao]
