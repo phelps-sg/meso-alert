@@ -19,7 +19,7 @@ object MemPoolWatcherActor {
 
   case class RegisterWatcher(listener: ActorRef)
   case object StartPeerGroup
-  case class PeerGroupAlreadyStartedException() extends Exception("Peer group already started")
+  case object PeerGroupAlreadyStartedException extends Exception("Peer group already started")
   case class NewTransaction(tx: Transaction)
   case class IncrementCounter(key: String)
   case object LogCounters
@@ -79,7 +79,7 @@ class MemPoolWatcherActor @Inject() (val peerGroupSelection: PeerGroupSelection,
 
         case Some(_) =>
           logger.debug("Peer group already started.")
-          sender ! Failure(PeerGroupAlreadyStartedException())
+          sender ! Failure(PeerGroupAlreadyStartedException)
       }
 
     case LogCounters =>
