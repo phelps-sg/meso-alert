@@ -29,18 +29,28 @@ class TxMessagingActorSlackChat @Inject()(config : Configuration, sce: SlackChat
   private val logger = LoggerFactory.getLogger(classOf[TxMessagingActorSlackChat])
 
   private val slack = Slack.getInstance()
-  private val methods = slack.methods(config.get[String]("slack.botToken"))
+  private val token = config.get[String]("slack.botToken")
+  private val methods = slack.methods(token)
 
   def sendMessage(channelId: String, message: String): Future[ChatPostMessageResponse] = {
 
-    val request = ChatPostMessageRequest.builder.channel(channelId).text(message).build
-
     val f = Future {
+      logger.debug(s"token = $token")
+      val request = ChatPostMessageRequest.builder
+        .token(token)
+        .username("meso-alert-slash-command")
+        .channel(channelId)
+        .text(message)
+        .build
+      logger.debug(s"Submitting request: $request")
       methods.chatPostMessage(request)
     }
 
     f.onComplete {
-      case Success(_) => logger.info(s"Successfully posted message $message to $channelId")
+      case Success(response) if response.isOk => logger.info(s"Successfully posted message $message to $channelId")
+      case Success(response) if !response.isOk =>
+        logger.error(response.getError)
+        logger.error(response.toString)
       case Failure(ex) =>
         logger.error(s"Could not post message $message to $channelId: ${ex.getMessage}")
         ex.printStackTrace()

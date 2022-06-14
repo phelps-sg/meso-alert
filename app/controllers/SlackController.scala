@@ -29,12 +29,13 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
     val channel = SlackChannel(channelId)
 
     command match {
-      case "/alert" =>
+      case "/crypto-alert" =>
         args.toLongOption match {
 
           case Some(amount) =>
+            logger.debug(s"amount = $amount")
             val f = for {
-              _ <- hooksManager.register(SlackChatHook(channel, amount))
+              _ <- hooksManager.register(SlackChatHook(channel, amount * 100000000))
               started <- hooksManager.start(channel)
             } yield started
             f recover {
