@@ -1,6 +1,6 @@
 package controllers
 
-import actors.HookAlreadyRegisteredException
+import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotStartedException}
 import akka.actor.ActorSystem
 import dao.{SlackChannel, SlackChatHook}
 import org.slf4j.LoggerFactory
@@ -38,14 +38,39 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
               _ <- hooksManager.register(SlackChatHook(channel, amount * 100000000))
               started <- hooksManager.start(channel)
             } yield started
-            f recover {
+            f.map { _ => Ok("Success") }
+            .recover {
               case HookAlreadyRegisteredException(_) =>
                 Ok("Alerts already registered for this channel")
-            } map { _ => Ok("Success") }
+            }
 
-          case None => Future { Ok(s"Invalid amount $args") }
-
+          case None =>
+            logger.debug(s"Invalid amount $args")
+            Future { Ok(s"Invalid amount $args") }
         }
+
+      case "/pause-alerts" =>
+        logger.debug("Pausing alerts")
+        val f = for {
+          stopped <- hooksManager.stop(channel)
+        } yield stopped
+        f.map { _ => Ok("Alerts paused for this channel") }
+          .recover {
+            case HookNotStartedException(_) =>
+              Ok("Alerts not active on this channel")
+          }
+
+      case "/resume-alerts" =>
+        logger.debug("Resuming alerts")
+        val f = for {
+          stopped <- hooksManager.start(channel)
+        } yield stopped
+        f.map { _ => Ok("Resuming alerts") }
+        .recover {
+          case HookAlreadyStartedException(_) =>
+            Ok("Alerts already active on this channel")
+        }
+
     }
 
   }
