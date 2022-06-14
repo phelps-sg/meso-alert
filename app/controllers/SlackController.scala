@@ -35,14 +35,18 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
           case Some(amount) =>
             logger.debug(s"amount = $amount")
             val f = for {
-              _ <- hooksManager.register(SlackChatHook(channel, amount * 100000000))
+              _ <- hooksManager.update(SlackChatHook(channel, amount * 100000000))
               started <- hooksManager.start(channel)
             } yield started
-            f.map { _ => Ok("Success") }
-            .recover {
-              case HookAlreadyRegisteredException(_) =>
-                Ok("Alerts already registered for this channel")
-            }
+            f.map { _ => Ok(s"OK, I will send updates on any BTC transactions exceeding $amount BTC") }
+              .recoverWith {
+                case HookAlreadyStartedException(_) =>
+                  val f = for {
+                    _ <- hooksManager.stop(channel)
+                    restarted <- hooksManager.start(channel)
+                  } yield restarted
+                  f.map { _ => Ok(s"OK I have reconfigured the alerts on this channel with new threshold of $amount BTC")}
+              }
 
           case None =>
             logger.debug(s"Invalid amount $args")

@@ -1,4 +1,4 @@
-import actors.{Register, Registered, Start, Started, Stop, Stopped}
+import actors.{Register, Registered, Start, Started, Stop, Stopped, Update, Updated}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -62,9 +62,8 @@ package object services {
     }
 
     def start(key: X): Future[Started[Y]] = sendAndReceive(Start(key))
-
     def stop(key: X): Future[Stopped[Y]] = sendAndReceive(Stop(key))
-
     def register(hook: Y): Future[Registered[Y]] = sendAndReceive(Register(hook))
+    def update(hook: Y): Future[Updated[Y]] = sendAndReceive(Update(hook))
   }
 }
