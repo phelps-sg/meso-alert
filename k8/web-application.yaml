@@ -48,6 +48,9 @@ spec:
             - name: play-secret
               mountPath: "/etc/secrets/play"
               readOnly: true
+            - name: slack-secret
+              mountPath: "/etc/secrets/slack"
+              readOnly: true
       volumes:
         - name: postgres-cred
           secret:
@@ -55,6 +58,9 @@ spec:
         - name: play-secret
           secret:
             secretName: meso-alert-play-secret
+        - name: slack-secret
+          secret:
+            secretName: meso-alert-slack
 
       imagePullSecrets:
         - name: regcred

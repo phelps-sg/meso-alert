@@ -8,9 +8,11 @@ ls -lR /etc/secrets
 
 PLAY_KEY=$(cat /etc/secrets/play/secret | base64)
 POSTGRES_PASSWORD=$(cat /etc/secrets/postgres/password)
+SLACK_BOT_TOKEN=$(cat /etc/secrets/slack/bot_token)
 
 cat <<EOF > application-production.conf
 play.http.secret.key="${PLAY_KEY}"
+slack.botToken = "${SLACK_BOT_TOKEN}"
 play.filters.disabled+=play.filters.hosts.AllowedHostsFilter
 
 meso-alert.db = {
@@ -25,6 +27,14 @@ meso-alert.db = {
   }
   numThreads = 12
   queueSize = 50000
+}
+
+slackChat.dispatcher {
+  executor = "thread-pool-executor"
+  throughput = 1
+  thread-pool-executor {
+    fixed-pool-size = 12
+  }
 }
 
 database.dispatcher {
