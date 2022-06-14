@@ -3,7 +3,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import dao.HookDao
-import org.slf4j.LoggerFactory
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
@@ -37,7 +37,7 @@ package object services {
 
   trait HooksManager[X, Y] extends ActorBackend {
 
-    private val logger = LoggerFactory.getLogger(classOf[HooksManager[X, Y]])
+    val logger: Logger
 
     val hookDao: HookDao[X, Y]
     val actor: ActorRef
