@@ -36,7 +36,7 @@ class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
   extends MemPoolWatcherService with ActorBackend {
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[MemPoolWatcher])
-  private val STATISTICS_FREQUENCY_MS: Long = 1000
+  private val STATISTICS_FREQUENCY_MS: Long = 1000 * 60
 
   import actors.MemPoolWatcherActor._
 
