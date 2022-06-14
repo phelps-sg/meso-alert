@@ -117,7 +117,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         val get: jdbc.JdbcBackend.Database = db
       })
       bind(classOf[ExecutionContext]).toInstance(testExecutionContext)
-      bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")
+//      bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")
       //      bindActor(classOf[WebhooksActor], "webhooks-actor")
       bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
       bindActorFactory(classOf[TxMessagingActorSlackChat], classOf[TxMessagingActorSlackChat.Factory])
@@ -163,21 +163,22 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   }
 
   trait ActorGuiceFixtures {
+    val mockMemPoolWatcher: MemPoolWatcherService
     val config = Configuration(ConfigFactory.load("application.test.conf"))
     def builder = new GuiceInjectorBuilder()
       .bindings(new TestModule)
       .overrides(inject.bind(classOf[Configuration]).toInstance(config))
       .overrides(inject.bind(classOf[ActorSystem]).toInstance(system))
-
+      .overrides(inject.bind(classOf[MemPoolWatcherService]).toInstance(mockMemPoolWatcher))
     val injector = builder.build()
   }
 
-  trait MemPoolGuiceFixtures extends ActorGuiceFixtures {
-    val mockMemPoolWatcher: MemPoolWatcherService
-
-    override def builder = super.builder
-      .overrides(inject.bind(classOf[MemPoolWatcherService]).toInstance(mockMemPoolWatcher))
-  }
+//  trait MemPoolGuiceFixtures extends ActorGuiceFixtures {
+//    val mockMemPoolWatcher: MemPoolWatcherService
+//
+//    override def builder = super.builder
+//      .overrides(inject.bind(classOf[MemPoolWatcherService]).toInstance(mockMemPoolWatcher))
+//  }
 
   trait WebhookDaoFixtures {
     val injector: Injector
@@ -325,7 +326,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   "MemPoolWatcher" should {
 
     trait TextFixtures extends MemPoolWatcherFixtures
-      with WebSocketFixtures with MemPoolGuiceFixtures with UserFixtures with TransactionFixtures
+      with WebSocketFixtures with ActorGuiceFixtures with UserFixtures with TransactionFixtures
 
     "send the correct TxUpdate message when a transaction update is received from " +
       "the bitcoinj peer group" in new TextFixtures {
@@ -496,7 +497,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "WebhooksManager" should {
 
-    trait TestFixtures extends ActorGuiceFixtures
+    trait TestFixtures extends MemPoolWatcherFixtures with ActorGuiceFixtures
       with WebhookDaoFixtures with WebhookActorFixtures with WebhookManagerFixtures
 
     "register and start all hooks stored in the database on initialisation" in new TestFixtures {
@@ -533,7 +534,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       extends MemPoolWatcherFixtures with ActorGuiceFixtures
         with SlackChatActorFixtures with HookActorTestLogic[SlackChatHook]
 
-    trait TestFixturesTwoSubscribers extends TestFixtures with MemPoolGuiceFixtures {
+    trait TestFixturesTwoSubscribers extends TestFixtures {
       override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
         ch.twice()
       }
@@ -576,7 +577,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     trait TestFixtures
       extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookActorFixtures with HookActorTestLogic[Webhook]
 
-    trait TestFixturesTwoSubscribers extends TestFixtures with MemPoolGuiceFixtures {
+    trait TestFixturesTwoSubscribers extends TestFixtures with ActorGuiceFixtures {
       override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
         ch.twice()
       }
