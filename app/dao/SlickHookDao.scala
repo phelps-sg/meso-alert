@@ -18,6 +18,7 @@ trait SlickHookDao[X, Y] {
   val lookupHookQuery: Y => Query[_, Y, Seq]
   val lookupKeyQuery: X => Query[_, Y, Seq]
   val insertHookQuery: Y => FixedSqlAction[Int, NoStream, Effect.Write]
+  val insertOrUpdateHookQuery: Y => FixedSqlAction[Int, NoStream, Effect.Write]
 
   implicit val ec: DatabaseExecutionContext = databaseExecutionContext
 
@@ -40,6 +41,13 @@ trait SlickHookDao[X, Y] {
         } else {
           db.run(insertHookQuery(hook))
         }
+    } yield result
+  }
+
+  def update(hook: Y): Future[Int] = {
+    for {
+      result <-
+        db.run(insertOrUpdateHookQuery(hook))
     } yield result
   }
 

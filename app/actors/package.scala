@@ -24,10 +24,12 @@ package object actors {
   case class HookAlreadyStartedException[X](uri: X) extends Exception(s"Webhook already started for $uri")
 
   case class Register[Y](hook: Y)
+  case class Update[Y](hook: Y)
   case class Unregister[Y](hook: Y)
   case class Started[Y](hook: Y)
   case class Stopped[Y](hook: Y)
   case class Registered[Y](hook: Y)
+  case class Updated[Y](hook: Y)
   case class Start[X](key: X)
   case class Stop[X](key: X)
 

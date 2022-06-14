@@ -51,6 +51,11 @@ trait HooksManagerActor[X, Y] extends Actor with InjectedActorSupport {
         case DuplicateHookException(_) => Failure(HookAlreadyRegisteredException(hook))
       } pipeTo sender
 
+    case Update(newHook: Y) =>
+      dao.update(newHook) map {
+        _ => Success(Updated(newHook))
+      } pipeTo sender
+
     case Start(uri: X) =>
       logger.debug(s"Received start request for $uri")
       provided(!(actors contains uri), uri withHook (hook => {

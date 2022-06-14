@@ -1,6 +1,6 @@
 import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
-import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate}
+import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -206,6 +206,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
     val key = new URI("http://test")
     val hook = Webhook(key, threshold = 100L)
+    val newHook = Webhook(key, threshold = 200L)
     val insertHook = Tables.webhooks += hook
     val queryHooks = Tables.webhooks.result
   }
@@ -225,13 +226,15 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
     val key = SlackChannel("http://test")
     val hook = SlackChatHook(key, threshold = 100L)
+    val newHook = SlackChatHook(key, threshold = 200L)
     val insertHook = Tables.slackChatHooks += hook
     val queryHooks = Tables.slackChatHooks.result
   }
 
   trait HookActorTestLogic[Y] {
     val hooksActor: ActorRef
-    val hook: Any
+    val hook: Y
+    val newHook: Y
     val key: Any
     val insertHook: FixedSqlAction[Int, NoStream, Effect.Write]
     val queryHooks: FixedSqlStreamingAction[Seq[Y], Y, Effect.Read]
@@ -261,6 +264,16 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       afterDbInit {
         for {
           response <- hooksActor ? Register(hook)
+          dbContents <- db.run(queryHooks)
+        } yield (response, dbContents)
+      }
+    }
+
+    def updateHook() = {
+      afterDbInit {
+        for {
+          _ <- db.run(insertHook)
+          response <- hooksActor ? Update(newHook)
           dbContents <- db.run(queryHooks)
         } yield (response, dbContents)
       }
@@ -591,6 +604,10 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       registerHook().futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
     }
 
+    "return Updated when updating an existing hook" in new TestFixtures {
+      updateHook().futureValue should matchPattern { case (Success(Updated(`newHook`)), Seq(`newHook`)) => }
+    }
+
     "return an exception when stopping a hook that is not started" in new TestFixtures {
       stopHook().futureValue should matchPattern { case Failure(HookNotStartedException(`key`)) => }
     }
@@ -638,6 +655,10 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
     "return Registered and record a new hook in the database when registering a new hook" in new TestFixtures {
       registerHook().futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
+    }
+
+    "return Updated when updating an existing hook" in new TestFixtures {
+      updateHook().futureValue should matchPattern { case (Success(Updated(`newHook`)), Seq(`newHook`)) => }
     }
 
     "return an exception when stopping a hook that is not started" in new TestFixtures {

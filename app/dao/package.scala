@@ -21,6 +21,7 @@ package object dao {
     def allKeys(): Future[Seq[X]]
     def find(key: X): Future[Option[Y]]
     def insert(hook: Y): Future[Int]
+    def update(hook: Y): Future[Int]
   }
 
   case class SlackChannel(id: String)
