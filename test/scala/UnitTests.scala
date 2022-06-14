@@ -1,3 +1,4 @@
+import actors.MemPoolWatcherActor.StartPeerGroup
 import actors.TxFilterAuthActor.{Auth, TxInputOutput}
 import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
@@ -325,6 +326,24 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         )
       )
     }
+  }
+
+  "MemPoolWatcherActor" should {
+
+    trait TextFixtures extends MemPoolWatcherFixtures with ActorGuiceFixtures with MemPoolWatcherActorFixtures
+
+    "return a successful acknowledgement when initialising the peer group" in new TextFixtures {
+      (mockPeerGroup.start _).expects().once()
+      (mockPeerGroup.setMaxConnections _).expects(*).once()
+      (mockPeerGroup.addPeerDiscovery _).expects(*).once()
+      (mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener)).expects(*).once()
+      (for {
+        started <- memPoolWatcherActor ? StartPeerGroup
+        _ <- Future { expectNoMessage() }
+      } yield started)
+        .futureValue should matchPattern { case Success(Started(_: PeerGroup)) => }
+    }
+
   }
 
   //noinspection ZeroIndexToHead
