@@ -2,9 +2,9 @@ package controllers
 
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.actor.ActorSystem
-import dao.{SlackChannel, SlackChatHook, SlashCommand}
+import dao.{SlackChannel, SlackChatHook, SlashCommand, SlashCommandHistoryDao}
 import org.slf4j.LoggerFactory
-import play.api.mvc.{Action, BaseController, ControllerComponents}
+import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.HooksManagerSlackChat
 
 import javax.inject.Inject
@@ -12,6 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 class SlackController @Inject()(val controllerComponents: ControllerComponents,
+                                val slashCommandHistoryDao: SlashCommandHistoryDao,
                                 val hooksManager: HooksManagerSlackChat)
                                (implicit system: ActorSystem, implicit val ec: ExecutionContext) extends BaseController {
 
@@ -26,89 +27,94 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
     logger.debug("received slash command")
     request.body.foreach { x => logger.debug(s"${x._1} = ${x._2}") }
 
-    val paramMap = request.body
-
-    def param(key: String): Option[String] = paramMap(key).headOption
-
-    def toCommand: Try[SlashCommand] = {
-      val attributes = coreAttributes.map(param)
-      attributes match {
-        case Seq(Some(channelId), Some(command), Some(args)) =>
-          optionalAttributes.map(param) match {
-            case Seq(teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall) =>
-              Success(SlashCommand(channelId, command, args, teamDomain, teamId,
-                channelName, userId, userName, isEnterpriseInstall, Some(java.time.LocalTime.now())))
-            case _ =>
-              Failure(new IllegalArgumentException("Malformed slash command"))
-          }
-        case _ =>
-          Failure(new IllegalArgumentException(s"Malformed slash command- missing attributes ${attributes.filterNot(_.isEmpty)}"))
-      }
-    }
-
-    toCommand match {
+    toCommand(request.body) match {
 
       case Success(slashCommand) =>
 
-        val channel = SlackChannel(slashCommand.channelId)
-
-        slashCommand.command match {
-          case "/crypto-alert" =>
-            slashCommand.text.toLongOption match {
-
-              case Some(amount) =>
-                logger.debug(s"amount = $amount")
-                val f = for {
-                  _ <- hooksManager.update(SlackChatHook(channel, amount * 100000000))
-                  started <- hooksManager.start(channel)
-                } yield started
-                f.map { _ => Ok(s"OK, I will send updates on any BTC transactions exceeding $amount BTC.") }
-                  .recoverWith {
-                    case HookAlreadyStartedException(_) =>
-                      val f = for {
-                        _ <- hooksManager.stop(channel)
-                        restarted <- hooksManager.start(channel)
-                      } yield restarted
-                      f.map { _ => Ok(s"OK, I have reconfigured the alerts on this channel with a new threshold of $amount BTC.") }
-                  }
-
-              case None =>
-                logger.debug(s"Invalid amount ${slashCommand.text}")
-                Future {
-                  Ok(s"Usage: `/crypto-alert [threshold amount in BTC]`")
-                }
-
-            }
-
-          case "/pause-alerts" =>
-            logger.debug("Pausing alerts")
-            val f = for {
-              stopped <- hooksManager.stop(channel)
-            } yield stopped
-            f.map { _ => Ok("OK, I have paused alerts for this channel.") }
-              .recover {
-                case HookNotStartedException(_) =>
-                  Ok("Alerts are not active on this channel.")
-              }
-
-          case "/resume-alerts" =>
-            logger.debug("Resuming alerts")
-            val f = for {
-              stopped <- hooksManager.start(channel)
-            } yield stopped
-            f.map { _ => Ok("OK, I will resume alerts on this channel.") }
-              .recover {
-                case HookAlreadyStartedException(_) =>
-                  Ok("Alerts are already active on this channel.")
-              }
-
-        }
+        val recordCommand = slashCommandHistoryDao.record(slashCommand)
+        for {
+          _ <- recordCommand
+          result <- process(slashCommand)
+        } yield result
 
       case Failure(ex) =>
         logger.error(ex.getMessage)
         Future { ServiceUnavailable(ex.getMessage) }
     }
 
+  }
+
+  def process(slashCommand: SlashCommand): Future[Result] = {
+    val channel = SlackChannel(slashCommand.channelId)
+    slashCommand.command match {
+      case "/crypto-alert" =>
+        slashCommand.text.toLongOption match {
+
+          case Some(amount) =>
+            logger.debug(s"amount = $amount")
+            val f = for {
+              _ <- hooksManager.update(SlackChatHook(channel, amount * 100000000))
+              started <- hooksManager.start(channel)
+            } yield started
+            f.map { _ => Ok(s"OK, I will send updates on any BTC transactions exceeding $amount BTC.") }
+              .recoverWith {
+                case HookAlreadyStartedException(_) =>
+                  val f = for {
+                    _ <- hooksManager.stop(channel)
+                    restarted <- hooksManager.start(channel)
+                  } yield restarted
+                  f.map { _ => Ok(s"OK, I have reconfigured the alerts on this channel with a new threshold of $amount BTC.") }
+              }
+
+          case None =>
+            logger.debug(s"Invalid amount ${slashCommand.text}")
+            Future {
+              Ok(s"Usage: `/crypto-alert [threshold amount in BTC]`")
+            }
+
+        }
+
+      case "/pause-alerts" =>
+        logger.debug("Pausing alerts")
+        val f = for {
+          stopped <- hooksManager.stop(channel)
+        } yield stopped
+        f.map { _ => Ok("OK, I have paused alerts for this channel.") }
+          .recover {
+            case HookNotStartedException(_) =>
+              Ok("Alerts are not active on this channel.")
+          }
+
+      case "/resume-alerts" =>
+        logger.debug("Resuming alerts")
+        val f = for {
+          stopped <- hooksManager.start(channel)
+        } yield stopped
+        f.map { _ => Ok("OK, I will resume alerts on this channel.") }
+          .recover {
+            case HookAlreadyStartedException(_) =>
+              Ok("Alerts are already active on this channel.")
+          }
+
+    }
+  }
+
+  def param(key: String)(implicit paramMap: Map[String, Seq[String]]): Option[String] = paramMap(key).headOption
+
+  def toCommand(implicit paramMap: Map[String, Seq[String]]): Try[SlashCommand] = {
+    val attributes = coreAttributes.map(param)
+    attributes match {
+      case Seq(Some(channelId), Some(command), Some(args)) =>
+        optionalAttributes.map(param) match {
+          case Seq(teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall) =>
+            Success(SlashCommand(None, channelId, command, args, teamDomain, teamId,
+              channelName, userId, userName, isEnterpriseInstall, Some(java.time.LocalTime.now())))
+          case _ =>
+            Failure(new IllegalArgumentException("Malformed slash command"))
+        }
+      case _ =>
+        Failure(new IllegalArgumentException(s"Malformed slash command- missing attributes ${attributes.filterNot(_.isEmpty)}"))
+    }
   }
 
 }

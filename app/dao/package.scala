@@ -24,7 +24,7 @@ package object dao {
     def update(hook: Y): Future[Int]
   }
 
-  case class SlashCommand(channelId: String, command: String, text: String,
+  case class SlashCommand(id: Option[Int], channelId: String, command: String, text: String,
                           team_domain: Option[String], teamId: Option[String], channelName: Option[String],
                           userId: Option[String], userName: Option[String], isEnterpriseInstall: Option[String],
                           timeStamp: Option[java.time.LocalTime])
@@ -43,4 +43,8 @@ package object dao {
   @ImplementedBy(classOf[SlickSlackChatDao])
   trait SlackChatHookDao extends HookDao[SlackChannel, SlackChatHook]
 
+  @ImplementedBy(classOf[SlickSlashCommandHistoryDao])
+  trait SlashCommandHistoryDao {
+    def record(slashCommand: SlashCommand): Future[Int]
+  }
 }
