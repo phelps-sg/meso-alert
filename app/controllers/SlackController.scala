@@ -45,12 +45,12 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
                     _ <- hooksManager.stop(channel)
                     restarted <- hooksManager.start(channel)
                   } yield restarted
-                  f.map { _ => Ok(s"OK I have reconfigured the alerts on this channel with new threshold of $amount BTC")}
+                  f.map { _ => Ok(s"OK, I have reconfigured the alerts on this channel with new threshold of $amount BTC")}
               }
 
           case None =>
             logger.debug(s"Invalid amount $args")
-            Future { Ok(s"Invalid amount $args") }
+            Future { Ok(s"Usage: `/crypto-alert <threshold amount in BTC>`") }
         }
 
       case "/pause-alerts" =>
@@ -58,7 +58,7 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
         val f = for {
           stopped <- hooksManager.stop(channel)
         } yield stopped
-        f.map { _ => Ok("Alerts paused for this channel") }
+        f.map { _ => Ok("OK, I have paused alerts for this channel") }
           .recover {
             case HookNotStartedException(_) =>
               Ok("Alerts not active on this channel")
