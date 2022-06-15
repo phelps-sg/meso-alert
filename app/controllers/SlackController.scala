@@ -21,7 +21,6 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
   private val optionalAttributes = List("team_domain", "team_id", "channel_name",
                                   "user_id", "user_name", "is_enterprise_install")
 
-
   def slashCommand: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { request =>
 
     logger.debug("received slash command")
