@@ -3,9 +3,7 @@ package dao
 import com.google.inject.{Inject, Singleton}
 import org.slf4j.{Logger, LoggerFactory}
 import slick.BtcPostgresProfile.api._
-import slick.dbio.Effect
 import slick.jdbc.JdbcBackend.Database
-import slick.sql.FixedSqlAction
 import slick.{DatabaseExecutionContext, Tables}
 
 import scala.concurrent.Future

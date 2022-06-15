@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.{Actor, ActorRef, Props}
 import akka.pattern.pipe
-import com.google.inject.{Inject, Singleton}
+import com.google.inject.Inject
 import org.bitcoinj.core.{NetworkParameters, Peer, Transaction}
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}

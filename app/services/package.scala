@@ -3,7 +3,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import dao.HookDao
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.Logger
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
