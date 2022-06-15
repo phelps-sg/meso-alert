@@ -38,19 +38,19 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
               _ <- hooksManager.update(SlackChatHook(channel, amount * 100000000))
               started <- hooksManager.start(channel)
             } yield started
-            f.map { _ => Ok(s"OK, I will send updates on any BTC transactions exceeding $amount BTC") }
+            f.map { _ => Ok(s"OK, I will send updates on any BTC transactions exceeding $amount BTC.") }
               .recoverWith {
                 case HookAlreadyStartedException(_) =>
                   val f = for {
                     _ <- hooksManager.stop(channel)
                     restarted <- hooksManager.start(channel)
                   } yield restarted
-                  f.map { _ => Ok(s"OK, I have reconfigured the alerts on this channel with new threshold of $amount BTC")}
+                  f.map { _ => Ok(s"OK, I have reconfigured the alerts on this channel with a new threshold of $amount BTC.")}
               }
 
           case None =>
             logger.debug(s"Invalid amount $args")
-            Future { Ok(s"Usage: `/crypto-alert <threshold amount in BTC>`") }
+            Future { Ok(s"Usage: `/crypto-alert [threshold amount in BTC]`") }
         }
 
       case "/pause-alerts" =>
@@ -58,10 +58,10 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
         val f = for {
           stopped <- hooksManager.stop(channel)
         } yield stopped
-        f.map { _ => Ok("OK, I have paused alerts for this channel") }
+        f.map { _ => Ok("OK, I have paused alerts for this channel.") }
           .recover {
             case HookNotStartedException(_) =>
-              Ok("Alerts not active on this channel")
+              Ok("Alerts are not active on this channel.")
           }
 
       case "/resume-alerts" =>
@@ -69,10 +69,10 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
         val f = for {
           stopped <- hooksManager.start(channel)
         } yield stopped
-        f.map { _ => Ok("Resuming alerts") }
+        f.map { _ => Ok("OK, I will resume alerts on this channel.") }
         .recover {
           case HookAlreadyStartedException(_) =>
-            Ok("Alerts already active on this channel")
+            Ok("Alerts are already active on this channel.")
         }
 
     }
