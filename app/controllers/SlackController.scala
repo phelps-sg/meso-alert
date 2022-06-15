@@ -36,7 +36,8 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
         case List(Some(channelId), Some(command), Some(args)) =>
           optionalAttributes.map(param) match {
             case List(teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall) =>
-              Success(SlashCommand(channelId, command, args, teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall))
+              Success(SlashCommand(channelId, command, args, teamDomain, teamId,
+                channelName, userId, userName, isEnterpriseInstall, Some(java.time.LocalTime.now())))
             case _ =>
               Failure(new IllegalArgumentException("Malformed slash command"))
           }
