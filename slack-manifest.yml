@@ -1,20 +1,20 @@
 display_information:
-  name: meso-alert
+  name: Meso Alert
 features:
   bot_user:
     display_name: meso-alert
     always_online: false
   slash_commands:
     - command: /crypto-alert
-      url: https://symbiotica.mesonomics.com:6000/api/slack/slash
+      url: https://e349-213-48-239-250.eu.ngrok.io/api/slack/slash
       description: Configures alert for cryptocurrency
       should_escape: false
     - command: /pause-alerts
-      url: https://symbiotica.mesonomics.com:6000/api/slack/slash
+      url: https://e349-213-48-239-250.eu.ngrok.io/api/slack/slash
       description: Pause active alerts for this channel
       should_escape: false
     - command: /resume-alerts
-      url: https://symbiotica.mesonomics.com:6000/api/slack/slash
+      url: https://e349-213-48-239-250.eu.ngrok.io/api/slack/slash
       description: Resume alerts for this channel
       should_escape: false
 oauth_config:
