@@ -13,7 +13,7 @@ import scala.util.{Failure, Success, Try}
 
 class SlackController @Inject()(val controllerComponents: ControllerComponents,
                                 val hooksManager: HooksManagerSlackChat)
-                               (implicit system: ActorSystem, ex: ExecutionContext) extends BaseController {
+                               (implicit system: ActorSystem, implicit val ec: ExecutionContext) extends BaseController {
 
   private val logger = LoggerFactory.getLogger(classOf[SlackController])
 
@@ -33,9 +33,9 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
     def toCommand: Try[SlashCommand] = {
       val attributes = coreAttributes.map(param)
       attributes match {
-        case List(Some(channelId), Some(command), Some(args)) =>
+        case Seq(Some(channelId), Some(command), Some(args)) =>
           optionalAttributes.map(param) match {
-            case List(teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall) =>
+            case Seq(teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall) =>
               Success(SlashCommand(channelId, command, args, teamDomain, teamId,
                 channelName, userId, userName, isEnterpriseInstall, Some(java.time.LocalTime.now())))
             case _ =>
@@ -48,13 +48,13 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
 
     toCommand match {
 
-      case Success(command) =>
+      case Success(slashCommand) =>
 
-        val channel = SlackChannel(command.channelId)
+        val channel = SlackChannel(slashCommand.channelId)
 
-        command match {
+        slashCommand.command match {
           case "/crypto-alert" =>
-            command.text.toLongOption match {
+            slashCommand.text.toLongOption match {
 
               case Some(amount) =>
                 logger.debug(s"amount = $amount")
@@ -73,7 +73,7 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
                   }
 
               case None =>
-                logger.debug(s"Invalid amount ${command.text}")
+                logger.debug(s"Invalid amount ${slashCommand.text}")
                 Future {
                   Ok(s"Usage: `/crypto-alert [threshold amount in BTC]`")
                 }
