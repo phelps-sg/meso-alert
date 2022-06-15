@@ -24,9 +24,16 @@ package object dao {
     def update(hook: Y): Future[Int]
   }
 
+  case class SlashCommand(channelId: String, command: String, text: String,
+                          team_domain: Option[String], teamId: Option[String], channelName: Option[String],
+                          userId: Option[String], userName: Option[String], isEnterpriseInstall: Option[String])
+
   case class SlackChannel(id: String)
+
   case class Webhook(uri: URI, threshold: Long) extends ThresholdFilter
+
   case class SlackChatHook(channel: SlackChannel, threshold: Long) extends ThresholdFilter
+
   case class DuplicateHookException[X](uri: X) extends Exception(s"A hook already exists with key $uri")
 
   @ImplementedBy(classOf[SlickWebhookDao])
