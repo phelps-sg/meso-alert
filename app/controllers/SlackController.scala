@@ -1,6 +1,6 @@
 package controllers
 
-import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotStartedException}
+import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.actor.ActorSystem
 import dao.{SlackChannel, SlackChatHook}
 import org.slf4j.LoggerFactory
