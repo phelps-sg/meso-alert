@@ -109,9 +109,9 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
   }
 
   lazy val db: JdbcBackend.Database = database.asInstanceOf[JdbcBackend.Database]
+  val testExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
 
   class TestModule extends AbstractModule with AkkaGuiceSupport {
-    val testExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
     override def configure(): Unit = {
       bind(classOf[Database]).toProvider(new Provider[Database] {
         val get: jdbc.JdbcBackend.Database = db
@@ -186,6 +186,21 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
     val injector = builder.build()
   }
 
+  trait DatabaseGuiceFixtures {
+    class DatabaseTestModule extends AbstractModule {
+      override def configure(): Unit = {
+        bind(classOf[Database]).toProvider(new Provider[Database] {
+          val get: jdbc.JdbcBackend.Database = db
+        })
+        bind(classOf[ExecutionContext]).toInstance(testExecutionContext)
+      }
+    }
+    def builder = new GuiceInjectorBuilder()
+      .bindings(new DatabaseTestModule)
+      .overrides(inject.bind(classOf[ActorSystem]).toInstance(system))
+    val injector = builder.build()
+  }
+
   trait WebhookDaoFixtures {
     val injector: Injector
     val webhookDao = injector.instanceOf[WebhookDao]
@@ -229,6 +244,15 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
     val newHook = SlackChatHook(key, threshold = 200L)
     val insertHook = Tables.slackChatHooks += hook
     val queryHooks = Tables.slackChatHooks.result
+  }
+
+  trait SlickSlashCommandHistoryFixtures {
+    val injector: Injector
+    val slickSlashCommandHistoryDao = injector.instanceOf[SlickSlashCommandHistoryDao]
+    val slashCommand = SlashCommand(None, "1234", "/test", "", None,
+      Some("5678"), Some("test-channel"), Some("91011"),
+      Some("test-user"), Some(false),
+      Some(java.time.LocalDateTime.of(2001, 1, 1, 0, 0)))
   }
 
   trait HookActorTestLogic[Y] {
@@ -681,6 +705,23 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
           Success(Stopped(`hook`)),
           Success(Started(`hook`)),
           Success(Stopped(`hook`))) =>
+      }
+    }
+  }
+
+  "SlickSlashCommandHistoryDao" should {
+
+    trait TestFixtures extends DatabaseGuiceFixtures with SlickSlashCommandHistoryFixtures
+
+    "record a slack slash command history" in new TestFixtures {
+
+      afterDbInit {
+        for {
+          n <- slickSlashCommandHistoryDao.record(slashCommand)
+          r <- database.run(Tables.slashCommandHistory.result)
+        } yield (n, r)
+      }.futureValue should matchPattern {
+        case (1, Seq(slashCommand)) =>
       }
     }
   }
