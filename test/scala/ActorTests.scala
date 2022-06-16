@@ -20,7 +20,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.Injector
@@ -49,7 +49,7 @@ import scala.util.{Failure, Success}
 class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
   with AnyWordSpecLike
   with PostgresContainer
-  with Matchers
+  with should.Matchers
   with MockFactory
   with ScalaFutures
   with BeforeAndAfterAll
