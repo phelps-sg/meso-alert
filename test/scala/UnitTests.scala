@@ -121,13 +121,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       (mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
         .expects(capture(listenerCapture)).atLeastOnce()
 
-      //      val pgs = new PeerGroupSelection() {
-      //        val params = mainNetParams
-      //        lazy val get = mockPeerGroup
-      //      }
-      //      val memPoolWatcherActor = system.actorOf(MemPoolWatcherActor.props(pgs, injector.instanceOf[DatabaseExecutionContext]))
-      //      val memPoolWatcher = new MemPoolWatcher(memPoolWatcherActor)
-
       val txWatchActor =
         system.actorOf(TxFilterAuthActor.props(mockWsActor, memPoolWatcher, mockUserManager))
 
