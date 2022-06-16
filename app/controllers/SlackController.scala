@@ -19,7 +19,8 @@ object SlackController {
     "team_domain", "team_id", "channel_name", "user_id", "user_name", "is_enterprise_install"
   )
 
-  def param(key: String)(implicit paramMap: Map[String, Seq[String]]): Option[String] = paramMap(key).headOption
+  def param(key: String)(implicit paramMap: Map[String, Seq[String]]): Option[String] =
+    Try(paramMap(key).headOption).orElse(Success(None)).get
 
   def toCommand(implicit paramMap: Map[String, Seq[String]]): Try[SlashCommand] = {
     val attributes = coreAttributes.map(param)

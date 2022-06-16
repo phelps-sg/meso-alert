@@ -9,6 +9,7 @@ import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
 import com.typesafe.config.ConfigFactory
+import controllers.SlackController
 import dao._
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
@@ -412,6 +413,24 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         } yield (n, r)
       }.futureValue should matchPattern {
         case (1, Seq(slashCommand)) =>
+      }
+    }
+  }
+
+  "SlashCommandHistoryController" should {
+
+    "convert an incoming parameter map to a case class" in {
+      val paramMap =
+        Map[String, Vector[String]](
+          "channel_id" -> Vector("1234"),
+          "command" -> Vector("/test"),
+          "text" -> Vector("")
+        )
+      SlackController.toCommand(paramMap) should matchPattern {
+        case Success(
+          SlashCommand(None, "1234", "/test", "",
+                        None, None, None, None, None, None, Some(_: java.time.LocalDateTime))
+        ) =>
       }
     }
   }
