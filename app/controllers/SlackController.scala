@@ -11,6 +11,36 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
+object SlackController {
+
+  private val coreAttributes = List("channel_id", "command", "text")
+
+  private val optionalAttributes = List(
+    "team_domain", "team_id", "channel_name", "user_id", "user_name", "is_enterprise_install"
+  )
+
+  def param(key: String)(implicit paramMap: Map[String, Seq[String]]): Option[String] = paramMap(key).headOption
+
+  def toCommand(implicit paramMap: Map[String, Seq[String]]): Try[SlashCommand] = {
+    val attributes = coreAttributes.map(param)
+    attributes match {
+      case Seq(Some(channelId), Some(command), Some(args)) =>
+        optionalAttributes.map(param) match {
+          case Seq(teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall) =>
+            Success(SlashCommand(None, channelId, command, args, teamDomain, teamId,
+              channelName, userId, userName,
+              isEnterpriseInstall.map(x => Try(x.toBoolean).orElse(Success(false)).get),
+              Some(java.time.LocalDateTime.now())))
+          case _ =>
+            Failure(new IllegalArgumentException("Malformed slash command"))
+        }
+      case _ =>
+        Failure(new IllegalArgumentException(s"Malformed slash command- missing attributes ${attributes.filterNot(_.isEmpty)}"))
+    }
+  }
+
+}
+
 class SlackController @Inject()(val controllerComponents: ControllerComponents,
                                 val slashCommandHistoryDao: SlashCommandHistoryDao,
                                 val hooksManager: HooksManagerSlackChat)
@@ -18,16 +48,12 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
 
   private val logger = LoggerFactory.getLogger(classOf[SlackController])
 
-  private val coreAttributes = List("channel_id", "command", "text")
-  private val optionalAttributes = List("team_domain", "team_id", "channel_name",
-                                  "user_id", "user_name", "is_enterprise_install")
-
   def slashCommand: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { request =>
 
     logger.debug("received slash command")
     request.body.foreach { x => logger.debug(s"${x._1} = ${x._2}") }
 
-    toCommand(request.body) match {
+    SlackController.toCommand(request.body) match {
 
       case Success(slashCommand) =>
 
@@ -47,6 +73,7 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
   def process(slashCommand: SlashCommand): Future[Result] = {
     val channel = SlackChannel(slashCommand.channelId)
     slashCommand.command match {
+
       case "/crypto-alert" =>
         slashCommand.text.toLongOption match {
 
@@ -96,26 +123,6 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
               Ok("Alerts are already active on this channel.")
           }
 
-    }
-  }
-
-  def param(key: String)(implicit paramMap: Map[String, Seq[String]]): Option[String] = paramMap(key).headOption
-
-  def toCommand(implicit paramMap: Map[String, Seq[String]]): Try[SlashCommand] = {
-    val attributes = coreAttributes.map(param)
-    attributes match {
-      case Seq(Some(channelId), Some(command), Some(args)) =>
-        optionalAttributes.map(param) match {
-          case Seq(teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall) =>
-            Success(SlashCommand(None, channelId, command, args, teamDomain, teamId,
-              channelName, userId, userName,
-              isEnterpriseInstall.map(x => Try(x.toBoolean).orElse(Success(false)).get),
-              Some(java.time.LocalDateTime.now())))
-          case _ =>
-            Failure(new IllegalArgumentException("Malformed slash command"))
-        }
-      case _ =>
-        Failure(new IllegalArgumentException(s"Malformed slash command- missing attributes ${attributes.filterNot(_.isEmpty)}"))
     }
   }
 
