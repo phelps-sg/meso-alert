@@ -40,8 +40,8 @@ object Tables {
     def channel_name = column[Option[String]]("channel_name")
     def user_id = column[Option[String]]("user_id")
     def user_name = column[Option[String]]("user_name")
-    def is_enterprise_install = column[Option[String]]("is_enterprise_install")
-    def time_stamp = column[Option[java.time.LocalTime]]("time_stamp")
+    def is_enterprise_install = column[Option[Boolean]]("is_enterprise_install")
+    def time_stamp = column[Option[java.time.LocalDateTime]]("time_stamp")
 
     override def * =
       (id.?, channel_id, command, text, team_domain, team_id, channel_name, user_id,
