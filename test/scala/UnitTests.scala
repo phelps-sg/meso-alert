@@ -46,7 +46,7 @@ import scala.io.Source
 import scala.util.{Failure, Success}
 
 //noinspection TypeAnnotation
-class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
+class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   with AnyWordSpecLike
   with PostgresContainer
   with should.Matchers
