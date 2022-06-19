@@ -460,7 +460,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           r <- database.run(Tables.slashCommandHistory.result)
         } yield (n, r)
       }.futureValue should matchPattern {
-        case (1, Seq(slashCommand)) =>
+        case (1, Seq(SlashCommand(Some(_: Int), `channelId`, `command`, `text`, `teamDomain`, `teamId`,
+        `channelName`, `userId`, `userName`, `isEnterpriseInstall`, `timeStamp`))) =>
       }
     }
   }
@@ -479,6 +480,17 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           SlashCommand(None, "1234", "/test", "",
                         None, None, None, None, None, None, Some(_: java.time.LocalDateTime))
         ) =>
+      }
+    }
+
+    "return an error when insufficient parameters are supplied" in {
+      val paramMap = {
+        Map[String, Vector[String]](
+          "channel_id" -> Vector("1234")
+        )
+      }
+      SlackController.toCommand(paramMap) should matchPattern {
+        case Failure(_) =>
       }
     }
   }
@@ -741,10 +753,18 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   trait SlickSlashCommandHistoryFixtures {
     val injector: Injector
     val slickSlashCommandHistoryDao = injector.instanceOf[SlickSlashCommandHistoryDao]
-    val slashCommand = SlashCommand(None, "1234", "/test", "", None,
-      Some("5678"), Some("test-channel"), Some("91011"),
-      Some("test-user"), Some(false),
-      Some(java.time.LocalDateTime.of(2001, 1, 1, 0, 0)))
+    val channelId = "1234"
+    val command = "/test"
+    val text = ""
+    val teamDomain = None
+    val teamId = Some("5678")
+    val channelName = Some("test-channel")
+    val userId = Some("91011")
+    val userName = Some("test-user")
+    val isEnterpriseInstall = Some(false)
+    val timeStamp = Some(java.time.LocalDateTime.of(2001, 1, 1, 0, 0))
+    val slashCommand = SlashCommand(None, channelId, command, text, teamDomain, teamId, channelName, userId,
+                                      userName, isEnterpriseInstall, timeStamp)
   }
 
   trait HookActorTestLogic[Y] {
