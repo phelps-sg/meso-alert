@@ -409,6 +409,20 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     "record a web hook in the database" in new TestFixtures {
       insertHook().futureValue should matchPattern { case (1, Seq(`hook`)) => }
     }
+
+    "return an existing hook by key" in new TestFixtures {
+      findHook().futureValue should matchPattern { case (1, Some(`hook`)) => }
+    }
+
+    "return None when attempting to find a non existent hook" in new TestFixtures
+    {
+      findNonExistentHook().futureValue should matchPattern { case None => }
+    }
+
+    "update an existing hook" in new TestFixtures {
+      updateHook().futureValue should matchPattern { case(1, 1, Seq(`newHook`)) => }
+    }
+
   }
 
   "SlackChatHookDao" should {
@@ -418,6 +432,19 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
     "record a slack chat hook in the database" in new TestFixtures {
       insertHook().futureValue should matchPattern { case (1, Seq(`hook`)) => }
+    }
+
+    "return an existing hook by key" in new TestFixtures {
+      findHook().futureValue should matchPattern { case (1, Some(`hook`)) => }
+    }
+
+    "return None when attempting to find a non existent hook" in new TestFixtures
+    {
+      findNonExistentHook().futureValue should matchPattern { case None => }
+    }
+
+    "update an existing hook" in new TestFixtures {
+      updateHook().futureValue should matchPattern { case(1, 1, Seq(`newHook`)) => }
     }
   }
 
@@ -609,6 +636,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   trait HookDaoTestLogic[X, Y] {
     val hook: Y
+    val newHook: Y
+    val key: X
     val hookDao: HookDao[X, Y]
     val tableQuery: TableQuery[_] //= Tables.webhooks
 
@@ -618,6 +647,33 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           n <- hookDao.insert(hook)
           queryResult <- database.run(tableQuery.result)
         } yield (n, queryResult)
+      }
+    }
+
+    def findNonExistentHook() = {
+      afterDbInit {
+        for {
+          hook <- hookDao.find(key)
+        } yield hook
+      }
+    }
+
+    def findHook() = {
+      afterDbInit {
+        for {
+          n <- hookDao.insert(hook)
+          hook <- hookDao.find(key)
+        } yield (n, hook)
+      }
+    }
+
+    def updateHook() = {
+      afterDbInit {
+        for {
+          i <- hookDao.insert(hook)
+          j <- hookDao.update(newHook)
+          queryResult <- database.run(tableQuery.result)
+        } yield (i, j, queryResult)
       }
     }
   }
