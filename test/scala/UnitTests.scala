@@ -263,7 +263,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   "WebhooksManager" should {
 
     trait TestFixtures extends MemPoolWatcherFixtures with ActorGuiceFixtures
-      with WebhookDaoFixtures with WebhookActorFixtures with WebhookManagerFixtures
+      with WebhookDaoFixtures with WebhookFixtures with WebhookActorFixtures with WebhookManagerFixtures
 
     "register and start all hooks stored in the database on initialisation" in new TestFixtures {
 
@@ -350,7 +350,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   "WebhookManagerActor" should {
 
     trait TestFixtures
-      extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookActorFixtures with HookActorTestLogic[Webhook]
+      extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookFixtures
+        with WebhookActorFixtures with HookActorTestLogic[Webhook]
 
     trait TestFixturesTwoSubscribers extends TestFixtures with ActorGuiceFixtures {
       override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
@@ -397,6 +398,26 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           Success(Started(`hook`)),
           Success(Stopped(`hook`))) =>
       }
+    }
+  }
+
+  "WebhookDao" should {
+
+    trait TestFixtures extends DatabaseGuiceFixtures
+      with WebhookDaoFixtures with WebhookFixtures with WebhookDaoTestLogic
+
+    "record a web hook in the database" in new TestFixtures {
+      insertHook().futureValue should matchPattern { case (1, Seq(`hook`)) => }
+    }
+  }
+
+  "SlackChatHookDao" should {
+
+    trait TestFixtures extends DatabaseGuiceFixtures
+      with SlackChatHookDaoFixtures with SlackChatHookFixtures with SlackChatDaoTestLogic
+
+    "record a slack chat hook in the database" in new TestFixtures {
+      insertHook().futureValue should matchPattern { case (1, Seq(`hook`)) => }
     }
   }
 
@@ -574,14 +595,56 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val injector = builder.build()
   }
 
+  trait WebhookFixtures {
+    val key = new URI("http://test")
+    val hook = Webhook(key, threshold = 100L)
+    val newHook = Webhook(key, threshold = 200L)
+  }
+
+  trait SlackChatHookFixtures {
+    val key = SlackChannel("#test")
+    val hook = SlackChatHook(key, threshold = 100L)
+    val newHook = SlackChatHook(key, threshold = 200L)
+  }
+
+  trait HookDaoTestLogic[X, Y] {
+    val hook: Y
+    val hookDao: HookDao[X, Y]
+    val tableQuery: TableQuery[_] //= Tables.webhooks
+
+    def insertHook() = {
+      afterDbInit {
+        for {
+          n <- hookDao.insert(hook)
+          queryResult <- database.run(tableQuery.result)
+        } yield (n, queryResult)
+      }
+    }
+  }
+
+  trait WebhookDaoTestLogic extends HookDaoTestLogic[URI, Webhook] {
+    override val tableQuery = Tables.webhooks
+  }
+
+  trait SlackChatDaoTestLogic extends HookDaoTestLogic[SlackChannel, SlackChatHook] {
+    override val tableQuery = Tables.slackChatHooks
+  }
+
+  trait SlackChatHookDaoFixtures {
+    val injector: Injector
+    val hookDao = injector.instanceOf[SlackChatHookDao]
+  }
+
   trait WebhookDaoFixtures {
     val injector: Injector
-    val webhookDao = injector.instanceOf[WebhookDao]
+    val hookDao = injector.instanceOf[WebhookDao]
   }
 
   trait WebhookActorFixtures {
     val injector: Injector
-
+    val key: URI
+    val hook: Webhook
+    val newHook: Webhook
     val hooksActor = {
       system.actorOf(
         HooksManagerActorWeb.props(
@@ -592,9 +655,9 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         )
       )
     }
-    val key = new URI("http://test")
-    val hook = Webhook(key, threshold = 100L)
-    val newHook = Webhook(key, threshold = 200L)
+//    val key = new URI("http://test")
+//    val hook = Webhook(key, threshold = 100L)
+//    val newHook = Webhook(key, threshold = 200L)
     val insertHook = Tables.webhooks += hook
     val queryHooks = Tables.webhooks.result
   }
@@ -718,10 +781,10 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   }
 
   trait WebhookManagerFixtures {
-    val webhookDao: WebhookDao
+    val hookDao: WebhookDao
     val webhookManagerMock = mock[WebhookManagerMock]
     val mockWebhookManagerActor = system.actorOf(MockWebhookManagerActor.props(webhookManagerMock))
-    val webhooksManager = new HooksManagerWeb(webhookDao, actor = mockWebhookManagerActor)
+    val webhooksManager = new HooksManagerWeb(hookDao, actor = mockWebhookManagerActor)
   }
 
   trait WebhooksActorFixtures {
