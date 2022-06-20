@@ -450,7 +450,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "SlickSlashCommandHistoryDao" should {
 
-    trait TestFixtures extends DatabaseGuiceFixtures with SlickSlashCommandHistoryFixtures
+    trait TestFixtures extends DatabaseGuiceFixtures with SlickSlashCommandFixtures
+      with SlickSlashCommandHistoryDaoFixtures
 
     "record a slack slash command history" in new TestFixtures {
 
@@ -468,25 +469,25 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "SlashCommandHistoryController" should {
 
-    "convert an incoming parameter map to a case class" in {
+    trait TestFixtures extends SlickSlashCommandFixtures
+
+    "convert an incoming parameter map to a case class" in new TestFixtures {
       val paramMap =
         Map[String, Vector[String]](
-          "channel_id" -> Vector("1234"),
-          "command" -> Vector("/test"),
-          "text" -> Vector("")
+          "channel_id" -> Vector(channelId),
+          "command" -> Vector(command),
+          "text" -> Vector(text)
         )
       SlackController.toCommand(paramMap) should matchPattern {
-        case Success(
-          SlashCommand(None, "1234", "/test", "",
-                        None, None, None, None, None, None, Some(_: java.time.LocalDateTime))
-        ) =>
+        case Success(SlashCommand(None, `channelId`, `command`, `text`,
+                        None, None, None, None, None, None, Some(_: java.time.LocalDateTime))) =>
       }
     }
 
-    "return an error when insufficient parameters are supplied" in {
+    "return an error when insufficient parameters are supplied" in new TestFixtures {
       val paramMap = {
         Map[String, Vector[String]](
-          "channel_id" -> Vector("1234")
+          "channel_id" -> Vector(channelId)
         )
       }
       SlackController.toCommand(paramMap) should matchPattern {
@@ -750,9 +751,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val queryHooks = Tables.slackChatHooks.result
   }
 
-  trait SlickSlashCommandHistoryFixtures {
-    val injector: Injector
-    val slickSlashCommandHistoryDao = injector.instanceOf[SlickSlashCommandHistoryDao]
+  trait SlickSlashCommandFixtures {
     val channelId = "1234"
     val command = "/test"
     val text = ""
@@ -764,8 +763,13 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val isEnterpriseInstall = Some(false)
     val timeStamp = Some(java.time.LocalDateTime.of(2001, 1, 1, 0, 0))
     val slashCommand = SlashCommand(None, channelId, command, text, teamDomain, teamId, channelName, userId,
-                                      userName, isEnterpriseInstall, timeStamp)
+      userName, isEnterpriseInstall, timeStamp)
   }
+
+  trait SlickSlashCommandHistoryDaoFixtures {
+    val injector: Injector
+    val slickSlashCommandHistoryDao = injector.instanceOf[SlickSlashCommandHistoryDao]
+ }
 
   trait HookActorTestLogic[Y] {
     val hooksActor: ActorRef
