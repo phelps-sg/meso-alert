@@ -1,6 +1,6 @@
 package actors
 
-import akka.actor.{Actor, ActorRef, PoisonPill, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
@@ -16,7 +16,8 @@ object TxFilterAuthActor {
     def apply(out: ActorRef): Actor
   }
 
-  def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService): Props =
+  def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
+           (implicit system: ActorSystem): Props =
     Props(new TxFilterAuthActor(out, memPoolWatcher, userManager))
 
   case class TxInputOutput(address: Option[String], value: Option[Long])
@@ -40,8 +41,8 @@ object TxFilterAuthActor {
 
 //noinspection TypeAnnotation
 class TxFilterAuthActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: MemPoolWatcherService,
-                                  userManager: UserManagerService)
-  extends Actor with TxUpdateActor with TxForwardingActor {
+                                  userManager: UserManagerService)(implicit system: ActorSystem)
+  extends Actor with TxUpdateActor {
 
   override val logger: Logger = LoggerFactory.getLogger(classOf[TxFilterAuthActor])
 
@@ -66,12 +67,10 @@ class TxFilterAuthActor @Inject()(@Assisted val out: ActorRef, val memPoolWatche
   def authenticate(auth: Auth): Unit = {
     try {
       val user = userManager.authenticate(auth.id)
-
+      val filterActor = system.actorOf(TxFilterNoAuthActor.props(out, user.filter, memPoolWatcher))
       def authorized: Receive = deathHandler.orElse {
-        case txUpdate: TxUpdate =>
-          if (user.filter(txUpdate)) forward(txUpdate)
+        message => filterActor ! message
       }
-
       context.become(authorized)
       registerWithWatcher()
     } catch {
