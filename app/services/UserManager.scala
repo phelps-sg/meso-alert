@@ -4,6 +4,7 @@ import actors.TxUpdate
 import com.google.inject.ImplementedBy
 
 import javax.inject.Singleton
+import scala.util.{Failure, Success, Try}
 
 case class InvalidCredentialsException() extends Exception
 
@@ -13,7 +14,7 @@ abstract case class User(id: String) {
 
 @ImplementedBy(classOf[UserManager])
 trait UserManagerService {
-  def authenticate(id: String): User
+  def authenticate(id: String): Try[User]
 }
 
 @Singleton
@@ -25,11 +26,11 @@ class UserManager extends UserManagerService {
     }
   }
 
-  def authenticate(id: String): User = {
+  def authenticate(id: String): Try[User] = {
     if (id == "guest") {
-      guest
+      Success(guest)
     } else {
-      throw InvalidCredentialsException()
+      Failure(InvalidCredentialsException())
     }
   }
 

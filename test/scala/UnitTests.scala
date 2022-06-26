@@ -384,7 +384,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       // Configure user to not filter events.
       (mockUser.filter _).expects(*).returning(true).atLeastOnce()
       // The user will authenticate  successfully with id "test".
-      (mockUserManager.authenticate _).expects("test").returning(mockUser)
+      (mockUserManager.authenticate _).expects("test").returning(Success(mockUser))
 
       // Capture the update messages sent to the web socket for later verification.
       val updateCapture = CaptureAll[TxUpdate]()
@@ -496,7 +496,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List(), List())
 
       (mockUser.filter _).expects(tx).returning(true)
-      (mockUserManager.authenticate _).expects("test").returning(mockUser)
+      (mockUserManager.authenticate _).expects("test").returning(Success(mockUser))
       (mockWs.update _).expects(tx)
 
       txWatchActor ! Auth("test", "test")
@@ -510,7 +510,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
       val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List(), List())
 
-      (mockUserManager.authenticate _).expects("test").throws(InvalidCredentialsException())
+      (mockUserManager.authenticate _).expects("test").returning(Failure(InvalidCredentialsException()))
 
       val probe = TestProbe()
       probe.watch(txWatchActor)
@@ -529,7 +529,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       val tx1 = TxUpdate("testHash1", 10, DateTime.now(), isPending = true, List(), List())
       val tx2 = TxUpdate("testHash2", 1, DateTime.now(), isPending = true, List(), List())
 
-      (mockUserManager.authenticate _).expects("test").returning(mockUser)
+      (mockUserManager.authenticate _).expects("test").returning(Success(mockUser))
 
       txWatchActor ! Auth("test", "test")
       expectNoMessage()

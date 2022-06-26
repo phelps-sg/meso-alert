@@ -9,6 +9,8 @@ import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import services.{InvalidCredentialsException, MemPoolWatcherService, UserManagerService}
 
+import scala.util.{Failure, Success}
+
 //noinspection TypeAnnotation
 object TxAuthActor {
 
@@ -65,16 +67,20 @@ class TxAuthActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: Mem
   }
 
   def authenticate(auth: Auth): Unit = {
-    try {
-      val user = userManager.authenticate(auth.id)
-      val filterActor = system.actorOf(TxFilterActor.props(out, user.filter, memPoolWatcher))
-      def authorized: Receive = deathHandler.orElse {
-        message => filterActor ! message
-      }
-      context.become(authorized)
-    } catch {
-      case _: InvalidCredentialsException =>
+    userManager.authenticate(auth.id) match {
+
+      case Success(user) =>
+        val filterActor = system.actorOf(TxFilterActor.props(out, user.filter, memPoolWatcher))
+        def authorized: Receive = deathHandler.orElse {
+          message => filterActor ! message
+        }
+        context.become(authorized)
+
+      case Failure(_: InvalidCredentialsException) =>
         self ! Die(s"Authentication failed for ${auth.id}.")
+
+      case Failure(ex: Exception) =>
+        self ! Die(ex.getMessage)
     }
   }
 
