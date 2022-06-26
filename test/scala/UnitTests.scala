@@ -495,7 +495,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
       val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List(), List())
 
-      (mockMemPoolWatcher.addListener _).expects(*).once()
       (mockUser.filter _).expects(tx).returning(true)
       (mockUserManager.authenticate _).expects("test").returning(mockUser)
       (mockWs.update _).expects(tx)
@@ -530,7 +529,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       val tx1 = TxUpdate("testHash1", 10, DateTime.now(), isPending = true, List(), List())
       val tx2 = TxUpdate("testHash2", 1, DateTime.now(), isPending = true, List(), List())
 
-      (mockMemPoolWatcher.addListener _).expects(*).once()
       (mockUserManager.authenticate _).expects("test").returning(mockUser)
 
       txWatchActor ! Auth("test", "test")
