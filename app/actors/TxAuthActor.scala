@@ -72,7 +72,6 @@ class TxAuthActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: Mem
         message => filterActor ! message
       }
       context.become(authorized)
-      registerWithWatcher()
     } catch {
       case _: InvalidCredentialsException =>
         self ! Die(s"Authentication failed for ${auth.id}.")
