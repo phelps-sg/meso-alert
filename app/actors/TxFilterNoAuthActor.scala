@@ -21,7 +21,7 @@ object TxFilterNoAuthActor {
 
 class TxFilterNoAuthActor @Inject() (@Assisted val out: ActorRef, @Assisted val filter: TxUpdate => Boolean,
                                      val memPoolWatcher: MemPoolWatcherService)
-  extends Actor with TxUpdateActor with TxForwardingActor {
+  extends Actor with TxUpdateActor {
 
   override val logger: Logger = LoggerFactory.getLogger(classOf[TxFilterNoAuthActor])
 
@@ -31,7 +31,7 @@ class TxFilterNoAuthActor @Inject() (@Assisted val out: ActorRef, @Assisted val 
   }
 
   override def receive: Receive = {
-    case tx: TxUpdate => if (filter(tx)) forward(tx)
+    case tx: TxUpdate => if (filter(tx)) out ! tx
     case Die => self ! PoisonPill
   }
 
