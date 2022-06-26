@@ -7,11 +7,13 @@ import org.slf4j.Logger
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 package object services {
 
   implicit val timeout: Timeout = 1.minute
+
+  case class HooksManagerFailedException(message: String) extends Exception(message)
 
   trait ActorBackend {
 
@@ -20,19 +22,16 @@ package object services {
 
     implicit val ec: ExecutionContext = executionContext
 
-    def sendAndReceive[T, R](message: T): Future[R] = {
-      (actor ? message) map {
-        case Success(x: R) => x
-        case Failure(ex) => throw ex
-      }
+    def sendAndReceive[T, R](message: T): Future[Try[R]] = {
+      (actor ? message) map { case x: Try[R] => x }
     }
   }
 
   trait HooksManagerService[X, Y] {
-    def init(): Future[Seq[Started[Y]]]
-    def start(key: X): Future[Started[Y]]
-    def stop(key: X): Future[Stopped[Y]]
-    def register(hook: Y): Future[Registered[Y]]
+    def init(): Future[Try[Unit]]
+    def start(key: X): Future[Try[Started[Y]]]
+    def stop(key: X): Future[Try[Stopped[Y]]]
+    def register(hook: Y): Future[Try[Registered[Y]]]
   }
 
   trait HooksManager[X, Y] extends ActorBackend {
@@ -45,7 +44,7 @@ package object services {
     implicit val system: ActorSystem
     implicit val executionContext: ExecutionContext
 
-    def init(): Future[Seq[Started[Y]]] = {
+    def init(): Future[Try[Unit]] = {
 
       val initFuture = for {
         _ <- hookDao.init()
@@ -54,16 +53,28 @@ package object services {
       } yield started
 
       initFuture.onComplete {
-        case Success(x) => logger.info(f"Started ${x.size} hooks.")
-        case Failure(exception) => logger.error(f"Failed to load hooks: ${exception.getMessage}")
+        case Success(tries) =>
+          if (tries.forall(_.isSuccess)) {
+            logger.info(s"Started ${tries.size} hooks.")
+          } else {
+            logger.error(s"Failed to load ${tries.filter(_.isFailure)} out of ${tries.size} hooks.")
+          }
+        case Failure(exception) => logger.error(f"Failed to load hooks: ${exception.getMessage}.")
       }
 
-      initFuture
+      initFuture.map(_.forall(_.isSuccess))
+        .map {
+          allStarted =>
+            if (allStarted)
+              Success(())
+            else
+              Failure(HooksManagerFailedException("Some hooks failed to start up"))
+        }
     }
 
-    def start(key: X): Future[Started[Y]] = sendAndReceive(Start(key))
-    def stop(key: X): Future[Stopped[Y]] = sendAndReceive(Stop(key))
-    def register(hook: Y): Future[Registered[Y]] = sendAndReceive(Register(hook))
-    def update(hook: Y): Future[Updated[Y]] = sendAndReceive(Update(hook))
+    def start(key: X): Future[Try[Started[Y]]] = sendAndReceive(Start(key))
+    def stop(key: X): Future[Try[Stopped[Y]]] = sendAndReceive(Stop(key))
+    def register(hook: Y): Future[Try[Registered[Y]]] = sendAndReceive(Register(hook))
+    def update(hook: Y): Future[Try[Updated[Y]]] = sendAndReceive(Update(hook))
   }
 }
