@@ -6,7 +6,7 @@ import com.google.inject.ImplementedBy
 import javax.inject.Singleton
 import scala.util.{Failure, Success, Try}
 
-case class InvalidCredentialsException() extends Exception
+case object InvalidCredentialsException extends Exception
 
 abstract case class User(id: String) {
   def filter(tx: TxUpdate): Boolean
@@ -30,7 +30,7 @@ class UserManager extends UserManagerService {
     if (id == "guest") {
       Success(guest)
     } else {
-      Failure(InvalidCredentialsException())
+      Failure(InvalidCredentialsException)
     }
   }
 

@@ -510,7 +510,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
       val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List(), List())
 
-      (mockUserManager.authenticate _).expects("test").returning(Failure(InvalidCredentialsException()))
+      (mockUserManager.authenticate _).expects("test").returning(Failure(InvalidCredentialsException))
 
       val probe = TestProbe()
       probe.watch(txWatchActor)
