@@ -67,7 +67,7 @@ class TxAuthActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: Mem
   def authenticate(auth: Auth): Unit = {
     try {
       val user = userManager.authenticate(auth.id)
-      val filterActor = system.actorOf(TxFilterNoAuthActor.props(out, user.filter, memPoolWatcher))
+      val filterActor = system.actorOf(TxFilterActor.props(out, user.filter, memPoolWatcher))
       def authorized: Receive = deathHandler.orElse {
         message => filterActor ! message
       }

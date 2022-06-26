@@ -15,7 +15,7 @@ trait HooksManagerActor[X, Y] extends Actor with InjectedActorSupport {
   val logger: Logger
   val dao: HookDao[X, Y]
   val messagingActorFactory: HookActorFactory[X]
-  val filteringActorFactory: TxFilterNoAuthActor.Factory
+  val filteringActorFactory: TxFilterActor.Factory
   val databaseExecutionContext: DatabaseExecutionContext
   val hookTypePrefix: String
 

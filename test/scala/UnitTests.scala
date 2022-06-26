@@ -1,6 +1,6 @@
 import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
 import actors.TxAuthActor.{Auth, TxInputOutput}
-import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxAuthActor, TxFilterNoAuthActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
+import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxAuthActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -122,7 +122,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
       bindActorFactory(classOf[TxMessagingActorSlackChat], classOf[TxMessagingActorSlackChat.Factory])
       bindActorFactory(classOf[TxAuthActor], classOf[TxAuthActor.Factory])
-      bindActorFactory(classOf[TxFilterNoAuthActor], classOf[TxFilterNoAuthActor.Factory])
+      bindActorFactory(classOf[TxFilterActor], classOf[TxFilterActor.Factory])
     }
   }
 
@@ -198,7 +198,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       system.actorOf(
         HooksManagerActorWeb.props(
           injector.instanceOf[TxMessagingActorWeb.Factory],
-          injector.instanceOf[TxFilterNoAuthActor.Factory],
+          injector.instanceOf[TxFilterActor.Factory],
           injector.instanceOf[WebhookDao],
           injector.instanceOf[DatabaseExecutionContext]
         )
@@ -218,7 +218,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       system.actorOf(
         HooksManagerActorSlackChat.props(
           injector.instanceOf[TxMessagingActorSlackChat.Factory],
-          injector.instanceOf[TxFilterNoAuthActor.Factory],
+          injector.instanceOf[TxFilterActor.Factory],
           injector.instanceOf[SlackChatHookDao],
           injector.instanceOf[DatabaseExecutionContext]
         )
@@ -333,7 +333,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       system.actorOf(
         HooksManagerActorWeb.props(
           injector.instanceOf[TxMessagingActorWeb.Factory],
-          injector.instanceOf[TxFilterNoAuthActor.Factory],
+          injector.instanceOf[TxFilterActor.Factory],
           injector.instanceOf[WebhookDao],
           injector.instanceOf[DatabaseExecutionContext]
         )
