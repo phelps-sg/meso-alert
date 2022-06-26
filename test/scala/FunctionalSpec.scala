@@ -1,4 +1,4 @@
-import actors.TxAuthActor._
+import actors.AuthenticationActor._
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._

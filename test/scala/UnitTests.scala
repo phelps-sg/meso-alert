@@ -1,6 +1,6 @@
 import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
-import actors.TxAuthActor.{Auth, TxInputOutput}
-import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxAuthActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
+import actors.AuthenticationActor.{Auth, TxInputOutput}
+import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, AuthenticationActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -121,7 +121,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       //      bindActor(classOf[WebhooksActor], "webhooks-actor")
       bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
       bindActorFactory(classOf[TxMessagingActorSlackChat], classOf[TxMessagingActorSlackChat.Factory])
-      bindActorFactory(classOf[TxAuthActor], classOf[TxAuthActor.Factory])
+      bindActorFactory(classOf[AuthenticationActor], classOf[AuthenticationActor.Factory])
       bindActorFactory(classOf[TxFilterActor], classOf[TxFilterActor.Factory])
     }
   }
@@ -317,7 +317,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val mockUserManager: UserManagerService
 
     val txWatchActor =
-      system.actorOf(TxAuthActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
+      system.actorOf(AuthenticationActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
   }
 
   trait WebhookManagerFixtures {
@@ -408,7 +408,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 //      val memPoolWatcher = new MemPoolWatcher(memPoolWatcherActor)
 
       val txWatchActor =
-        system.actorOf(TxAuthActor.props(mockWsActor, memPoolWatcher, mockUserManager))
+        system.actorOf(AuthenticationActor.props(mockWsActor, memPoolWatcher, mockUserManager))
 
       memPoolWatcher.addListener(txWatchActor)
 

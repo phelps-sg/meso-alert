@@ -1,4 +1,4 @@
-import actors.TxAuthActor.TxInputOutput
+import actors.AuthenticationActor.TxInputOutput
 import akka.actor.{Actor, ActorRef}
 import com.github.nscala_time.time.Imports.DateTime
 import org.bitcoinj.core._
@@ -86,10 +86,10 @@ package object actors {
         isPending = tx.isPending,
         inputs =
           (for (input <- tx.getInputs.asScala)
-            yield TxAuthActor.TxInputOutput(address(input), value(input))).toSeq,
+            yield AuthenticationActor.TxInputOutput(address(input), value(input))).toSeq,
         outputs =
           (for (output <- tx.getOutputs.asScala)
-            yield TxAuthActor.TxInputOutput(address(output), value(output))).toSeq,
+            yield AuthenticationActor.TxInputOutput(address(output), value(output))).toSeq,
       )
 
     // https://bitcoin.stackexchange.com/questions/83481/bitcoinj-java-library-not-decoding-input-addresses-for-some-transactions

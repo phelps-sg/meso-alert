@@ -12,7 +12,7 @@ import services.{InvalidCredentialsException, MemPoolWatcherService, UserManager
 import scala.util.{Failure, Success}
 
 //noinspection TypeAnnotation
-object TxAuthActor {
+object AuthenticationActor {
 
   trait Factory {
     def apply(out: ActorRef): Actor
@@ -20,7 +20,7 @@ object TxAuthActor {
 
   def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
            (implicit system: ActorSystem): Props =
-    Props(new TxAuthActor(out, memPoolWatcher, userManager))
+    Props(new AuthenticationActor(out, memPoolWatcher, userManager))
 
   case class TxInputOutput(address: Option[String], value: Option[Long])
 
@@ -42,13 +42,13 @@ object TxAuthActor {
 }
 
 //noinspection TypeAnnotation
-class TxAuthActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: MemPoolWatcherService,
-                            userManager: UserManagerService)(implicit system: ActorSystem)
+class AuthenticationActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: MemPoolWatcherService,
+                                    userManager: UserManagerService)(implicit system: ActorSystem)
   extends Actor with TxUpdateActor {
 
-  override val logger: Logger = LoggerFactory.getLogger(classOf[TxAuthActor])
+  override val logger: Logger = LoggerFactory.getLogger(classOf[AuthenticationActor])
 
-  import TxAuthActor._
+  import AuthenticationActor._
 
   override def receive: Receive = unauthorized
 
