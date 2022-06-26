@@ -1,6 +1,6 @@
 package actors
 
-import actors.TxFilterAuthActor.Die
+import actors.TxAuthActor.Die
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted

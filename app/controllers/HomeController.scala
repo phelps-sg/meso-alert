@@ -1,7 +1,7 @@
 package controllers
 
-import actors.TxFilterAuthActor._
-import actors.{TxFilterAuthActor, TxUpdate}
+import actors.TxAuthActor._
+import actors.{TxAuthActor, TxUpdate}
 import akka.actor.{ActorSystem, Props}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
@@ -27,7 +27,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
                                val userManager: UserManagerService,
                                val webHooksManager: HooksManagerWebService,
                                val slackChatHooksManager: HooksManagerSlackChatService,
-                               val actorFactory: TxFilterAuthActor.Factory)
+                               val actorFactory: TxAuthActor.Factory)
                               (implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext)
   extends BaseController with SameOriginCheck with InjectedActorSupport {
 
@@ -60,16 +60,16 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     Ok(views.html.index())
   }
 
-  def wsFutureFlow(request: RequestHeader): Future[Flow[TxFilterAuthActor.Auth, TxUpdate, _]] = {
+  def wsFutureFlow(request: RequestHeader): Future[Flow[TxAuthActor.Auth, TxUpdate, _]] = {
     Future {
-      ActorFlow.actorRef[TxFilterAuthActor.Auth, TxUpdate] {
+      ActorFlow.actorRef[TxAuthActor.Auth, TxUpdate] {
             out => Props(actorFactory(out))
 //        out => TxFilterAuthActor.props(out, memPoolWatcher, userManager)
       }
     }
   }
 
-  def websocket: WebSocket = WebSocket.acceptOrResult[TxFilterAuthActor.Auth, TxUpdate] {
+  def websocket: WebSocket = WebSocket.acceptOrResult[TxAuthActor.Auth, TxUpdate] {
     case rh if sameOriginCheck(rh) =>
       wsFutureFlow(rh).map { flow =>
         Right(flow)

@@ -10,7 +10,7 @@ import play.api.libs.json._
 import services.{InvalidCredentialsException, MemPoolWatcherService, UserManagerService}
 
 //noinspection TypeAnnotation
-object TxFilterAuthActor {
+object TxAuthActor {
 
   trait Factory {
     def apply(out: ActorRef): Actor
@@ -18,7 +18,7 @@ object TxFilterAuthActor {
 
   def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
            (implicit system: ActorSystem): Props =
-    Props(new TxFilterAuthActor(out, memPoolWatcher, userManager))
+    Props(new TxAuthActor(out, memPoolWatcher, userManager))
 
   case class TxInputOutput(address: Option[String], value: Option[Long])
 
@@ -40,13 +40,13 @@ object TxFilterAuthActor {
 }
 
 //noinspection TypeAnnotation
-class TxFilterAuthActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: MemPoolWatcherService,
-                                  userManager: UserManagerService)(implicit system: ActorSystem)
+class TxAuthActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: MemPoolWatcherService,
+                            userManager: UserManagerService)(implicit system: ActorSystem)
   extends Actor with TxUpdateActor {
 
-  override val logger: Logger = LoggerFactory.getLogger(classOf[TxFilterAuthActor])
+  override val logger: Logger = LoggerFactory.getLogger(classOf[TxAuthActor])
 
-  import TxFilterAuthActor._
+  import TxAuthActor._
 
   override def receive: Receive = unauthorized
 
