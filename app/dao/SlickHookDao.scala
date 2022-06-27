@@ -3,22 +3,15 @@ package dao
 import org.slf4j.Logger
 import slick.BtcPostgresProfile.api._
 import slick.DatabaseExecutionContext
-import slick.dbio.Effect
-import slick.jdbc.JdbcBackend.Database
-import slick.sql.FixedSqlAction
 
 import scala.concurrent.Future
 
-trait SlickHookDao[X, Y] {
+trait SlickHookDao[X, Y] extends SlickDao[Y] {
 
   val logger: Logger
-  val db: Database
   val databaseExecutionContext: DatabaseExecutionContext
-  val table: TableQuery[_]
   val lookupHookQuery: Y => Query[_, Y, Seq]
   val lookupKeyQuery: X => Query[_, Y, Seq]
-  val insertHookQuery: Y => FixedSqlAction[Int, NoStream, Effect.Write]
-  val insertOrUpdateHookQuery: Y => FixedSqlAction[Int, NoStream, Effect.Write]
 
   implicit val ec: DatabaseExecutionContext = databaseExecutionContext
 
@@ -39,7 +32,7 @@ trait SlickHookDao[X, Y] {
         if (n > 0) {
           throw DuplicateHookException(hook)
         } else {
-          db.run(insertHookQuery(hook))
+          db.run(table += hook)
         }
     } yield result
   }
@@ -47,7 +40,7 @@ trait SlickHookDao[X, Y] {
   def update(hook: Y): Future[Int] = {
     for {
       result <-
-        db.run(insertOrUpdateHookQuery(hook))
+        db.run(table.insertOrUpdate(hook))
     } yield result
   }
 

@@ -1,5 +1,8 @@
 import actors.TxUpdate
 import com.google.inject.ImplementedBy
+import slick.BtcPostgresProfile.api._
+import slick.jdbc.JdbcBackend.Database
+import slick.lifted.TableQuery
 
 import java.net.URI
 import scala.concurrent.Future
@@ -15,8 +18,16 @@ package object dao {
     def filter(tx: TxUpdate): Boolean = tx.value >= threshold
   }
 
+  trait SlickDao[Y] {
+    val table: TableQuery[_ <: Table[Y]]
+    val db: Database
+
+    def init(): Future[Unit] = db.run(table.schema.createIfNotExists)
+    def all(): Future[Seq[Y]] = db.run(table.result)
+  }
+
   trait HookDao[X, Y] {
-    def init(): Future[Unit]
+   def init(): Future[Unit]
     def all(): Future[Seq[Y]]
     def allKeys(): Future[Seq[X]]
     def find(key: X): Future[Option[Y]]
@@ -46,5 +57,6 @@ package object dao {
   @ImplementedBy(classOf[SlickSlashCommandHistoryDao])
   trait SlashCommandHistoryDao {
     def record(slashCommand: SlashCommand): Future[Int]
+    def init(): Future[Unit]
   }
 }

@@ -5,17 +5,16 @@ import actors.{AuthenticationActor, TxUpdate}
 import akka.actor.{ActorSystem, Props}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
-import play.api.Logger
 import play.api.libs.concurrent.InjectedActorSupport
 import play.api.libs.json.Json
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
+import play.api.{Logger, Logging}
 import services.{HooksManagerSlackChatService, HooksManagerWebService, MemPoolWatcherService, UserManagerService}
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -28,23 +27,14 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
                                val webHooksManager: HooksManagerWebService,
                                val slackChatHooksManager: HooksManagerSlackChatService,
                                val actorFactory: AuthenticationActor.Factory)
-                              (implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext)
-  extends BaseController with SameOriginCheck with InjectedActorSupport {
+                              (implicit system: ActorSystem, mat: Materializer, implicit val ec: ExecutionContext)
+  extends BaseController with SameOriginCheck with InjectedActorSupport with Logging with InitialisingController {
 
-  val logger: Logger = play.api.Logger(getClass)
-
-  private val init = for {
+  override def init(): Future[Unit] = for {
     _ <- memPoolWatcher.init()
     _ <- webHooksManager.init()
     _ <- slackChatHooksManager.init()
   } yield ()
-
-  init.onComplete {
-    case Success(_) => logger.info("Initialisation complete.")
-    case Failure(ex) =>
-      logger.error(s"Initialisation failed with ${ex.getMessage}")
-      ex.printStackTrace()
-  }
 
   implicit val mft: MessageFlowTransformer[Auth, TxUpdate] =
     MessageFlowTransformer.jsonMessageFlowTransformer[Auth, TxUpdate]

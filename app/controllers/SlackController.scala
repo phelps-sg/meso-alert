@@ -3,7 +3,7 @@ package controllers
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.actor.ActorSystem
 import dao.{SlackChannel, SlackChatHook, SlashCommand, SlashCommandHistoryDao}
-import org.slf4j.LoggerFactory
+import play.api.Logging
 import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.HooksManagerSlackChat
 
@@ -45,9 +45,12 @@ object SlackController {
 class SlackController @Inject()(val controllerComponents: ControllerComponents,
                                 val slashCommandHistoryDao: SlashCommandHistoryDao,
                                 val hooksManager: HooksManagerSlackChat)
-                               (implicit system: ActorSystem, implicit val ec: ExecutionContext) extends BaseController {
+                               (implicit system: ActorSystem, implicit val ec: ExecutionContext)
+  extends BaseController with Logging with InitialisingController {
 
-  private val logger = LoggerFactory.getLogger(classOf[SlackController])
+  override def init(): Future[Unit] = for {
+    result <- slashCommandHistoryDao.init()
+  } yield result
 
   def slashCommand: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { request =>
 
