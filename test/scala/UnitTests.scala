@@ -529,14 +529,14 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     override def receive: Receive = {
       case Start(uri: URI) =>
         mock.start(uri)
-        sender ! Success(Started(hooks(uri)))
+        sender() ! Success(Started(hooks(uri)))
       case Register(hook: Webhook) =>
         mock.register(hook)
         hooks(hook.uri) = hook
-        sender ! Success(Registered(hook))
+        sender() ! Success(Registered(hook))
       case Stop(uri: URI) =>
         mock.stop(uri)
-        sender ! Success(Stopped(hooks(uri)))
+        sender() ! Success(Stopped(hooks(uri)))
       case x =>
         fail(s"unrecognized message: $x")
     }
