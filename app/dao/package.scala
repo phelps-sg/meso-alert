@@ -15,8 +15,6 @@ package object dao {
     def filter(tx: TxUpdate): Boolean = tx.value >= threshold
   }
 
-  trait Hook extends ThresholdFilter
-
   trait HookDao[X, Y] {
     def init(): Future[Unit]
     def all(): Future[Seq[Y]]
@@ -27,8 +25,8 @@ package object dao {
   }
 
   case class SlackChannel(id: String)
-  case class Webhook(uri: URI, threshold: Long) extends Hook
-  case class SlackChatHook(channel: SlackChannel, threshold: Long) extends Hook
+  case class Webhook(uri: URI, threshold: Long) extends ThresholdFilter
+  case class SlackChatHook(channel: SlackChannel, threshold: Long) extends ThresholdFilter
   case class DuplicateHookException[X](uri: X) extends Exception(s"A hook already exists with key $uri")
 
   @ImplementedBy(classOf[SlickWebhookDao])

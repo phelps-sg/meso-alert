@@ -11,12 +11,11 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import javax.inject.{Inject, Provider, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
 
 @ImplementedBy(classOf[MemPoolWatcher])
 trait MemPoolWatcherService {
   def addListener(listener: ActorRef): Unit
-  def init(): Future[Try[Started[PeerGroup]]]
+  def init(): Future[Started[PeerGroup]]
 }
 
 @ImplementedBy(classOf[MainNetPeerGroup])
@@ -41,8 +40,8 @@ class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
 
   import actors.MemPoolWatcherActor._
 
-  def startPeerGroup(): Future[Try[Started[PeerGroup]]] = {
-   sendAndReceive(StartPeerGroup)
+  def startPeerGroup(): Future[Started[PeerGroup]] = {
+    sendAndReceive(StartPeerGroup)
   }
 
   def run(): Future[Unit] = {
@@ -54,7 +53,7 @@ class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
     }
   }
 
-  def init(): Future[Try[Started[PeerGroup]]] = {
+  def init(): Future[Started[PeerGroup]] = {
     logger.info("Starting peer group... ")
     BriefLogFormatter.initVerbose()
     val statistics = Future { run() }

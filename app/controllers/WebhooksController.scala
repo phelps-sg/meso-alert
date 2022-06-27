@@ -10,7 +10,6 @@ import services.HooksManagerWebService
 import java.net.URI
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
 
 class WebhooksController @Inject()(val controllerComponents: ControllerComponents,
                                    val slackWebHooksManager: HooksManagerWebService)
@@ -24,8 +23,8 @@ class WebhooksController @Inject()(val controllerComponents: ControllerComponent
   implicit val uriJson: OFormat[UriDto] = Json.format[UriDto]
   implicit val hookJson: OFormat[HookDto] = Json.format[HookDto]
 
-  def checkEx[T](f: Future[Try[T]]): Future[Result] =
-    f map{ case Success(_) => Ok("Success") case Failure(err) => ServiceUnavailable(err.getMessage) }
+  def checkEx[T](f: Future[T]): Future[Result] =
+    f map(_ => Ok("Success")) recover { case ex => ServiceUnavailable(ex.getMessage) }
 
   def start: Action[UriDto] = Action.async(parse.json[UriDto]) { request =>
     checkEx(slackWebHooksManager.start(new URI(request.body.uri)))
