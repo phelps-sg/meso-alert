@@ -30,12 +30,12 @@ trait HooksManagerActor[X, Y] extends Actor with InjectedActorSupport {
       dao.find(key) map {
         case Some(hook) => Success(fn(hook))
         case None => Failure(HookNotRegisteredException(key))
-      } pipeTo sender
+      } pipeTo sender()
     }
   }
 
   def fail(ex: Exception): Unit = {
-    sender ! Failure(ex)
+    sender() ! Failure(ex)
   }
 
   def provided(condition: => Boolean, block: => Unit, ex: => Exception): Unit = {
@@ -49,12 +49,12 @@ trait HooksManagerActor[X, Y] extends Actor with InjectedActorSupport {
         _ => Success(Registered(hook))
       } recover {
         case DuplicateHookException(_) => Failure(HookAlreadyRegisteredException(hook))
-      } pipeTo sender
+      } pipeTo sender()
 
     case Update(newHook: Y) =>
       dao.update(newHook) map {
         _ => Success(Updated(newHook))
-      } pipeTo sender
+      } pipeTo sender()
 
     case Start(uri: X) =>
       logger.debug(s"Received start request for $uri")
