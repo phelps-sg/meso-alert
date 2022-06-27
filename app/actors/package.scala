@@ -1,6 +1,7 @@
 import actors.AuthenticationActor.TxInputOutput
 import akka.actor.{Actor, ActorRef}
 import com.github.nscala_time.time.Imports.DateTime
+import dao.Hook
 import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
 import org.slf4j.Logger
@@ -17,19 +18,19 @@ package object actors {
     def apply(x: X): Actor
   }
 
-  case class CreateActors[X, Y](uri: X, hook: Y)
+  case class CreateActors[X](uri: X, hook: Hook[X])
   case class HookNotRegisteredException[X](uri: X) extends Exception(s"No webhook registered for $uri")
   case class HookNotStartedException[X](uri: X) extends Exception(s"No webhook started for $uri")
-  case class HookAlreadyRegisteredException[Y](hook: Y) extends Exception(s"Webhook already registered with same key as $hook")
+  case class HookAlreadyRegisteredException[X](hook: Hook[X]) extends Exception(s"Webhook already registered with same key as $hook")
   case class HookAlreadyStartedException[X](uri: X) extends Exception(s"Webhook already started for $uri")
 
-  case class Register[Y](hook: Y)
-  case class Update[Y](hook: Y)
-  case class Unregister[Y](hook: Y)
-  case class Started[Y](hook: Y)
-  case class Stopped[Y](hook: Y)
-  case class Registered[Y](hook: Y)
-  case class Updated[Y](hook: Y)
+  case class Register[X](hook: Hook[X])
+  case class Update[X](hook: Hook[X])
+  case class Unregister[X](hook: Hook[X])
+  case class Started[X](hook: X)
+  case class Stopped[X](hook: X)
+  case class Registered[X](hook: Hook[X])
+  case class Updated[X](hook: Hook[X])
   case class Start[X](key: X)
   case class Stop[X](key: X)
 

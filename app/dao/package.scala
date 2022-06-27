@@ -26,11 +26,11 @@ package object dao {
     def all(): Future[Seq[Y]] = db.run(table.result)
   }
 
-  trait HookDao[X, Y] {
-   def init(): Future[Unit]
-    def all(): Future[Seq[Y]]
-    def allKeys(): Future[Seq[X]]
-    def find(key: X): Future[Option[Y]]
+  trait HookDao[X, Y <: Hook[X]] {
+    def init(): Future[Unit]
+    def all(): Future[Seq[Hook[X]]]
+    def allKeys(): Future[Seq[_ <: X]]
+    def find(key: X): Future[Option[_ <: Hook[X]]]
     def insert(hook: Y): Future[Int]
     def update(hook: Y): Future[Int]
   }
@@ -42,9 +42,17 @@ package object dao {
 
   case class SlackChannel(id: String)
 
-  case class Webhook(uri: URI, threshold: Long) extends ThresholdFilter
+  trait Hook[+X] {
+    def key: X
+  }
 
-  case class SlackChatHook(channel: SlackChannel, threshold: Long) extends ThresholdFilter
+  case class Webhook(uri: URI, threshold: Long) extends Hook[URI] with ThresholdFilter {
+    def key: URI = uri
+  }
+
+  case class SlackChatHook(channel: SlackChannel, threshold: Long) extends Hook[SlackChannel] with ThresholdFilter {
+    def key: SlackChannel = channel
+  }
 
   case class DuplicateHookException[X](uri: X) extends Exception(s"A hook already exists with key $uri")
 

@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.Props
 import com.google.inject.Inject
-import dao.{Webhook, WebhookDao}
+import dao.{Hook, SlackChatHook, Webhook, WebhookDao}
 import org.slf4j.{Logger, LoggerFactory}
 import play.api.libs.json.{JsObject, Json, Writes}
 import slick.DatabaseExecutionContext
@@ -17,11 +17,21 @@ object HooksManagerActorWeb {
             databaseExecutionContext: DatabaseExecutionContext): Props =
     Props(new HooksManagerActorWeb(messagingActorFactory, filteringActorFactory, webhookDao, databaseExecutionContext))
 
-  implicit val startWrites: Writes[Started[Webhook]] = new Writes[Started[Webhook]]() {
-    def writes(started: Started[Webhook]): JsObject = Json.obj(fields =
-        "uri" -> started.hook.uri,
-        "threshold" -> started.hook.threshold
-    )
+  implicit val startWrites: Writes[Started[Hook[_]]] = new Writes[Started[Hook[_]]]() {
+    def writes(started: Started[Hook[_]]): JsObject = {
+      started match {
+        case Started(hook: Webhook) =>
+          Json.obj(fields =
+            "uri" -> hook.uri.toString,
+            "threshold" -> hook.threshold
+          )
+        case Started(hook: SlackChatHook) =>
+          Json.obj(fields =
+            "channel" -> hook.channel.toString,
+            "threshold" -> hook.threshold
+          )
+      }
+    }
   }
 }
 

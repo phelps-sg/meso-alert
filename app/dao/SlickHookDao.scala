@@ -6,7 +6,7 @@ import slick.DatabaseExecutionContext
 
 import scala.concurrent.Future
 
-trait SlickHookDao[X, Y] extends SlickDao[Y] {
+trait SlickHookDao[X, Y <: Hook[X]] extends SlickDao[Y] {
 
   val logger: Logger
   val databaseExecutionContext: DatabaseExecutionContext
@@ -15,7 +15,7 @@ trait SlickHookDao[X, Y] extends SlickDao[Y] {
 
   implicit val ec: DatabaseExecutionContext = databaseExecutionContext
 
-  def find(key: X): Future[Option[Y]] = {
+  def find(key: X): Future[Option[Hook[X]]] = {
     logger.debug(s"Querying for ${key.toString}")
     db.run(lookupKeyQuery(key).result).map {
       case Seq(result) => Some(result)

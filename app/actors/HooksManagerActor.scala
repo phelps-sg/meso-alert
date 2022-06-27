@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
-import dao.{DuplicateHookException, Filter, HookDao}
+import dao.{DuplicateHookException, Filter, Hook, HookDao}
 import org.slf4j.Logger
 import play.api.libs.concurrent.InjectedActorSupport
 import slick.DatabaseExecutionContext
@@ -10,7 +10,7 @@ import slick.DatabaseExecutionContext
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-trait HooksManagerActor[X, Y] extends Actor with InjectedActorSupport {
+trait HooksManagerActor[X, Y <: Hook[X]] extends Actor with InjectedActorSupport {
 
   val logger: Logger
   val dao: HookDao[X, Y]
@@ -26,7 +26,7 @@ trait HooksManagerActor[X, Y] extends Actor with InjectedActorSupport {
   def encodeKey(key: X): String
 
   implicit class HookFor(key: X) {
-    def withHook[R](fn: Y => R): Unit = {
+    def withHook[R](fn: Hook[X] => R): Unit = {
       dao.find(key) map {
         case Some(hook) => Success(fn(hook))
         case None => Failure(HookNotRegisteredException(key))

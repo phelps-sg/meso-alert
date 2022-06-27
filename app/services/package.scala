@@ -2,7 +2,7 @@ import actors.{Register, Registered, Start, Started, Stop, Stopped, Update, Upda
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
-import dao.HookDao
+import dao.{Hook, HookDao}
 import org.slf4j.Logger
 
 import scala.concurrent.duration.DurationInt
@@ -35,7 +35,7 @@ package object services {
     def register(hook: Y): Future[Registered[Y]]
   }
 
-  trait HooksManager[X, Y] extends ActorBackend {
+  trait HooksManager[X, Y <: Hook[X]] extends ActorBackend {
 
     val logger: Logger
 

@@ -297,7 +297,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
     trait TestFixtures
       extends MemPoolWatcherFixtures with ActorGuiceFixtures
-        with SlackChatActorFixtures with HookActorTestLogic[SlackChatHook]
+        with SlackChatActorFixtures with HookActorTestLogic[SlackChannel, SlackChatHook]
 
     trait TestFixturesTwoSubscribers extends TestFixtures {
       override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
@@ -351,7 +351,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
     trait TestFixtures
       extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookFixtures
-        with WebhookActorFixtures with HookActorTestLogic[Webhook]
+        with WebhookActorFixtures with HookActorTestLogic[URI, Webhook]
 
     trait TestFixturesTwoSubscribers extends TestFixtures with ActorGuiceFixtures {
       override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
@@ -647,7 +647,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val newHook = SlackChatHook(key, threshold = 200L)
   }
 
-  trait HookDaoTestLogic[X, Y] {
+  trait HookDaoTestLogic[X, Y <: Hook[X]] {
     val hook: Y
     val newHook: Y
     val key: X
@@ -771,7 +771,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val slickSlashCommandHistoryDao = injector.instanceOf[SlickSlashCommandHistoryDao]
  }
 
-  trait HookActorTestLogic[Y] {
+  trait HookActorTestLogic[X, Y <: Hook[X]] {
     val hooksActor: ActorRef
     val hook: Y
     val newHook: Y
