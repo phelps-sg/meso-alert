@@ -39,7 +39,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     _ <- slackChatHooksManager.init()
   } yield ()
 
-  init.onComplete{
+  init.onComplete {
     case Success(_) => logger.info("Initialisation complete.")
     case Failure(ex) =>
       logger.error(s"Initialisation failed with ${ex.getMessage}")
