@@ -24,9 +24,17 @@ package object dao {
     def update(hook: Y): Future[Int]
   }
 
+  case class SlashCommand(id: Option[Int], channelId: String, command: String, text: String,
+                          team_domain: Option[String], teamId: Option[String], channelName: Option[String],
+                          userId: Option[String], userName: Option[String], isEnterpriseInstall: Option[Boolean],
+                          timeStamp: Option[java.time.LocalDateTime])
+
   case class SlackChannel(id: String)
+
   case class Webhook(uri: URI, threshold: Long) extends ThresholdFilter
+
   case class SlackChatHook(channel: SlackChannel, threshold: Long) extends ThresholdFilter
+
   case class DuplicateHookException[X](uri: X) extends Exception(s"A hook already exists with key $uri")
 
   @ImplementedBy(classOf[SlickWebhookDao])
@@ -35,4 +43,8 @@ package object dao {
   @ImplementedBy(classOf[SlickSlackChatDao])
   trait SlackChatHookDao extends HookDao[SlackChannel, SlackChatHook]
 
+  @ImplementedBy(classOf[SlickSlashCommandHistoryDao])
+  trait SlashCommandHistoryDao {
+    def record(slashCommand: SlashCommand): Future[Int]
+  }
 }

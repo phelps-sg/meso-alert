@@ -1,6 +1,6 @@
 package slick
 
-import dao.{SlackChannel, SlackChatHook, Webhook}
+import dao.{SlackChannel, SlackChatHook, SlashCommand, Webhook}
 
 import java.net.URI
 
@@ -27,6 +27,28 @@ object Tables {
   }
   val webhooks = TableQuery[Webhooks]
 
+  //  private val coreAttributes = List("channel_id", "command", "text")
+  //  private val optionalAttributes = List("team_domain", "team_id", "channel_name",
+  //    "user_id", "user_name", "is_enterprise_install")
+  class SlashCommandHistory(tag: Tag) extends Table[SlashCommand](tag, "slack_slash_command_history") {
+    def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
+    def channel_id = column[String]("channel_id")
+    def command = column[String]("command")
+    def text = column[String]("text")
+    def team_domain = column[Option[String]]("team_domain")
+    def team_id = column[Option[String]]("team_id")
+    def channel_name = column[Option[String]]("channel_name")
+    def user_id = column[Option[String]]("user_id")
+    def user_name = column[Option[String]]("user_name")
+    def is_enterprise_install = column[Option[Boolean]]("is_enterprise_install")
+    def time_stamp = column[Option[java.time.LocalDateTime]]("time_stamp")
+
+    override def * =
+      (id.?, channel_id, command, text, team_domain, team_id, channel_name, user_id,
+        user_name, is_enterprise_install, time_stamp) <> (SlashCommand.tupled, SlashCommand.unapply)
+  }
+  val slashCommandHistory = TableQuery[SlashCommandHistory]
+
   class SlackChatHooks(tag: Tag) extends Table[SlackChatHook](tag, "slack_chat_hooks") {
     def channel_id = column[String]("channel_id", O.PrimaryKey)
     def threshold = column[Long]("threshold")
@@ -39,5 +61,6 @@ object Tables {
   }
   val slackChatHooks = TableQuery[SlackChatHooks]
 
-  val schema = webhooks.schema ++ slackChatHooks.schema
+  val schema = webhooks.schema ++ slackChatHooks.schema ++ slashCommandHistory.schema
+
 }

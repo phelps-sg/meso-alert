@@ -9,6 +9,7 @@ import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
 import com.typesafe.config.ConfigFactory
+import controllers.SlackController
 import dao._
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
@@ -20,7 +21,7 @@ import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.Injector
@@ -49,7 +50,7 @@ import scala.util.{Failure, Success}
 class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   with AnyWordSpecLike
   with PostgresContainer
-  with Matchers
+  with should.Matchers
   with MockFactory
   with ScalaFutures
   with BeforeAndAfterAll
@@ -61,285 +62,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   // whenReady timeout
   implicit override val patienceConfig =
     PatienceConfig(timeout = Span(20, Seconds), interval = Span(5, Millis))
-
-  trait WebSocketMock {
-    def update(tx: TxUpdate): Unit
-  }
-
-  object MockWebsocketActor {
-    def props(mock: WebSocketMock) = Props(new MockWebsocketActor(mock))
-  }
-
-  class MockWebsocketActor(val mock: WebSocketMock) extends Actor {
-    override def receive: Receive = {
-      case tx: TxUpdate =>
-        mock.update(tx)
-      case _ =>
-        fail("unrecognized message format")
-    }
-  }
-
-  trait WebhookManagerMock {
-    def start(uri: URI): Unit
-    def register(hook: Webhook): Unit
-    def stop(uri: URI): Unit
-  }
-
-  object MockWebhookManagerActor {
-    def props(mock: WebhookManagerMock) = Props(new MockWebhookManagerActor(mock))
-  }
-
-  class MockWebhookManagerActor(val mock: WebhookManagerMock) extends Actor {
-    val hooks = mutable.Map[URI, Webhook]()
-
-    override def receive: Receive = {
-      case Start(uri: URI) =>
-        mock.start(uri)
-        sender ! Success(Started(hooks(uri)))
-      case Register(hook: Webhook) =>
-        mock.register(hook)
-        hooks(hook.uri) = hook
-        sender ! Success(Registered(hook))
-      case Stop(uri: URI) =>
-        mock.stop(uri)
-        sender ! Success(Stopped(hooks(uri)))
-      case x =>
-        fail(s"unrecognized message: $x")
-    }
-  }
-
-  lazy val db: JdbcBackend.Database = database.asInstanceOf[JdbcBackend.Database]
-
-  class TestModule extends AbstractModule with AkkaGuiceSupport {
-    val testExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
-    override def configure(): Unit = {
-      bind(classOf[Database]).toProvider(new Provider[Database] {
-        val get: jdbc.JdbcBackend.Database = db
-      })
-      bind(classOf[ExecutionContext]).toInstance(testExecutionContext)
-//      bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")
-      //      bindActor(classOf[WebhooksActor], "webhooks-actor")
-      bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
-      bindActorFactory(classOf[TxMessagingActorSlackChat], classOf[TxMessagingActorSlackChat.Factory])
-      bindActorFactory(classOf[AuthenticationActor], classOf[AuthenticationActor.Factory])
-      bindActorFactory(classOf[TxFilterActor], classOf[TxFilterActor.Factory])
-    }
-  }
-
-  override def afterAll(): Unit = {
-    TestKit.shutdownActorSystem(system)
-  }
-
-  def afterDbInit[T](fn: => Future[T]): Future[T] = {
-    for {
-      _ <- database.run(DBIO.seq(Tables.schema.dropIfExists, Tables.schema.create))
-      response <- fn
-    } yield response
-  }
-
-  trait MemPoolWatcherFixtures {
-    val mockMemPoolWatcher = mock[MemPoolWatcherService]
-    val mainNetParams = MainNetParams.get()
-
-    class MockPeerGroup extends PeerGroup(mainNetParams)
-    val mockPeerGroup = mock[MockPeerGroup]
-
-    def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]): ch.Derived = {
-      ch.never()
-    }
-    memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
-  }
-
-  trait MemPoolWatcherActorFixtures {
-    val mainNetParams: MainNetParams
-    val mockPeerGroup: PeerGroup
-    val injector: Injector
-
-    val pgs = new PeerGroupSelection() {
-      val params = mainNetParams
-      lazy val get = mockPeerGroup
-    }
-    val memPoolWatcherActor = system.actorOf(MemPoolWatcherActor.props(pgs, injector.instanceOf[DatabaseExecutionContext]))
-    val memPoolWatcher = new MemPoolWatcher(memPoolWatcherActor)
-  }
-
-  trait TransactionFixtures {
-    val mainNetParams: MainNetParams
-    lazy val transactions = Json.parse(Source.fromResource("tx_valid.json").getLines.mkString)
-      .as[Array[JsArray]].map(_.value).filter(_.size > 1)
-      .map(testData => mainNetParams.getDefaultSerializer.makeTransaction(HEX.decode(testData(1).as[String].toLowerCase)))
-  }
-
-  trait WebSocketFixtures {
-    val mockWs = mock[WebSocketMock]
-    val mockWsActor = system.actorOf(MockWebsocketActor.props(mockWs))
-  }
-
-  trait ActorGuiceFixtures {
-    val mockMemPoolWatcher: MemPoolWatcherService
-    val config = Configuration(ConfigFactory.load("application.test.conf"))
-    def builder = new GuiceInjectorBuilder()
-      .bindings(new TestModule)
-      .overrides(inject.bind(classOf[Configuration]).toInstance(config))
-      .overrides(inject.bind(classOf[ActorSystem]).toInstance(system))
-      .overrides(inject.bind(classOf[MemPoolWatcherService]).toInstance(mockMemPoolWatcher))
-    val injector = builder.build()
-  }
-
-  trait WebhookDaoFixtures {
-    val injector: Injector
-    val webhookDao = injector.instanceOf[WebhookDao]
-  }
-
-  trait WebhookActorFixtures {
-    val injector: Injector
-
-    val hooksActor = {
-      system.actorOf(
-        HooksManagerActorWeb.props(
-          injector.instanceOf[TxMessagingActorWeb.Factory],
-          injector.instanceOf[TxFilterActor.Factory],
-          injector.instanceOf[WebhookDao],
-          injector.instanceOf[DatabaseExecutionContext]
-        )
-      )
-    }
-    val key = new URI("http://test")
-    val hook = Webhook(key, threshold = 100L)
-    val newHook = Webhook(key, threshold = 200L)
-    val insertHook = Tables.webhooks += hook
-    val queryHooks = Tables.webhooks.result
-  }
-
-  trait SlackChatActorFixtures {
-    val injector: Injector
-
-    val hooksActor = {
-      system.actorOf(
-        HooksManagerActorSlackChat.props(
-          injector.instanceOf[TxMessagingActorSlackChat.Factory],
-          injector.instanceOf[TxFilterActor.Factory],
-          injector.instanceOf[SlackChatHookDao],
-          injector.instanceOf[DatabaseExecutionContext]
-        )
-      )
-    }
-    val key = SlackChannel("http://test")
-    val hook = SlackChatHook(key, threshold = 100L)
-    val newHook = SlackChatHook(key, threshold = 200L)
-    val insertHook = Tables.slackChatHooks += hook
-    val queryHooks = Tables.slackChatHooks.result
-  }
-
-  trait HookActorTestLogic[Y] {
-    val hooksActor: ActorRef
-    val hook: Y
-    val newHook: Y
-    val key: Any
-    val insertHook: FixedSqlAction[Int, NoStream, Effect.Write]
-    val queryHooks: FixedSqlStreamingAction[Seq[Y], Y, Effect.Read]
-
-    def stopHook() = {
-      afterDbInit {
-        hooksActor ? Stop(key)
-      }
-    }
-
-    def startHook() = {
-      afterDbInit {
-        hooksActor ? Start(key)
-      }
-    }
-
-    def registerExistingHook() = {
-      afterDbInit {
-        for {
-          _ <- db.run(insertHook)
-          registered <- hooksActor ? Register(hook)
-        } yield registered
-      }
-    }
-
-    def registerHook() = {
-      afterDbInit {
-        for {
-          response <- hooksActor ? Register(hook)
-          dbContents <- db.run(queryHooks)
-        } yield (response, dbContents)
-      }
-    }
-
-    def updateHook() = {
-      afterDbInit {
-        for {
-          _ <- db.run(insertHook)
-          response <- hooksActor ? Update(newHook)
-          dbContents <- db.run(queryHooks)
-        } yield (response, dbContents)
-      }
-    }
-
-    def registerStartStopRestartStop() = {
-      afterDbInit {
-        for {
-          registered <- hooksActor ? Register(hook)
-          started <- hooksActor ? Start(key)
-          stopped <- hooksActor ? Stop(key)
-          _ <- Future {
-            expectNoMessage(200.millis)  // Wait for child actors to die
-          }
-          restarted <- hooksActor ? Start(key)
-          finalStop <- hooksActor ? Stop(key)
-        } yield (registered, started, stopped, restarted, finalStop)
-      }
-    }
-
-    def registerStartStart() = {
-      afterDbInit {
-        for {
-          registered <- hooksActor ? Register(hook)
-          started <- hooksActor ? Start(key)
-          error <- hooksActor ? Start(key)
-        } yield error
-      }
-    }
-
-  }
-
-  trait UserFixtures {
-    val mockUser = mock[User]
-    val mockUserManager = mock[UserManagerService]
-  }
-
-  trait TxWatchActorFixtures {
-    val mockWsActor: ActorRef
-    val mockMemPoolWatcher: MemPoolWatcherService
-    val mockUserManager: UserManagerService
-
-    val txWatchActor =
-      system.actorOf(AuthenticationActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
-  }
-
-  trait WebhookManagerFixtures {
-    val webhookDao: WebhookDao
-    val webhookManagerMock = mock[WebhookManagerMock]
-    val mockWebhookManagerActor = system.actorOf(MockWebhookManagerActor.props(webhookManagerMock))
-    val webhooksManager = new HooksManagerWeb(webhookDao, actor = mockWebhookManagerActor)
-  }
-
-  trait WebhooksActorFixtures {
-    val injector: Injector
-    val hooksActor = {
-      system.actorOf(
-        HooksManagerActorWeb.props(
-          injector.instanceOf[TxMessagingActorWeb.Factory],
-          injector.instanceOf[TxFilterActor.Factory],
-          injector.instanceOf[WebhookDao],
-          injector.instanceOf[DatabaseExecutionContext]
-        )
-      )
-    }
-  }
 
   "MemPoolWatcherActor" should {
 
@@ -399,13 +121,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       val listenerCapture = CaptureAll[OnTransactionBroadcastListener]()
       (mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
         .expects(capture(listenerCapture)).atLeastOnce()
-
-//      val pgs = new PeerGroupSelection() {
-//        val params = mainNetParams
-//        lazy val get = mockPeerGroup
-//      }
-//      val memPoolWatcherActor = system.actorOf(MemPoolWatcherActor.props(pgs, injector.instanceOf[DatabaseExecutionContext]))
-//      val memPoolWatcher = new MemPoolWatcher(memPoolWatcherActor)
 
       val txWatchActor =
         system.actorOf(AuthenticationActor.props(mockWsActor, memPoolWatcher, mockUserManager))
@@ -548,7 +263,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   "WebhooksManager" should {
 
     trait TestFixtures extends MemPoolWatcherFixtures with ActorGuiceFixtures
-      with WebhookDaoFixtures with WebhookActorFixtures with WebhookManagerFixtures
+      with WebhookDaoFixtures with WebhookFixtures with WebhookActorFixtures with WebhookManagerFixtures
 
     "register and start all hooks stored in the database on initialisation" in new TestFixtures {
 
@@ -635,7 +350,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   "WebhookManagerActor" should {
 
     trait TestFixtures
-      extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookActorFixtures with HookActorTestLogic[Webhook]
+      extends MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookFixtures
+        with WebhookActorFixtures with HookActorTestLogic[Webhook]
 
     trait TestFixturesTwoSubscribers extends TestFixtures with ActorGuiceFixtures {
       override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
@@ -682,6 +398,486 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           Success(Started(`hook`)),
           Success(Stopped(`hook`))) =>
       }
+    }
+  }
+
+  "WebhookDao" should {
+
+    trait TestFixtures extends DatabaseGuiceFixtures
+      with WebhookDaoFixtures with WebhookFixtures with WebhookDaoTestLogic
+
+    "record a web hook in the database" in new TestFixtures {
+      insertHook().futureValue should matchPattern { case (1, Seq(`hook`)) => }
+    }
+
+    "return an existing hook by key" in new TestFixtures {
+      findHook().futureValue should matchPattern { case (1, Some(`hook`)) => }
+    }
+
+    "return None when attempting to find a non existent hook" in new TestFixtures
+    {
+      findNonExistentHook().futureValue should matchPattern { case None => }
+    }
+
+    "update an existing hook" in new TestFixtures {
+      updateHook().futureValue should matchPattern { case(1, 1, Seq(`newHook`)) => }
+    }
+
+  }
+
+  "SlackChatHookDao" should {
+
+    trait TestFixtures extends DatabaseGuiceFixtures
+      with SlackChatHookDaoFixtures with SlackChatHookFixtures with SlackChatDaoTestLogic
+
+    "record a slack chat hook in the database" in new TestFixtures {
+      insertHook().futureValue should matchPattern { case (1, Seq(`hook`)) => }
+    }
+
+    "return an existing hook by key" in new TestFixtures {
+      findHook().futureValue should matchPattern { case (1, Some(`hook`)) => }
+    }
+
+    "return None when attempting to find a non existent hook" in new TestFixtures
+    {
+      findNonExistentHook().futureValue should matchPattern { case None => }
+    }
+
+    "update an existing hook" in new TestFixtures {
+      updateHook().futureValue should matchPattern { case(1, 1, Seq(`newHook`)) => }
+    }
+  }
+
+  "SlickSlashCommandHistoryDao" should {
+
+    trait TestFixtures extends DatabaseGuiceFixtures with SlickSlashCommandFixtures
+      with SlickSlashCommandHistoryDaoFixtures
+
+    "record a slack slash command history" in new TestFixtures {
+
+      afterDbInit {
+        for {
+          n <- slickSlashCommandHistoryDao.record(slashCommand)
+          r <- database.run(Tables.slashCommandHistory.result)
+        } yield (n, r)
+      }.futureValue should matchPattern {
+        case (1, Seq(SlashCommand(Some(_: Int), `channelId`, `command`, `text`, `teamDomain`, `teamId`,
+        `channelName`, `userId`, `userName`, `isEnterpriseInstall`, `timeStamp`))) =>
+      }
+    }
+  }
+
+  "SlashCommandHistoryController" should {
+
+    trait TestFixtures extends SlickSlashCommandFixtures
+
+    "convert an incoming parameter map to a case class" in new TestFixtures {
+      val paramMap =
+        Map[String, Vector[String]](
+          "channel_id" -> Vector(channelId),
+          "command" -> Vector(command),
+          "text" -> Vector(text)
+        )
+      SlackController.toCommand(paramMap) should matchPattern {
+        case Success(SlashCommand(None, `channelId`, `command`, `text`,
+                        None, None, None, None, None, None, Some(_: java.time.LocalDateTime))) =>
+      }
+    }
+
+    "return an error when insufficient parameters are supplied" in new TestFixtures {
+      val paramMap = {
+        Map[String, Vector[String]](
+          "channel_id" -> Vector(channelId)
+        )
+      }
+      SlackController.toCommand(paramMap) should matchPattern {
+        case Failure(_) =>
+      }
+    }
+  }
+
+  trait WebSocketMock {
+    def update(tx: TxUpdate): Unit
+  }
+
+  object MockWebsocketActor {
+    def props(mock: WebSocketMock) = Props(new MockWebsocketActor(mock))
+  }
+
+  class MockWebsocketActor(val mock: WebSocketMock) extends Actor {
+    override def receive: Receive = {
+      case tx: TxUpdate =>
+        mock.update(tx)
+      case _ =>
+        fail("unrecognized message format")
+    }
+  }
+
+  trait WebhookManagerMock {
+    def start(uri: URI): Unit
+    def register(hook: Webhook): Unit
+    def stop(uri: URI): Unit
+  }
+
+  object MockWebhookManagerActor {
+    def props(mock: WebhookManagerMock) = Props(new MockWebhookManagerActor(mock))
+  }
+
+  class MockWebhookManagerActor(val mock: WebhookManagerMock) extends Actor {
+    val hooks = mutable.Map[URI, Webhook]()
+
+    override def receive: Receive = {
+      case Start(uri: URI) =>
+        mock.start(uri)
+        sender ! Success(Started(hooks(uri)))
+      case Register(hook: Webhook) =>
+        mock.register(hook)
+        hooks(hook.uri) = hook
+        sender ! Success(Registered(hook))
+      case Stop(uri: URI) =>
+        mock.stop(uri)
+        sender ! Success(Stopped(hooks(uri)))
+      case x =>
+        fail(s"unrecognized message: $x")
+    }
+  }
+
+  lazy val db: JdbcBackend.Database = database.asInstanceOf[JdbcBackend.Database]
+  val testExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
+
+  class TestModule extends AbstractModule with AkkaGuiceSupport {
+    override def configure(): Unit = {
+      bind(classOf[Database]).toProvider(new Provider[Database] {
+        val get: jdbc.JdbcBackend.Database = db
+      })
+      bind(classOf[ExecutionContext]).toInstance(testExecutionContext)
+//      bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")
+      //      bindActor(classOf[WebhooksActor], "webhooks-actor")
+      bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
+      bindActorFactory(classOf[TxMessagingActorSlackChat], classOf[TxMessagingActorSlackChat.Factory])
+      bindActorFactory(classOf[AuthenticationActor], classOf[AuthenticationActor.Factory])
+      bindActorFactory(classOf[TxFilterActor], classOf[TxFilterActor.Factory])
+    }
+  }
+
+  override def afterAll(): Unit = {
+    TestKit.shutdownActorSystem(system)
+  }
+
+  def afterDbInit[T](fn: => Future[T]): Future[T] = {
+    for {
+      _ <- database.run(DBIO.seq(Tables.schema.dropIfExists, Tables.schema.create))
+      response <- fn
+    } yield response
+  }
+
+  trait MemPoolWatcherFixtures {
+    val mockMemPoolWatcher = mock[MemPoolWatcherService]
+    val mainNetParams = MainNetParams.get()
+
+    class MockPeerGroup extends PeerGroup(mainNetParams)
+    val mockPeerGroup = mock[MockPeerGroup]
+
+    def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]): ch.Derived = {
+      ch.never()
+    }
+    memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
+  }
+
+  trait MemPoolWatcherActorFixtures {
+    val mainNetParams: MainNetParams
+    val mockPeerGroup: PeerGroup
+    val injector: Injector
+
+    val pgs = new PeerGroupSelection() {
+      val params = mainNetParams
+      lazy val get = mockPeerGroup
+    }
+    val memPoolWatcherActor = system.actorOf(MemPoolWatcherActor.props(pgs, injector.instanceOf[DatabaseExecutionContext]))
+    val memPoolWatcher = new MemPoolWatcher(memPoolWatcherActor)
+  }
+
+  trait TransactionFixtures {
+    val mainNetParams: MainNetParams
+    lazy val transactions = Json.parse(Source.fromResource("tx_valid.json").getLines.mkString)
+      .as[Array[JsArray]].map(_.value).filter(_.size > 1)
+      .map(testData => mainNetParams.getDefaultSerializer.makeTransaction(HEX.decode(testData(1).as[String].toLowerCase)))
+  }
+
+  trait WebSocketFixtures {
+    val mockWs = mock[WebSocketMock]
+    val mockWsActor = system.actorOf(MockWebsocketActor.props(mockWs))
+  }
+
+  trait ActorGuiceFixtures {
+    val mockMemPoolWatcher: MemPoolWatcherService
+    val config = Configuration(ConfigFactory.load("application.test.conf"))
+    def builder = new GuiceInjectorBuilder()
+      .bindings(new TestModule)
+      .overrides(inject.bind(classOf[Configuration]).toInstance(config))
+      .overrides(inject.bind(classOf[ActorSystem]).toInstance(system))
+      .overrides(inject.bind(classOf[MemPoolWatcherService]).toInstance(mockMemPoolWatcher))
+    val injector = builder.build()
+  }
+
+  trait DatabaseGuiceFixtures {
+    class DatabaseTestModule extends AbstractModule {
+      override def configure(): Unit = {
+        bind(classOf[Database]).toProvider(new Provider[Database] {
+          val get: jdbc.JdbcBackend.Database = db
+        })
+        bind(classOf[ExecutionContext]).toInstance(testExecutionContext)
+      }
+    }
+    def builder = new GuiceInjectorBuilder()
+      .bindings(new DatabaseTestModule)
+      .overrides(inject.bind(classOf[ActorSystem]).toInstance(system))
+    val injector = builder.build()
+  }
+
+  trait WebhookFixtures {
+    val key = new URI("http://test")
+    val hook = Webhook(key, threshold = 100L)
+    val newHook = Webhook(key, threshold = 200L)
+  }
+
+  trait SlackChatHookFixtures {
+    val key = SlackChannel("#test")
+    val hook = SlackChatHook(key, threshold = 100L)
+    val newHook = SlackChatHook(key, threshold = 200L)
+  }
+
+  trait HookDaoTestLogic[X, Y] {
+    val hook: Y
+    val newHook: Y
+    val key: X
+    val hookDao: HookDao[X, Y]
+    val tableQuery: TableQuery[_] //= Tables.webhooks
+
+    def insertHook() = {
+      afterDbInit {
+        for {
+          n <- hookDao.insert(hook)
+          queryResult <- database.run(tableQuery.result)
+        } yield (n, queryResult)
+      }
+    }
+
+    def findNonExistentHook() = {
+      afterDbInit {
+        for {
+          hook <- hookDao.find(key)
+        } yield hook
+      }
+    }
+
+    def findHook() = {
+      afterDbInit {
+        for {
+          n <- hookDao.insert(hook)
+          hook <- hookDao.find(key)
+        } yield (n, hook)
+      }
+    }
+
+    def updateHook() = {
+      afterDbInit {
+        for {
+          i <- hookDao.insert(hook)
+          j <- hookDao.update(newHook)
+          queryResult <- database.run(tableQuery.result)
+        } yield (i, j, queryResult)
+      }
+    }
+  }
+
+  trait WebhookDaoTestLogic extends HookDaoTestLogic[URI, Webhook] {
+    override val tableQuery = Tables.webhooks
+  }
+
+  trait SlackChatDaoTestLogic extends HookDaoTestLogic[SlackChannel, SlackChatHook] {
+    override val tableQuery = Tables.slackChatHooks
+  }
+
+  trait SlackChatHookDaoFixtures {
+    val injector: Injector
+    val hookDao = injector.instanceOf[SlackChatHookDao]
+  }
+
+  trait WebhookDaoFixtures {
+    val injector: Injector
+    val hookDao = injector.instanceOf[WebhookDao]
+  }
+
+  trait WebhookActorFixtures {
+    val injector: Injector
+    val key: URI
+    val hook: Webhook
+    val newHook: Webhook
+    val hooksActor = {
+      system.actorOf(
+        HooksManagerActorWeb.props(
+          injector.instanceOf[TxMessagingActorWeb.Factory],
+          injector.instanceOf[TxFilterActor.Factory],
+          injector.instanceOf[WebhookDao],
+          injector.instanceOf[DatabaseExecutionContext]
+        )
+      )
+    }
+//    val key = new URI("http://test")
+//    val hook = Webhook(key, threshold = 100L)
+//    val newHook = Webhook(key, threshold = 200L)
+    val insertHook = Tables.webhooks += hook
+    val queryHooks = Tables.webhooks.result
+  }
+
+  trait SlackChatActorFixtures {
+    val injector: Injector
+
+    val hooksActor = {
+      system.actorOf(
+        HooksManagerActorSlackChat.props(
+          injector.instanceOf[TxMessagingActorSlackChat.Factory],
+          injector.instanceOf[TxFilterActor.Factory],
+          injector.instanceOf[SlackChatHookDao],
+          injector.instanceOf[DatabaseExecutionContext]
+        )
+      )
+    }
+    val key = SlackChannel("http://test")
+    val hook = SlackChatHook(key, threshold = 100L)
+    val newHook = SlackChatHook(key, threshold = 200L)
+    val insertHook = Tables.slackChatHooks += hook
+    val queryHooks = Tables.slackChatHooks.result
+  }
+
+  trait SlickSlashCommandFixtures {
+    val channelId = "1234"
+    val command = "/test"
+    val text = ""
+    val teamDomain = None
+    val teamId = Some("5678")
+    val channelName = Some("test-channel")
+    val userId = Some("91011")
+    val userName = Some("test-user")
+    val isEnterpriseInstall = Some(false)
+    val timeStamp = Some(java.time.LocalDateTime.of(2001, 1, 1, 0, 0))
+    val slashCommand = SlashCommand(None, channelId, command, text, teamDomain, teamId, channelName, userId,
+      userName, isEnterpriseInstall, timeStamp)
+  }
+
+  trait SlickSlashCommandHistoryDaoFixtures {
+    val injector: Injector
+    val slickSlashCommandHistoryDao = injector.instanceOf[SlickSlashCommandHistoryDao]
+ }
+
+  trait HookActorTestLogic[Y] {
+    val hooksActor: ActorRef
+    val hook: Y
+    val newHook: Y
+    val key: Any
+    val insertHook: FixedSqlAction[Int, NoStream, Effect.Write]
+    val queryHooks: FixedSqlStreamingAction[Seq[Y], Y, Effect.Read]
+
+    def stopHook() = {
+      afterDbInit {
+        hooksActor ? Stop(key)
+      }
+    }
+
+    def startHook() = {
+      afterDbInit {
+        hooksActor ? Start(key)
+      }
+    }
+
+    def registerExistingHook() = {
+      afterDbInit {
+        for {
+          _ <- db.run(insertHook)
+          registered <- hooksActor ? Register(hook)
+        } yield registered
+      }
+    }
+
+    def registerHook() = {
+      afterDbInit {
+        for {
+          response <- hooksActor ? Register(hook)
+          dbContents <- db.run(queryHooks)
+        } yield (response, dbContents)
+      }
+    }
+
+    def updateHook() = {
+      afterDbInit {
+        for {
+          _ <- db.run(insertHook)
+          response <- hooksActor ? Update(newHook)
+          dbContents <- db.run(queryHooks)
+        } yield (response, dbContents)
+      }
+    }
+
+    def registerStartStopRestartStop() = {
+      afterDbInit {
+        for {
+          registered <- hooksActor ? Register(hook)
+          started <- hooksActor ? Start(key)
+          stopped <- hooksActor ? Stop(key)
+          _ <- Future {
+            expectNoMessage(200.millis)  // Wait for child actors to die
+          }
+          restarted <- hooksActor ? Start(key)
+          finalStop <- hooksActor ? Stop(key)
+        } yield (registered, started, stopped, restarted, finalStop)
+      }
+    }
+
+    def registerStartStart() = {
+      afterDbInit {
+        for {
+          registered <- hooksActor ? Register(hook)
+          started <- hooksActor ? Start(key)
+          error <- hooksActor ? Start(key)
+        } yield error
+      }
+    }
+
+  }
+
+  trait UserFixtures {
+    val mockUser = mock[User]
+    val mockUserManager = mock[UserManagerService]
+  }
+
+  trait TxWatchActorFixtures {
+    val mockWsActor: ActorRef
+    val mockMemPoolWatcher: MemPoolWatcherService
+    val mockUserManager: UserManagerService
+
+    val txWatchActor =
+      system.actorOf(AuthenticationActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager))
+  }
+
+  trait WebhookManagerFixtures {
+    val hookDao: WebhookDao
+    val webhookManagerMock = mock[WebhookManagerMock]
+    val mockWebhookManagerActor = system.actorOf(MockWebhookManagerActor.props(webhookManagerMock))
+    val webhooksManager = new HooksManagerWeb(hookDao, actor = mockWebhookManagerActor)
+  }
+
+  trait WebhooksActorFixtures {
+    val injector: Injector
+    val hooksActor = {
+      system.actorOf(
+        HooksManagerActorWeb.props(
+          injector.instanceOf[TxMessagingActorWeb.Factory],
+          injector.instanceOf[TxFilterActor.Factory],
+          injector.instanceOf[WebhookDao],
+          injector.instanceOf[DatabaseExecutionContext]
+        )
+      )
     }
   }
 
