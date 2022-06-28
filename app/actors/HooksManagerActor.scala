@@ -70,7 +70,9 @@ trait HooksManagerActor[X, Y <: Hook[X]] extends Actor with InjectedActorSupport
       logger.debug(s"Received start request for $uri")
       provided(!(actors contains uri), uri withHook (hook => {
         self ! CreateActors(uri, hook)
-        Started(hook)
+        val startedHook = hook.newStatus(isRunning = true)
+        self ! Update(startedHook)
+        Started(startedHook)
       }), HookAlreadyStartedException(uri))
 
     case Stop(key: X) =>
@@ -78,7 +80,10 @@ trait HooksManagerActor[X, Y <: Hook[X]] extends Actor with InjectedActorSupport
       provided (actors contains key, {
         actors(key).foreach(_ ! PoisonPill)
         actors -= key
-        key withHook (hook => Stopped(hook))
+        key withHook (hook => {
+          self ! Update(hook.newStatus(isRunning = false))
+          Stopped(hook)
+        })
       }, HookNotStartedException(key))
 
     case CreateActors(key: X, hook: Filter) =>

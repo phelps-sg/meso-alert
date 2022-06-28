@@ -29,7 +29,7 @@ trait HooksManager[X, Y <: Hook[X]] extends ActorBackend {
 
     val initFuture = for {
       _ <- hookDao.init()
-      keys <- hookDao.allKeys()
+      keys <- hookDao.allRunningKeys()
       started <- Future.sequence(keys.map(key => start(key)))
     } yield started
 

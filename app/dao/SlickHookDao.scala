@@ -17,6 +17,8 @@ trait SlickHookDao[X, Y <: Hook[X]] extends SlickDao[Y] {
 
   implicit val ec: DatabaseExecutionContext = databaseExecutionContext
 
+  protected def toKeys(results: Future[Seq[String]]): Future[Seq[X]]
+
   def find(key: X): Future[Option[Hook[X]]] = {
     logger.debug(s"Querying for ${key.toString}")
     db.run(lookupKeyQuery(key).result).map {
@@ -44,6 +46,10 @@ trait SlickHookDao[X, Y <: Hook[X]] extends SlickDao[Y] {
       result <-
         db.run(table.insertOrUpdate(hook))
     } yield result
+  }
+
+  protected def runKeyQuery(query: Query[Rep[String], String, Seq]): Future[Seq[X]] = {
+    toKeys(db.run(query.result))
   }
 
 }

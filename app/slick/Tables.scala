@@ -13,15 +13,16 @@ object Tables {
     Some((hook.uri.toURL.toString, hook.threshold))
   }
 
-  def toWebhook(tuple: (String, Long)): Webhook = Webhook(new URI(tuple._1), tuple._2)
+  def toWebhook(tuple: (String, Long, Boolean)): Webhook = Webhook(new URI(tuple._1), tuple._2, tuple._3)
 
   class Webhooks(tag: Tag) extends Table[Webhook](tag, "webhooks") {
     def url = column[String]("url", O.PrimaryKey)
     def threshold = column[Long]("threshold")
-    def * = (url, threshold) <> (
-      h => Webhook(new URI(h._1), h._2),
+    def is_running = column[Boolean]("is_running")
+    def * = (url, threshold, is_running) <> (
+      h => Webhook(new URI(h._1), h._2, h._3),
       (h: Webhook) => {
-        Some(h.uri.toString, h.threshold)
+        Some(h.uri.toString, h.threshold, h.isRunning)
       }
     )
   }
@@ -52,10 +53,11 @@ object Tables {
   class SlackChatHooks(tag: Tag) extends Table[SlackChatHook](tag, "slack_chat_hooks") {
     def channel_id = column[String]("channel_id", O.PrimaryKey)
     def threshold = column[Long]("threshold")
-    def * = (channel_id, threshold) <> (
-      h => SlackChatHook(SlackChannel(h._1), h._2),
+    def is_running = column[Boolean]("is_running")
+    def * = (channel_id, threshold, is_running) <> (
+      h => SlackChatHook(SlackChannel(h._1), h._2, h._3),
       (h: SlackChatHook) => {
-        Some(h.channel.id, h.threshold)
+        Some(h.channel.id, h.threshold, h.isRunning)
       }
     )
   }

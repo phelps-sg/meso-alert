@@ -20,7 +20,16 @@ class SlickWebhookDao @Inject() (val db: Database,
   override val lookupHookQuery = (hook: Webhook) => Tables.webhooks.filter(_.url === hook.uri.toString)
   override val lookupKeyQuery = (uri: URI) => Tables.webhooks.filter(_.url === uri.toString)
 
-  def allKeys(): Future[Seq[URI]] = db.run(Tables.webhooks.map(_.url).result) map {
+  override def toKeys(results: Future[Seq[String]]): Future[Seq[URI]] = results map {
     _.map(new URI(_))
   }
+
+  def allKeys(): Future[Seq[URI]] = {
+    runKeyQuery(for (hook <- Tables.webhooks) yield hook.url)
+  }
+
+  def allRunningKeys(): Future[Seq[URI]] = {
+    runKeyQuery(for (hook <- Tables.webhooks if hook.is_running) yield hook.url)
+  }
+
 }

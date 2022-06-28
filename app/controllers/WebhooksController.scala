@@ -35,7 +35,7 @@ class WebhooksController @Inject()(val controllerComponents: ControllerComponent
   }
 
   def register: Action[HookDto] = Action.async(parse.json[HookDto]) { request =>
-    checkEx(slackWebHooksManager.register(Webhook(new URI(request.body.uri), request.body.threshold)))
+    checkEx(slackWebHooksManager.register(Webhook(new URI(request.body.uri), request.body.threshold, isRunning = true)))
   }
 
 }

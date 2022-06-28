@@ -11,12 +11,16 @@ case class SlackChannel(id: String)
 
 trait Hook[+X] {
   def key: X
+  val isRunning: Boolean
+  def newStatus(isRunning: Boolean): Hook[X]
 }
 
-case class Webhook(uri: URI, threshold: Long) extends Hook[URI] with ThresholdFilter {
+case class Webhook(uri: URI, threshold: Long, isRunning: Boolean) extends Hook[URI] with ThresholdFilter {
   def key: URI = uri
+  override def newStatus(isRunning: Boolean): Hook[URI] = copy(isRunning = isRunning)
 }
 
-case class SlackChatHook(channel: SlackChannel, threshold: Long) extends Hook[SlackChannel] with ThresholdFilter {
+case class SlackChatHook(channel: SlackChannel, threshold: Long, isRunning: Boolean) extends Hook[SlackChannel] with ThresholdFilter {
   def key: SlackChannel = channel
+  override def newStatus(isRunning: Boolean): Hook[SlackChannel] = copy(isRunning = isRunning)
 }

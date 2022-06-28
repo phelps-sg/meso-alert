@@ -1,12 +1,13 @@
 package actors
 
-import scala.jdk.CollectionConverters.CollectionHasAsScala
 import actors.AuthenticationActor.TxInputOutput
 import com.github.nscala_time.time.Imports.DateTime
 import dao.Hook
-import org.bitcoinj.core.{LegacyAddress, NetworkParameters, SegwitAddress, Transaction, TransactionInput, TransactionOutput, Utils}
+import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
 import play.api.libs.json.{JsObject, Json, Writes}
+
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 case class Register[X](hook: Hook[X])
 case class Update[X](hook: Hook[X])

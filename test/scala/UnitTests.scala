@@ -1,6 +1,6 @@
-import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
 import actors.AuthenticationActor.{Auth, TxInputOutput}
-import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, AuthenticationActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
+import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
+import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -265,31 +265,37 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     trait TestFixtures extends MemPoolWatcherFixtures with ActorGuiceFixtures
       with WebhookDaoFixtures with WebhookFixtures with WebhookActorFixtures with WebhookManagerFixtures
 
-    "register and start all hooks stored in the database on initialisation" in new TestFixtures {
+    "register and start all running hooks stored in the database on initialisation" in new TestFixtures {
 
-      val hook1 = Webhook(new URI("http://test1"), 10)
-      val hook2 = Webhook(new URI("http://test2"), 20)
+      val hook1 = Webhook(new URI("http://test1"), 10, isRunning = true)
+      val hook2 = Webhook(new URI("http://test2"), 20, isRunning = true)
+      val hook3 = Webhook(new URI("http://test3"), 30, isRunning = false)
 
-      (webhookManagerMock.register _).expects(hook1).returning(Success(Registered(hook1)))
-      (webhookManagerMock.register _).expects(hook2).returning(Success(Registered(hook2)))
+      val hooks = List(hook1, hook2, hook3)
 
-      (webhookManagerMock.start _).expects(hook1.uri).returning(Success(Started(hook1)))
-      (webhookManagerMock.start _).expects(hook2.uri).returning(Success(Started(hook2)))
+      hooks foreach { hook =>
+        (webhookManagerMock.register _).expects(hook).returning(Success(Registered(hook)))
+      }
+
+      hooks.filter(_.isRunning).foreach { hook =>
+        (webhookManagerMock.start _).expects(hook.uri).returning(Success(Started(hook)))
+      }
 
       val init = for {
         _ <- database.run(
           DBIO.seq(
             Tables.schema.create,
-            Tables.webhooks += hook1,
-            Tables.webhooks += hook2
+            Tables.webhooks ++= hooks,
           )
         )
-        _ <- webhooksManager.register(hook1)
-        _ <- webhooksManager.register(hook2)
+        _ <- Future.sequence(hooks.map(webhooksManager.register))
         response <- webhooksManager.init()
       } yield response
 
-      whenReady(init) { _ => succeed }
+      init.futureValue should matchPattern {
+        case Seq(Started(`hook1`), Started(`hook2`)) =>
+      }
+
     }
   }
 
@@ -342,7 +348,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           Success(Started(`hook`)),
           Success(Stopped(`hook`)),
           Success(Started(`hook`)),
-          Success(Stopped(`hook`))) =>
+          Success(Stopped(`hook`)),
+          Seq(`stoppedHook`)) =>
       }
     }
   }
@@ -396,7 +403,8 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           Success(Started(`hook`)),
           Success(Stopped(`hook`)),
           Success(Started(`hook`)),
-          Success(Stopped(`hook`))) =>
+          Success(Stopped(`hook`)),
+          Seq(`stoppedHook`)) =>
       }
     }
   }
@@ -637,14 +645,15 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   trait WebhookFixtures {
     val key = new URI("http://test")
-    val hook = Webhook(key, threshold = 100L)
-    val newHook = Webhook(key, threshold = 200L)
+    val hook = Webhook(key, threshold = 100L, isRunning = true)
+    val stoppedHook = hook.copy(isRunning = false)
+    val newHook = Webhook(key, threshold = 200L, isRunning = true)
   }
 
   trait SlackChatHookFixtures {
     val key = SlackChannel("#test")
-    val hook = SlackChatHook(key, threshold = 100L)
-    val newHook = SlackChatHook(key, threshold = 200L)
+    val hook = SlackChatHook(key, threshold = 100L, isRunning = true)
+    val newHook = SlackChatHook(key, threshold = 200L, isRunning = true)
   }
 
   trait HookDaoTestLogic[X, Y <: Hook[X]] {
@@ -745,8 +754,9 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       )
     }
     val key = SlackChannel("http://test")
-    val hook = SlackChatHook(key, threshold = 100L)
-    val newHook = SlackChatHook(key, threshold = 200L)
+    val hook = SlackChatHook(key, threshold = 100L, isRunning = true)
+    val stoppedHook = hook.copy(isRunning = false)
+    val newHook = SlackChatHook(key, threshold = 200L, isRunning = true)
     val insertHook = Tables.slackChatHooks += hook
     val queryHooks = Tables.slackChatHooks.result
   }
@@ -830,7 +840,9 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           }
           restarted <- hooksActor ? Start(key)
           finalStop <- hooksActor ? Stop(key)
-        } yield (registered, started, stopped, restarted, finalStop)
+          _ <- Future { expectNoMessage(200.millis) } // Wait for database to become consistent
+          dbContents <- db.run(queryHooks)
+        } yield (registered, started, stopped, restarted, finalStop, dbContents)
       }
     }
 

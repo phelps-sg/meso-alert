@@ -84,7 +84,7 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
           case Some(amount) =>
             logger.debug(s"amount = $amount")
             val f = for {
-              _ <- hooksManager.update(SlackChatHook(channel, amount * 100000000))
+              _ <- hooksManager.update(SlackChatHook(channel, amount * 100000000, isRunning = true))
               started <- hooksManager.start(channel)
             } yield started
             f.map { _ => Ok(s"OK, I will send updates on any BTC transactions exceeding $amount BTC.") }

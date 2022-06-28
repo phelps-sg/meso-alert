@@ -21,8 +21,17 @@ class SlickSlackChatDao @Inject() (val db: Database,
   override val lookupKeyQuery =
     (channel: SlackChannel) => Tables.slackChatHooks.filter(_.channel_id === channel.id)
 
-  def allKeys(): Future[Seq[SlackChannel]] = db.run(Tables.slackChatHooks.map(_.channel_id).result) map {
-    _.map(SlackChannel)
+  override def toKeys(results: Future[Seq[String]]): Future[Seq[SlackChannel]] = {
+    results map {
+      _.map(SlackChannel)
+    }
   }
 
+  def allKeys(): Future[Seq[SlackChannel]] = {
+    runKeyQuery(for(hook <- Tables.slackChatHooks) yield hook.channel_id)
+  }
+
+  override def allRunningKeys(): Future[Seq[_ <: SlackChannel]] = {
+    runKeyQuery(for(hook <- Tables.slackChatHooks if hook.is_running) yield hook.channel_id)
+  }
 }
