@@ -8,6 +8,7 @@ import play.api.libs.concurrent.InjectedActorSupport
 import slick.DatabaseExecutionContext
 
 import scala.concurrent.ExecutionContext
+import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 
 trait TxMessagingActorFactory[X] {
@@ -18,7 +19,8 @@ object HooksManagerActor {
   case class CreateActors[X](uri: X, hook: Hook[X])
 }
 
-trait HooksManagerActor[X, Y <: Hook[X]] extends Actor with InjectedActorSupport with Logging {
+abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
+  extends Actor with InjectedActorSupport with Logging {
 
   import HooksManagerActor._
 
