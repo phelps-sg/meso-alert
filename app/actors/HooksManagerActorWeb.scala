@@ -39,7 +39,7 @@ class HooksManagerActorWeb @Inject()(val messagingActorFactory: TxMessagingActor
                                      val filteringActorFactory: TxFilterActor.Factory,
                                      val dao: WebhookDao,
                                      val databaseExecutionContext: DatabaseExecutionContext)
-  extends HooksManagerActor[URI, Webhook] with Logging {
+  extends HooksManagerActor[URI, Webhook] {
 
   override val hookTypePrefix: String = "webhook"
   override def encodeKey(uri: URI): String = URLEncoder.encode(uri.toString, "UTF-8")

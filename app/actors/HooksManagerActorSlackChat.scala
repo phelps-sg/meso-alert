@@ -28,7 +28,7 @@ class HooksManagerActorSlackChat @Inject()(val messagingActorFactory: TxMessagin
                                            val filteringActorFactory: TxFilterActor.Factory,
                                            val dao: SlackChatHookDao,
                                            val databaseExecutionContext: DatabaseExecutionContext)
-  extends HooksManagerActor[SlackChannel, SlackChatHook] with Logging {
+  extends HooksManagerActor[SlackChannel, SlackChatHook] {
 
   override val hookTypePrefix: String = "slack-chat-hook"
   override def encodeKey(channel: SlackChannel): String = URLEncoder.encode(channel.id, "UTF-8")
