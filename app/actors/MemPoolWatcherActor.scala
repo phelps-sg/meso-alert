@@ -75,11 +75,11 @@ class MemPoolWatcherActor @Inject() (val peerGroupSelection: PeerGroupSelection,
             peerGroup.start()
           } map {
             _ => Success(Started(peerGroup))
-          } pipeTo sender
+          } pipeTo sender()
 
         case Some(_) =>
           logger.debug("Peer group already started.")
-          sender ! Failure(PeerGroupAlreadyStartedException)
+          sender() ! Failure(PeerGroupAlreadyStartedException)
       }
 
     case LogCounters =>
