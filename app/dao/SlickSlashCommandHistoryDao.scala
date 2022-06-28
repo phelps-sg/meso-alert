@@ -1,10 +1,16 @@
 package dao
-import com.google.inject.Inject
+import com.google.inject.{ImplementedBy, Inject}
 import slick.BtcPostgresProfile.api._
 import slick.jdbc.JdbcBackend.Database
 import slick.{DatabaseExecutionContext, Tables}
 
 import scala.concurrent.Future
+
+@ImplementedBy(classOf[SlickSlashCommandHistoryDao])
+trait SlashCommandHistoryDao {
+  def record(slashCommand: SlashCommand): Future[Int]
+  def init(): Future[Unit]
+}
 
 class SlickSlashCommandHistoryDao @Inject()(val db: Database,
                                             val databaseExecutionContext: DatabaseExecutionContext)

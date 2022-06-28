@@ -10,11 +10,21 @@ import slick.DatabaseExecutionContext
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
+trait TxMessagingActorFactory[X] {
+  def apply(x: X): Actor
+}
+
+object HooksManagerActor {
+  case class CreateActors[X](uri: X, hook: Hook[X])
+}
+
 trait HooksManagerActor[X, Y <: Hook[X]] extends Actor with InjectedActorSupport {
+
+  import HooksManagerActor._
 
   val logger: Logger
   val dao: HookDao[X, Y]
-  val messagingActorFactory: HookActorFactory[X]
+  val messagingActorFactory: TxMessagingActorFactory[X]
   val filteringActorFactory: TxFilterActor.Factory
   val databaseExecutionContext: DatabaseExecutionContext
   val hookTypePrefix: String

@@ -6,6 +6,8 @@ import slick.DatabaseExecutionContext
 
 import scala.concurrent.Future
 
+case class DuplicateHookException[X](uri: X) extends Exception(s"A hook already exists with key $uri")
+
 trait SlickHookDao[X, Y <: Hook[X]] extends SlickDao[Y] {
 
   val logger: Logger

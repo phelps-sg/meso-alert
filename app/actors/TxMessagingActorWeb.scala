@@ -28,7 +28,7 @@ class MonixBackend extends HttpBackendSelection {
 
 object TxMessagingActorWeb {
 
-  trait Factory extends HookActorFactory[URI] {
+  trait Factory extends TxMessagingActorFactory[URI] {
     def apply(hookUri: URI): Actor
   }
 }

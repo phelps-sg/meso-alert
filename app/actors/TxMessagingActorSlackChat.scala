@@ -16,7 +16,7 @@ import scala.util.{Failure, Success}
 
 object TxMessagingActorSlackChat  {
 
-  trait Factory extends HookActorFactory[SlackChannel] {
+  trait Factory extends TxMessagingActorFactory[SlackChannel] {
     def apply(channel: SlackChannel): Actor
   }
 }
