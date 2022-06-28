@@ -1,7 +1,6 @@
 package dao
 
 import com.google.inject.{Inject, Singleton}
-import org.slf4j.{Logger, LoggerFactory}
 import slick.BtcPostgresProfile.api._
 import slick.jdbc.JdbcBackend.Database
 import slick.{DatabaseExecutionContext, Tables}
@@ -14,7 +13,6 @@ class SlickSlackChatDao @Inject() (val db: Database,
                                    val databaseExecutionContext: DatabaseExecutionContext)
   extends SlackChatHookDao with SlickHookDao[SlackChannel, SlackChatHook] {
 
-  override val logger: Logger = LoggerFactory.getLogger(classOf[SlickWebhookDao])
   override val table = Tables.slackChatHooks
   override val lookupHookQuery =
     (hook: SlackChatHook) => Tables.slackChatHooks.filter(_.channel_id === hook.channel.id)

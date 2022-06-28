@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
-import org.slf4j.{Logger, LoggerFactory}
+import play.api.Logging
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
 import services.{InvalidCredentialsException, MemPoolWatcherService, UserManagerService}
@@ -44,9 +44,7 @@ object AuthenticationActor {
 //noinspection TypeAnnotation
 class AuthenticationActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: MemPoolWatcherService,
                                     userManager: UserManagerService)(implicit system: ActorSystem)
-  extends Actor with TxUpdateActor {
-
-  override val logger: Logger = LoggerFactory.getLogger(classOf[AuthenticationActor])
+  extends Actor with TxUpdateActor with Logging {
 
   import AuthenticationActor._
 

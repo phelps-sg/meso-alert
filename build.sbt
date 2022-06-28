@@ -12,7 +12,7 @@ Test / javaOptions += "-Dconfig.file=test/resources/application.test.conf"
 
 libraryDependencies += guice
 libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
-libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.11"
+//libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.11"
 libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.30.0"
 
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test

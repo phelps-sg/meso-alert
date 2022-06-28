@@ -6,7 +6,7 @@ import com.google.inject.Inject
 import org.bitcoinj.core.{NetworkParameters, Peer, Transaction}
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
-import org.slf4j.LoggerFactory
+import play.api.Logging
 import services.PeerGroupSelection
 import slick.DatabaseExecutionContext
 
@@ -29,9 +29,8 @@ object MemPoolWatcherActor {
 }
 
 class MemPoolWatcherActor @Inject() (val peerGroupSelection: PeerGroupSelection,
-                                     val databaseExecutionContext: DatabaseExecutionContext) extends Actor {
-
-  private val logger = LoggerFactory.getLogger(classOf[MemPoolWatcherActor])
+                                     val databaseExecutionContext: DatabaseExecutionContext)
+  extends Actor with Logging {
 
   private val TOTAL_KEY: String = "TOTAL"
   //noinspection ActorMutableStateInspection
@@ -53,7 +52,7 @@ class MemPoolWatcherActor @Inject() (val peerGroupSelection: PeerGroupSelection,
     case NewTransaction(tx: Transaction) =>
       val result: RiskAnalysis.Result = DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze
       self ! IncrementCounter(TOTAL_KEY)
-      logger.debug("tx {} result {}", tx.getTxId, result)
+      logger.debug(s"tx ${tx.getTxId} result $result")
       self ! IncrementCounter(result.name)
       if (result eq RiskAnalysis.Result.NON_STANDARD)
         self ! IncrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))

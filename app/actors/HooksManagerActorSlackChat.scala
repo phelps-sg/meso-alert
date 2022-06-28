@@ -3,7 +3,7 @@ package actors
 import akka.actor.Props
 import com.google.inject.Inject
 import dao.{SlackChannel, SlackChatHook, SlackChatHookDao}
-import org.slf4j.{Logger, LoggerFactory}
+import play.api.Logging
 import slick.DatabaseExecutionContext
 
 import java.net.URLEncoder
@@ -28,9 +28,8 @@ class HooksManagerActorSlackChat @Inject()(val messagingActorFactory: TxMessagin
                                            val filteringActorFactory: TxFilterActor.Factory,
                                            val dao: SlackChatHookDao,
                                            val databaseExecutionContext: DatabaseExecutionContext)
-  extends HooksManagerActor[SlackChannel, SlackChatHook] {
+  extends HooksManagerActor[SlackChannel, SlackChatHook] with Logging {
 
-  override val logger: Logger = LoggerFactory.getLogger(classOf[HooksManagerActorSlackChat])
   override val hookTypePrefix: String = "slack-chat-hook"
   override def encodeKey(channel: SlackChannel): String = URLEncoder.encode(channel.id, "UTF-8")
 }

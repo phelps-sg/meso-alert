@@ -1,13 +1,12 @@
 package actors
 
 import akka.actor.ActorRef
-import org.slf4j.Logger
+import play.api.Logging
 import services.MemPoolWatcherService
 
-trait TxUpdateActor {
+trait TxUpdateActor extends Logging {
   val self: ActorRef
   val memPoolWatcher: MemPoolWatcherService
-  val logger: Logger
 
   def registerWithWatcher(): Unit = {
     logger.info("Registering new mem pool listener... ")

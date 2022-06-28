@@ -3,7 +3,7 @@ package actors
 import akka.actor.Props
 import com.google.inject.Inject
 import dao.{Hook, SlackChatHook, Webhook, WebhookDao}
-import org.slf4j.{Logger, LoggerFactory}
+import play.api.Logging
 import play.api.libs.json.{JsObject, Json, Writes}
 import slick.DatabaseExecutionContext
 
@@ -39,9 +39,8 @@ class HooksManagerActorWeb @Inject()(val messagingActorFactory: TxMessagingActor
                                      val filteringActorFactory: TxFilterActor.Factory,
                                      val dao: WebhookDao,
                                      val databaseExecutionContext: DatabaseExecutionContext)
-  extends HooksManagerActor[URI, Webhook] {
+  extends HooksManagerActor[URI, Webhook] with Logging {
 
-  override val logger: Logger = LoggerFactory.getLogger(classOf[HooksManagerActorWeb])
   override val hookTypePrefix: String = "webhook"
   override def encodeKey(uri: URI): String = URLEncoder.encode(uri.toString, "UTF-8")
 }

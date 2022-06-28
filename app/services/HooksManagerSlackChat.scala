@@ -4,7 +4,6 @@ import akka.actor.{ActorRef, ActorSystem}
 import com.google.inject.ImplementedBy
 import com.google.inject.name.Named
 import dao.{SlackChannel, SlackChatHook, SlackChatHookDao}
-import org.slf4j.{Logger, LoggerFactory}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
@@ -16,7 +15,4 @@ trait HooksManagerSlackChatService extends HooksManagerService[SlackChannel, Sla
 class HooksManagerSlackChat @Inject()(val hookDao: SlackChatHookDao,
                                       @Named("slack-hooks-actor") val actor: ActorRef)
                                      (implicit val system: ActorSystem, val executionContext: ExecutionContext)
-  extends HooksManagerSlackChatService with HooksManager[SlackChannel, SlackChatHook] {
-
-  override val logger: Logger = LoggerFactory.getLogger(classOf[HooksManagerWeb])
-}
+  extends HooksManagerSlackChatService with HooksManager[SlackChannel, SlackChatHook]

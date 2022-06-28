@@ -4,7 +4,6 @@ import akka.actor.{ActorRef, ActorSystem}
 import com.google.inject.ImplementedBy
 import com.google.inject.name.Named
 import dao.{Webhook, WebhookDao}
-import org.slf4j.{Logger, LoggerFactory}
 
 import java.net.URI
 import javax.inject.{Inject, Singleton}
@@ -17,7 +16,4 @@ trait HooksManagerWebService extends HooksManagerService[URI, Webhook]
 class HooksManagerWeb @Inject()(val hookDao: WebhookDao,
                                 @Named("webhooks-actor") val actor: ActorRef)
                                (implicit val system: ActorSystem, val executionContext: ExecutionContext)
-  extends HooksManagerWebService with HooksManager[URI, Webhook] {
-
-  override val logger: Logger = LoggerFactory.getLogger(classOf[HooksManagerWeb])
-}
+  extends HooksManagerWebService with HooksManager[URI, Webhook]

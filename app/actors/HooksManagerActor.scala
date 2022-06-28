@@ -3,7 +3,7 @@ package actors
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
 import dao.{DuplicateHookException, Filter, Hook, HookDao}
-import org.slf4j.Logger
+import play.api.Logger
 import play.api.libs.concurrent.InjectedActorSupport
 import slick.DatabaseExecutionContext
 
@@ -22,7 +22,7 @@ trait HooksManagerActor[X, Y <: Hook[X]] extends Actor with InjectedActorSupport
 
   import HooksManagerActor._
 
-  val logger: Logger
+  protected val logger: Logger
   val dao: HookDao[X, Y]
   val messagingActorFactory: TxMessagingActorFactory[X]
   val filteringActorFactory: TxFilterActor.Factory

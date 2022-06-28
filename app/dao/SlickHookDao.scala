@@ -1,6 +1,6 @@
 package dao
 
-import org.slf4j.Logger
+import play.api.Logging
 import slick.BtcPostgresProfile.api._
 import slick.DatabaseExecutionContext
 
@@ -8,9 +8,8 @@ import scala.concurrent.Future
 
 case class DuplicateHookException[X](uri: X) extends Exception(s"A hook already exists with key $uri")
 
-trait SlickHookDao[X, Y <: Hook[X]] extends SlickDao[Y] {
+trait SlickHookDao[X, Y <: Hook[X]] extends SlickDao[Y] with Logging {
 
-  val logger: Logger
   val databaseExecutionContext: DatabaseExecutionContext
   val lookupHookQuery: Y => Query[_, Y, Seq]
   val lookupKeyQuery: X => Query[_, Y, Seq]

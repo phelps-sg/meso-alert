@@ -7,8 +7,7 @@ import com.slack.api.Slack
 import com.slack.api.methods.request.chat.ChatPostMessageRequest
 import com.slack.api.methods.response.chat.ChatPostMessageResponse
 import dao.SlackChannel
-import org.slf4j.LoggerFactory
-import play.api.Configuration
+import play.api.{Configuration, Logging}
 import slick.SlackChatExecutionContext
 
 import scala.concurrent.Future
@@ -22,11 +21,9 @@ object TxMessagingActorSlackChat  {
 }
 
 class TxMessagingActorSlackChat @Inject()(config : Configuration, sce: SlackChatExecutionContext,
-                                          @Assisted channel: SlackChannel) extends Actor {
+                                          @Assisted channel: SlackChannel) extends Actor with Logging {
 
   implicit val executionContext: SlackChatExecutionContext = sce
-
-  private val logger = LoggerFactory.getLogger(classOf[TxMessagingActorSlackChat])
 
   private val slack = Slack.getInstance()
   private val token = config.get[String]("slack.botToken")

@@ -3,7 +3,7 @@ package services
 import actors.{Register, Registered, Start, Started, Stop, Stopped, Update, Updated}
 import akka.actor.{ActorRef, ActorSystem}
 import dao.{Hook, HookDao}
-import org.slf4j.Logger
+import play.api.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -15,9 +15,7 @@ trait HooksManagerService[X, Y] {
   def register(hook: Y): Future[Registered[Y]]
 }
 
-trait HooksManager[X, Y <: Hook[X]] extends ActorBackend {
-
-  val logger: Logger
+trait HooksManager[X, Y <: Hook[X]] extends ActorBackend with Logging {
 
   val hookDao: HookDao[X, Y]
   val actor: ActorRef

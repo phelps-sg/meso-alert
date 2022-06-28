@@ -7,7 +7,7 @@ import com.google.inject.name.Named
 import org.bitcoinj.core._
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.utils.BriefLogFormatter
-import org.slf4j.{Logger, LoggerFactory}
+import play.api.Logging
 
 import javax.inject.{Inject, Provider, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,9 +33,8 @@ class MainNetPeerGroup extends PeerGroupSelection {
 @Singleton
 class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
                               (implicit system: ActorSystem, implicit val executionContext: ExecutionContext)
-  extends MemPoolWatcherService with ActorBackend {
+  extends MemPoolWatcherService with ActorBackend with Logging {
 
-  private val logger: Logger = LoggerFactory.getLogger(classOf[MemPoolWatcher])
   private val STATISTICS_FREQUENCY_MS: Long = 1000 * 60
 
   import actors.MemPoolWatcherActor._
