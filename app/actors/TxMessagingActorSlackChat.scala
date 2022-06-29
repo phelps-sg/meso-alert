@@ -13,6 +13,8 @@ import slick.SlackChatExecutionContext
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
+import scala.jdk.FutureConverters._
+
 object TxMessagingActorSlackChat  {
 
   trait Factory extends TxMessagingActorFactory[SlackChannel] {
@@ -27,23 +29,23 @@ class TxMessagingActorSlackChat @Inject()(config : Configuration, sce: SlackChat
 
   private val slack = Slack.getInstance()
   private val token = config.get[String]("slack.botToken")
-  private val methods = slack.methods(token)
+  private val methods = slack.methodsAsync(token)
 
   def sendMessage(channelId: String, message: String): Future[ChatPostMessageResponse] = {
 
-    val f = Future {
-      logger.debug(s"token = $token")
-      val request = ChatPostMessageRequest.builder
-        .token(token)
-        .username("meso-alert-slash-command")
-        .channel(channelId)
-        .text(message)
-        .build
-      logger.debug(s"Submitting request: $request")
-      methods.chatPostMessage(request)
-    }
+    logger.debug(s"token = $token")
 
-    f.onComplete {
+    val request = ChatPostMessageRequest.builder
+      .token(token)
+      .username("meso-alert-slash-command")
+      .channel(channelId)
+      .text(message)
+      .build
+
+    logger.debug(s"Submitting request: $request")
+
+    val chatPostMessageFuture = methods.chatPostMessage(request).asScala
+    chatPostMessageFuture.onComplete {
       case Success(response) if response.isOk => logger.info(s"Successfully posted message $message to $channelId")
       case Success(response) if !response.isOk =>
         logger.error(response.getError)
@@ -53,7 +55,7 @@ class TxMessagingActorSlackChat @Inject()(config : Configuration, sce: SlackChat
         ex.printStackTrace()
     }
 
-    f
+    chatPostMessageFuture
   }
 
   override def receive: Receive = {
