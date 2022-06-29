@@ -19,7 +19,8 @@ class SlackAuthController @Inject()(protected val config: Configuration,
                                    (implicit val ec: ExecutionContext)
   extends BaseController with SlackClient with Logging {
 
-  def authRedirect(temporaryCode: String): mvc.Action[AnyContent] = Action.async { implicit request: Request[AnyContent] =>
+  def authRedirect(temporaryCode: String): mvc.Action[AnyContent] =
+    Action.async { implicit request: Request[AnyContent] =>
 
     logger.debug("Received slash auth redirect")
 
