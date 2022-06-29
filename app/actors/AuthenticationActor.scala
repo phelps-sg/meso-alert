@@ -29,12 +29,14 @@ object AuthenticationActor {
   }
   case class Die(message: String)
 
+  // scalafix:off
   implicit val authWrites = new Writes[Auth] {
     def writes(auth: Auth): JsObject = Json.obj(
       "id" -> auth.id,
       "token" -> auth.token
     )
   }
+  // scalafix:on
 
   implicit val authReads: Reads[Auth] =
     ((JsPath \ "id").read[String] and (JsPath \ "token").read[String])(Auth.apply _)
