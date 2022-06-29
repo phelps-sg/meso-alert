@@ -45,6 +45,12 @@ sbt-test:
 sbt-build:
 	$(SDK_INIT); sbt dist
 
+sbt-scalafix-check:
+	$(SDK_INIT); sbt "scalafixAll --check"
+
+sbt-scalafix:
+	$(SDK_INIT); sbt "scalafixAll"
+
 docker-push: docker-build
 	sudo docker push registry.gitlab.com/mesonomics/meso-alert/play-server
 
