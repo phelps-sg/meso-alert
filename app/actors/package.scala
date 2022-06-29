@@ -6,6 +6,7 @@ import scala.collection.immutable.ArraySeq
 //noinspection TypeAnnotation
 package object actors {
 
+  // scalafix:off
   implicit val txInputOutputWrites = new Writes[TxInputOutput] {
     def writes(inpOut: TxInputOutput): JsObject = {
       val addressField: Array[(String, Json.JsValueWrapper)] =
@@ -15,10 +16,11 @@ package object actors {
       Json.obj(ArraySeq.unsafeWrapArray(addressField ++ valueField): _*)
     }
   }
+  // scalafix:on
 
   val blockChairBaseURL = "https://www.blockchair.com/bitcoin"
-  def linkToTxHash(hash: String) = s"<$blockChairBaseURL/transaction/$hash|$hash>"
-  def linkToAddress(address: String) = s"<$blockChairBaseURL/address/$address|$address>"
+  def linkToTxHash(hash: String): String = s"<$blockChairBaseURL/transaction/$hash|$hash>"
+  def linkToAddress(address: String): String = s"<$blockChairBaseURL/address/$address|$address>"
 
   def formatSatoshi(value: Long): String = (value / 100000000L).toString
 
