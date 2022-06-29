@@ -8,6 +8,8 @@ play.filters.hosts {
   allowed = [".ngrok.io", "localhost:9000"]
 }
 
+slack.clientId = "${SLACK_CLIENT_ID}"
+slack.clientSecret = "${SLACK_CLIENT_SECRET}"
 slack.botToken = ${SLACK_BOT_TOKEN}
 
 meso-alert.db = {

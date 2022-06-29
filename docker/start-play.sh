@@ -9,9 +9,13 @@ ls -lR /etc/secrets
 PLAY_KEY=$(cat /etc/secrets/play/secret | base64)
 POSTGRES_PASSWORD=$(cat /etc/secrets/postgres/password)
 SLACK_BOT_TOKEN=$(cat /etc/secrets/slack/bot_token)
+SLACK_CLIENT_SECRET=$(cat /etc/secrets/slack/client_secret)
+SLACK_CLIENT_ID=$(cat /etc/secrets/slack/client_id)
 
 cat <<EOF > application-production.conf
 play.http.secret.key="${PLAY_KEY}"
+slack.clientId = "${SLACK_CLIENT_ID}"
+slack.clientSecret = "${SLACK_CLIENT_SECRET}"
 slack.botToken = "${SLACK_BOT_TOKEN}"
 play.filters.disabled+=play.filters.hosts.AllowedHostsFilter
 
