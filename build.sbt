@@ -10,7 +10,8 @@ inThisBuild(
   List(
     scalaVersion := "2.13.8",
     semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision
+    semanticdbVersion := scalafixSemanticdb.revision,
+    scalacOptions += "-Ywarn-unused"
   )
 )
 
