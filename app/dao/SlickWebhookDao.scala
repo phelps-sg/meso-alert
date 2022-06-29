@@ -15,8 +15,8 @@ class SlickWebhookDao @Inject() (val db: Database,
   extends WebhookDao with SlickHookDao[URI, Webhook] {
 
   override val table = Tables.webhooks
-  override val lookupHookQuery = (hook: Webhook) => Tables.webhooks.filter(_.url === hook.uri.toString)
-  override val lookupKeyQuery = (uri: URI) => Tables.webhooks.filter(_.url === uri.toString)
+  override val lookupHookQuery: Webhook => Query[Tables.Webhooks,Webhook,Seq] = (hook: Webhook) => Tables.webhooks.filter(_.url === hook.uri.toString)
+  override val lookupKeyQuery: URI => Query[Tables.Webhooks,Webhook,Seq] = (uri: URI) => Tables.webhooks.filter(_.url === uri.toString)
 
   override def toKeys(results: Future[Seq[String]]): Future[Seq[URI]] = results map {
     _.map(new URI(_))
