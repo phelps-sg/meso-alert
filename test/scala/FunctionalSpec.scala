@@ -14,6 +14,7 @@ import play.api.test.{Helpers, TestServer}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
+import play.api.Application
 
 
 //noinspection TypeAnnotation
@@ -24,9 +25,9 @@ class FunctionalSpec extends PlaySpec with ScalaFutures {
 
   def fixture: fixture = new fixture()
   class fixture() extends {
-    val app = new GuiceApplicationBuilder().build()
+    val app: Application = new GuiceApplicationBuilder().build()
     val outgoing: Source[TextMessage.Strict, NotUsed] = Source.single(Auth("guest", "test").message)
-    val incoming = {
+    val incoming: Sink[Message,Future[Done]] = {
       Sink.foreach[Message] {
         case message: TextMessage.Strict =>
           println(message.text)
