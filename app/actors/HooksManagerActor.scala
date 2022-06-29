@@ -99,7 +99,7 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
       actors += key -> Array(messagingActor, filteringActor)
 
     case CreateActors(_: X, _) =>
-      logger.error(s"Not starting child actors; unrecognized hook type")
+      logger.error("Not starting child actors; unrecognized hook type")
 
   }
 
