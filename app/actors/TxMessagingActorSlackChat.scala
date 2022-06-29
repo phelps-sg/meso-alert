@@ -4,6 +4,7 @@ import akka.actor.Actor
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import com.slack.api.Slack
+import com.slack.api.methods.AsyncMethodsClient
 import com.slack.api.methods.request.chat.ChatPostMessageRequest
 import com.slack.api.methods.response.chat.ChatPostMessageResponse
 import dao.SlackChannel
@@ -12,7 +13,6 @@ import slick.SlackChatExecutionContext
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-
 import scala.jdk.FutureConverters._
 
 object TxMessagingActorSlackChat  {
@@ -22,14 +22,18 @@ object TxMessagingActorSlackChat  {
   }
 }
 
-class TxMessagingActorSlackChat @Inject()(config : Configuration, sce: SlackChatExecutionContext,
-                                          @Assisted channel: SlackChannel) extends Actor with Logging {
+trait SlackClient {
+  protected val config: Configuration
+  protected val slack: Slack = Slack.getInstance()
+  protected val token: String = config.get[String]("slack.botToken")
+  protected val methods: AsyncMethodsClient = slack.methodsAsync(token)
+}
+
+class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, sce: SlackChatExecutionContext,
+                                          @Assisted channel: SlackChannel)
+  extends Actor with SlackClient with Logging {
 
   implicit val executionContext: SlackChatExecutionContext = sce
-
-  private val slack = Slack.getInstance()
-  private val token = config.get[String]("slack.botToken")
-  private val methods = slack.methodsAsync(token)
 
   def sendMessage(channelId: String, message: String): Future[ChatPostMessageResponse] = {
 
