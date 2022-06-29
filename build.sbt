@@ -6,7 +6,13 @@ version := "1.0-SNAPSHOT"
 
 lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-scalaVersion := "2.13.8"
+inThisBuild(
+  List(
+    scalaVersion := "2.13.8",
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision
+  )
+)
 
 Test / javaOptions += "-Dconfig.file=test/resources/application.test.conf"
 
