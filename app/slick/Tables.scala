@@ -2,7 +2,7 @@ package slick
 
 // scalafix:off
 
-import dao.{SlackChannel, SlackChatHook, SlashCommand, Webhook}
+import dao._
 
 import java.net.URI
 
@@ -52,6 +52,18 @@ object Tables {
   }
   val slashCommandHistory = TableQuery[SlashCommandHistory]
 
+  class SlackUsers(tag: Tag) extends Table[SlackUser](tag, "slack_users") {
+    def id = column[String]("id", O.PrimaryKey)
+    def bot_id = column[String]("bot_id")
+    def access_token = column[String]("access_token")
+    def team_id = column[String]("team_id")
+    def team_name = column[String]("team_name")
+
+    override def * =
+      (id, bot_id, access_token, team_id, team_name) <> (SlackUser.tupled, SlackUser.unapply)
+  }
+  val slackUsers = TableQuery[SlackUsers]
+
   class SlackChatHooks(tag: Tag) extends Table[SlackChatHook](tag, "slack_chat_hooks") {
     def channel_id = column[String]("channel_id", O.PrimaryKey)
     def threshold = column[Long]("threshold")
@@ -65,6 +77,6 @@ object Tables {
   }
   val slackChatHooks = TableQuery[SlackChatHooks]
 
-  val schema = webhooks.schema ++ slackChatHooks.schema ++ slashCommandHistory.schema
+  val schema = webhooks.schema ++ slackChatHooks.schema ++ slashCommandHistory.schema ++ slackUsers.schema
 
 }

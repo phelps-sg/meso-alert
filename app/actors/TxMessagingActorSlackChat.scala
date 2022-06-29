@@ -21,7 +21,6 @@ object TxMessagingActorSlackChat  {
   }
 }
 
-
 class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, sce: SlackChatExecutionContext,
                                           @Assisted channel: SlackChannel)
   extends Actor with SlackClient with Logging {
@@ -41,7 +40,7 @@ class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, 
 
     logger.debug(s"Submitting request: $request")
 
-    val chatPostMessageFuture = methods.chatPostMessage(request).asScala
+    val chatPostMessageFuture = slackMethods.chatPostMessage(request).asScala
     chatPostMessageFuture.onComplete {
       case Success(response) if response.isOk => logger.info(s"Successfully posted message $message to $channelId")
       case Success(response) if !response.isOk =>

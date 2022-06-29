@@ -8,5 +8,7 @@ trait SlackClient {
   protected val config: Configuration
   protected val slack: Slack = Slack.getInstance()
   protected val token: String = config.get[String]("slack.botToken")
-  protected val methods: AsyncMethodsClient = slack.methodsAsync(token)
+  protected val slackClientId: String = config.get[String]("slack.clientId")
+  protected val slackClientSecret: String = config.get[String]("slack.clientSecret")
+  protected val slackMethods: AsyncMethodsClient = slack.methodsAsync(token)
 }

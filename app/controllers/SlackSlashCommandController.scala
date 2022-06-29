@@ -11,7 +11,7 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-object SlackController {
+object SlackSlashCommandController {
 
   private val coreAttributes = List("channel_id", "command", "text")
 
@@ -42,10 +42,10 @@ object SlackController {
 
 }
 
-class SlackController @Inject()(val controllerComponents: ControllerComponents,
-                                val slashCommandHistoryDao: SlashCommandHistoryDao,
-                                val hooksManager: HooksManagerSlackChat)
-                               (implicit system: ActorSystem, implicit val ec: ExecutionContext)
+class SlackSlashCommandController @Inject()(val controllerComponents: ControllerComponents,
+                                            val slashCommandHistoryDao: SlashCommandHistoryDao,
+                                            val hooksManager: HooksManagerSlackChat)
+                                           (implicit system: ActorSystem, implicit val ec: ExecutionContext)
   extends BaseController with Logging with InitialisingController {
 
   override def init(): Future[Unit] = for {
@@ -57,7 +57,7 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
     logger.debug("received slash command")
     request.body.foreach { x => logger.debug(s"${x._1} = ${x._2}") }
 
-    SlackController.toCommand(request.body) match {
+    SlackSlashCommandController.toCommand(request.body) match {
 
       case Success(slashCommand) =>
 

@@ -1,4 +1,5 @@
 package dao
+
 import com.google.inject.{ImplementedBy, Inject}
 import slick.BtcPostgresProfile.api._
 import slick.jdbc.JdbcBackend.Database

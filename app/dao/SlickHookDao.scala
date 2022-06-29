@@ -7,6 +7,7 @@ import slick.DatabaseExecutionContext
 import scala.concurrent.Future
 
 case class DuplicateHookException[X](uri: X) extends Exception(s"A hook already exists with key $uri")
+case class SchemaConstraintViolation(message: String) extends Exception(message)
 
 trait SlickHookDao[X, Y <: Hook[X]] extends SlickDao[Y] with Logging {
 
@@ -24,7 +25,7 @@ trait SlickHookDao[X, Y <: Hook[X]] extends SlickDao[Y] with Logging {
       case Seq(result) => Some(result)
       case Seq() => None
       case _ =>
-        throw new RuntimeException(s"Multiple results returned for uri ${key.toString}")
+        throw SchemaConstraintViolation(s"Multiple results returned for uri ${key.toString}")
     }
   }
 

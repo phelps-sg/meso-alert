@@ -9,7 +9,7 @@ import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
 import com.typesafe.config.ConfigFactory
-import controllers.SlackController
+import controllers.SlackSlashCommandController
 import dao._
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
@@ -458,6 +458,46 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
   }
 
+  "SlickSlackUserDao" should {
+
+    trait TestFixtures extends DatabaseGuiceFixtures with SlickSlackUserFixtures
+    with SlickSlackUserDaoFixtures
+
+    "record a user in the database" in new TestFixtures {
+
+      afterDbInit {
+        for {
+          n <- slickSlackUserDao.insertOrUpdate(slackUser)
+          r <- database.run(Tables.slackUsers.result)
+        } yield (n, r)
+      }.futureValue should matchPattern {
+        case (1, Seq(`slackUser`)) =>
+      }
+    }
+
+    "find a user in the database" in new TestFixtures {
+      afterDbInit {
+        for {
+          n <- slickSlackUserDao.insertOrUpdate(slackUser)
+          user <- slickSlackUserDao.find(userId)
+        } yield (n, user)
+      }.futureValue should matchPattern {
+        case (1, Some(`slackUser`)) =>
+      }
+    }
+
+    "return None when a user with the given user id does not exist" in new TestFixtures {
+      afterDbInit {
+        for {
+          n <- slickSlackUserDao.insertOrUpdate(slackUser)
+          user <- slickSlackUserDao.find("nonexistent")
+        } yield (n, user)
+      }.futureValue should matchPattern {
+        case (1, None) =>
+      }
+    }
+  }
+
   "SlickSlashCommandHistoryDao" should {
 
     trait TestFixtures extends DatabaseGuiceFixtures with SlickSlashCommandFixtures
@@ -488,7 +528,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           "command" -> Vector(command),
           "text" -> Vector(text)
         )
-      SlackController.toCommand(paramMap) should matchPattern {
+      SlackSlashCommandController.toCommand(paramMap) should matchPattern {
         case Success(SlashCommand(None, `channelId`, `command`, `text`,
                         None, None, None, None, None, None, Some(_: java.time.LocalDateTime))) =>
       }
@@ -500,7 +540,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
           "channel_id" -> Vector(channelId)
         )
       }
-      SlackController.toCommand(paramMap) should matchPattern {
+      SlackSlashCommandController.toCommand(paramMap) should matchPattern {
         case Failure(_) =>
       }
     }
@@ -761,6 +801,20 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val newHook = SlackChatHook(key, threshold = 200L, isRunning = true)
     val insertHook = Tables.slackChatHooks += hook
     val queryHooks = Tables.slackChatHooks.result
+  }
+
+  trait SlickSlackUserDaoFixtures {
+    val injector: Injector
+    val slickSlackUserDao = injector.instanceOf[SlickSlackUserDao]
+  }
+
+  trait SlickSlackUserFixtures {
+    val userId = "testUser"
+    val botId = "testBotId"
+    val accessToken = "testToken"
+    val teamId = "testTeamId"
+    val teamName = "testTeam"
+    val slackUser = SlackUser(userId, botId, accessToken, teamId, teamName)
   }
 
   trait SlickSlashCommandFixtures {

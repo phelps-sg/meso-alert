@@ -24,3 +24,5 @@ case class SlackChatHook(channel: SlackChannel, threshold: Long, isRunning: Bool
   def key: SlackChannel = channel
   override def newStatus(isRunning: Boolean): Hook[SlackChannel] = copy(isRunning = isRunning)
 }
+
+case class SlackUser(id: String, botId: String, accessToken: String, teamId: String, teamName: String)
