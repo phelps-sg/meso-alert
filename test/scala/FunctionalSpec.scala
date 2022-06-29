@@ -19,10 +19,11 @@ import scala.util.{Failure, Success}
 //noinspection TypeAnnotation
 class FunctionalSpec extends PlaySpec with ScalaFutures {
 
-  implicit override val patienceConfig =
+  implicit override val patienceConfig: PatienceConfig =
     PatienceConfig(timeout = Span(10, Seconds), interval = Span(500, Millis))
 
-  def fixture = new {
+  def fixture: fixture = new fixture()
+  class fixture() extends {
     val app = new GuiceApplicationBuilder().build()
     val outgoing: Source[TextMessage.Strict, NotUsed] = Source.single(Auth("guest", "test").message)
     val incoming = {
