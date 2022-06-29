@@ -22,5 +22,5 @@ class Module extends AbstractModule with AkkaGuiceSupport {
 
 @Singleton
 class DatabaseProvider @Inject() (config: Config) extends Provider[Database] {
-  lazy val get = Database.forConfig("meso-alert.db", config)
+  lazy val get: Database = Database.forConfig("meso-alert.db", config)
 }
