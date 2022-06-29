@@ -100,7 +100,7 @@ class SlackController @Inject()(val controllerComponents: ControllerComponents,
           case None =>
             logger.debug(s"Invalid amount ${slashCommand.text}")
             Future {
-              Ok(s"Usage: `/crypto-alert [threshold amount in BTC]`")
+              Ok("Usage: `/crypto-alert [threshold amount in BTC]`")
             }
 
         }
