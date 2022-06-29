@@ -20,7 +20,6 @@ Test / javaOptions += "-Dconfig.file=test/resources/application.test.conf"
 
 libraryDependencies += guice
 libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
-//libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.2.11"
 libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.30.0"
 
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test
@@ -47,8 +46,3 @@ libraryDependencies ++= List(
   "com.slack.api" % "bolt-servlet" %  "1.22.2",
   "com.slack.api" % "bolt-jetty" %  "1.22.2",
 )
-// Adds additional packages into Twirl
-//TwirlKeys.templateImports += "com.mesonomics.controllers._"
-
-// Adds additional packages into conf/routes
-// play.sbt.routes.RoutesKeys.routesImport += "com.mesonomics.binders._"
