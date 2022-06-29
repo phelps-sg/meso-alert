@@ -3,17 +3,16 @@ package actors
 import akka.actor.Actor
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
-import com.slack.api.Slack
-import com.slack.api.methods.AsyncMethodsClient
 import com.slack.api.methods.request.chat.ChatPostMessageRequest
 import com.slack.api.methods.response.chat.ChatPostMessageResponse
 import dao.SlackChannel
 import play.api.{Configuration, Logging}
+import slack.SlackClient
 import slick.SlackChatExecutionContext
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 import scala.jdk.FutureConverters._
+import scala.util.{Failure, Success}
 
 object TxMessagingActorSlackChat  {
 
@@ -22,12 +21,6 @@ object TxMessagingActorSlackChat  {
   }
 }
 
-trait SlackClient {
-  protected val config: Configuration
-  protected val slack: Slack = Slack.getInstance()
-  protected val token: String = config.get[String]("slack.botToken")
-  protected val methods: AsyncMethodsClient = slack.methodsAsync(token)
-}
 
 class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, sce: SlackChatExecutionContext,
                                           @Assisted channel: SlackChannel)
