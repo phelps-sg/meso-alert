@@ -13,6 +13,11 @@ scalatest:
   script:
     - make sbt-test
 
+scalafix:
+  stage: test
+  script:
+    - make sbt-scalafix-check
+
 docker:
   stage: push
   script:
