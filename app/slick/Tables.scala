@@ -1,5 +1,7 @@
 package slick
 
+// scalafix:off
+
 import dao.{SlackChannel, SlackChatHook, SlashCommand, Webhook}
 
 import java.net.URI

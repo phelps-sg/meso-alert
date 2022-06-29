@@ -46,6 +46,8 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
 import scala.util.{Failure, Success}
 
+// scalafix:off
+
 //noinspection TypeAnnotation
 class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   with AnyWordSpecLike
