@@ -3,7 +3,7 @@ package actors
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
 import dao.{DuplicateHookException, Filter, Hook, HookDao}
-import play.api.{Logger, Logging}
+import play.api.Logging
 import play.api.libs.concurrent.InjectedActorSupport
 import slick.DatabaseExecutionContext
 
@@ -98,7 +98,7 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
           name = s"$hookTypePrefix-filter-$actorId")
       actors += key -> Array(messagingActor, filteringActor)
 
-    case CreateActors(key: X, _) =>
+    case CreateActors(_: X, _) =>
       logger.error(s"Not starting child actors; unrecognized hook type")
 
   }

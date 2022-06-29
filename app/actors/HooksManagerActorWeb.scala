@@ -3,7 +3,6 @@ package actors
 import akka.actor.Props
 import com.google.inject.Inject
 import dao.{Hook, SlackChatHook, Webhook, WebhookDao}
-import play.api.Logging
 import play.api.libs.json.{JsObject, Json, Writes}
 import slick.DatabaseExecutionContext
 

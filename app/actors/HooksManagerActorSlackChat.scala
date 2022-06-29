@@ -3,7 +3,6 @@ package actors
 import akka.actor.Props
 import com.google.inject.Inject
 import dao.{SlackChannel, SlackChatHook, SlackChatHookDao}
-import play.api.Logging
 import slick.DatabaseExecutionContext
 
 import java.net.URLEncoder
