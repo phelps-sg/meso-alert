@@ -22,8 +22,12 @@ package object actors {
   def linkToTxHash(hash: String): String = s"<$blockChairBaseURL/transaction/$hash|$hash>"
   def linkToAddress(address: String): String = s"<$blockChairBaseURL/address/$address|$address>"
 
-  def formatSatoshi(value: Long): String = (value / 100000000L).toString
-
+  def formatSatoshi(value: Long): String = {
+    value match {
+      case value if value >= 100000000 => (value / 100000000L).toString
+      case _ => "%1.3f".format((value.toFloat / 100000000L))
+    }
+  }
   def formatOutputAddresses(outputs: Seq[TxInputOutput]): String =
     outputs.filterNot(_.address.isEmpty)
       .map(output => output.address.get)
