@@ -10,7 +10,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[SlickSlackUserDao])
 trait SlackUserDao {
   def insertOrUpdate(slackUser: SlackUser): Future[Int]
-  def init: Future[Unit]
+  def init(): Future[Unit]
   def find(userId: String): Future[Option[SlackUser]]
 }
 
