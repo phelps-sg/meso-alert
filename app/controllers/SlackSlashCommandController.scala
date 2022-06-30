@@ -2,7 +2,7 @@ package controllers
 
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.actor.ActorSystem
-import dao.{SlackChannel, SlackChatHook, SlackTeam, SlackTeamDao, SlashCommand, SlashCommandHistoryDao}
+import dao._
 import play.api.Logging
 import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.HooksManagerSlackChat

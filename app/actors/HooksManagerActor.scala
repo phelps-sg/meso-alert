@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
-import dao.{DuplicateHookException, Filter, Hook, HookDao}
+import dao.{DuplicateHookException, Hook, HookDao}
 import play.api.Logging
 import play.api.libs.concurrent.InjectedActorSupport
 import slick.DatabaseExecutionContext

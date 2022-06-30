@@ -4,13 +4,12 @@ import com.slack.api.methods.AsyncMethodsClient
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
 import dao.{SlackTeam, SlackTeamDao}
 import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
-import play.api.{Configuration, Logging}
+import play.api.{Configuration, Logging, mvc}
 import slack.SlackClient
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.FutureConverters._
-import play.api.mvc
 
 case class InvalidUserException(str: String) extends Exception(str)
 

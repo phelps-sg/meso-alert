@@ -3,7 +3,7 @@ package actors
 import akka.actor.Actor
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{ImplementedBy, Inject}
-import dao.{Hook, Webhook}
+import dao.Webhook
 import monix.eval.Task
 import org.apache.commons.logging.LogFactory
 import play.api.libs.json.Json
@@ -13,7 +13,6 @@ import sttp.client3._
 import sttp.client3.asynchttpclient.monix._
 import sttp.model.Uri
 
-import java.net.URI
 import javax.inject.Singleton
 import scala.util.{Failure, Success}
 

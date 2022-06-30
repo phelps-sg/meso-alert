@@ -6,7 +6,7 @@ import com.google.inject.assistedinject.Assisted
 import com.slack.api.methods.AsyncMethodsClient
 import com.slack.api.methods.request.chat.ChatPostMessageRequest
 import com.slack.api.methods.response.chat.ChatPostMessageResponse
-import dao.{Hook, SlackChannel, SlackChatHook}
+import dao.SlackChatHook
 import play.api.{Configuration, Logging}
 import slack.SlackClient
 import slick.SlackChatExecutionContext

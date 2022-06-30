@@ -1,7 +1,6 @@
 package slack
 
 import com.slack.api.Slack
-import com.slack.api.methods.AsyncMethodsClient
 import play.api.Configuration
 
 trait SlackClient {
