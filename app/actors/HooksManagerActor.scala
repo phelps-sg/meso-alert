@@ -88,9 +88,6 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
       }, HookNotStartedException(key))
 
     case CreateActors(key: X, hook: Y) =>
-      hook match {
-        case h: Hook[X] =>
-      }
       logger.debug(s"Creating child actors for key $key and hook $hook")
       val actorId = encodeKey(key)
       logger.debug(s"actorId = $actorId")
