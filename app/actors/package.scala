@@ -25,7 +25,7 @@ package object actors {
   def formatSatoshi(value: Long): String = {
     value match {
       case value if value >= 100000000 => (value / 100000000L).toString
-      case _ => "%1.3f".format((value.toFloat / 100000000L))
+      case _ => (value.toDouble / 100000000L).toString
     }
   }
   def formatOutputAddresses(outputs: Seq[TxInputOutput]): String =

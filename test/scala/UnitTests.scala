@@ -1,3 +1,4 @@
+package actors
 import actors.AuthenticationActor.{Auth, TxInputOutput}
 import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
 import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
@@ -474,6 +475,18 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         case (1, Seq(SlashCommand(Some(_: Int), `channelId`, `command`, `text`, `teamDomain`, `teamId`,
         `channelName`, `userId`, `userName`, `isEnterpriseInstall`, `timeStamp`))) =>
       }
+    }
+  }
+
+  "formatSatoshiValue" should {
+
+    "return a value greater than 1 when value >= 100000000" in {
+      formatSatoshi(100000000) shouldEqual "1"
+      formatSatoshi(1000000000) shouldEqual "10"
+    }
+    "return a decimal value between 0 and 0.99999999 when 0 <= value < 100000000" in {
+      formatSatoshi(0) shouldEqual "0.0"
+      formatSatoshi(99999999) shouldEqual "0.99999999"
     }
   }
 
