@@ -1,7 +1,7 @@
 package controllers
 
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
-import dao.{SlackUser, SlackUserDao}
+import dao.{SlackTeam, SlackTeamDao}
 import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
 import play.api.{Configuration, Logging}
 import slack.SlackClient
@@ -14,7 +14,7 @@ import play.api.mvc
 case class InvalidUserException(str: String) extends Exception(str)
 
 class SlackAuthController @Inject()(protected val config: Configuration,
-                                    val slackUserDao: SlackUserDao,
+                                    val slackUserDao: SlackTeamDao,
                                     val controllerComponents: ControllerComponents)
                                    (implicit val ec: ExecutionContext)
   extends BaseController with SlackClient with Logging with InitialisingController {
@@ -40,7 +40,7 @@ class SlackAuthController @Inject()(protected val config: Configuration,
 
       n <- if (response.isOk) {
         val slackUser =
-          SlackUser(response.getAuthedUser.getId, response.getBotUserId, response.getAccessToken,
+          SlackTeam(response.getAuthedUser.getId, response.getBotUserId, response.getAccessToken,
             response.getTeam.getId, response.getTeam.getName)
         logger.debug(s"user = $slackUser")
         slackUserDao.insertOrUpdate(slackUser)

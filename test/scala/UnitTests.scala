@@ -458,39 +458,39 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
   }
 
-  "SlickSlackUserDao" should {
+  "SlickSlackTeamDao" should {
 
-    trait TestFixtures extends DatabaseGuiceFixtures with SlickSlackUserFixtures
+    trait TestFixtures extends DatabaseGuiceFixtures with SlickSlackTeamFixtures
     with SlickSlackUserDaoFixtures
 
-    "record a user in the database" in new TestFixtures {
+    "record a team in the database" in new TestFixtures {
 
       afterDbInit {
         for {
-          n <- slickSlackUserDao.insertOrUpdate(slackUser)
-          r <- database.run(Tables.slackUsers.result)
+          n <- slickSlackTeamDao.insertOrUpdate(slackTeam)
+          r <- database.run(Tables.slackTeams.result)
         } yield (n, r)
       }.futureValue should matchPattern {
-        case (1, Seq(`slackUser`)) =>
+        case (1, Seq(`slackTeam`)) =>
       }
     }
 
-    "find a user in the database" in new TestFixtures {
+    "find a team in the database" in new TestFixtures {
       afterDbInit {
         for {
-          n <- slickSlackUserDao.insertOrUpdate(slackUser)
-          user <- slickSlackUserDao.find(userId)
+          n <- slickSlackTeamDao.insertOrUpdate(slackTeam)
+          user <- slickSlackTeamDao.find(teamId)
         } yield (n, user)
       }.futureValue should matchPattern {
-        case (1, Some(`slackUser`)) =>
+        case (1, Some(`slackTeam`)) =>
       }
     }
 
     "return None when a user with the given user id does not exist" in new TestFixtures {
       afterDbInit {
         for {
-          n <- slickSlackUserDao.insertOrUpdate(slackUser)
-          user <- slickSlackUserDao.find("nonexistent")
+          n <- slickSlackTeamDao.insertOrUpdate(slackTeam)
+          user <- slickSlackTeamDao.find("nonexistent")
         } yield (n, user)
       }.futureValue should matchPattern {
         case (1, None) =>
@@ -525,12 +525,13 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       val paramMap =
         Map[String, Vector[String]](
           "channel_id" -> Vector(channelId),
+          "team_id" -> Vector(teamId),
           "command" -> Vector(command),
           "text" -> Vector(text)
         )
       SlackSlashCommandController.toCommand(paramMap) should matchPattern {
         case Success(SlashCommand(None, `channelId`, `command`, `text`,
-                        None, None, None, None, None, None, Some(_: java.time.LocalDateTime))) =>
+                        None, `teamId`, None, None, None, None, Some(_: java.time.LocalDateTime))) =>
       }
     }
 
@@ -694,8 +695,9 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
 
   trait SlackChatHookFixtures {
     val key = SlackChannel("#test")
-    val hook = SlackChatHook(key, threshold = 100L, isRunning = true)
-    val newHook = SlackChatHook(key, threshold = 200L, isRunning = true)
+    val hook = SlackChatHook(key, threshold = 100L, isRunning = true, token="test_token_1")
+    val stoppedHook = hook.copy(isRunning = false)
+    val newHook = SlackChatHook(key, threshold = 200L, isRunning = true, token="test_token_2")
   }
 
   trait HookDaoTestLogic[X, Y <: Hook[X]] {
@@ -782,7 +784,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val queryHooks = Tables.webhooks.result
   }
 
-  trait SlackChatActorFixtures {
+  trait SlackChatActorFixtures extends SlackChatHookFixtures {
     val injector: Injector
 
     val hooksActor = {
@@ -795,26 +797,23 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
         )
       )
     }
-    val key = SlackChannel("http://test")
-    val hook = SlackChatHook(key, threshold = 100L, isRunning = true)
-    val stoppedHook = hook.copy(isRunning = false)
-    val newHook = SlackChatHook(key, threshold = 200L, isRunning = true)
+
     val insertHook = Tables.slackChatHooks += hook
     val queryHooks = Tables.slackChatHooks.result
   }
 
   trait SlickSlackUserDaoFixtures {
     val injector: Injector
-    val slickSlackUserDao = injector.instanceOf[SlickSlackUserDao]
+    val slickSlackTeamDao = injector.instanceOf[SlickSlackTeamDao]
   }
 
-  trait SlickSlackUserFixtures {
+  trait SlickSlackTeamFixtures {
     val userId = "testUser"
     val botId = "testBotId"
     val accessToken = "testToken"
     val teamId = "testTeamId"
     val teamName = "testTeam"
-    val slackUser = SlackUser(userId, botId, accessToken, teamId, teamName)
+    val slackTeam = SlackTeam(teamId, userId, botId, accessToken, teamName)
   }
 
   trait SlickSlashCommandFixtures {
@@ -822,7 +821,7 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     val command = "/test"
     val text = ""
     val teamDomain = None
-    val teamId = Some("5678")
+    val teamId = "5678"
     val channelName = Some("test-channel")
     val userId = Some("91011")
     val userName = Some("test-user")

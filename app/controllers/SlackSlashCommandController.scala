@@ -2,7 +2,7 @@ package controllers
 
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.actor.ActorSystem
-import dao.{SlackChannel, SlackChatHook, SlashCommand, SlashCommandHistoryDao}
+import dao.{SlackChannel, SlackChatHook, SlackTeam, SlackTeamDao, SlashCommand, SlashCommandHistoryDao}
 import play.api.Logging
 import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.HooksManagerSlackChat
@@ -27,7 +27,7 @@ object SlackSlashCommandController {
     attributes match {
       case Seq(Some(channelId), Some(command), Some(args)) =>
         optionalAttributes.map(param) match {
-          case Seq(teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall) =>
+          case Seq(teamDomain, Some(teamId), channelName, userId, userName, isEnterpriseInstall) =>
             Success(SlashCommand(None, channelId, command, args, teamDomain, teamId,
               channelName, userId, userName,
               isEnterpriseInstall.map(x => Try(x.toBoolean).orElse(Success(false)).get),
@@ -44,6 +44,7 @@ object SlackSlashCommandController {
 
 class SlackSlashCommandController @Inject()(val controllerComponents: ControllerComponents,
                                             val slashCommandHistoryDao: SlashCommandHistoryDao,
+                                            val slackTeamDao: SlackTeamDao,
                                             val hooksManager: HooksManagerSlackChat)
                                            (implicit system: ActorSystem, implicit val ec: ExecutionContext)
   extends BaseController with Logging with InitialisingController {
@@ -84,7 +85,16 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
           case Some(amount) =>
             logger.debug(s"amount = $amount")
             val f = for {
-              _ <- hooksManager.update(SlackChatHook(channel, amount * 100000000, isRunning = true))
+              team <- slackTeamDao.find(slashCommand.teamId)
+              _ <- {
+                team match {
+                 case Some(SlackTeam(_, _, _, accessToken, _)) =>
+                    hooksManager.update(
+                      SlackChatHook(channel, token = accessToken, amount * 100000000, isRunning = true))
+                 case None =>
+                   Future.failed(new IllegalArgumentException(s"No such slack team ${slashCommand.teamId}"))
+                }
+              }
               started <- hooksManager.start(channel)
             } yield started
             f.map { _ => Ok(s"OK, I will send updates on any BTC transactions exceeding $amount BTC.") }

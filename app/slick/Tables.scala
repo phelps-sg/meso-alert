@@ -39,7 +39,7 @@ object Tables {
     def command = column[String]("command")
     def text = column[String]("text")
     def team_domain = column[Option[String]]("team_domain")
-    def team_id = column[Option[String]]("team_id")
+    def team_id = column[String]("team_id")
     def channel_name = column[Option[String]]("channel_name")
     def user_id = column[Option[String]]("user_id")
     def user_name = column[Option[String]]("user_name")
@@ -52,31 +52,32 @@ object Tables {
   }
   val slashCommandHistory = TableQuery[SlashCommandHistory]
 
-  class SlackUsers(tag: Tag) extends Table[SlackUser](tag, "slack_users") {
-    def id = column[String]("id", O.PrimaryKey)
+  class SlackTeams(tag: Tag) extends Table[SlackTeam](tag, "slack_teams") {
+    def team_id = column[String]("team_id", O.PrimaryKey)
+    def user_id = column[String]("user_id")
     def bot_id = column[String]("bot_id")
     def access_token = column[String]("access_token")
-    def team_id = column[String]("team_id")
     def team_name = column[String]("team_name")
 
     override def * =
-      (id, bot_id, access_token, team_id, team_name) <> (SlackUser.tupled, SlackUser.unapply)
+      (team_id, user_id, bot_id, access_token, team_name) <> (SlackTeam.tupled, SlackTeam.unapply)
   }
-  val slackUsers = TableQuery[SlackUsers]
+  val slackTeams = TableQuery[SlackTeams]
 
   class SlackChatHooks(tag: Tag) extends Table[SlackChatHook](tag, "slack_chat_hooks") {
     def channel_id = column[String]("channel_id", O.PrimaryKey)
+    def token = column[String]("token")
     def threshold = column[Long]("threshold")
     def is_running = column[Boolean]("is_running")
-    def * = (channel_id, threshold, is_running) <> (
-      h => SlackChatHook(SlackChannel(h._1), h._2, h._3),
+    def * = (channel_id, token, threshold, is_running) <> (
+      h => SlackChatHook(SlackChannel(h._1), h._2, h._3, h._4),
       (h: SlackChatHook) => {
-        Some(h.channel.id, h.threshold, h.isRunning)
+        Some(h.channel.id, h.token, h.threshold, h.isRunning)
       }
     )
   }
   val slackChatHooks = TableQuery[SlackChatHooks]
 
-  val schema = webhooks.schema ++ slackChatHooks.schema ++ slashCommandHistory.schema ++ slackUsers.schema
+  val schema = webhooks.schema ++ slackChatHooks.schema ++ slashCommandHistory.schema ++ slackTeams.schema
 
 }
