@@ -33,7 +33,7 @@ class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, 
 
     val request = ChatPostMessageRequest.builder
       .token(token)
-      .username("meso-alert-slash-command")
+      .username("meso-alert")
       .channel(channelId)
       .text(message)
       .build
