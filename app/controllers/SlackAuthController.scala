@@ -1,5 +1,6 @@
 package controllers
 
+import com.slack.api.methods.AsyncMethodsClient
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
 import dao.{SlackTeam, SlackTeamDao}
 import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
@@ -19,6 +20,8 @@ class SlackAuthController @Inject()(protected val config: Configuration,
                                    (implicit val ec: ExecutionContext)
   extends BaseController with SlackClient with Logging with InitialisingController {
 
+  protected val slackMethods: AsyncMethodsClient = slack.methodsAsync()
+
   override def init(): Future[Unit] = {
     slackUserDao.init()
   }
@@ -28,7 +31,7 @@ class SlackAuthController @Inject()(protected val config: Configuration,
 
     logger.debug("Received slash auth redirect")
 
-    val request = OAuthV2AccessRequest.builder
+    val slackRequest = OAuthV2AccessRequest.builder
       .clientId(slackClientId)
       .clientSecret(slackClientSecret)
       .code(temporaryCode)
@@ -36,7 +39,7 @@ class SlackAuthController @Inject()(protected val config: Configuration,
 
     val f = for {
 
-      response <- slackMethods.oauthV2Access(request).asScala
+      response <- slackMethods.oauthV2Access(slackRequest).asScala
 
       n <- if (response.isOk) {
         val slackTeam =

@@ -3,6 +3,7 @@ package actors
 import akka.actor.Actor
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{ImplementedBy, Inject}
+import dao.{Hook, Webhook}
 import monix.eval.Task
 import org.apache.commons.logging.LogFactory
 import play.api.libs.json.Json
@@ -28,12 +29,12 @@ class MonixBackend extends HttpBackendSelection {
 
 object TxMessagingActorWeb {
 
-  trait Factory extends TxMessagingActorFactory[URI] {
-    def apply(hookUri: URI): Actor
+  trait Factory extends TxMessagingActorFactory[Webhook] {
+    def apply(hook: Webhook): Actor
   }
 }
 
-class TxMessagingActorWeb @Inject()(backendSelection: HttpBackendSelection, @Assisted hookUri: URI)  extends Actor {
+class TxMessagingActorWeb @Inject()(backendSelection: HttpBackendSelection, @Assisted hook: Webhook)  extends Actor {
 
   private val logger = LogFactory.getLog(classOf[TxMessagingActorWeb])
 
@@ -44,7 +45,7 @@ class TxMessagingActorWeb @Inject()(backendSelection: HttpBackendSelection, @Ass
         val r = basicRequest
           .contentType("application/json")
           .body(Json.stringify(Json.obj("text" -> message(tx))))
-          .post(Uri(javaUri = hookUri))
+          .post(Uri(javaUri = hook.uri))
 
         r.send(backend)
           .flatMap { response => Task(logger.debug(s"""Got ${response.code} response, body:\n${response.body}""")) }

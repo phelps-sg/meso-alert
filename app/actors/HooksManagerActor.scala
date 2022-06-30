@@ -11,8 +11,8 @@ import scala.concurrent.ExecutionContext
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 
-trait TxMessagingActorFactory[X] {
-  def apply(x: X): Actor
+trait TxMessagingActorFactory[Y] {
+  def apply(x: Y): Actor
 }
 
 object HooksManagerActor {
@@ -25,7 +25,7 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
   import HooksManagerActor._
 
   val dao: HookDao[X, Y]
-  val messagingActorFactory: TxMessagingActorFactory[X]
+  val messagingActorFactory: TxMessagingActorFactory[Y]
   val filteringActorFactory: TxFilterActor.Factory
   val databaseExecutionContext: DatabaseExecutionContext
   val hookTypePrefix: String
@@ -87,12 +87,15 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
         })
       }, HookNotStartedException(key))
 
-    case CreateActors(key: X, hook: Filter) =>
+    case CreateActors(key: X, hook: Y) =>
+      hook match {
+        case h: Hook[X] =>
+      }
       logger.debug(s"Creating child actors for key $key and hook $hook")
       val actorId = encodeKey(key)
       logger.debug(s"actorId = $actorId")
       val messagingActor =
-        injectedChild(messagingActorFactory(key), name = s"$hookTypePrefix-messenger-$actorId")
+        injectedChild(messagingActorFactory(hook), name = s"$hookTypePrefix-messenger-$actorId")
       val filteringActor =
         injectedChild(filteringActorFactory(messagingActor, hook.filter),
           name = s"$hookTypePrefix-filter-$actorId")
