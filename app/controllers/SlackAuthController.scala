@@ -39,11 +39,12 @@ class SlackAuthController @Inject()(protected val config: Configuration,
       response <- slackMethods.oauthV2Access(request).asScala
 
       n <- if (response.isOk) {
-        val slackUser =
-          SlackTeam(response.getAuthedUser.getId, response.getBotUserId, response.getAccessToken,
-            response.getTeam.getId, response.getTeam.getName)
-        logger.debug(s"user = $slackUser")
-        slackUserDao.insertOrUpdate(slackUser)
+        val slackTeam =
+          SlackTeam(teamId = response.getTeam.getId, userId = response.getAuthedUser.getId,
+                    botId = response.getBotUserId, accessToken = response.getAccessToken,
+                    teamName = response.getTeam.getName)
+        logger.debug(s"user = $slackTeam")
+        slackUserDao.insertOrUpdate(slackTeam)
       } else {
         Future.failed(InvalidUserException(response.getError))
       }
