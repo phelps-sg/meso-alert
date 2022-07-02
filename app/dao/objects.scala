@@ -26,3 +26,5 @@ case class SlackChatHook(channel: SlackChannel, token: String, threshold: Long, 
 }
 
 case class SlackTeam(teamId: String, userId: String, botId: String, accessToken: String, teamName: String)
+
+case class TransactionUpdate(id: Option[Long], hash: String, value: Long, time: String, isPending: Boolean)

@@ -71,8 +71,13 @@ class AuthenticationActor @Inject()(@Assisted val out: ActorRef, val memPoolWatc
 
       case Success(user) =>
         val filterActor = system.actorOf(TxFilterActor.props(out, user.filter, memPoolWatcher))
+        //val slickManagerActor = system.actorOf(SlickManagerActor.props(out, memPoolWatcher))
         def authorized: Receive = deathHandler.orElse {
-          message => filterActor ! message
+          message => {
+            filterActor ! message
+            //slickManagerActor ! message
+          }
+
         }
         context.become(authorized)
 
