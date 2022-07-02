@@ -28,7 +28,7 @@ object SlackSlashCommandController {
       case Seq(Some(channelId), Some(command), Some(args)) =>
         optionalAttributes.map(param) match {
           case Seq(teamDomain, Some(teamId), channelName, userId, userName, isEnterpriseInstall) =>
-            Success(SlashCommand(Some(0), channelId, command, args, teamDomain, teamId,
+            Success(SlashCommand(None, channelId, command, args, teamDomain, teamId,
               channelName, userId, userName,
               isEnterpriseInstall.map(x => Try(x.toBoolean).orElse(Success(false)).get),
               Some(java.time.LocalDateTime.now())))
