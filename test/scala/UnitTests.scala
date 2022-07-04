@@ -1,7 +1,6 @@
-package actors
 import actors.AuthenticationActor.{Auth, TxInputOutput}
 import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
-import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
+import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated, formatSatoshi}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
