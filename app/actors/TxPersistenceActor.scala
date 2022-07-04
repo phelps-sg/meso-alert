@@ -27,7 +27,9 @@ object TxPersistenceActor {
 class TxPersistenceActor @Inject()(val transactionUpdateDao: TransactionUpdateDao,
                                   val memPoolWatcher: MemPoolWatcherService)
                                   (implicit val ec: ExecutionContext)
-  extends Actor with TxUpdateActor {
+  extends Actor with TxUpdateActor with TxRetryOrDie {
+
+  override var maxRetryCount = 3
 
 
   override def preStart(): Unit = {
@@ -40,10 +42,29 @@ class TxPersistenceActor @Inject()(val transactionUpdateDao: TransactionUpdateDa
     case tx: TxUpdate => transactionUpdateDao.record(tx) onComplete {
       case Success(_) => logger.debug(s"Successfully added tx ${tx.hash} to database.")
       case Failure(ex) =>
-        logger.error(s"Could not add tx ${tx.hash} to database: ${ex.getMessage}")
-        self ! Die("TxPersistenceActor could not add tx to database.")
+        context.become(retryOrDie(0))
+        self ! Retry(tx, ex)
     }
-    case Die => self ! PoisonPill
+    case Die(reason)  =>
+      logger.error(s"TxPersistenceActor terminating because $reason")
+      self ! PoisonPill
+  }
+
+  override def retryOrDie(currentRetryCount: Int): Receive = {
+    case Retry(tx, _) if currentRetryCount < maxRetryCount =>
+      logger.error(s"Could not add tx ${tx.hash} to database. Retrying ...")
+      transactionUpdateDao.record(tx) onComplete {
+        case Success(_) =>
+          logger.debug(s"Successfully added tx ${tx.hash} to database.")
+          context.become(receive)
+        case Failure(ex) =>
+          context.become(retryOrDie(currentRetryCount + 1))
+          self ! Retry(tx, ex)
+      }
+    case Retry(tx, ex) if currentRetryCount >= maxRetryCount =>
+      logger.error(s"Could not add tx ${tx.hash} to database: ${ex.getMessage}")
+      context.become(receive)
+      self ! Die("could not add tx to database.")
   }
 
 }

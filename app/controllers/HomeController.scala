@@ -35,7 +35,6 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     _ <- memPoolWatcher.init()
     _ <- webHooksManager.init()
     _ <- slackChatHooksManager.init()
-    _ <- slickTxManager.init()
   } yield ()
 
   implicit val mft: MessageFlowTransformer[Auth, TxUpdate] =
