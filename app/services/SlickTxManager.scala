@@ -2,10 +2,10 @@ package services
 
 import dao._
 import actors._
+import controllers.InitialisingController
 import scala.concurrent.{ExecutionContext, Future}
 import akka.actor.{ ActorSystem}
 import com.google.inject.ImplementedBy
-import org.bitcoinj.utils.BriefLogFormatter
 import play.api.Logging
 
 import javax.inject.{Inject, Singleton}
@@ -18,16 +18,15 @@ trait SlickTxManagerService {
 }
 
 @Singleton
-class SlickTxManager @Inject()(val slickTransactionUpdateDao: SlickTransactionUpdateDao, val memPoolWatcher: MemPoolWatcherService)
-                              (implicit system: ActorSystem, implicit val executionContext: ExecutionContext)
+class SlickTxManager @Inject()(val transactionUpdateDao: TransactionUpdateDao, val memPoolWatcher: MemPoolWatcherService)
+                              (implicit system: ActorSystem, implicit val ec: ExecutionContext)
 
-  extends SlickTxManagerService with Logging {
+  extends SlickTxManagerService with Logging with InitialisingController {
 
-  def init(): Future[Unit] = {
+  override def init(): Future[Unit] = {
     Future {
       logger.info("Starting slick tx manager... ")
-      BriefLogFormatter.initVerbose()
-      system.actorOf(SlickManagerActor.props(slickTransactionUpdateDao, memPoolWatcher))
+      system.actorOf(TxPersistenceActor.props(transactionUpdateDao, memPoolWatcher))
     }
   }
 

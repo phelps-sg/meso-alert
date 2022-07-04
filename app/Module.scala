@@ -1,4 +1,4 @@
- import actors.{AuthenticationActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb , SlickManagerActor}
+ import actors.{AuthenticationActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb , TxPersistenceActor}
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import play.libs.akka.AkkaGuiceSupport
@@ -17,7 +17,7 @@ class Module extends AbstractModule with AkkaGuiceSupport {
     bindActorFactory(classOf[TxMessagingActorSlackChat], classOf[TxMessagingActorSlackChat.Factory])
     bindActorFactory(classOf[AuthenticationActor], classOf[AuthenticationActor.Factory])
     bindActorFactory(classOf[TxFilterActor], classOf[TxFilterActor.Factory])
-    bindActorFactory(classOf[SlickManagerActor], classOf[SlickManagerActor.Factory])
+    bindActorFactory(classOf[TxPersistenceActor], classOf[TxPersistenceActor.Factory])
 
   }
 }
