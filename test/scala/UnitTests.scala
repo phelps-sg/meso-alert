@@ -13,7 +13,6 @@ import controllers.SlackSlashCommandController
 import dao._
 import org.bitcoinj.core._
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
-import org.bitcoinj.params.MainNetParams
 import org.scalamock.handlers.CallHandler1
 import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
