@@ -85,21 +85,6 @@ object Fixtures {
     class MainNetPeerGroup extends PeerGroup(mainNetParams)
   }
 
-  //trait MemPoolWatcherFixtures extends MockFactory {
-  //  val mockMemPoolWatcher = mock[MemPoolWatcherService]
-  //  val mainNetParams = MainNetParams.get()
-  //
-  //  class MockPeerGroup extends PeerGroup(mainNetParams)
-  //
-  //  val mockPeerGroup = mock[MockPeerGroup]
-
-  //  def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]): ch.Derived = {
-  //    ch.never()
-  //  }
-
-  //  memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
-  //}
-
   trait MemPoolWatcherActorFixtures {
     val mainNetParams: MainNetParams
     val mockPeerGroup: PeerGroup
