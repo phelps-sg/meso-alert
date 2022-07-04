@@ -80,6 +80,11 @@ object Fixtures {
     }
   }
 
+  trait PeerGroupFixtures {
+    val mainNetParams = MainNetParams.get()
+    class MainNetPeerGroup extends PeerGroup(mainNetParams)
+  }
+
   //trait MemPoolWatcherFixtures extends MockFactory {
   //  val mockMemPoolWatcher = mock[MemPoolWatcherService]
   //  val mainNetParams = MainNetParams.get()
