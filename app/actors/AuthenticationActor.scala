@@ -75,7 +75,6 @@ class AuthenticationActor @Inject()(@Assisted val out: ActorRef, val memPoolWatc
           message => {
             filterActor ! message
           }
-
         }
         context.become(authorized)
 
