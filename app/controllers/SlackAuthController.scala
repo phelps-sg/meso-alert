@@ -14,7 +14,7 @@ import scala.jdk.FutureConverters._
 case class InvalidUserException(str: String) extends Exception(str)
 
 class SlackAuthController @Inject()(protected val config: Configuration,
-                                    val slackUserDao: SlackTeamDao,
+                                    val slackTeamDao: SlackTeamDao,
                                     val controllerComponents: ControllerComponents)
                                    (implicit val ec: ExecutionContext)
   extends BaseController with SlackClient with Logging with InitialisingController {
@@ -22,7 +22,7 @@ class SlackAuthController @Inject()(protected val config: Configuration,
   protected val slackMethods: AsyncMethodsClient = slack.methodsAsync()
 
   override def init(): Future[Unit] = {
-    slackUserDao.init()
+    slackTeamDao.init()
   }
 
   def authRedirect(temporaryCode: String): mvc.Action[AnyContent] =
@@ -46,7 +46,7 @@ class SlackAuthController @Inject()(protected val config: Configuration,
                     botId = response.getBotUserId, accessToken = response.getAccessToken,
                     teamName = response.getTeam.getName)
         logger.debug(s"user = $slackTeam")
-        slackUserDao.insertOrUpdate(slackTeam)
+        slackTeamDao.insertOrUpdate(slackTeam)
       } else {
         Future.failed(InvalidUserException(response.getError))
       }
