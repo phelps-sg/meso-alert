@@ -253,9 +253,6 @@ object Fixtures {
         )
       )
     }
-    //    val key = new URI("http://test")
-    //    val hook = Webhook(key, threshold = 100L)
-    //    val newHook = Webhook(key, threshold = 200L)
     val insertHook = Tables.webhooks += hook
     val queryHooks = Tables.webhooks.result
   }
