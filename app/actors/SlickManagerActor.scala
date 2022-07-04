@@ -3,7 +3,6 @@ package actors
 import actors.AuthenticationActor.Die
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import com.google.inject.Inject
-import com.google.inject.assistedinject.Assisted
 import services.MemPoolWatcherService
 import dao._
 

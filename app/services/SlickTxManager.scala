@@ -1,17 +1,14 @@
 package services
 
-import actors.TxUpdate
-import com.google.inject.ImplementedBy
 import dao._
 import actors._
-import scala.util.{Failure, Success, Try}
 import scala.concurrent.{ExecutionContext, Future}
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ ActorSystem}
 import com.google.inject.ImplementedBy
 import org.bitcoinj.utils.BriefLogFormatter
 import play.api.Logging
 
-import javax.inject.{Inject, Provider, Singleton}
+import javax.inject.{Inject, Singleton}
 
 
 
@@ -30,7 +27,7 @@ class SlickTxManager @Inject()(val slickTransactionUpdateDao: SlickTransactionUp
     Future {
       logger.info("Starting slick tx manager... ")
       BriefLogFormatter.initVerbose()
-      val slickManagerActor = system.actorOf(SlickManagerActor.props(slickTransactionUpdateDao, memPoolWatcher))
+      system.actorOf(SlickManagerActor.props(slickTransactionUpdateDao, memPoolWatcher))
     }
   }
 
