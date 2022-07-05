@@ -22,6 +22,7 @@ import slick.lifted.TableQuery
 import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 import slick.{DatabaseExecutionContext, Tables, jdbc}
 import com.google.common.util.concurrent.ListenableFuture
+import org.scalamock.util.Defaultable
 
 import java.net.URI
 import javax.inject.Provider
@@ -34,6 +35,10 @@ import scala.util.{Failure, Success}
 
 //noinspection TypeAnnotation
 object Fixtures {
+
+  implicit val d = new Defaultable[ListenableFuture[_]] {
+    override val default = null
+  }
 
   trait WebSocketMock {
     def update(tx: TxUpdate): Unit
