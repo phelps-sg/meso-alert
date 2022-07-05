@@ -10,7 +10,7 @@ import java.util.concurrent.Executors
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
-trait PostgresContainer extends ForAllTestContainer { // with BeforeAndAfter with AwaitilitySupport {
+trait PostgresContainer extends ForAllTestContainer {
   self: Suite =>
 
   val logger: Logger = LoggerFactory.getLogger(classOf[PostgresContainer])
