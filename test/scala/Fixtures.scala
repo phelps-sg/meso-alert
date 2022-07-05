@@ -2,6 +2,7 @@ import actors.{AuthenticationActor, HooksManagerActorSlackChat, HooksManagerActo
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
 import com.typesafe.config.ConfigFactory
 import dao._
@@ -10,6 +11,7 @@ import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.params.MainNetParams
 import org.scalamock.handlers.CallHandler1
 import org.scalamock.scalatest.MockFactory
+import org.scalamock.util.Defaultable
 import play.api.inject.Injector
 import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, Json}
@@ -21,8 +23,6 @@ import slick.jdbc.JdbcBackend.Database
 import slick.lifted.TableQuery
 import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 import slick.{DatabaseExecutionContext, Tables, jdbc}
-import com.google.common.util.concurrent.ListenableFuture
-import org.scalamock.util.Defaultable
 
 import java.net.URI
 import javax.inject.Provider
