@@ -33,11 +33,4 @@ trait PostgresContainer extends ForAllTestContainer { // with BeforeAndAfter wit
   implicit val timeout: Duration = Duration(1, "min")
   implicit val ec: ExecutionContextExecutor = ExecutionContext.global
 
-  //  before {
-  //    Await.ready(database.run(DBIO.seq(Tables.schema.create)), timeout)
-  //  }
-  //
-  //  after {
-  //    Await.ready(database.run(DBIO.seq(Tables.schema.drop)), timeout)
-  //  }
 }
