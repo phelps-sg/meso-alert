@@ -15,7 +15,8 @@ trait PostgresContainer extends ForAllTestContainer {
 
   val logger: Logger = LoggerFactory.getLogger(classOf[PostgresContainer])
 
-  val testExecutionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
+  implicit val testExecutionContext: ExecutionContextExecutor =
+    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
 
   override val container: PostgreSQLContainer = PostgreSQLContainer(
     //    dockerImageNameOverride = "postgres:14.2",
@@ -30,6 +31,6 @@ trait PostgresContainer extends ForAllTestContainer {
   }
 
   implicit val timeout: Duration = Duration(1, "min")
-  implicit val ec: ExecutionContextExecutor = ExecutionContext.global
+//  implicit val ec: ExecutionContextExecutor = ExecutionContext.global
 
 }
