@@ -1,6 +1,6 @@
 package unittests
 
-import actors.{AuthenticationActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update}
+import actors.{AuthenticationActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -17,8 +17,8 @@ import org.scalamock.util.Defaultable
 import play.api.inject.Injector
 import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, Json}
-import play.api.{Configuration, inject}
-import services.{HooksManagerWeb, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, User, UserManagerService}
+import play.api.{Configuration, Logging, inject}
+import services.{HooksManagerSlackChat, HooksManagerWeb, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, User, UserManagerService}
 import slick.BtcPostgresProfile.api._
 import slick.dbio.{DBIO, Effect}
 import slick.jdbc.JdbcBackend.Database
@@ -58,36 +58,70 @@ object Fixtures {
     }
   }
 
-  trait WebhookManagerMock {
-    def start(uri: URI): Unit
+  trait HookManagerMock[X, Y] {
+    def start(uri: X): Unit
+    def register(hook: Y): Unit
+    def stop(uri: X): Unit
+    def update(hook: Y): Unit
+  }
 
-    def register(hook: Webhook): Unit
+  trait WebhookManagerMock extends HookManagerMock[URI, Webhook]
+  trait SlackChatManagerMock extends HookManagerMock[SlackChannel, SlackChatHook]
 
-    def stop(uri: URI): Unit
+  trait MockHookManagerActor[X, Y <: Hook[X]] extends Actor with Logging {
+    val mock: HookManagerMock[X, Y]
+    val hooks = mutable.Map[X, Y]()
+
+    override def receive: Receive = {
+      case Start(uri: X) =>
+        logger.debug("Received start request for $uri")
+        mock.start(uri)
+        sender() ! Success(Started(hooks(uri)))
+      case Register(hook: Y) =>
+        mock.register(hook)
+        hooks(hook.key) = hook
+        sender() ! Success(Registered(hook))
+      case Stop(uri: X) =>
+        mock.stop(uri)
+        sender() ! Success(Stopped(hooks(uri)))
+      case Update(hook: Y) =>
+        mock.update(hook)
+        sender() ! Success(Updated(hook))
+      case x =>
+        Failure(new IllegalArgumentException("unrecognized message: $x"))
+    }
   }
 
   object MockWebhookManagerActor {
     def props(mock: WebhookManagerMock) = Props(new MockWebhookManagerActor(mock))
   }
+  class MockWebhookManagerActor(val mock: WebhookManagerMock)
+    extends MockHookManagerActor[URI, Webhook]
 
-  class MockWebhookManagerActor(val mock: WebhookManagerMock) extends Actor {
-    val hooks = mutable.Map[URI, Webhook]()
-
-    override def receive: Receive = {
-      case Start(uri: URI) =>
-        mock.start(uri)
-        sender() ! Success(Started(hooks(uri)))
-      case Register(hook: Webhook) =>
-        mock.register(hook)
-        hooks(hook.uri) = hook
-        sender() ! Success(Registered(hook))
-      case Stop(uri: URI) =>
-        mock.stop(uri)
-        sender() ! Success(Stopped(hooks(uri)))
-      case x =>
-        Failure(new IllegalArgumentException("unrecognized message: $x"))
-    }
+  object MockSlackChatManagerActor {
+    def props(mock: SlackChatManagerMock) = Props(new MockSlackChatManagerActor(mock))
   }
+  class MockSlackChatManagerActor(val mock: SlackChatManagerMock)
+    extends MockHookManagerActor[SlackChannel, SlackChatHook]
+
+//    Actor {
+//    val hooks = mutable.Map[URI, Webhook]()
+//
+//    override def receive: Receive = {
+//      case Start(uri: URI) =>
+//        mock.start(uri)
+//        sender() ! Success(Started(hooks(uri)))
+//      case Register(hook: Webhook) =>
+//        mock.register(hook)
+//        hooks(hook.uri) = hook
+//        sender() ! Success(Registered(hook))
+//      case Stop(uri: URI) =>
+//        mock.stop(uri)
+//        sender() ! Success(Stopped(hooks(uri)))
+//      case x =>
+//        Failure(new IllegalArgumentException("unrecognized message: $x"))
+//    }
+//  }
 
   trait MemPoolWatcherActorFixtures {
     val mainNetParams: MainNetParams
@@ -295,7 +329,7 @@ object Fixtures {
     val queryHooks = Tables.slackChatHooks.result
   }
 
-  trait SlickSlackUserDaoFixtures {
+  trait SlickSlackTeamDaoFixtures {
     val injector: Injector
     val slickSlackTeamDao = injector.instanceOf[SlickSlackTeamDao]
   }
@@ -424,6 +458,17 @@ object Fixtures {
 
     val txWatchActor =
       actorSystem.actorOf(AuthenticationActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager)(actorSystem))
+  }
+
+  trait SlackChatHookManagerFixtures extends MockFactory {
+    val actorSystem: ActorSystem
+    val hookDao: SlackChatHookDao
+    val executionContext: ExecutionContext
+
+    val slackChatManagerMock = mock[SlackChatManagerMock]
+    val mockSlackChatManagerActor = actorSystem.actorOf(MockSlackChatManagerActor.props(slackChatManagerMock))
+    val slackChatManager =
+      new HooksManagerSlackChat(hookDao, actor = mockSlackChatManagerActor)(actorSystem, executionContext)
   }
 
   trait WebhookManagerFixtures extends MockFactory {

@@ -12,7 +12,7 @@ import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{DatabaseGuiceFixtures, DatabaseInitializer, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamFixtures, SlickSlackUserDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
+import unittests.Fixtures.{DatabaseGuiceFixtures, DatabaseInitializer, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
 
 // scalafix:off
 
@@ -83,7 +83,7 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   "SlickSlackTeamDao" should {
 
     trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures with SlickSlackTeamFixtures
-      with SlickSlackUserDaoFixtures with DatabaseInitializer
+      with SlickSlackTeamDaoFixtures with DatabaseInitializer
 
     "record a team in the database" in new TestFixtures {
       afterDbInit {

@@ -16,7 +16,7 @@ trait PostgresContainer extends ForAllTestContainer {
   val logger: Logger = LoggerFactory.getLogger(classOf[PostgresContainer])
 
   implicit val testExecutionContext: ExecutionContextExecutor =
-    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
+    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(6))
 
   override val container: PostgreSQLContainer = PostgreSQLContainer(
     //    dockerImageNameOverride = "postgres:14.2",
