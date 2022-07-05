@@ -2,14 +2,13 @@ package unittests
 
 import actors.AuthenticationActor.{Auth, TxInputOutput}
 import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
-import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxUpdate, Updated, formatSatoshi}
+import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxUpdate, Updated}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
-import controllers.SlackSlashCommandController
 import dao._
 import org.bitcoinj.core._
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
@@ -25,10 +24,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
-import slick.BtcPostgresProfile.api._
-import slick.Tables
-import slick.dbio.DBIO
-import unittests.Fixtures.{ActorGuiceFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, SlickSlashCommandFixtures, TransactionFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookDaoFixtures, WebhookFixtures, WebhookManagerFixtures}
+import unittests.Fixtures.{ActorGuiceFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, TransactionFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
