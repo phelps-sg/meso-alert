@@ -1,4 +1,5 @@
-import Fixtures.{DatabaseGuiceFixtures, DatabaseInitializer, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamFixtures, SlickSlackUserDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
+package unittests
+
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import dao.SlashCommand
@@ -7,8 +8,10 @@ import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
+import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
+import unittests.Fixtures.{DatabaseGuiceFixtures, DatabaseInitializer, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamFixtures, SlickSlackUserDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
 
 // scalafix:off
 
@@ -20,10 +23,10 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
   //noinspection TypeAnnotation
   trait FixtureBindings {
-    val bindModule: GuiceableModule = new UnitTestModule(dbBackend, testExecutionContext)
+    val bindModule: GuiceableModule = new UnitTestModule(database, testExecutionContext)
     val executionContext = testExecutionContext
     val actorSystem = system
-    val db = dbBackend
+    val db = database
   }
 
   implicit override val patienceConfig: PatienceConfig =

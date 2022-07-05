@@ -1,3 +1,5 @@
+package unittests
+
 import actors.{AuthenticationActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb}
 import com.google.inject.AbstractModule
 import play.libs.akka.AkkaGuiceSupport

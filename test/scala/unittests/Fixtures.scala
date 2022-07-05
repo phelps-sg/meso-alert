@@ -1,3 +1,5 @@
+package unittests
+
 import actors.{AuthenticationActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
@@ -31,7 +33,6 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
 import scala.util.{Failure, Success}
-
 
 //noinspection TypeAnnotation
 object Fixtures {
@@ -118,7 +119,9 @@ object Fixtures {
 
   trait MemPoolWatcherFixtures extends MockFactory {
     val mainNetParams = MainNetParams.get()
+
     class MainNetPeerGroup extends PeerGroup(mainNetParams)
+
     val mockMemPoolWatcher = mock[MemPoolWatcherService]
     val mockPeerGroup = mock[MainNetPeerGroup]
 

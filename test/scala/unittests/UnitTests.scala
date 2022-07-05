@@ -1,4 +1,5 @@
-import Fixtures._
+package unittests
+
 import actors.AuthenticationActor.{Auth, TxInputOutput}
 import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
 import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxUpdate, Updated, formatSatoshi}
@@ -22,10 +23,12 @@ import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
+import postgres.PostgresContainer
 import services._
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import slick.dbio.DBIO
+import unittests.Fixtures.{ActorGuiceFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, SlickSlashCommandFixtures, TransactionFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookDaoFixtures, WebhookFixtures, WebhookManagerFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
@@ -55,11 +58,11 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     PatienceConfig(timeout = Span(20, Seconds), interval = Span(5, Millis))
 
   trait FixtureBindings {
-    val bindModule: GuiceableModule = new UnitTestModule(dbBackend, testExecutionContext)
+    val bindModule: GuiceableModule = new UnitTestModule(database, testExecutionContext)
     val executionContext = testExecutionContext
     val actorSystem = system
     val timeout: Timeout = 20.seconds
-    val db = dbBackend
+    val db = database
 
     def wait(duration: FiniteDuration) = expectNoMessage(duration)
   }

@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="UnitTests" type="ScalaTestRunConfiguration" factoryName="ScalaTest" nameIsGenerated="true" show_console_on_std_err="false" show_console_on_std_out="false">
+  <configuration default="false" name="unittests.UnitTests" type="ScalaTestRunConfiguration" factoryName="ScalaTest" nameIsGenerated="true" show_console_on_std_err="false" show_console_on_std_out="false">
     <module name="meso-alert" />
     <extension name="net.ashald.envfile">
       <option name="IS_ENABLED" value="false" />
@@ -19,7 +19,7 @@
     <option name="testKind" value="Class" />
     <option name="javaOptions" value="-Dconfig.file=test/resources/application.test.conf" />
     <option name="shortenClasspath" value="NONE" />
-    <option name="testClassPath" value="UnitTests" />
+    <option name="testClassPath" value="unittests.UnitTests" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
