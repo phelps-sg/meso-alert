@@ -8,7 +8,9 @@ import dao._
 import org.bitcoinj.core.PeerGroup
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.params.MainNetParams
+import org.scalamock.handlers.CallHandler1
 import org.scalamock.scalatest.MockFactory
+import org.scalatest.concurrent.ScalaFutures
 import play.api.inject.Injector
 import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, Json}
@@ -20,6 +22,7 @@ import slick.jdbc.JdbcBackend.Database
 import slick.lifted.TableQuery
 import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 import slick.{DatabaseExecutionContext, Tables, jdbc}
+import com.google.common.util.concurrent.ListenableFuture
 
 import java.net.URI
 import javax.inject.Provider
@@ -28,6 +31,7 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
 import scala.util.{Failure, Success}
+
 
 //noinspection TypeAnnotation
 object Fixtures {
@@ -80,11 +84,6 @@ object Fixtures {
     }
   }
 
-  trait PeerGroupFixtures {
-    val mainNetParams = MainNetParams.get()
-    class MainNetPeerGroup extends PeerGroup(mainNetParams)
-  }
-
   trait MemPoolWatcherActorFixtures {
     val mainNetParams: MainNetParams
     val mockPeerGroup: PeerGroup
@@ -111,6 +110,19 @@ object Fixtures {
     val actorSystem: ActorSystem
     val mockWs = mock[WebSocketMock]
     val mockWsActor = actorSystem.actorOf(MockWebsocketActor.props(mockWs))
+  }
+
+  trait MemPoolWatcherFixtures extends MockFactory {
+    val mainNetParams = MainNetParams.get()
+    class MainNetPeerGroup extends PeerGroup(mainNetParams)
+    val mockMemPoolWatcher = mock[MemPoolWatcherService]
+    val mockPeerGroup = mock[MainNetPeerGroup]
+
+    def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]): ch.Derived = {
+      ch.never()
+    }
+
+    memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
   }
 
   trait ActorGuiceFixtures {

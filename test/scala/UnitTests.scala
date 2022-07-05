@@ -573,16 +573,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
   }
 
-  trait MemPoolWatcherFixtures extends PeerGroupFixtures {
-    val mockMemPoolWatcher = mock[MemPoolWatcherService]
-    val mockPeerGroup = mock[MainNetPeerGroup]
-
-    def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]): ch.Derived = {
-      ch.never()
-    }
-
-    memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
-  }
 
   class TestModule extends AbstractModule with AkkaGuiceSupport {
     override def configure(): Unit = {
