@@ -3,8 +3,7 @@ package postgres
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
 import org.scalatest.Suite
 import org.slf4j.{Logger, LoggerFactory}
-import slick.{BtcPostgresProfile, jdbc}
-import slick.jdbc.JdbcBackend
+import slick.jdbc
 import slick.jdbc.JdbcBackend.Database
 
 import java.util.concurrent.Executors
