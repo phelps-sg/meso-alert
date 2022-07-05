@@ -384,12 +384,12 @@ object Fixtures {
           started <- hooksActor ? Start(key)
           stopped <- hooksActor ? Stop(key)
           _ <- Future {
-            wait(200.millis) // Wait for child actors to die
+            wait(500.millis) // Wait for child actors to die
           }
           restarted <- hooksActor ? Start(key)
           finalStop <- hooksActor ? Stop(key)
           _ <- Future {
-            wait(200.millis)
+            wait(500.millis)
           } // Wait for database to become consistent
           dbContents <- db.run(queryHooks)
         } yield (registered, started, stopped, restarted, finalStop, dbContents)
