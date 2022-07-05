@@ -3,6 +3,7 @@ package unittests
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import dao.SlashCommand
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -19,7 +20,8 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   with AnyWordSpecLike
   with PostgresContainer
   with should.Matchers
-  with ScalaFutures {
+  with ScalaFutures
+  with BeforeAndAfterAll {
 
   //noinspection TypeAnnotation
   trait FixtureBindings {
@@ -135,4 +137,7 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     }
   }
 
+  override def afterAll(): Unit = {
+    TestKit.shutdownActorSystem(system)
+  }
 }
