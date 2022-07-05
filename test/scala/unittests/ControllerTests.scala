@@ -55,7 +55,12 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
       val controller = new SlackSlashCommandController(Helpers.stubControllerComponents(),
         slashCommandHistoryDao = slickSlashCommandHistoryDao,
-        slackTeamDao = slickSlackTeamDao, hooksManager = new HooksManagerSlackChat(hookDao, hooksActor))
+        slackTeamDao = slickSlackTeamDao, hooksManager = new HooksManagerSlackChat(hookDao, hooksActor)) {
+        override def init(): Future[Unit] = {
+          // Do not call createIfNotExists because of issue #68
+          Future { () }
+        }
+      }
 
 
       override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]): CallHandler1[ActorRef, Unit] = {

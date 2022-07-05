@@ -17,6 +17,15 @@
       <list />
     </option>
     <option name="testKind" value="All in package" />
+    <option name="classBuf">
+      <list>
+        <option value="unittests.DaoTests" />
+        <option value="unittests.ActorTests" />
+        <option value="unittests.ServiceTests" />
+        <option value="unittests.ControllerTests" />
+        <option value="unittests.FormattingTests" />
+      </list>
+    </option>
     <option name="shortenClasspath" value="NONE" />
     <option name="testPackagePath" value="unittests" />
     <method v="2">
