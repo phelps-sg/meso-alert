@@ -1,11 +1,10 @@
 package unittests
 
-import actors.{HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, Updated}
-import akka.actor.{ActorRef, ActorSystem}
+import actors.{Registered, Started}
+import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import akka.util.Timeout
-import dao.{SlackChannel, SlackChatHook, Webhook}
-import org.scalamock.handlers.CallHandler1
+import dao.Webhook
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -15,12 +14,12 @@ import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import slick.dbio.DBIO
-import unittests.Fixtures.{ActorGuiceFixtures, HookActorTestLogic, MemPoolWatcherFixtures, SlackChatActorFixtures, WebhookActorFixtures, WebhookDaoFixtures, WebhookFixtures, WebhookManagerFixtures}
+import unittests.Fixtures.{ActorGuiceFixtures, MemPoolWatcherFixtures, WebhookActorFixtures, WebhookDaoFixtures, WebhookFixtures, WebhookManagerFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import scala.util.{Failure, Success}
+import scala.concurrent.duration.DurationInt
+import scala.util.Success
 
 //noinspection TypeAnnotation
 class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
