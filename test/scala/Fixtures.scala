@@ -101,7 +101,7 @@ object Fixtures {
 
   trait TransactionFixtures {
     val mainNetParams: MainNetParams
-    lazy val transactions = Json.parse(Source.fromResource("tx_valid.json").getLines.mkString)
+    lazy val transactions = Json.parse(Source.fromResource("tx_valid.json").getLines().mkString)
       .as[Array[JsArray]].map(_.value).filter(_.size > 1)
       .map(testData => mainNetParams.getDefaultSerializer.makeTransaction(HEX.decode(testData(1).as[String].toLowerCase)))
   }
