@@ -36,17 +36,7 @@ class TxPersistenceActor @Inject()(val transactionUpdateDao: TransactionUpdateDa
   }
   
 
-  override def receive: Receive = {
-    case tx: TxUpdate => process(tx) onComplete {
-      case Success(_) => logger.debug(s"Succesfuly added tx ${tx.hash} to db.")
-      case Failure(ex) =>
-        context.become(retryOrDie(0))
-        self ! Retry(tx, ex)
-    }
-    case Die(reason)  =>
-      logger.error(s"TxPersistenceActor terminating because $reason")
-      self ! PoisonPill
-  }
+  override def receive: Receive = receiveDefault
 
 
 }

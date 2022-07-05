@@ -12,8 +12,29 @@ trait TxRetryOrDie[T] extends Actor with Logging {
 
 //  message types
   case class Retry(tx: TxUpdate, exception: Throwable)
+  case class SwitchContext(tx: TxUpdate, ex: Throwable)
+
+  def switchToRetryContext(tx: TxUpdate, ex: Throwable): Unit = {
+    context.become(retryOrDie(0))
+    self ! Retry(tx, ex)
+  }
 
   def process(tx: TxUpdate) : Future[T]
+
+
+  def receiveDefault : Receive = {
+    case tx: TxUpdate => process(tx) onComplete {
+      case Success(_) => logger.debug(s"Succesfuly processsed tx ${tx.hash}.")
+      case Failure(ex) => self ! SwitchContext(tx,ex)
+    }
+    case Die(reason)  =>
+      logger.error(s"TxPersistenceActor terminating because $reason")
+      self ! PoisonPill
+
+    case SwitchContext(tx: TxUpdate, ex: Throwable) =>
+      switchToRetryContext(tx, ex)
+
+  }
 
   def retryOrDie(currentRetryCount: Int): Receive = {
     case Retry(tx, _) if currentRetryCount < maxRetryCount =>
