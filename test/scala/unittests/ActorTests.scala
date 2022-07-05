@@ -38,7 +38,7 @@ import scala.util.{Failure, Success}
 // scalafix:off
 
 //noinspection TypeAnnotation
-class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
+class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
   with AnyWordSpecLike
   with PostgresContainer
   with should.Matchers
@@ -271,46 +271,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
   }
 
-  "WebhooksManager" should {
-
-    trait TestFixtures extends FixtureBindings with MemPoolWatcherFixtures with ActorGuiceFixtures
-      with WebhookDaoFixtures with WebhookFixtures with WebhookActorFixtures with WebhookManagerFixtures {
-    }
-
-    "register and start all running hooks stored in the database on initialisation" in new TestFixtures {
-
-      val hook1 = Webhook(new URI("http://test1"), 10, isRunning = true)
-      val hook2 = Webhook(new URI("http://test2"), 20, isRunning = true)
-      val hook3 = Webhook(new URI("http://test3"), 30, isRunning = false)
-
-      val hooks = List(hook1, hook2, hook3)
-
-      hooks foreach { hook =>
-        (webhookManagerMock.register _).expects(hook).returning(Success(Registered(hook)))
-      }
-
-      hooks.filter(_.isRunning).foreach { hook =>
-        (webhookManagerMock.start _).expects(hook.uri).returning(Success(Started(hook)))
-      }
-
-      val init = for {
-        _ <- database.run(
-          DBIO.seq(
-            Tables.schema.create,
-            Tables.webhooks ++= hooks,
-          )
-        )
-        _ <- Future.sequence(hooks.map(webhooksManager.register))
-        response <- webhooksManager.init()
-      } yield response
-
-      init.futureValue should matchPattern {
-        case Seq(Started(`hook1`), Started(`hook2`)) =>
-      }
-
-    }
-  }
-
   "SlackChatManagerActor" should {
 
     trait TestFixtures extends FixtureBindings
@@ -423,51 +383,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
       }
     }
   }
-
-  "formatSatoshiValue" should {
-
-    "return a value greater than 1 when value >= 100000000" in {
-      formatSatoshi(100000000) shouldEqual "1"
-      formatSatoshi(1000000000) shouldEqual "10"
-    }
-
-    "return a decimal value between 0 and 0.99999999 when 0 <= value < 100000000" in {
-      formatSatoshi(0) shouldEqual "0.0"
-      formatSatoshi(99999999) shouldEqual "0.99999999"
-    }
-  }
-
-  "SlashCommandHistoryController" should {
-
-    trait TestFixtures extends SlickSlashCommandFixtures
-
-    "convert an incoming parameter map to a case class" in new TestFixtures {
-      val paramMap =
-        Map[String, Vector[String]](
-          "channel_id" -> Vector(channelId),
-          "team_id" -> Vector(teamId),
-          "command" -> Vector(command),
-          "text" -> Vector(text)
-        )
-      SlackSlashCommandController.toCommand(paramMap) should matchPattern {
-        case Success(SlashCommand(None, `channelId`, `command`, `text`,
-        None, `teamId`, None, None, None, None, Some(_: java.time.LocalDateTime))) =>
-      }
-    }
-
-    "return an error when insufficient parameters are supplied" in new TestFixtures {
-      val paramMap = {
-        Map[String, Vector[String]](
-          "channel_id" -> Vector(channelId)
-        )
-      }
-      SlackSlashCommandController.toCommand(paramMap) should matchPattern {
-        case Failure(_) =>
-      }
-    }
-  }
-
-
 
   override def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)
