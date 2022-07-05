@@ -5,7 +5,7 @@ import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import com.google.inject.Inject
 import services.MemPoolWatcherService
 import dao._
-]import scala.util.{Failure, Success}
+import scala.util.{Failure, Success}
 
 
 
