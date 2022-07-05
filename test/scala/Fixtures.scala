@@ -10,7 +10,6 @@ import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.params.MainNetParams
 import org.scalamock.handlers.CallHandler1
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.concurrent.ScalaFutures
 import play.api.inject.Injector
 import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, Json}
