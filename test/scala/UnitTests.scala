@@ -1,14 +1,13 @@
 import Fixtures._
 import actors.AuthenticationActor.{Auth, TxInputOutput}
 import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
-import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Updated, formatSatoshi}
+import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxUpdate, Updated, formatSatoshi}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
 import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
-import com.google.inject.AbstractModule
 import controllers.SlackSlashCommandController
 import dao._
 import org.bitcoinj.core._
@@ -23,19 +22,14 @@ import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
-import play.libs.akka.AkkaGuiceSupport
 import services._
 import slick.BtcPostgresProfile.api._
+import slick.Tables
 import slick.dbio.DBIO
-import slick.jdbc.JdbcBackend
-import slick.jdbc.JdbcBackend.Database
-import slick.{Tables, jdbc}
 
 import java.net.URI
-import java.util.concurrent.Executors
-import javax.inject.Provider
+import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 // scalafix:off
@@ -53,15 +47,15 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   // akka timeout
   implicit val akkaTimeout = Timeout(5.seconds)
 
-  lazy val dbBackend: JdbcBackend.Database = database.asInstanceOf[JdbcBackend.Database]
-  val testExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
+//  lazy val dbBackend: JdbcBackend.Database = database.asInstanceOf[JdbcBackend.Database]
+//  val testExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
 
   // whenReady timeout
   implicit override val patienceConfig =
     PatienceConfig(timeout = Span(20, Seconds), interval = Span(5, Millis))
 
   trait FixtureBindings {
-    val bindModule: GuiceableModule = new TestModule()
+    val bindModule: GuiceableModule = new UnitTestModule(dbBackend, testExecutionContext)
     val executionContext = testExecutionContext
     val actorSystem = system
     val timeout: Timeout = 20.seconds
@@ -427,109 +421,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
     }
   }
 
-  "WebhookDao" should {
-
-    trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures
-      with WebhookDaoFixtures with WebhookFixtures with WebhookDaoTestLogic {
-    }
-
-    "record a web hook in the database" in new TestFixtures {
-      insertHook().futureValue should matchPattern { case (1, Seq(`hook`)) => }
-    }
-
-    "return an existing hook by key" in new TestFixtures {
-      findHook().futureValue should matchPattern { case (1, Some(`hook`)) => }
-    }
-
-    "return None when attempting to find a non existent hook" in new TestFixtures {
-      findNonExistentHook().futureValue should matchPattern { case None => }
-    }
-
-    "update an existing hook" in new TestFixtures {
-      updateHook().futureValue should matchPattern { case (1, 1, Seq(`newHook`)) => }
-    }
-
-  }
-
-  "SlackChatHookDao" should {
-
-    trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures
-      with SlackChatHookDaoFixtures with SlackChatHookFixtures with SlackChatDaoTestLogic
-
-    "record a slack chat hook in the database" in new TestFixtures {
-      insertHook().futureValue should matchPattern { case (1, Seq(`hook`)) => }
-    }
-
-    "return an existing hook by key" in new TestFixtures {
-      findHook().futureValue should matchPattern { case (1, Some(`hook`)) => }
-    }
-
-    "return None when attempting to find a non existent hook" in new TestFixtures {
-      findNonExistentHook().futureValue should matchPattern { case None => }
-    }
-
-    "update an existing hook" in new TestFixtures {
-      updateHook().futureValue should matchPattern { case (1, 1, Seq(`newHook`)) => }
-    }
-  }
-
-  "SlickSlackTeamDao" should {
-
-    trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures with SlickSlackTeamFixtures
-      with SlickSlackUserDaoFixtures with DatabaseInitializer
-
-    "record a team in the database" in new TestFixtures {
-      afterDbInit {
-        for {
-          n <- slickSlackTeamDao.insertOrUpdate(slackTeam)
-          r <- db.run(Tables.slackTeams.result)
-        } yield (n, r)
-      }.futureValue should matchPattern {
-        case (1, Seq(`slackTeam`)) =>
-      }
-    }
-
-    "find a team in the database" in new TestFixtures {
-      afterDbInit {
-        for {
-          n <- slickSlackTeamDao.insertOrUpdate(slackTeam)
-          user <- slickSlackTeamDao.find(teamId)
-        } yield (n, user)
-      }.futureValue should matchPattern {
-        case (1, Some(`slackTeam`)) =>
-      }
-    }
-
-    "return None when a user with the given user id does not exist" in new TestFixtures {
-      afterDbInit {
-        for {
-          n <- slickSlackTeamDao.insertOrUpdate(slackTeam)
-          user <- slickSlackTeamDao.find("nonexistent")
-        } yield (n, user)
-      }.futureValue should matchPattern {
-        case (1, None) =>
-      }
-    }
-  }
-
-  "SlickSlashCommandHistoryDao" should {
-
-    trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures with SlickSlashCommandFixtures
-      with SlickSlashCommandHistoryDaoFixtures with DatabaseInitializer
-
-    "record a slack slash command history" in new TestFixtures {
-      afterDbInit {
-        for {
-          n <- slickSlashCommandHistoryDao.record(slashCommand)
-          r <- database.run(Tables.slashCommandHistory.result)
-        } yield (n, r)
-      }.futureValue should matchPattern {
-        case (1, Seq(SlashCommand(Some(_: Int), `channelId`, `command`, `text`, `teamDomain`, `teamId`,
-        `channelName`, `userId`, `userName`, `isEnterpriseInstall`, `timeStamp`))) =>
-      }
-    }
-  }
-
   "formatSatoshiValue" should {
 
     "return a value greater than 1 when value >= 100000000" in {
@@ -574,20 +465,6 @@ class UnitTests extends TestKit(ActorSystem("meso-alert-test"))
   }
 
 
-  class TestModule extends AbstractModule with AkkaGuiceSupport {
-    override def configure(): Unit = {
-      bind(classOf[Database]).toProvider(new Provider[Database] {
-        val get: jdbc.JdbcBackend.Database = dbBackend
-      })
-      bind(classOf[ExecutionContext]).toInstance(testExecutionContext)
-      //      bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")
-      //      bindActor(classOf[WebhooksActor], "webhooks-actor")
-      bindActorFactory(classOf[TxMessagingActorWeb], classOf[TxMessagingActorWeb.Factory])
-      bindActorFactory(classOf[TxMessagingActorSlackChat], classOf[TxMessagingActorSlackChat.Factory])
-      bindActorFactory(classOf[AuthenticationActor], classOf[AuthenticationActor.Factory])
-      bindActorFactory(classOf[TxFilterActor], classOf[TxFilterActor.Factory])
-    }
-  }
 
   override def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)

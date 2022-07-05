@@ -1,11 +1,11 @@
-package scala
-
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
 import org.scalatest.Suite
 import org.slf4j.{Logger, LoggerFactory}
 import slick.BtcPostgresProfile
 import slick.BtcPostgresProfile.api._
+import slick.jdbc.JdbcBackend
 
+import java.util.concurrent.Executors
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
@@ -13,6 +13,9 @@ trait PostgresContainer extends ForAllTestContainer { // with BeforeAndAfter wit
   self: Suite =>
 
   val logger: Logger = LoggerFactory.getLogger(classOf[PostgresContainer])
+
+  lazy val dbBackend: JdbcBackend.Database = database.asInstanceOf[JdbcBackend.Database]
+  val testExecutionContext: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
 
   override val container: PostgreSQLContainer = PostgreSQLContainer(
 //    dockerImageNameOverride = "postgres:14.2",
