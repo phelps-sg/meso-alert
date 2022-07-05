@@ -6,6 +6,7 @@ import com.google.inject.Inject
 import services.MemPoolWatcherService
 import dao._
 import scala.util.{Failure, Success}
+import scala.concurrent.Future
 
 
 
@@ -26,7 +27,7 @@ class TxPersistenceActor @Inject()(val transactionUpdateDao: TransactionUpdateDa
   extends Actor with TxUpdateActor with TxRetryOrDie[Int] {
 
   override val maxRetryCount = 3
-  override def process(tx: TxUpdate) = transactionUpdateDao.record(tx)
+  override def process(tx: TxUpdate): Future[Int] = transactionUpdateDao.record(tx)
 
   override def preStart(): Unit = {
     super.preStart()
