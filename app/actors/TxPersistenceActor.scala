@@ -29,7 +29,7 @@ class TxPersistenceActor @Inject()(val transactionUpdateDao: TransactionUpdateDa
                                   (implicit val ec: ExecutionContext)
   extends Actor with TxUpdateActor with TxRetryOrDie {
 
-  override var maxRetryCount = 3
+  override val maxRetryCount = 3
 
 
   override def preStart(): Unit = {
