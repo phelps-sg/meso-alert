@@ -35,6 +35,7 @@ import scala.io.Source
 import scala.util.{Failure, Success}
 
 //noinspection TypeAnnotation
+// scalafix:off
 object Fixtures {
 
   implicit val d = new Defaultable[ListenableFuture[_]] {
@@ -496,3 +497,5 @@ object Fixtures {
   }
 
 }
+
+// scalafix:on
