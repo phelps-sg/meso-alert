@@ -54,14 +54,12 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
   } yield result
 
   def slashCommand: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { request =>
-
     logger.debug("received slash command")
     request.body.foreach { x => logger.debug(s"${x._1} = ${x._2}") }
 
     SlackSlashCommandController.toCommand(request.body) match {
 
       case Success(slashCommand) =>
-
         val recordCommand = slashCommandHistoryDao.record(slashCommand)
         for {
           _ <- recordCommand
@@ -72,27 +70,33 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
         logger.error(ex.getMessage)
         Future { ServiceUnavailable(ex.getMessage) }
     }
-
   }
 
-  def process(slashCommand: SlashCommand): Future[Result] = {
-    val channel = SlackChannel(slashCommand.channelId)
-    slashCommand.command match {
+  def channel(implicit slashCommand: SlashCommand): SlackChannel = SlackChannel(slashCommand.channelId)
 
-      case "/crypto-alert" =>
-        slashCommand.text.toLongOption match {
+  def cryptoAlert(implicit slashCommand: SlashCommand): Future[Result] = {
+
+    val args = slashCommand.text.toLowerCase.split("\\s+")
+
+    args match {
+
+      case Array(_) | Array(_, "btc") =>
+
+        args.head.toLongOption match {
 
           case Some(amount) =>
             logger.debug(s"amount = $amount")
+
             val f = for {
               team <- slackTeamDao.find(slashCommand.teamId)
               _ <- {
                 team match {
-                 case Some(SlackTeam(_, _, _, accessToken, _)) =>
+                  case Some(SlackTeam(_, _, _, accessToken, _)) =>
                     hooksManager.update(
-                      SlackChatHook(channel, token = accessToken, amount * 100000000, isRunning = true))
-                 case None =>
-                   Future.failed(new IllegalArgumentException(s"No such slack team ${slashCommand.teamId}"))
+                      SlackChatHook(channel, token = accessToken, amount * 100000000, isRunning = true)
+                    )
+                  case None =>
+                    Future.failed(new IllegalArgumentException(s"No such slack team ${slashCommand.teamId}"))
                 }
               }
               started <- hooksManager.start(channel)
@@ -110,33 +114,54 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
           case None =>
             logger.debug(s"Invalid amount ${slashCommand.text}")
             Future {
-              Ok("Usage: `/crypto-alert [threshold amount in BTC]`")
+              Ok("Usage: `/crypto-alert [threshold amount] [currency]`")
             }
 
         }
 
-      case "/pause-alerts" =>
-        logger.debug("Pausing alerts")
-        val f = for {
-          stopped <- hooksManager.stop(channel)
-        } yield stopped
-        f.map { _ => Ok("OK, I have paused alerts for this channel.") }
-          .recover {
-            case HookNotStartedException(_) =>
-              Ok("Alerts are not active on this channel.")
-          }
+      case Array(_, _) =>
+        Future {
+          Ok("I currently only provide alerts for BTC, but other currencies are coming soon.")
+        }
 
-      case "/resume-alerts" =>
-        logger.debug("Resuming alerts")
-        val f = for {
-          stopped <- hooksManager.start(channel)
-        } yield stopped
-        f.map { _ => Ok("OK, I will resume alerts on this channel.") }
-          .recover {
-            case HookAlreadyStartedException(_) =>
-              Ok("Alerts are already active on this channel.")
-          }
+      case _ =>
+        Future {
+          Ok("Usage: `/crypto-alert [threshold amount] [currency]`")
+        }
 
+    }
+
+  }
+
+  def pauseAlerts(implicit slashCommand: SlashCommand): Future[Result] = {
+    logger.debug("Pausing alerts")
+    val f = for {
+      stopped <- hooksManager.stop(channel)
+    } yield stopped
+    f.map { _ => Ok("OK, I have paused alerts for this channel.") }
+      .recover {
+        case HookNotStartedException(_) =>
+          Ok("Alerts are not active on this channel.")
+      }
+  }
+
+  def resumeAlerts(implicit slashCommand: SlashCommand): Future[Result] = {
+    logger.debug("Resuming alerts")
+    val f = for {
+      stopped <- hooksManager.start(channel)
+    } yield stopped
+    f.map { _ => Ok("OK, I will resume alerts on this channel.") }
+      .recover {
+        case HookAlreadyStartedException(_) =>
+          Ok("Alerts are already active on this channel.")
+      }
+  }
+
+  def process(implicit slashCommand: SlashCommand): Future[Result] = {
+    slashCommand.command match {
+      case "/crypto-alert" => cryptoAlert
+      case "/pause-alerts" => pauseAlerts
+      case "/resume-alerts" => resumeAlerts
     }
   }
 

@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="UnitTests" type="ScalaTestRunConfiguration" factoryName="ScalaTest" nameIsGenerated="true" show_console_on_std_err="false" show_console_on_std_out="false">
+  <configuration default="false" name="ScalaTests in 'unittests'" type="ScalaTestRunConfiguration" factoryName="ScalaTest" singleton="false" nameIsGenerated="true" show_console_on_std_err="false" show_console_on_std_out="false">
     <module name="meso-alert" />
     <extension name="net.ashald.envfile">
       <option name="IS_ENABLED" value="false" />
@@ -11,15 +11,23 @@
         <ENTRY IS_ENABLED="true" PARSER="runconfig" />
       </ENTRIES>
     </extension>
-    <option name="allowRunningInParallel" value="false" />
+    <option name="allowRunningInParallel" value="true" />
     <option name="projectPathOnTarget" />
     <option name="selectedOptions">
       <list />
     </option>
-    <option name="testKind" value="Class" />
-    <option name="javaOptions" value="-Dconfig.file=test/resources/application.test.conf" />
+    <option name="testKind" value="All in package" />
+    <option name="classBuf">
+      <list>
+        <option value="unittests.DaoTests" />
+        <option value="unittests.ActorTests" />
+        <option value="unittests.ServiceTests" />
+        <option value="unittests.ControllerTests" />
+        <option value="unittests.FormattingTests" />
+      </list>
+    </option>
     <option name="shortenClasspath" value="NONE" />
-    <option name="testClassPath" value="UnitTests" />
+    <option name="testPackagePath" value="unittests" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
