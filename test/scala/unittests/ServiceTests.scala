@@ -45,8 +45,7 @@ class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   "WebhooksManager" should {
 
     trait TestFixtures extends FixtureBindings with MemPoolWatcherFixtures with ActorGuiceFixtures
-      with WebhookDaoFixtures with WebhookFixtures with WebhookActorFixtures with WebhookManagerFixtures {
-    }
+      with WebhookDaoFixtures with WebhookFixtures with WebhookActorFixtures with WebhookManagerFixtures
 
     "register and start all running hooks stored in the database on initialisation" in new TestFixtures {
 
