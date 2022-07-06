@@ -1,11 +1,9 @@
 package actors
 
-import actors.AuthenticationActor.Die
-import akka.actor.{Actor, ActorRef, PoisonPill, Props}
+import akka.actor.{Actor, ActorRef, Props}
 import com.google.inject.Inject
 import services.MemPoolWatcherService
 import dao._
-import scala.util.{Failure, Success}
 import scala.concurrent.Future
 
 
@@ -28,15 +26,17 @@ class TxPersistenceActor @Inject()(val transactionUpdateDao: TransactionUpdateDa
 
   override val maxRetryCount = 3
   override def process(tx: TxUpdate): Future[Int] = transactionUpdateDao.record(tx)
+  override def success(): Unit = logger.debug("Succesfuly added tx to db.")
+  override def failure(ex: Throwable): Unit = logger.error(s"Failed to proccess tx, ${ex.getMessage}.")
+  override def actorDeath(reason: String): Unit = logger.info(s"TxPersistenceActor terminating because $reason")
 
   override def preStart(): Unit = {
     super.preStart()
     registerWithWatcher()
     transactionUpdateDao.init()
   }
-  
 
-  override def receive: Receive = receiveDefault
+  override def receive: Receive = receiveDefault()
 
 
 }
