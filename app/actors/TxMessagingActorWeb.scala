@@ -5,7 +5,7 @@ import com.google.inject.assistedinject.Assisted
 import com.google.inject.{ImplementedBy, Inject}
 import dao.Webhook
 import monix.eval.Task
-import org.apache.commons.logging.LogFactory
+import play.api.Logging
 import play.api.libs.json.Json
 import sttp.capabilities.WebSockets
 import sttp.capabilities.monix.MonixStreams
@@ -33,9 +33,8 @@ object TxMessagingActorWeb {
   }
 }
 
-class TxMessagingActorWeb @Inject()(backendSelection: HttpBackendSelection, @Assisted hook: Webhook)  extends Actor {
-
-  private val logger = LogFactory.getLog(classOf[TxMessagingActorWeb])
+class TxMessagingActorWeb @Inject()(backendSelection: HttpBackendSelection, @Assisted hook: Webhook)
+  extends Actor with Logging {
 
   override def receive: Receive = {
     case tx: TxUpdate =>
