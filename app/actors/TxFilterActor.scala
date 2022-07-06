@@ -4,6 +4,7 @@ import actors.AuthenticationActor.Die
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
+import play.api.Logging
 import services.MemPoolWatcherService
 
 object TxFilterActor {
@@ -20,7 +21,7 @@ object TxFilterActor {
 
 class TxFilterActor @Inject()(@Assisted val out: ActorRef, @Assisted val filter: TxUpdate => Boolean,
                               val memPoolWatcher: MemPoolWatcherService)
-  extends Actor with TxUpdateActor {
+  extends Actor with TxUpdateActor with Logging {
 
   override def preStart(): Unit = {
     super.preStart()
