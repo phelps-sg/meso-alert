@@ -9,8 +9,9 @@ import actors.AuthenticationActor.Die
 trait TxRetryOrDie[T] extends Actor with Logging {
   val maxRetryCount: Int
   implicit val ec: ExecutionContext
+
 //  message types
-  case class Retry(tx: TxUpdate, exception: Throwable)
+  case class Retry(tx: TxUpdate, retryCount: Int, exception: Option[Exception])
   case class SwitchContext(newContext: Receive)
 
   def process(tx: TxUpdate) : Future[T]
@@ -19,28 +20,20 @@ trait TxRetryOrDie[T] extends Actor with Logging {
   def actorDeath(reason: String): Unit
 
 
-  def receiveDefault(currentRetryCount: Int = 0) : Receive = {
-    case tx: TxUpdate => process(tx) onComplete {
-      case Success(_) => success()
-      case Failure(ex) =>
-        failure(ex)
-        self ! Retry(tx, ex)
-    }
-
-    case Retry(tx, _) if currentRetryCount < maxRetryCount =>
-      logger.error(s"Error processing tx ${tx.hash}. Retrying...")
-      process(tx) onComplete {
-        case Success(_) =>
-          success()
-          self ! SwitchContext(receiveDefault())
-        case Failure(ex) =>
-          self ! SwitchContext(receiveDefault(currentRetryCount+1))
-          self ! Retry(tx, ex)
-      }
-    case Retry(tx, ex) if currentRetryCount >= maxRetryCount =>
-      self ! Die(s"Could not process tx ${tx.hash}. ${ex.getMessage}")
-
-    case SwitchContext(newContext) => context.become(newContext)
+  def receiveDefault : Receive = {
+    case tx: TxUpdate => self ! Retry(tx, 0, None)
+    case Retry(tx, retryCount, _) if retryCount < maxRetryCount =>
+      process(tx) map {
+        _ => success()
+      } recover {
+        case ex: Exception =>
+          failure(ex)
+          self ! Retry(tx, retryCount+1, Some(ex))
+        case ex: Error =>
+          logger.error(s"Fatal error: ${ex.getMessage}")
+        }
+    case Retry(tx, retryCount, ex) if retryCount >= maxRetryCount =>
+      self ! Die(s"Could not process tx ${tx.hash}. ${ex.get.getMessage}")
 
     case Die(reason)  =>
       actorDeath(reason)

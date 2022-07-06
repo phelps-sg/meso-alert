@@ -35,7 +35,7 @@ class TxPersistenceActor @Inject()(val transactionUpdateDao: TransactionUpdateDa
     transactionUpdateDao.init()
   }
 
-  override def receive: Receive = receiveDefault()
+  override def receive: Receive = receiveDefault
 
 
 }
