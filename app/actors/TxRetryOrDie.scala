@@ -39,7 +39,7 @@ trait TxRetryOrDie[T] extends Actor with Logging {
           self ! Retry(tx, ex)
       }
     case Retry(tx, ex) if currentRetryCount >= maxRetryCount =>
-      self ! Die(s"Could not proccess tx ${tx.hash}. ${ex.getMessage}")
+      self ! Die(s"Could not process tx ${tx.hash}. ${ex.getMessage}")
 
     case SwitchContext(newContext) => context.become(newContext)
 
