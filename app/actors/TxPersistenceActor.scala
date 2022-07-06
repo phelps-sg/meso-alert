@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.google.inject.Inject
 import services.MemPoolWatcherService
 import dao._
-import scala.concurrent.Future
+import scala.concurrent.{Future, ExecutionContext}
 
 
 
@@ -14,13 +14,13 @@ object TxPersistenceActor {
     def apply(out: ActorRef): Actor
   }
 
-  def props(transactionUpdateDao: TransactionUpdateDao, memPoolWatcher: MemPoolWatcherService ): Props =
-        Props(new TxPersistenceActor(transactionUpdateDao, memPoolWatcher))
+  def props(transactionUpdateDao: TransactionUpdateDao, memPoolWatcher: MemPoolWatcherService, ec: ExecutionContext ): Props =
+        Props(new TxPersistenceActor(transactionUpdateDao, memPoolWatcher, ec))
 
 }
 
 class TxPersistenceActor @Inject()(val transactionUpdateDao: TransactionUpdateDao,
-                                  val memPoolWatcher: MemPoolWatcherService)
+                                  val memPoolWatcher: MemPoolWatcherService, implicit val ec: ExecutionContext)
   extends Actor with TxUpdateActor with TxRetryOrDie[Int] {
 
   override val maxRetryCount = 3

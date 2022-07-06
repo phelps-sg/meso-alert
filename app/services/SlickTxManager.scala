@@ -26,7 +26,7 @@ class SlickTxManager @Inject()(val transactionUpdateDao: TransactionUpdateDao, v
   override def init(): Future[Unit] = {
     Future {
       logger.info("Starting slick tx manager... ")
-      system.actorOf(TxPersistenceActor.props(transactionUpdateDao, memPoolWatcher))
+      system.actorOf(TxPersistenceActor.props(transactionUpdateDao, memPoolWatcher,ec))
     }
   }
 
