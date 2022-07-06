@@ -2,7 +2,6 @@ package actors
 import akka.actor._
 import scala.concurrent.{Future, ExecutionContext}
 import play.api.Logging
-import scala.util.{Failure, Success}
 import actors.AuthenticationActor.Die
 
 
@@ -12,7 +11,6 @@ trait TxRetryOrDie[T] extends Actor with Logging {
 
 //  message types
   case class Retry(tx: TxUpdate, retryCount: Int, exception: Option[Exception])
-  case class SwitchContext(newContext: Receive)
 
   def process(tx: TxUpdate) : Future[T]
   def success(): Unit
