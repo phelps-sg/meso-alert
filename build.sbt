@@ -21,6 +21,7 @@ Test / javaOptions += "-Dconfig.file=test/resources/application.test.conf"
 libraryDependencies += guice
 libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
 libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.30.0"
+libraryDependencies += "org.abstractj.kalium" % "kalium" % "0.8.0"
 
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test
 libraryDependencies += "org.awaitility" % "awaitility-scala" % "4.2.0" % Test
