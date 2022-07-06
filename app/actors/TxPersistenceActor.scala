@@ -26,16 +26,12 @@ class TxPersistenceActor @Inject()(val transactionUpdateDao: TransactionUpdateDa
   override val maxRetryCount = 3
   override def process(tx: TxUpdate): Future[Int] = transactionUpdateDao.record(tx)
   override def success(): Unit = logger.debug("Successfully added tx to db.")
-  override def failure(ex: Throwable): Unit = logger.error(s"Failed to process tx, ${ex.getMessage}.")
-  override def actorDeath(reason: String): Unit = logger.info(s"TxPersistenceActor terminating because $reason")
 
   override def preStart(): Unit = {
     super.preStart()
     registerWithWatcher()
     transactionUpdateDao.init()
   }
-
-  override def receive: Receive = receiveDefault
 
 
 }

@@ -14,11 +14,12 @@ trait TxRetryOrDie[T] extends Actor with Logging {
 
   def process(tx: TxUpdate) : Future[T]
   def success(): Unit
-  def failure(ex: Throwable): Unit
-  def actorDeath(reason: String): Unit
+  def failure(ex: Throwable): Unit = logger.error(s"Failed to process tx, ${ex.getMessage}.")
+  def actorDeath(reason: String): Unit = logger.info(s"${this.getClass.getName} terminating because $reason")
 
 
-  def receiveDefault : Receive = {
+
+  def receive : Receive = {
     case tx: TxUpdate => self ! Retry(tx, 0, None)
     case Retry(tx, retryCount, _) if retryCount < maxRetryCount =>
       process(tx) map {
