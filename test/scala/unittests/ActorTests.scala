@@ -7,7 +7,6 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
-import com.github.nscala_time.time.Imports.DateTime
 import com.google.common.util.concurrent.ListenableFuture
 import dao._
 import org.bitcoinj.core._
@@ -215,7 +214,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
     "provide updates when user is authenticated" in new TestFixturesOneSubscriber {
 
-      val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List(), List())
+      val tx = TxUpdate("testHash", 10, java.time.LocalDateTime.now(), isPending = true, List(), List())
 
       (mockUser.filter _).expects(tx).returning(true)
       (mockUserManager.authenticate _).expects("test").returning(Success(mockUser))
@@ -230,7 +229,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
     "not provide updates when credentials are invalid" in new TestFixtures {
 
-      val tx = TxUpdate("testHash", 10, DateTime.now(), isPending = true, List(), List())
+      val tx = TxUpdate("testHash", 10, java.time.LocalDateTime.now(), isPending = true, List(), List())
 
       (mockUserManager.authenticate _).expects("test").returning(Failure(InvalidCredentialsException))
 
@@ -248,8 +247,8 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
     "only provide updates according to the user's filter" in new TestFixturesOneSubscriber {
 
-      val tx1 = TxUpdate("testHash1", 10, DateTime.now(), isPending = true, List(), List())
-      val tx2 = TxUpdate("testHash2", 1, DateTime.now(), isPending = true, List(), List())
+      val tx1 = TxUpdate("testHash1", 10, java.time.LocalDateTime.now(), isPending = true, List(), List())
+      val tx2 = TxUpdate("testHash2", 1, java.time.LocalDateTime.now(), isPending = true, List(), List())
 
       (mockUserManager.authenticate _).expects("test").returning(Success(mockUser))
 

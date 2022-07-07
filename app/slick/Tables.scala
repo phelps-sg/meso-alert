@@ -82,7 +82,7 @@ object Tables {
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
     def hash = column[String]("hash") 
     def value = column[Long]("value") 
-    def time_stamp = column[String]("time_stamp")
+    def time_stamp = column[java.time.LocalDateTime]("time_stamp")
     def isPending = column[Boolean]("isPending")
 
     override def * = (id.?, hash, value, time_stamp, isPending) <> (TransactionUpdate.tupled, TransactionUpdate.unapply) 

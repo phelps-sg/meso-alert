@@ -25,8 +25,7 @@ class SlickTransactionUpdateDao @Inject()(val db: Database,
 
 
   def record(txUpdate: TxUpdate): Future[Int] = {
-    val timeString = txUpdate.time.toString()
-    val slickTxUpdate = TransactionUpdate(None, txUpdate.hash, txUpdate.value, timeString, txUpdate.isPending)
+    val slickTxUpdate = TransactionUpdate(None, txUpdate.hash, txUpdate.value, txUpdate.time, txUpdate.isPending)
     db.run(Tables.transactionUpdates += slickTxUpdate)
   }
 
