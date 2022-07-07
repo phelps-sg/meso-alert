@@ -1,6 +1,7 @@
 package unittests
 
 import actors.AuthenticationActor.{Auth, TxInputOutput}
+import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
 import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
 import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxUpdate, Updated}
 import akka.actor.{ActorRef, ActorSystem}
@@ -24,7 +25,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
-import unittests.Fixtures.{ActorGuiceFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, TransactionFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
+import unittests.Fixtures.{ActorGuiceFixtures, EncryptionActorFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, TransactionFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
@@ -378,6 +379,57 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
           Seq(`stoppedHook`)) =>
       }
     }
+  }
+
+  "EncryptionActor" should {
+
+    trait TestFixtures extends FixtureBindings with EncryptionActorFixtures
+
+    "decrypt ciphertext to plain text" in new TestFixtures {
+      (for {
+        init <- encryptionActor ? Init(secret)
+        encryptedResult <- encryptionActor ? Encrypt(plainTextBinary)
+        decryptedResult <- {
+          encryptedResult match {
+            case Success(encrypted: Encrypted) =>
+              encryptionActor ? encrypted
+            case _ =>
+              fail(s"Invalid message from actor $encryptedResult")
+          }
+        }
+      } yield (init, encryptedResult, decryptedResult))
+      .futureValue match {
+        case (Success(_), Success(Encrypted(_, _)), Success(decrypted: Decrypted)) =>
+          decrypted.asString shouldEqual plainText
+        case _ =>
+          fail()
+      }
+    }
+
+    "not reuse the same nonce for subsequent messages" in new TestFixtures {
+      (for {
+        init <- encryptionActor ? Init(secret)
+        encryptedResult <- encryptionActor ? Encrypt(plainTextBinary)
+        secondEncryptedResult <- encryptionActor ? Encrypt(secondPlainTextBinary)
+      } yield (init, encryptedResult, secondEncryptedResult)).futureValue should matchPattern {
+        case (Success(_), Success(Encrypted(_, nonce1)), Success(Encrypted(_, nonce2)))
+          if !(nonce1 sameElements nonce2) =>
+      }
+    }
+
+    "give an error if encrypting without initialisation" in new TestFixtures {
+      (for {
+        error <- encryptionActor ? Encrypt(plainTextBinary)
+      } yield error).futureValue should matchPattern { case Failure(_) => }
+    }
+
+    "give an error if initialising an already initialised actor" in new TestFixtures {
+      (for {
+        init <- encryptionActor ? Init(secret)
+        error <- encryptionActor ? Init(secret)
+      } yield (init, error)).futureValue should matchPattern { case (Success(_), Failure(_)) => }
+    }
+
   }
 
   override def afterAll(): Unit = {

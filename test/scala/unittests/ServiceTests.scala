@@ -1,5 +1,6 @@
 package unittests
 
+import actors.EncryptionActor.{Decrypted, Encrypted}
 import actors.{Registered, Started}
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
@@ -15,7 +16,7 @@ import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import slick.dbio.DBIO
-import unittests.Fixtures.{ActorGuiceFixtures, MemPoolWatcherFixtures, WebhookActorFixtures, WebhookDaoFixtures, WebhookFixtures, WebhookManagerFixtures}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, WebhookActorFixtures, WebhookDaoFixtures, WebhookFixtures, WebhookManagerFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
@@ -42,6 +43,24 @@ class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   // whenReady timeout
   implicit override val patienceConfig: PatienceConfig =
     PatienceConfig(timeout = Span(20, Seconds), interval = Span(5, Millis))
+
+  "EncryptionManager" should {
+
+    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with EncryptionActorFixtures
+      with EncryptionManagerFixtures
+
+    "decrypt ciphertext to the correct plain text" in new TestFixtures {
+      (for {
+        _ <- encryptionManager.init()
+        encrypted <- encryptionManager.encrypt(plainTextBinary)
+        decrypted <- encryptionManager.decrypt(encrypted)
+      } yield (encrypted, decrypted)).futureValue match {
+        case (Encrypted(_, _), decrypted: Decrypted) =>
+          decrypted.asString shouldEqual plainText
+      }
+    }
+
+  }
 
   "WebhooksManager" should {
 
