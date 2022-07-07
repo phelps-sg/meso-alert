@@ -51,6 +51,9 @@ spec:
             - name: slack-secret
               mountPath: "/etc/secrets/slack"
               readOnly: true
+            - name: sodium-secret
+              mountPath: "/etc/secrets/sodium"
+              readOnly: true
       volumes:
         - name: postgres-cred
           secret:
@@ -61,6 +64,8 @@ spec:
         - name: slack-secret
           secret:
             secretName: meso-alert-slack
-
+        - name: sodium-secret
+          secret:
+            secretName: meso-alert-sodium-secret
       imagePullSecrets:
         - name: regcred
