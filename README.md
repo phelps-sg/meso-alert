@@ -94,3 +94,8 @@ curl -X POST http://localhost:9000/api/webhooks/stop --data \
 '{"uri":"https://hooks.slack.com/services/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"}' \
 -H 'Content-Type: application/json'
 ~~~
+
+## Making changes to the code
+
+Please read the [contributing guidelines](CONTRIBUTING.md) before making any changes.
+
