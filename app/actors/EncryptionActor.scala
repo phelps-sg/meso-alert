@@ -25,7 +25,7 @@ class EncryptionActor extends Actor with Logging {
 
   import actors.EncryptionActor._
 
-  def unrecognizedMessage(message: Any) =
+  def unrecognizedMessage(message: Any): Unit =
     sender() ! Failure(new RuntimeException(s"Unrecognized message: $message"))
 
   override def receive: Receive = {
