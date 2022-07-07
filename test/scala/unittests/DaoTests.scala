@@ -2,7 +2,8 @@ package unittests
 
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
-import dao.SlashCommand
+import dao.{SlashCommand, TransactionUpdate}
+import actors.TxUpdate
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should
@@ -12,7 +13,8 @@ import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{DatabaseGuiceFixtures, DatabaseInitializer, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
+import unittests.Fixtures.{DatabaseGuiceFixtures, DatabaseInitializer, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, SlickTransactionUpdateDaoFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
+import com.github.nscala_time.time.Imports.DateTime
 
 // scalafix:off
 
@@ -134,6 +136,24 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
         case (1, Seq(SlashCommand(Some(_: Int), `channelId`, `command`, `text`, `teamDomain`, `teamId`,
         `channelName`, `userId`, `userName`, `isEnterpriseInstall`, `timeStamp`))) =>
       }
+    }
+  }
+
+  "SlickTransactionUpdateDao" should {
+    trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures with SlickTransactionUpdateDaoFixtures
+      with DatabaseInitializer
+
+    "record a TxUpdate" in new TestFixtures {
+      val currentTime = DateTime.now()
+      val currentTimeString = currentTime.toString()
+      val tx = TxUpdate("testHash", 10, currentTime, isPending = true, List(), List())
+      afterDbInit {
+        for {
+          n <- slickTransactionUpdateDao.record(tx)
+          r <- database.run(Tables.transactionUpdates.result)
+        } yield (n, r)
+      }.futureValue should matchPattern {
+        case (1, Seq(TransactionUpdate(Some(_: Long), "testHash", 10, currentTimeString, true ))) =>      }
     }
   }
 
