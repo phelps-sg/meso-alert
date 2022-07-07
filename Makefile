@@ -19,6 +19,9 @@ curl-install: apt-update
 docker-install: apt-update
 	sudo apt-get install -y docker
 
+libsodium-install:
+	sudo apt-get install -y libsodium-dev
+
 sdkman-install:
 	curl -s "https://get.sdkman.io" | bash
 
@@ -31,7 +34,7 @@ sbt-install:
 nvm-install:
 	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 
-install-dev: curl-install sdkman-install jdk-install sbt-install docker-install nvm-install
+install-dev: curl-install sdkman-install jdk-install sbt-install docker-install nvm-install libsodium-install
 
 staging-config:
 	bin/staging-config.sh
@@ -52,7 +55,8 @@ sbt-scalafix:
 	$(SDK_INIT); sbt "scalafixAll"
 
 docker-push: docker-build
-	sudo docker push registry.gitlab.com/mesonomics/meso-alert/play-server
+	sudo docker push registry.gitlab.com/mesonomics/meso-alert/play-server; \
+	sudo docker push registry.gitlab.com/mesonomics/meso-alert/ci
 
 docker-server-start: docker-build
 	$(EXPORT_ENV); cd docker; sudo -E docker-compose up

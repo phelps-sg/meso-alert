@@ -11,8 +11,10 @@ POSTGRES_PASSWORD=$(cat /etc/secrets/postgres/password)
 SLACK_BOT_TOKEN=$(cat /etc/secrets/slack/bot_token)
 SLACK_CLIENT_SECRET=$(cat /etc/secrets/slack/client_secret)
 SLACK_CLIENT_ID=$(cat /etc/secrets/slack/client_id)
+SODIUM_KEY=$(cat /etc/secrets/sodium/key)
 
 cat <<EOF > application-production.conf
+sodium.secret="${SODIUM_KEY}"
 play.http.secret.key="${PLAY_KEY}"
 slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"

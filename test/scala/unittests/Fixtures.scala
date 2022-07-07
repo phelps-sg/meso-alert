@@ -1,6 +1,6 @@
 package unittests
 
-import actors.{AuthenticationActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
+import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -18,7 +18,7 @@ import play.api.inject.Injector
 import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, Json}
 import play.api.{Configuration, Logging, inject}
-import services.{HooksManagerSlackChat, HooksManagerWeb, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, User, UserManagerService}
+import services.{HooksManagerSlackChat, HooksManagerWeb, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, SodiumEncryptionManager, User, UserManagerService}
 import slick.BtcPostgresProfile.api._
 import slick.dbio.{DBIO, Effect}
 import slick.jdbc.JdbcBackend.Database
@@ -167,9 +167,12 @@ object Fixtures {
     memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
   }
 
-  trait ActorGuiceFixtures {
-    val mockMemPoolWatcher: MemPoolWatcherService
+  trait ConfigurationFixtures {
     val config = Configuration(ConfigFactory.load("application.test.conf"))
+  }
+
+  trait ActorGuiceFixtures extends ConfigurationFixtures {
+    val mockMemPoolWatcher: MemPoolWatcherService
     val actorSystem: ActorSystem
     val bindModule: GuiceableModule
 
@@ -479,6 +482,26 @@ object Fixtures {
     val webhookManagerMock = mock[WebhookManagerMock]
     val mockWebhookManagerActor = actorSystem.actorOf(MockWebhookManagerActor.props(webhookManagerMock))
     val webhooksManager = new HooksManagerWeb(hookDao, actor = mockWebhookManagerActor)(actorSystem, executionContext)
+  }
+
+  trait EncryptionManagerFixtures {
+    val executionContext: ExecutionContext
+    val actorSystem: ActorSystem
+    val config: Configuration
+    val encryptionActor: ActorRef
+    val encryptionManager = new SodiumEncryptionManager(encryptionActor, config)(actorSystem, executionContext)
+  }
+
+  trait EncryptionActorFixtures {
+    val actorSystem: ActorSystem
+    val secret: Array[Byte]  =
+      Array(56, -5, 127, -79, -126, 3, 110, 29, -57, 55, -97, 79, -32, -126, 83, -74, 66, 119, -35, -65, 75,
+        -69, -93, -11, 80, -55, 105, -22, 95, 76, 59, 37)
+    val encryptionActor = actorSystem.actorOf(EncryptionActor.props())
+    val plainText = "To be or not to be!"
+    val plainTextBinary = plainText.getBytes
+    val secondPlainText = "That is the question!"
+    val secondPlainTextBinary = secondPlainText.getBytes
   }
 
   trait WebhooksActorFixtures {
