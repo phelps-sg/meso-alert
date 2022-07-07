@@ -1,8 +1,9 @@
 package unittests
 
 import actors.AuthenticationActor.{Auth, TxInputOutput}
+import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
 import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
-import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxUpdate, Updated}
+import actors.{AuthenticationActor, EncryptionActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxUpdate, Updated}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -377,6 +378,40 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
           Success(Stopped(`hook`)),
           Seq(`stoppedHook`)) =>
       }
+    }
+  }
+
+  "EncryptionActor" should {
+
+    trait TestFixtures {
+      val secret: Array[Byte]  =
+        Array(56, -5, 127, -79, -126, 3, 110, 29, -57, 55, -97, 79, -32, -126, 83, -74, 66, 119, -35, -65, 75,
+          -69, -93, -11, 80, -55, 105, -22, 95, 76, 59, 37)
+      val encryptionActor = system.actorOf(EncryptionActor.props())
+      val plainText = "To be or not to be!"
+      val plainTextBinary = plainText.getBytes
+    }
+
+    "decrypt ciphertext to plain text" in new TestFixtures {
+      (for {
+        init <- encryptionActor ? Init(secret)
+        encryptedResult <- encryptionActor ? Encrypt(plainTextBinary)
+        decryptedResult <- {
+          encryptedResult match {
+            case Success(encrypted: Encrypted) =>
+              encryptionActor ? encrypted
+            case _ =>
+              fail(s"Invalid message from actor $encryptedResult")
+          }
+        }
+      } yield (init, encryptedResult, decryptedResult))
+      .futureValue match {
+        case (Success, Success(Encrypted(_, _)), Success(decrypted: Decrypted)) =>
+          decrypted.asString shouldEqual plainText
+        case _ =>
+          fail()
+      }
+
     }
   }
 
