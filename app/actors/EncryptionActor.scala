@@ -25,6 +25,9 @@ class EncryptionActor extends Actor with Logging {
 
   import actors.EncryptionActor._
 
+  def unrecognizedMessage(message: Any) =
+    sender() ! Failure(new RuntimeException(s"Unrecognized message: $message"))
+
   override def receive: Receive = {
 
     case Init(secretKey: Array[Byte]) =>
@@ -32,13 +35,17 @@ class EncryptionActor extends Actor with Logging {
       if (result < 0) {
         sender() ! Failure(SodiumInitialisationError(s"sodium_init() returned $result"))
       } else if (result > 0) {
-        sender() ! Failure(SodiumInitialisationError("sodium library already initialised"))
+        logger.warn("Sodium library already initialised")
+        sender() ! Success(result)
       } else {
-        sender() ! Success
+        sender() ! Success(result)
       }
       val rng = new Random()
       val box = new SecretBox(secretKey)
       context.become(initialised(box, rng))
+
+    case message =>
+      unrecognizedMessage(message)
   }
 
   def initialised(box: SecretBox, rng: Random): Receive = {
@@ -52,7 +59,7 @@ class EncryptionActor extends Actor with Logging {
       sender() ! Success(Decrypted(box.decrypt(nonce, cipherText)))
 
     case message =>
-      sender() ! Failure(new RuntimeException(s"Unrecognized message: $message"))
+      unrecognizedMessage(message)
 
   }
 
