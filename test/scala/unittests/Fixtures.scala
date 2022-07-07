@@ -1,6 +1,6 @@
 package unittests
 
-import actors.{AuthenticationActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor, TxRetryOrDie, TxUpdate, Update, Updated}
+import actors.{AuthenticationActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -18,7 +18,7 @@ import play.api.inject.Injector
 import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, Json}
 import play.api.{Configuration, Logging, inject}
-import services.{HooksManagerSlackChat, HooksManagerWeb, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, SlickTxManagerService, User, UserManagerService}
+import services.{HooksManagerSlackChat, HooksManagerWeb, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, User, UserManagerService}
 import slick.BtcPostgresProfile.api._
 import slick.dbio.{DBIO, Effect}
 import slick.jdbc.JdbcBackend.Database
