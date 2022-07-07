@@ -2,6 +2,14 @@
 
 Mesonomics crypto-currency alert service.
 
+## Development Environment
+
+The instructions below have been tested using [Pop!_OS 22.04 LTS](https://pop.system76.com/), but should
+work with other Debian-based Linux distros.  
+
+In principle the application can be built and run using macOS, but this has not been tested and the 
+installation scripts will need to be adapted.
+
 ## Installation
 
 To install the tools needed to build and run the application from the shell run:
