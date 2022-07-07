@@ -23,10 +23,10 @@ libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
 libraryDependencies += "com.github.nscala-time" %% "nscala-time" % "2.30.0"
 libraryDependencies += "org.abstractj.kalium" % "kalium" % "0.8.0"
 
+val AkkaVersion = "2.6.19"
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test
 libraryDependencies += "org.awaitility" % "awaitility-scala" % "4.2.0" % Test
 libraryDependencies += "org.scalamock" %% "scalamock" % "5.2.0" % Test
-val AkkaVersion = "2.6.19"
 libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % Test
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.12" % Test
 
