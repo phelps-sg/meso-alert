@@ -1,7 +1,6 @@
 package actors
 
 import actors.AuthenticationActor.TxInputOutput
-import com.github.nscala_time.time.Imports.DateTime
 import dao.Hook
 import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
@@ -19,7 +18,7 @@ case class Updated[X](hook: Hook[X])
 case class Start[X](key: X)
 case class Stop[X](key: X)
 
-case class TxUpdate(hash: String, value: Long, time: DateTime, isPending: Boolean,
+case class TxUpdate(hash: String, value: Long, time: java.time.LocalDateTime, isPending: Boolean,
                     outputs: Seq[TxInputOutput], inputs: Seq[TxInputOutput])
 
 object TxUpdate {
@@ -28,7 +27,7 @@ object TxUpdate {
     TxUpdate(
       hash = tx.getTxId.toString,
       value = tx.getOutputSum.value,
-      time = DateTime.now(),
+      time = java.time.LocalDateTime.now(),
       isPending = tx.isPending,
       inputs =
         (for (input <- tx.getInputs.asScala)

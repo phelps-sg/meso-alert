@@ -11,7 +11,7 @@ import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
 import play.api.{Logger, Logging}
-import services.{EncryptionManagerService, HooksManagerSlackChatService, HooksManagerWebService, MemPoolWatcherService, UserManagerService}
+import services.{EncryptionManagerService, HooksManagerSlackChatService, HooksManagerWebService, MemPoolWatcherService, UserManagerService, SlickTxManagerService}
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -23,6 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
                                val memPoolWatcher: MemPoolWatcherService,
+                               val slickTxManager: SlickTxManagerService,
                                val userManager: UserManagerService,
                                val webHooksManager: HooksManagerWebService,
                                val slackChatHooksManager: HooksManagerSlackChatService,

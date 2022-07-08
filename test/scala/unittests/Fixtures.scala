@@ -367,6 +367,14 @@ object Fixtures {
     val slickSlashCommandHistoryDao = injector.instanceOf[SlickSlashCommandHistoryDao]
   }
 
+  trait SlickTransactionUpdateDaoFixtures {
+    val injector: Injector
+    val slickTransactionUpdateDao = injector.instanceOf[SlickTransactionUpdateDao]
+  }
+
+
+
+
   trait HookActorTestLogic[X, Y <: Hook[X]] extends DatabaseInitializer {
     implicit val timeout: Timeout
     val hooksActor: ActorRef

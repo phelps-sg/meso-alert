@@ -78,6 +78,18 @@ object Tables {
   }
   val slackChatHooks = TableQuery[SlackChatHooks]
 
-  val schema = webhooks.schema ++ slackChatHooks.schema ++ slashCommandHistory.schema ++ slackTeams.schema
+  class TransactionUpdates(tag: Tag) extends Table[TransactionUpdate](tag, "transaction_updates") { 
+    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def hash = column[String]("hash") 
+    def value = column[Long]("value") 
+    def time_stamp = column[java.time.LocalDateTime]("time_stamp")
+    def isPending = column[Boolean]("isPending")
+
+    override def * = (id.?, hash, value, time_stamp, isPending) <> (TransactionUpdate.tupled, TransactionUpdate.unapply) 
+}
+  val transactionUpdates = TableQuery[TransactionUpdates]
+
+
+  val schema = webhooks.schema ++ slackChatHooks.schema ++ slashCommandHistory.schema ++ slackTeams.schema ++ transactionUpdates.schema
 
 }
