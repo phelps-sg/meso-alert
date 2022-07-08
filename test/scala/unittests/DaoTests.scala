@@ -139,6 +139,7 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   }
 
   "SlickTransactionUpdateDao" should {
+
     trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures with SlickTransactionUpdateDaoFixtures
       with DatabaseInitializer
 
