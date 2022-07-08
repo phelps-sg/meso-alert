@@ -470,7 +470,6 @@ object Fixtures {
     val mockMemPoolWatcher: MemPoolWatcherService = mock[MemPoolWatcherService]
     val mockSlickTransactionUpdateDao = mock[SlickTransactionUpdateDao]
     val txPersistenceActor = actorSystem.actorOf(TxPersistenceActor.props(mockSlickTransactionUpdateDao, mockMemPoolWatcher, executionContext))
-
   }
 
   trait TxWatchActorFixtures {

@@ -3,7 +3,7 @@ package unittests
 import actors.AuthenticationActor.{Auth, TxInputOutput}
 import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
 import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
-import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxPersistenceActor, TxUpdate, Updated}
+import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxUpdate, Updated}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -203,25 +203,21 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
   }
 
 
-  "TxPersistenceActor" should {
-    trait TestFixtures extends FixtureBindings
-      with TxUpdateFixtures with TxPersistenceActorFixtures
+   "TxPersistenceActor" should {
+      trait TestFixtures extends FixtureBindings
+        with TxUpdateFixtures with TxPersistenceActorFixtures
 
-    "register itself as a listener to the mem-pool" in new TestFixtures {
-      (mockSlickTransactionUpdateDao.init _).expects()
-      (mockMemPoolWatcher.addListener _).expects(*)
-    }
-    "record a new transaction update when it arrives" in new TestFixtures{
-      (mockSlickTransactionUpdateDao.init _).expects()
-      (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).atLeastOnce()
-
-      txPersistenceActor ! tx
-      (mockSlickTransactionUpdateDao.record _).expects(tx).returning(Future(1))
-    }
-
-
-
-
+      "register itself as a listener to the mem-pool" in new TestFixtures {
+        (mockSlickTransactionUpdateDao.init _).expects()
+        (mockMemPoolWatcher.addListener _).expects(txPersistenceActor)
+      }
+//       "record a new transaction update when it arrives" in new TestFixtures {
+//        (mockSlickTransactionUpdateDao.init _).expects()
+//        (mockMemPoolWatcher.addListener _).expects(txPersistenceActor)
+//
+//        txPersistenceActor ! tx
+//        (mockSlickTransactionUpdateDao.record _).expects(tx).returning(Future(1))
+//      }
     }
 
   "TxWatchActor" should {
