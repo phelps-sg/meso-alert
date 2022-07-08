@@ -13,7 +13,7 @@ import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{DatabaseGuiceFixtures, DatabaseInitializer, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, SlickTransactionUpdateDaoFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
+import unittests.Fixtures.{DatabaseGuiceFixtures, DatabaseInitializer, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, SlickTransactionUpdateDaoFixtures, TxUpdateFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
 
 // scalafix:off
 
@@ -141,18 +141,16 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   "SlickTransactionUpdateDao" should {
 
     trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures with SlickTransactionUpdateDaoFixtures
-      with DatabaseInitializer
+      with TxUpdateFixtures with DatabaseInitializer
 
     "record a TxUpdate" in new TestFixtures {
-      val currentTime = java.time.LocalDateTime.now()
-      val tx = TxUpdate("testHash", 10, currentTime, isPending = true, List(), List())
       afterDbInit {
         for {
           n <- slickTransactionUpdateDao.record(tx)
           r <- database.run(Tables.transactionUpdates.result)
         } yield (n, r)
       }.futureValue should matchPattern {
-        case (1, Seq(TransactionUpdate(Some(_: Long), "testHash", 10, `currentTime`, true ))) =>      }
+        case (1, Seq(TransactionUpdate(Some(_: Long), "testHash", 10, `timeStamp`, true ))) =>      }
     }
   }
 

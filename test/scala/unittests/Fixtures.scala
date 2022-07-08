@@ -372,6 +372,11 @@ object Fixtures {
     val slickTransactionUpdateDao = injector.instanceOf[SlickTransactionUpdateDao]
   }
 
+  trait TxUpdateFixtures {
+    val timeStamp = java.time.LocalDateTime.of(2001, 1, 1, 0, 0)
+    val tx = TxUpdate("testHash", 10, timeStamp, isPending = true, List(), List())
+  }
+
   trait HookActorTestLogic[X, Y <: Hook[X]] extends DatabaseInitializer {
     implicit val timeout: Timeout
     val hooksActor: ActorRef
