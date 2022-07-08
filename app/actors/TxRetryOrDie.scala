@@ -4,7 +4,6 @@ import scala.concurrent.{Future, ExecutionContext}
 import play.api.Logging
 import actors.AuthenticationActor.Die
 
-
 trait TxRetryOrDie[T] extends Actor with Logging {
   val maxRetryCount: Int
   implicit val ec: ExecutionContext
@@ -16,8 +15,6 @@ trait TxRetryOrDie[T] extends Actor with Logging {
   def success(): Unit
   def failure(ex: Throwable): Unit = logger.error(s"Failed to process tx, ${ex.getMessage}.")
   def actorDeath(reason: String): Unit = logger.info(s"${this.getClass.getName} terminating because $reason")
-
-
 
   def receive : Receive = {
     case tx: TxUpdate => self ! Retry(tx, 0, None)
