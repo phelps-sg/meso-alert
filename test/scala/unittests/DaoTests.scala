@@ -152,7 +152,7 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
           r <- database.run(Tables.transactionUpdates.result)
         } yield (n, r)
       }.futureValue should matchPattern {
-        case (1, Seq(TransactionUpdate(Some(_: Long), "testHash", 10, currentTime, true ))) =>      }
+        case (1, Seq(TransactionUpdate(Some(_: Long), "testHash", 10, `currentTime`, true ))) =>      }
     }
   }
 
