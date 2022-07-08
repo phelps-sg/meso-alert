@@ -1,6 +1,6 @@
 package unittests
 
-import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
+import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -462,6 +462,15 @@ object Fixtures {
   trait UserFixtures extends MockFactory {
     val mockUser = mock[User]
     val mockUserManager = mock[UserManagerService]
+  }
+
+  trait TxPersistenceActorFixtures extends MockFactory {
+    val actorSystem: ActorSystem
+    val executionContext: ExecutionContext
+    val mockMemPoolWatcher: MemPoolWatcherService = mock[MemPoolWatcherService]
+    val mockSlickTransactionUpdateDao = mock[SlickTransactionUpdateDao]
+    val txPersistenceActor = actorSystem.actorOf(TxPersistenceActor.props(mockSlickTransactionUpdateDao, mockMemPoolWatcher, executionContext))
+
   }
 
   trait TxWatchActorFixtures {
