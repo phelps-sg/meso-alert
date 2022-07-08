@@ -6,8 +6,6 @@ import services.MemPoolWatcherService
 import dao._
 import scala.concurrent.{Future, ExecutionContext}
 
-
-
 object TxPersistenceActor {
 
   trait Factory {
