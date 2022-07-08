@@ -3,7 +3,6 @@ package unittests
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import dao.{SlashCommand, TransactionUpdate}
-import actors.TxUpdate
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should
