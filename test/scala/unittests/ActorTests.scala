@@ -202,8 +202,8 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
     }
   }
 
-
   "TxPersistenceActor" should {
+
     trait TestFixtures extends FixtureBindings with ActorGuiceFixtures
       with TxUpdateFixtures with TxPersistenceActorFixtures
 
@@ -211,6 +211,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
       (mockSlickTransactionUpdateDao.init _).expects().once()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
     }
+
     "record a new transaction update when it arrives" in new TestFixtures {
       (mockSlickTransactionUpdateDao.init _).expects().once()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
@@ -218,6 +219,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
       txPersistenceActor ! tx
     }
+
     "retry to record a transaction if it fails" in new TestFixtures {
       (mockSlickTransactionUpdateDao.init _).expects().once()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
@@ -226,10 +228,13 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
       txPersistenceActor ! tx
     }
+
     "terminate the actor if maxRetryCount (3) is reached" in new TestFixtures {
       (mockSlickTransactionUpdateDao.init _).expects().once()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
-      (mockSlickTransactionUpdateDao.record _).expects(tx).returning(Future.failed[Int](new Exception("error"))).repeat(3)
+      (mockSlickTransactionUpdateDao.record _).expects(tx).returning(
+        Future.failed[Int](new Exception("error"))
+      ).repeat(3)
 
       val probe = TestProbe()
       probe.watch(txPersistenceActor)
