@@ -24,7 +24,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
-import unittests.Fixtures.{ActorGuiceFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, TransactionFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
+import unittests.Fixtures.{ActorGuiceFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, TransactionFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
@@ -199,6 +199,48 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
         Seq(_)) =>
       }
 
+    }
+  }
+
+  "TxPersistenceActor" should {
+
+    trait TestFixtures extends FixtureBindings with ActorGuiceFixtures
+      with TxUpdateFixtures with TxPersistenceActorFixtures
+
+    "register itself as a listener to the mem-pool" in new TestFixtures {
+      (mockSlickTransactionUpdateDao.init _).expects().once()
+      (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
+    }
+
+    "record a new transaction update when it arrives" in new TestFixtures {
+      (mockSlickTransactionUpdateDao.init _).expects().once()
+      (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
+      (mockSlickTransactionUpdateDao.record _).expects(tx).returning(Future(1)).once()
+
+      txPersistenceActor ! tx
+    }
+
+    "retry to record a transaction if it fails" in new TestFixtures {
+      (mockSlickTransactionUpdateDao.init _).expects().once()
+      (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
+      (mockSlickTransactionUpdateDao.record _).expects(tx).returning(Future.failed[Int](new Exception("error")))
+      (mockSlickTransactionUpdateDao.record _).expects(tx).returning(Future(1))
+
+      txPersistenceActor ! tx
+    }
+
+    "terminate the actor if maxRetryCount (3) is reached" in new TestFixtures {
+      (mockSlickTransactionUpdateDao.init _).expects().once()
+      (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
+      (mockSlickTransactionUpdateDao.record _).expects(tx).returning(
+        Future.failed[Int](new Exception("error"))
+      ).repeat(3)
+
+      val probe = TestProbe()
+      probe.watch(txPersistenceActor)
+
+      txPersistenceActor ! tx
+      probe.expectTerminated(txPersistenceActor)
     }
   }
 

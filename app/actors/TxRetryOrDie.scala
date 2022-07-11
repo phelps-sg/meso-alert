@@ -5,12 +5,17 @@ import play.api.Logging
 
 import scala.concurrent.{ExecutionContext, Future}
 
+
+object TxRetryOrDie {
+  //  message types
+  case class Retry(tx: TxUpdate, retryCount: Int, exception: Option[Exception])
+
+}
+
 trait TxRetryOrDie[T] extends Actor with Logging {
+  import TxRetryOrDie._
   val maxRetryCount: Int
   implicit val ec: ExecutionContext
-
-//  message types
-  case class Retry(tx: TxUpdate, retryCount: Int, exception: Option[Exception])
 
   def process(tx: TxUpdate) : Future[T]
   def success(): Unit
