@@ -32,8 +32,6 @@ class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, 
 
   def sendMessage(message: String): Future[ChatPostMessageResponse] = {
 
-    logger.debug(s"token = $hook.token")
-
     val request = ChatPostMessageRequest.builder
       .token(hook.token)
       .username("meso-alert")
