@@ -21,10 +21,8 @@ class SodiumEncryptionManager @Inject() (@Named("encryption-actor") val actor: A
   (implicit system: ActorSystem, implicit val executionContext: ExecutionContext)
   extends EncryptionManagerService with ActorBackend with Logging with InitialisingController {
 
-  private val secretBase64 = config.get[String]("sodium.secret")
-  private val secret = decode(secretBase64)
-
-  init()
+  private def secretBase64: String = config.get[String]("sodium.secret")
+  private def secret: Array[Byte] = decode(secretBase64)
 
   private def decode(base64: String): Array[Byte] = java.util.Base64.getDecoder.decode(base64)
 
