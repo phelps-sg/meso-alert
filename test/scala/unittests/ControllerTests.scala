@@ -1,10 +1,11 @@
 package unittests
 
+import actors.EncryptionActor.Encrypted
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import akka.util.Timeout
 import controllers.SlackSlashCommandController
-import dao.{SlackChannel, SlackChatHook, SlackTeam, SlashCommand}
+import dao.{SlackChannel, SlackChatHookEncrypted, SlackTeam, SlashCommand}
 import org.scalamock.handlers.CallHandler1
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -21,7 +22,7 @@ import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{ActorGuiceFixtures, DatabaseInitializer, MemPoolWatcherFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -44,14 +45,17 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   }
 
   implicit override val patienceConfig: PatienceConfig =
-    PatienceConfig(timeout = Span(20, Seconds), interval = Span(5, Millis))
+    PatienceConfig(timeout = Span(2, Seconds), interval = Span(5, Millis))
 
   "SlackSlashCommandController" should {
 
     trait TestFixtures extends FixtureBindings
-      with MemPoolWatcherFixtures with ActorGuiceFixtures with SlickSlashCommandHistoryDaoFixtures
-      with SlickSlackTeamDaoFixtures with SlackChatActorFixtures
-      with SlackChatHookDaoFixtures with SlickSlashCommandFixtures with DatabaseInitializer {
+      with  ConfigurationFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
+      with MemPoolWatcherFixtures with ActorGuiceFixtures with SlackChatHookDaoFixtures
+      with SlickSlashCommandHistoryDaoFixtures with SlickSlackTeamDaoFixtures with SlackChatActorFixtures
+      with SlickSlashCommandFixtures with DatabaseInitializer {
+
+      encryptionManager.init()
 
       val controller = new SlackSlashCommandController(Helpers.stubControllerComponents(),
         slashCommandHistoryDao = slickSlashCommandHistoryDao,
@@ -67,7 +71,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
         ch.once()
       }
 
-      def submitCommand(command: SlashCommand): Future[(Result, Seq[SlackChatHook])] = {
+      def submitCommand(command: SlashCommand): Future[(Result, Seq[SlackChatHookEncrypted])] = {
         afterDbInit {
           for {
             _ <- db.run(
@@ -89,7 +93,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       val futureValue = submitCommand(cryptoAlertCommand).futureValue
 
       futureValue should matchPattern {
-       case (_: Result, Seq(SlackChatHook(SlackChannel(`channelId`), "test-token", 500000000, true))) =>
+       case (_: Result, Seq(SlackChatHookEncrypted(SlackChannel(`channelId`), _: Encrypted, 500000000, true))) =>
       }
 
       futureValue match {
@@ -106,7 +110,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       val futureValue = submitCommand(cryptoAlertCommand).futureValue
 
       futureValue should matchPattern {
-        case (_: Result, Seq(SlackChatHook(SlackChannel(`channelId`), "test-token", 500000000, true))) =>
+        case (_: Result, Seq(SlackChatHookEncrypted(SlackChannel(`channelId`), _: Encrypted, 500000000, true))) =>
       }
 
       futureValue match {

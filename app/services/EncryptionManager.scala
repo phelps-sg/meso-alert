@@ -2,8 +2,8 @@ package services
 
 import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
 import akka.actor.{ActorRef, ActorSystem}
-import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.google.inject.name.Named
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import play.api.{Configuration, Logging}
 
 import scala.concurrent.{ExecutionContext, Future}

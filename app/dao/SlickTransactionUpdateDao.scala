@@ -1,11 +1,10 @@
 package dao
 
+import actors.TxUpdate
 import com.google.inject.{ImplementedBy, Inject}
 import slick.BtcPostgresProfile.api._
 import slick.jdbc.JdbcBackend.Database
 import slick.{DatabaseExecutionContext, Tables}
-import actors.TxUpdate
-
 
 import scala.concurrent.Future
 

@@ -11,5 +11,5 @@ trait SlickDao[Y] {
   val db: Database
 
   def init(): Future[Unit] = db.run(table.schema.createIfNotExists)
-  def all(): Future[Seq[Y]] = db.run(table.result)
+//  def all(): Future[Seq[Y]] = db.run(table.result)
 }
