@@ -4,6 +4,7 @@ import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.actor.ActorSystem
 import dao._
 import play.api.Logging
+import play.api.i18n.{DefaultMessagesApi, I18nSupport, Lang, Langs, Messages, MessagesApi, MessagesImpl}
 import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.HooksManagerSlackChat
 
@@ -48,6 +49,7 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
                                             val hooksManager: HooksManagerSlackChat)
                                            (implicit system: ActorSystem, implicit val ec: ExecutionContext)
   extends BaseController with Logging with InitialisingController {
+
 
   override def init(): Future[Unit] = for {
     result <- slashCommandHistoryDao.init()
@@ -120,8 +122,10 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
         }
 
       case Array(_, _) =>
+        val lang: Lang      = Lang("en")
+        val message: String = messagesApi("slackResponse.currencyError")(lang)
         Future {
-          Ok("I currently only provide alerts for BTC, but other currencies are coming soon.")
+          Ok(message)
         }
 
       case _ =>
