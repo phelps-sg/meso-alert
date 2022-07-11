@@ -1,5 +1,6 @@
 package unittests
 
+import actors.EncryptionActor.Encrypted
 import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
@@ -18,7 +19,7 @@ import play.api.inject.Injector
 import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, Json}
 import play.api.{Configuration, Logging, inject}
-import services.{HooksManagerSlackChat, HooksManagerWeb, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, SodiumEncryptionManager, User, UserManagerService}
+import services.{EncryptionManagerService, HooksManagerSlackChat, HooksManagerWeb, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, SodiumEncryptionManager, User, UserManagerService}
 import slick.BtcPostgresProfile.api._
 import slick.dbio.{DBIO, Effect}
 import slick.jdbc.JdbcBackend.Database
@@ -208,16 +209,24 @@ object Fixtures {
 
   trait WebhookFixtures {
     val key = new URI("http://test")
-    val hook = Webhook(key, threshold = 100L, isRunning = true)
+    val originalThreshold = 100L
+    val newThreshold = 200L
+    val hook = Webhook(key, threshold = originalThreshold, isRunning = true)
     val stoppedHook = hook.copy(isRunning = false)
-    val newHook = Webhook(key, threshold = 200L, isRunning = true)
+    val newHook = Webhook(key, threshold = newThreshold, isRunning = true)
   }
 
   trait SlackChatHookFixtures {
+    val encryptedToken1 = Encrypted(cipherText = Array[Byte] { 1 }, nonce = Array[Byte] { 1 })
+    val encryptedToken2 = Encrypted(cipherText = Array[Byte] { 2 }, nonce = Array[Byte] { 2 })
+    val originalThreshold = 100L
+    val newThreshold = 200L
     val key = SlackChannel("#test")
-    val hook = SlackChatHook(key, threshold = 100L, isRunning = true, token = "test_token_1")
+    val hook = SlackChatHook(key, threshold = originalThreshold, isRunning = true, token = "test_token_1")
     val stoppedHook = hook.copy(isRunning = false)
-    val newHook = SlackChatHook(key, threshold = 200L, isRunning = true, token = "test_token_2")
+    val newHook = SlackChatHook(key, threshold = newThreshold, isRunning = true, token = "test_token_2")
+    val encryptedHook =
+      SlackChatHookEncrypted(key, threshold = newThreshold, isRunning = true, token = encryptedToken1)
   }
 
   trait DatabaseInitializer {
@@ -285,8 +294,10 @@ object Fixtures {
   }
 
   trait SlackChatHookDaoFixtures {
+    val db: Database
     val injector: Injector
-    val hookDao = injector.instanceOf[SlackChatHookDao]
+    val encryptionManager: EncryptionManagerService
+    val hookDao = new SlickSlackChatDao(db, injector.instanceOf[DatabaseExecutionContext], encryptionManager)
   }
 
   trait WebhookDaoFixtures {
@@ -316,6 +327,7 @@ object Fixtures {
 
   trait SlackChatActorFixtures extends SlackChatHookFixtures {
     val actorSystem: ActorSystem
+    val hookDao: SlackChatHookDao
     val injector: Injector
 
     val hooksActor = {
@@ -323,13 +335,14 @@ object Fixtures {
         HooksManagerActorSlackChat.props(
           injector.instanceOf[TxMessagingActorSlackChat.Factory],
           injector.instanceOf[TxFilterActor.Factory],
-          injector.instanceOf[SlackChatHookDao],
+          hookDao,
+//          injector.instanceOf[SlackChatHookDao],
           injector.instanceOf[DatabaseExecutionContext]
         )
       )
     }
 
-    val insertHook = Tables.slackChatHooks += hook
+    val insertHook = Tables.slackChatHooks += encryptedHook
     val queryHooks = Tables.slackChatHooks.result
   }
 
@@ -377,14 +390,14 @@ object Fixtures {
     val tx = TxUpdate("testHash", 10, timeStamp, isPending = true, List(), List())
   }
 
-  trait HookActorTestLogic[X, Y <: Hook[X]] extends DatabaseInitializer {
+  trait HookActorTestLogic[X, Y <: Hook[X], Z] extends DatabaseInitializer {
     implicit val timeout: Timeout
     val hooksActor: ActorRef
     val hook: Y
     val newHook: Y
     val key: Any
     val insertHook: FixedSqlAction[Int, NoStream, Effect.Write]
-    val queryHooks: FixedSqlStreamingAction[Seq[Y], Y, Effect.Read]
+    val queryHooks: FixedSqlStreamingAction[Seq[Z], Z, Effect.Read]
 
     def wait(duration: FiniteDuration): Unit
 

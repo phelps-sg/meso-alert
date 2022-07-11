@@ -1,5 +1,7 @@
 package dao
 
+import actors.EncryptionActor.Encrypted
+
 import java.net.URI
 
 case class SlashCommand(id: Option[Int], channelId: String, command: String, text: String,
@@ -20,7 +22,11 @@ case class Webhook(uri: URI, threshold: Long, isRunning: Boolean) extends Hook[U
   override def newStatus(isRunning: Boolean): Hook[URI] = copy(isRunning = isRunning)
 }
 
-case class SlackChatHook(channel: SlackChannel, token: String, threshold: Long, isRunning: Boolean) extends Hook[SlackChannel] {
+case class SlackChatHookEncrypted(channel: SlackChannel, token: Encrypted,
+                                  threshold: Long, isRunning: Boolean)
+
+case class SlackChatHook(channel: SlackChannel, token: String,
+                         threshold: Long, isRunning: Boolean) extends Hook[SlackChannel] {
   def key: SlackChannel = channel
   override def newStatus(isRunning: Boolean): Hook[SlackChannel] = copy(isRunning = isRunning)
 }

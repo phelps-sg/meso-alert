@@ -1,14 +1,14 @@
 package services
 
-import dao._
 import actors._
-import controllers.InitialisingController
-import scala.concurrent.{ExecutionContext, Future}
-import akka.actor.{ ActorSystem}
+import akka.actor.ActorSystem
 import com.google.inject.ImplementedBy
+import controllers.InitialisingController
+import dao._
 import play.api.Logging
 
 import javax.inject.{Inject, Singleton}
+import scala.concurrent.{ExecutionContext, Future}
 
 
 

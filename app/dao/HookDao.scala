@@ -7,7 +7,7 @@ import scala.concurrent.Future
 
 trait HookDao[X, Y <: Hook[X]] {
   def init(): Future[Unit]
-  def all(): Future[Seq[Hook[X]]]
+//  def all(): Future[Seq[Hook[X]]]
   def allKeys(): Future[Seq[_ <: X]]
   def allRunningKeys(): Future[Seq[_ <: X]]
   def find(key: X): Future[Option[_ <: Hook[X]]]

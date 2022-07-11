@@ -2,6 +2,7 @@ package slick
 
 // scalafix:off
 
+import actors.EncryptionActor.Encrypted
 import dao._
 
 import java.net.URI
@@ -10,6 +11,12 @@ object Tables {
 
   val profile: BtcPostgresProfile.type = BtcPostgresProfile
   import profile.api._
+
+  def encodeBase64(bytes: Array[Byte]): String =
+    java.util.Base64.getEncoder.encode(bytes).map(_.toChar).mkString
+
+  def decodeBase64(data: String): Array[Byte] =
+    java.util.Base64.getDecoder.decode(data)
 
   def ws(hook: Webhook): Option[(String, Long)] = {
     Some((hook.uri.toURL.toString, hook.threshold))
@@ -64,15 +71,16 @@ object Tables {
   }
   val slackTeams = TableQuery[SlackTeams]
 
-  class SlackChatHooks(tag: Tag) extends Table[SlackChatHook](tag, "slack_chat_hooks") {
+  class SlackChatHooks(tag: Tag) extends Table[SlackChatHookEncrypted](tag, "slack_chat_hooks") {
     def channel_id = column[String]("channel_id", O.PrimaryKey)
+    def nonce = column[String]("nonce")
     def token = column[String]("token")
     def threshold = column[Long]("threshold")
     def is_running = column[Boolean]("is_running")
-    def * = (channel_id, token, threshold, is_running) <> (
-      h => SlackChatHook(SlackChannel(h._1), h._2, h._3, h._4),
-      (h: SlackChatHook) => {
-        Some(h.channel.id, h.token, h.threshold, h.isRunning)
+    def * = (channel_id, nonce, token, threshold, is_running) <> (
+      h => SlackChatHookEncrypted(SlackChannel(h._1), Encrypted(decodeBase64(h._2), decodeBase64(h._3)), h._4, h._5),
+      (h: SlackChatHookEncrypted) => {
+        Some(h.channel.id, encodeBase64(h.token.nonce), encodeBase64(h.token.cipherText), h.threshold, h.isRunning)
       }
     )
   }

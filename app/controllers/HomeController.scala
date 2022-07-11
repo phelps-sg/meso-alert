@@ -11,7 +11,7 @@ import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
 import play.api.{Logger, Logging}
-import services.{EncryptionManagerService, HooksManagerSlackChatService, HooksManagerWebService, MemPoolWatcherService, UserManagerService, SlickTxManagerService}
+import services.{EncryptionManagerService, HooksManagerSlackChatService, HooksManagerWebService, MemPoolWatcherService, SlickTxManagerService, UserManagerService}
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}

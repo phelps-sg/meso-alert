@@ -12,7 +12,7 @@ import scala.concurrent.Future
 @Singleton
 class SlickWebhookDao @Inject() (val db: Database,
                                  val databaseExecutionContext: DatabaseExecutionContext)
-  extends WebhookDao with SlickHookDao[URI, Webhook] {
+  extends WebhookDao with SlickHookDao[URI, Webhook, Webhook] {
 
   override val table = Tables.webhooks
   override val lookupHookQuery: Webhook => Query[Tables.Webhooks,Webhook,Seq] = (hook: Webhook) => Tables.webhooks.filter(_.url === hook.uri.toString)
@@ -30,4 +30,6 @@ class SlickWebhookDao @Inject() (val db: Database,
     runKeyQuery(for (hook <- Tables.webhooks if hook.is_running) yield hook.url)
   }
 
+  override protected def toDB(hook: Webhook): Future[Webhook] = Future { hook }
+  override protected def fromDB(hook: Webhook): Future[Webhook] = Future { hook }
 }

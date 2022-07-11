@@ -1,8 +1,9 @@
 package unittests
 
+import actors.EncryptionActor.Encrypted
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
-import dao.{SlashCommand, TransactionUpdate}
+import dao.{SlackChatHookEncrypted, SlashCommand, TransactionUpdate}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should
@@ -12,7 +13,7 @@ import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{DatabaseGuiceFixtures, DatabaseInitializer, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, SlickTransactionUpdateDaoFixtures, TxUpdateFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
+import unittests.Fixtures.{ConfigurationFixtures, DatabaseGuiceFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, SlickTransactionUpdateDaoFixtures, TxUpdateFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
 
 // scalafix:off
 
@@ -60,11 +61,17 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
   "SlackChatHookDao" should {
 
-    trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures
-      with SlackChatHookDaoFixtures with SlackChatHookFixtures with SlackChatDaoTestLogic
+    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with DatabaseGuiceFixtures
+      with EncryptionActorFixtures with EncryptionManagerFixtures
+      with SlackChatHookDaoFixtures with SlackChatHookFixtures with SlackChatDaoTestLogic {
+
+      encryptionManager.init()
+    }
 
     "record a slack chat hook in the database" in new TestFixtures {
-      insertHook().futureValue should matchPattern { case (1, Seq(`hook`)) => }
+      insertHook().futureValue should matchPattern {
+        case (1, Seq(SlackChatHookEncrypted(`key`, _: Encrypted, `originalThreshold`, true))) =>
+      }
     }
 
     "return an existing hook by key" in new TestFixtures {
@@ -76,7 +83,9 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     }
 
     "update an existing hook" in new TestFixtures {
-      updateHook().futureValue should matchPattern { case (1, 1, Seq(`newHook`)) => }
+      updateHook().futureValue should matchPattern {
+        case (1, 1, Seq(SlackChatHookEncrypted(`key`, _: Encrypted, `newThreshold`, true))) =>
+      }
     }
   }
 

@@ -11,7 +11,7 @@ object EncryptionActor {
 
   case class Init(secretKey: Array[Byte])
   case class Encrypt(plainText: Array[Byte])
-  case class Encrypted(cipherText: Array[Byte], nonce: Array[Byte])
+  case class Encrypted(nonce: Array[Byte], cipherText: Array[Byte])
   case class Decrypted(plainText: Array[Byte]) {
     def asString: String = plainText.map(_.toChar).mkString
   }

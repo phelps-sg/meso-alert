@@ -1,8 +1,9 @@
 package actors
-import akka.actor._
-import scala.concurrent.{Future, ExecutionContext}
-import play.api.Logging
 import actors.AuthenticationActor.Die
+import akka.actor._
+import play.api.Logging
+
+import scala.concurrent.{ExecutionContext, Future}
 
 trait TxRetryOrDie[T] extends Actor with Logging {
   val maxRetryCount: Int

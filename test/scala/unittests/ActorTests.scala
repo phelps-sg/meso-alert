@@ -24,7 +24,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
-import unittests.Fixtures.{ActorGuiceFixtures, EncryptionActorFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, TransactionFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
+import unittests.Fixtures.{ActorGuiceFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, TransactionFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
@@ -270,8 +270,11 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
   "SlackChatManagerActor" should {
 
     trait TestFixtures extends FixtureBindings
-      with MemPoolWatcherFixtures with ActorGuiceFixtures
-      with SlackChatActorFixtures with HookActorTestLogic[SlackChannel, SlackChatHook] {
+      with MemPoolWatcherFixtures with ActorGuiceFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
+      with SlackChatHookDaoFixtures with SlackChatActorFixtures with HookActorTestLogic[SlackChannel, SlackChatHook, SlackChatHookEncrypted] {
+
+      encryptionManager.init()
+
       override def wait(duration: FiniteDuration): Unit = expectNoMessage(duration)
     }
 
@@ -292,11 +295,15 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
     }
 
     "return Registered and record a new hook in the database when registering a new hook" in new TestFixtures {
-      registerHook().futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
+      registerHook().futureValue should matchPattern {
+        case (Success(Registered(`hook`)), Seq(_: SlackChatHookEncrypted)) =>
+      }
     }
 
     "return Updated when updating an existing hook" in new TestFixtures {
-      updateHook().futureValue should matchPattern { case (Success(Updated(`newHook`)), Seq(`newHook`)) => }
+      updateHook().futureValue should matchPattern {
+        case (Success(Updated(`newHook`)), Seq(_: SlackChatHookEncrypted)) =>
+      }
     }
 
     "return an exception when stopping a hook that is not started" in new TestFixtures {
@@ -304,7 +311,9 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
     }
 
     "return an exception when registering a pre-existing hook" in new TestFixtures {
-      registerExistingHook().futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
+      registerExistingHook().futureValue should matchPattern {
+        case Failure(HookAlreadyRegisteredException(`hook`)) =>
+      }
     }
 
     "return an exception when starting a hook that has already been started" in new TestFixturesOneSubscriber {
@@ -319,7 +328,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
           Success(Stopped(`hook`)),
           Success(Started(`hook`)),
           Success(Stopped(`hook`)),
-          Seq(`stoppedHook`)) =>
+          Seq(_: SlackChatHookEncrypted)) =>
       }
     }
   }
@@ -328,7 +337,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
     trait TestFixtures extends FixtureBindings with
       MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookFixtures
-      with WebhookActorFixtures with HookActorTestLogic[URI, Webhook] {
+      with WebhookActorFixtures with HookActorTestLogic[URI, Webhook, Webhook] {
     }
 
     trait TestFixturesTwoSubscribers extends TestFixtures with ActorGuiceFixtures {

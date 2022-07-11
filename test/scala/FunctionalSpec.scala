@@ -9,12 +9,12 @@ import akka.{Done, NotUsed}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.play._
+import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.{Helpers, TestServer}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-import play.api.Application
 
 
 //noinspection TypeAnnotation

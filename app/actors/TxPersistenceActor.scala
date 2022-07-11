@@ -2,9 +2,10 @@ package actors
 
 import akka.actor.{Actor, ActorRef, Props}
 import com.google.inject.Inject
-import services.MemPoolWatcherService
 import dao._
-import scala.concurrent.{Future, ExecutionContext}
+import services.MemPoolWatcherService
+
+import scala.concurrent.{ExecutionContext, Future}
 
 object TxPersistenceActor {
 
