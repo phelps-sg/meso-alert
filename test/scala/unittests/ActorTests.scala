@@ -25,7 +25,7 @@ import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
 import unittests.Fixtures.{ActorGuiceFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, TransactionFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
-
+import scala.language.postfixOps
 import java.net.URI
 import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
@@ -240,7 +240,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
       probe.watch(txPersistenceActor)
 
       txPersistenceActor ! tx
-      probe.expectTerminated(txPersistenceActor)
+      probe.expectTerminated(txPersistenceActor, 5 seconds)
     }
   }
 
