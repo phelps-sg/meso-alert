@@ -63,7 +63,7 @@ object Tables {
     def team_id = column[String]("team_id", O.PrimaryKey)
     def user_id = column[String]("user_id")
     def bot_id = column[String]("bot_id")
-    def nonce = column[String]("none")
+    def nonce = column[String]("nonce")
     def access_token = column[String]("access_token")
     def team_name = column[String]("team_name")
 
