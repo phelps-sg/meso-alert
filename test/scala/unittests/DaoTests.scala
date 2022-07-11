@@ -3,7 +3,7 @@ package unittests
 import actors.EncryptionActor.Encrypted
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
-import dao.{SlackChatHookEncrypted, SlashCommand, TransactionUpdate}
+import dao.{SlackChatHookEncrypted, SlackTeamEncrypted, SlashCommand, TransactionUpdate}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should
@@ -91,8 +91,12 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
   "SlickSlackTeamDao" should {
 
-    trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures with SlickSlackTeamFixtures
-      with SlickSlackTeamDaoFixtures with DatabaseInitializer
+    trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures
+      with SlickSlackTeamFixtures with ConfigurationFixtures with EncryptionActorFixtures
+      with EncryptionManagerFixtures with SlickSlackTeamDaoFixtures with DatabaseInitializer {
+
+      encryptionManager.init()
+    }
 
     "record a team in the database" in new TestFixtures {
       afterDbInit {
@@ -101,7 +105,7 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
           r <- db.run(Tables.slackTeams.result)
         } yield (n, r)
       }.futureValue should matchPattern {
-        case (1, Seq(`slackTeam`)) =>
+        case (1, Seq(SlackTeamEncrypted(`teamId`, `userId`, `botId`, _: Encrypted, `teamName`))) =>
       }
     }
 

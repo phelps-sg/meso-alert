@@ -347,8 +347,10 @@ object Fixtures {
   }
 
   trait SlickSlackTeamDaoFixtures {
+    val db: Database
     val injector: Injector
-    val slickSlackTeamDao = injector.instanceOf[SlickSlackTeamDao]
+    val encryptionManager: EncryptionManagerService
+    val slickSlackTeamDao = new SlickSlackTeamDao(db, injector.instanceOf[DatabaseExecutionContext], encryptionManager)
   }
 
   trait SlickSlackTeamFixtures {
@@ -369,6 +371,7 @@ object Fixtures {
     val channelName = Some("test-channel")
     val userId = Some("91011")
     val userName = Some("test-user")
+    val testToken= "test-token"
     val isEnterpriseInstall = Some(false)
     val timeStamp = Some(java.time.LocalDateTime.of(2001, 1, 1, 0, 0))
     val slashCommand = SlashCommand(None, channelId, command, text, teamDomain, teamId, channelName, userId,

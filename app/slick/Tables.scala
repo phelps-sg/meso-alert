@@ -59,15 +59,22 @@ object Tables {
   }
   val slashCommandHistory = TableQuery[SlashCommandHistory]
 
-  class SlackTeams(tag: Tag) extends Table[SlackTeam](tag, "slack_teams") {
+  class SlackTeams(tag: Tag) extends Table[SlackTeamEncrypted](tag, "slack_teams") {
     def team_id = column[String]("team_id", O.PrimaryKey)
     def user_id = column[String]("user_id")
     def bot_id = column[String]("bot_id")
+    def nonce = column[String]("none")
     def access_token = column[String]("access_token")
     def team_name = column[String]("team_name")
 
     override def * =
-      (team_id, user_id, bot_id, access_token, team_name) <> (SlackTeam.tupled, SlackTeam.unapply)
+      (team_id, user_id, bot_id, nonce, access_token, team_name) <> (
+        team =>
+          SlackTeamEncrypted(team._1, team._2, team._3, Encrypted(decodeBase64(team._4), decodeBase64(team._5)), team._6),
+        (team: SlackTeamEncrypted) =>
+          Some(team.teamId, team.userId, team.botId, encodeBase64(team.accessToken.nonce),
+            encodeBase64(team.accessToken.cipherText), team.teamName)
+    )
   }
   val slackTeams = TableQuery[SlackTeams]
 

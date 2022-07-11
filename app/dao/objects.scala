@@ -32,5 +32,6 @@ case class SlackChatHook(channel: SlackChannel, token: String,
 }
 
 case class SlackTeam(teamId: String, userId: String, botId: String, accessToken: String, teamName: String)
+case class SlackTeamEncrypted(teamId: String, userId: String, botId: String, accessToken: Encrypted, teamName: String)
 
 case class TransactionUpdate(id: Option[Long], hash: String, value: Long, timeStamp: java.time.LocalDateTime, isPending: Boolean)

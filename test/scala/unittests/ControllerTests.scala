@@ -5,7 +5,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import akka.util.Timeout
 import controllers.SlackSlashCommandController
-import dao.{SlackChannel, SlackChatHookEncrypted, SlackTeam, SlashCommand}
+import dao.{SlackChannel, SlackChatHookEncrypted, SlackTeam, SlackTeamEncrypted, SlashCommand}
 import org.scalamock.handlers.CallHandler1
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -50,7 +50,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   "SlackSlashCommandController" should {
 
     trait TestFixtures extends FixtureBindings
-      with  ConfigurationFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
+      with ConfigurationFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
       with MemPoolWatcherFixtures with ActorGuiceFixtures with SlackChatHookDaoFixtures
       with SlickSlashCommandHistoryDaoFixtures with SlickSlackTeamDaoFixtures with SlackChatActorFixtures
       with SlickSlashCommandFixtures with DatabaseInitializer {
@@ -74,8 +74,9 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       def submitCommand(command: SlashCommand): Future[(Result, Seq[SlackChatHookEncrypted])] = {
         afterDbInit {
           for {
+            encrypted <- encryptionManager.encrypt(testToken.getBytes)
             _ <- db.run(
-              Tables.slackTeams += SlackTeam(teamId, "test-user", "test-bot", "test-token", "test-team")
+              Tables.slackTeams += SlackTeamEncrypted(teamId, "test-user", "test-bot", encrypted, "test-team")
             )
             response <- controller.process(command)
             dbContents <- db.run(Tables.slackChatHooks.result)
