@@ -7,6 +7,7 @@ cat <<EOF > ./conf/application.conf
 play.filters.hosts {
   allowed = [".ngrok.io", "localhost:9000"]
 }
+play.i18n.langs = ["en"]
 
 slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"

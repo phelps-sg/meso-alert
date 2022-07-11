@@ -13,8 +13,6 @@ import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.http.Status.OK
-import play.api.i18n.{DefaultMessagesApi, I18nSupport, Lang, Langs, Messages, MessagesApi, MessagesImpl}
-import play.api.inject.Injector
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.Result
 import play.api.test.Helpers
@@ -55,11 +53,9 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       with SlickSlackTeamDaoFixtures with SlackChatActorFixtures
       with SlackChatHookDaoFixtures with SlickSlashCommandFixtures with DatabaseInitializer {
 
-      val injector: Injector
-      val messageAPI = injector.instanceOf[MessagesApi]
-      val controller = new SlackSlashCommandController(Helpers.stubControllerComponents(messagesApi=messageAPI),
+      val controller = new SlackSlashCommandController(Helpers.stubControllerComponents(),
         slashCommandHistoryDao = slickSlashCommandHistoryDao,
-        slackTeamDao = slickSlackTeamDao, hooksManager = new HooksManagerSlackChat(hookDao, hooksActor)) {
+        slackTeamDao = slickSlackTeamDao, hooksManager = new HooksManagerSlackChat(hookDao, hooksActor), messagesApi) {
         override def init(): Future[Unit] = {
           // Do not call createIfNotExists because of issue #68
           Future { () }
