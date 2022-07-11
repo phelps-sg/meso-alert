@@ -5,7 +5,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import akka.util.Timeout
 import controllers.SlackSlashCommandController
-import dao.{SlackChannel, SlackChatHookEncrypted, SlackTeam, SlackTeamEncrypted, SlashCommand}
+import dao.{SlackChannel, SlackChatHookEncrypted, SlackTeamEncrypted, SlashCommand}
 import org.scalamock.handlers.CallHandler1
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
