@@ -51,7 +51,6 @@ class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
     "decrypt ciphertext to the correct plain text" in new TestFixtures {
       (for {
-        _ <- encryptionManager.init()
         encrypted <- encryptionManager.encrypt(plainTextBinary)
         decrypted <- encryptionManager.decrypt(encrypted)
       } yield (encrypted, decrypted)).futureValue match {

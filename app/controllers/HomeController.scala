@@ -36,7 +36,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     _ <- memPoolWatcher.init()
     _ <- webHooksManager.init()
     _ <- slackChatHooksManager.init()
-    _ <- encryptionManagerService.init()
+//    _ <- encryptionManagerService.init()
   } yield ()
 
   implicit val mft: MessageFlowTransformer[Auth, TxUpdate] =
