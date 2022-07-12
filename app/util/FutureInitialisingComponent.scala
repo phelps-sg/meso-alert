@@ -6,7 +6,7 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-trait InitialisingComponent extends Logging {
+trait FutureInitialisingComponent extends Logging {
 
   protected val initialisationTimeout: FiniteDuration = 1.minute
   implicit val ec: ExecutionContext

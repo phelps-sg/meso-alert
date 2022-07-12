@@ -6,7 +6,7 @@ import services.EncryptionManagerService
 import slick.BtcPostgresProfile.api._
 import slick.jdbc.JdbcBackend.Database
 import slick.{DatabaseExecutionContext, Tables}
-import util.InitialisingComponent
+import util.FutureInitialisingComponent
 
 import scala.concurrent.Future
 
@@ -20,7 +20,7 @@ trait SlackTeamDao {
 class SlickSlackTeamDao  @Inject()(val db: Database,
                                    val databaseExecutionContext: DatabaseExecutionContext,
                                    val encryptionManager: EncryptionManagerService)
-  extends InitialisingComponent with SlickDao[SlackTeamEncrypted] with Logging with SlackTeamDao {
+  extends FutureInitialisingComponent with SlickDao[SlackTeamEncrypted] with Logging with SlackTeamDao {
 
   implicit val ec: DatabaseExecutionContext = databaseExecutionContext
   override def table: TableQuery[Tables.SlackTeams] = Tables.slackTeams

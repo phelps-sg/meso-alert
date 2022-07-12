@@ -8,7 +8,7 @@ import org.bitcoinj.core._
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.utils.BriefLogFormatter
 import play.api.Logging
-import util.InitialisingComponent
+import util.FutureInitialisingComponent
 
 import javax.inject.{Inject, Provider, Singleton}
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
@@ -35,7 +35,7 @@ class MainNetPeerGroup extends PeerGroupSelection {
 @Singleton
 class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
                               (implicit system: ActorSystem, implicit val executionContext: ExecutionContext)
-  extends MemPoolWatcherService with ActorBackend with Logging with InitialisingComponent {
+  extends MemPoolWatcherService with ActorBackend with Logging with FutureInitialisingComponent {
 
   initialise()
 

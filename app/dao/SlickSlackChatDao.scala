@@ -5,7 +5,7 @@ import services.EncryptionManagerService
 import slick.BtcPostgresProfile.api._
 import slick.jdbc.JdbcBackend.Database
 import slick.{DatabaseExecutionContext, Tables}
-import util.InitialisingComponent
+import util.FutureInitialisingComponent
 
 import scala.concurrent.Future
 
@@ -15,7 +15,7 @@ class SlickSlackChatDao @Inject() (val db: Database,
                                    val databaseExecutionContext: DatabaseExecutionContext,
                                    val encryptionManager: EncryptionManagerService)
   extends SlackChatHookDao with SlickHookDao[SlackChannel, SlackChatHook, SlackChatHookEncrypted]
-    with InitialisingComponent {
+    with FutureInitialisingComponent {
 
   initialise()
 

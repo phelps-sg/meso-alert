@@ -5,7 +5,7 @@ import play.api.Logging
 import slick.BtcPostgresProfile.api._
 import slick.jdbc.JdbcBackend.Database
 import slick.{DatabaseExecutionContext, Tables}
-import util.InitialisingComponent
+import util.FutureInitialisingComponent
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -17,7 +17,7 @@ trait SlashCommandHistoryDao {
 class SlickSlashCommandHistoryDao @Inject()(val db: Database,
                                             val databaseExecutionContext: DatabaseExecutionContext)
                                            (implicit val ec: ExecutionContext)
-    extends SlashCommandHistoryDao with InitialisingComponent with Logging with SlickDao[SlashCommand] {
+    extends SlashCommandHistoryDao with FutureInitialisingComponent with Logging with SlickDao[SlashCommand] {
 
   initialise()
 

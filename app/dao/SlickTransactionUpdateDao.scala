@@ -6,7 +6,7 @@ import play.api.Logging
 import slick.BtcPostgresProfile.api._
 import slick.jdbc.JdbcBackend.Database
 import slick.{DatabaseExecutionContext, Tables}
-import util.InitialisingComponent
+import util.FutureInitialisingComponent
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -18,7 +18,7 @@ trait TransactionUpdateDao {
 class SlickTransactionUpdateDao @Inject()(val db: Database,
                                             val databaseExecutionContext: DatabaseExecutionContext)
                                          (implicit val ec: ExecutionContext)
-    extends TransactionUpdateDao with Logging with SlickDao[TransactionUpdate] with InitialisingComponent {
+    extends TransactionUpdateDao with Logging with SlickDao[TransactionUpdate] with FutureInitialisingComponent {
 
   initialise()
 

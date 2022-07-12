@@ -5,7 +5,7 @@ import akka.actor.ActorSystem
 import com.google.inject.ImplementedBy
 import dao._
 import play.api.Logging
-import util.InitialisingComponent
+import util.FutureInitialisingComponent
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -19,7 +19,7 @@ trait SlickTxManagerService {
 class SlickTxManager @Inject()(val transactionUpdateDao: TransactionUpdateDao, val memPoolWatcher: MemPoolWatcherService)
                               (implicit system: ActorSystem, implicit val ec: ExecutionContext)
 
-  extends SlickTxManagerService with Logging with InitialisingComponent {
+  extends SlickTxManagerService with Logging with FutureInitialisingComponent {
 
   initialise()
 
