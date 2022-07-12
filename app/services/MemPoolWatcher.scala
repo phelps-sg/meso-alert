@@ -11,6 +11,7 @@ import play.api.Logging
 import util.InitialisingComponent
 
 import javax.inject.{Inject, Provider, Singleton}
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[MemPoolWatcher])
@@ -38,17 +39,17 @@ class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
 
   initialise()
 
-  private val STATISTICS_FREQUENCY_MS: Long = 1000 * 60
+  private def statisticsInitialDelay: FiniteDuration = 1.minute
+  private def statisticsInterval: FiniteDuration = 1.minute
 
   import actors.MemPoolWatcherActor._
 
   override def init(): Future[Unit] = {
     logger.info("Starting peer group... ")
     BriefLogFormatter.initVerbose()
-    val statistics = Future { run() }
+    scheduleStatistics()
     for {
       started <- startPeerGroup()
-      _ <- statistics
     } yield started
   }
 
@@ -56,22 +57,12 @@ class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
     sendAndReceive(StartPeerGroup)
   }
 
-  def run(): Future[Unit] = {
-    Future {
-      while (true) {
-        logger.debug("Sleeping")
-        Thread.sleep(STATISTICS_FREQUENCY_MS)
-        logger.debug("printing counters")
-        printCounters()
-      }
-    }
-  }
-
   def addListener(listener: ActorRef): Unit = {
     actor ! RegisterWatcher(listener)
   }
 
-  private def printCounters(): Unit = {
-    actor ! LogCounters
+  private def scheduleStatistics() = {
+    logger.debug(s"actor = $actor")
+    system.scheduler.scheduleWithFixedDelay(statisticsInitialDelay, statisticsInterval, actor, LogCounters)
   }
 }
