@@ -12,7 +12,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[SlickTxManager])
 trait SlickTxManagerService {
-  def init(): Future[Unit]
+  def initialiseFuture(): Future[Unit]
 }
 
 @Singleton
@@ -23,7 +23,7 @@ class SlickTxManager @Inject()(val transactionUpdateDao: TransactionUpdateDao, v
 
   initialise()
 
-  override def init(): Future[Unit] = {
+  override def initialiseFuture(): Future[Unit] = {
     Future {
       logger.info("Starting slick tx manager... ")
       system.actorOf(TxPersistenceActor.props(transactionUpdateDao, memPoolWatcher,ec))

@@ -11,7 +11,6 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[SodiumEncryptionManager])
 trait EncryptionManagerService {
-  def init(): Future[Unit]
   def encrypt(plainText: Array[Byte]): Future[Encrypted]
   def decrypt(encrypted: Encrypted): Future[Decrypted]
 }
@@ -28,7 +27,7 @@ class SodiumEncryptionManager @Inject() (@Named("encryption-actor") val actor: A
 
   private def decode(base64: String): Array[Byte] = java.util.Base64.getDecoder.decode(base64)
 
-  override def init(): Future[Unit] = sendAndReceive(Init(secret))
+  override def initialiseFuture(): Future[Unit] = sendAndReceive(Init(secret))
   def encrypt(plainText: Array[Byte]): Future[Encrypted] = sendAndReceive(Encrypt(plainText))
   def decrypt(encrypted: Encrypted): Future[Decrypted] = sendAndReceive(encrypted)
 

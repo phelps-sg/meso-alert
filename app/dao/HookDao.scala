@@ -6,7 +6,7 @@ import java.net.URI
 import scala.concurrent.Future
 
 trait HookDao[X, Y <: Hook[X]] {
-  def init(): Future[Unit]
+  protected def initialiseFuture(): Future[Unit]
 //  def all(): Future[Seq[Hook[X]]]
   def allKeys(): Future[Seq[_ <: X]]
   def allRunningKeys(): Future[Seq[_ <: X]]

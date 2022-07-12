@@ -44,7 +44,7 @@ class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
 
   import actors.MemPoolWatcherActor._
 
-  override def init(): Future[Unit] = {
+  override def initialiseFuture(): Future[Unit] = {
     logger.info("Starting peer group... ")
     BriefLogFormatter.initVerbose()
     scheduleStatistics()

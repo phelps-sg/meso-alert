@@ -10,5 +10,5 @@ trait SlickDao[Y] {
   def table: TableQuery[_ <: Table[Y]]
   def db: Database
 
-  def init(): Future[Unit] = db.run(table.schema.createIfNotExists)
+  protected def initialiseFuture(): Future[Unit] = db.run(table.schema.createIfNotExists)
 }

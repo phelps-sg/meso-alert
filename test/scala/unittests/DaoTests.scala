@@ -65,7 +65,7 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       with EncryptionActorFixtures with EncryptionManagerFixtures
       with SlackChatHookDaoFixtures with SlackChatHookFixtures with SlackChatDaoTestLogic {
 
-      encryptionManager.init()
+      encryptionManager.initialiseFuture()
     }
 
     "record a slack chat hook in the database" in new TestFixtures {

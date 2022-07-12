@@ -90,7 +90,7 @@ class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
           )
         )
         _ <- Future.sequence(hooks.map(webhooksManager.register))
-        response <- webhooksManager.init()
+        response <- webhooksManager.initialiseFuture()
       } yield response
 
       init.futureValue shouldBe ()

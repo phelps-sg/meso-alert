@@ -24,10 +24,9 @@ trait HooksManager[X, Y <: Hook[X]] extends ActorBackend with Logging with Initi
   implicit val system: ActorSystem
   implicit val executionContext: ExecutionContext
 
-  override def init(): Future[Unit] = {
+  override def initialiseFuture(): Future[Unit] = {
 
     val initFuture = for {
-      _ <- hookDao.init()
       keys <- hookDao.allRunningKeys()
       started <- Future.sequence(keys.map(key => start(key)))
     } yield started

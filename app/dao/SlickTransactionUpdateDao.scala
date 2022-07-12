@@ -13,7 +13,6 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[SlickTransactionUpdateDao])
 trait TransactionUpdateDao {
   def record(txUpdate: TxUpdate): Future[Int]
-  def init(): Future[Unit]
 }
 
 class SlickTransactionUpdateDao @Inject()(val db: Database,

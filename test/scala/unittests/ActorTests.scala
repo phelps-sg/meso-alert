@@ -208,12 +208,12 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
       with MemPoolWatcherFixtures with TxUpdateFixtures with TxPersistenceActorFixtures
 
     "register itself as a listener to the mem-pool" in new TestFixtures {
-      (mockTransactionUpdateDao.init _).expects().once()
+//      (mockTransactionUpdateDao.init _).expects().once()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
     }
 
     "record a new transaction update when it arrives" in new TestFixtures {
-      (mockTransactionUpdateDao.init _).expects().once()
+//      (mockTransactionUpdateDao.init _).expects().once()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
       (mockTransactionUpdateDao.record _).expects(tx).returning(Future(1)).once()
 
@@ -221,7 +221,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
     }
 
     "retry to record a transaction if it fails" in new TestFixtures {
-      (mockTransactionUpdateDao.init _).expects().once()
+//      (mockTransactionUpdateDao.init _).expects().once()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
       (mockTransactionUpdateDao.record _).expects(tx).returning(Future.failed[Int](new Exception("error")))
       (mockTransactionUpdateDao.record _).expects(tx).returning(Future(1))
@@ -230,7 +230,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
     }
 
     "terminate the actor if maxRetryCount (3) is reached" in new TestFixtures {
-      (mockTransactionUpdateDao.init _).expects().once()
+//      (mockTransactionUpdateDao.init _).expects().once()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
       (mockTransactionUpdateDao.record _).expects(tx).returning(
         Future.failed[Int](new Exception("error"))
@@ -315,7 +315,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
       with MemPoolWatcherFixtures with ActorGuiceFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
       with SlackChatHookDaoFixtures with SlackChatActorFixtures with HookActorTestLogic[SlackChannel, SlackChatHook, SlackChatHookEncrypted] {
 
-      encryptionManager.init()
+      encryptionManager.initialiseFuture()
 
       override def wait(duration: FiniteDuration): Unit = expectNoMessage(duration)
     }

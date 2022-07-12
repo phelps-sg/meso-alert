@@ -11,11 +11,11 @@ trait InitialisingComponent extends Logging {
   protected val initialisationTimeout: FiniteDuration = 1.minute
   implicit val ec: ExecutionContext
 
-  def init(): Future[Unit]
+  protected def initialiseFuture(): Future[Unit]
 
   def initialise(): Unit = {
     logger.debug("Initialising.. ")
-    val f = init()
+    val f = initialiseFuture()
     f.onComplete {
       case Success(_) => logger.info("Initialisation complete.")
       case Failure(ex) =>

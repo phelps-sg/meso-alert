@@ -138,7 +138,7 @@ object Fixtures {
     }
     val memPoolWatcherActor = actorSystem.actorOf(MemPoolWatcherActor.props(pgs, injector.instanceOf[DatabaseExecutionContext]))
     val memPoolWatcher = new MemPoolWatcher(memPoolWatcherActor)(actorSystem, executionContext) {
-      override def init(): Future[Unit] = {
+      override def initialiseFuture(): Future[Unit] = {
         Future { () }
       }
     }

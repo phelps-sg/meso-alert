@@ -29,7 +29,6 @@ class TxPersistenceActor @Inject()(val transactionUpdateDao: TransactionUpdateDa
   override def preStart(): Unit = {
     super.preStart()
     registerWithWatcher()
-    transactionUpdateDao.init()
   }
 
 }
