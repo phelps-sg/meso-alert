@@ -1,10 +1,10 @@
- import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor}
- import com.google.inject.AbstractModule
- import com.typesafe.config.Config
- import play.libs.akka.AkkaGuiceSupport
- import slick.jdbc.JdbcBackend.Database
+import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor}
+import com.google.inject.AbstractModule
+import com.typesafe.config.Config
+import play.libs.akka.AkkaGuiceSupport
+import slick.jdbc.JdbcBackend.Database
 
- import javax.inject.{Inject, Provider, Singleton}
+import javax.inject.{Inject, Provider, Singleton}
 
 class Module extends AbstractModule with AkkaGuiceSupport {
 
