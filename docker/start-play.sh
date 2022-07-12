@@ -20,6 +20,7 @@ slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"
 slack.botToken = "${SLACK_BOT_TOKEN}"
 play.filters.disabled+=play.filters.hosts.AllowedHostsFilter
+play.i18n.langs = ["en"]
 
 meso-alert.db = {
   connectionPool = "HikariCP" //use HikariCP for our connection pool
