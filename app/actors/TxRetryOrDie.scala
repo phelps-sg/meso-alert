@@ -11,11 +11,12 @@ import scala.language.postfixOps
 object TxRetryOrDie {
   //  message types
   case class Retry(tx: TxUpdate, retryCount: Int, exception: Option[Exception])
-
+  case class ScheduleRetry(timeout: FiniteDuration, tx: TxUpdate, retryCount: Int, exception: Option[Exception])
 }
 
-trait TxRetryOrDie[T] extends Actor with Logging {
+trait TxRetryOrDie[T] extends Actor with Timers with Logging {
   import TxRetryOrDie._
+  val random: scala.util.Random
   val maxRetryCount: Int
   implicit val ec: ExecutionContext
 //  back-off policy configuration (milliseconds)
@@ -27,9 +28,10 @@ trait TxRetryOrDie[T] extends Actor with Logging {
   def failure(ex: Throwable): Unit = logger.error(s"Failed to process tx, ${ex.getMessage}.")
   def actorDeath(reason: String): Unit = logger.info(s"${this.getClass.getName} terminating because $reason")
 
-  private def calculateWaitTime(retryCount: Int): Double = {
-    scala.util.Random.between(0, min(cap, base * pow(2, retryCount)))
+  def calculateWaitTime(retryCount: Int): FiniteDuration = {
+    random.between(0, min(cap, base * pow(2, retryCount))) milliseconds
   }
+
   def receive : Receive = {
     case tx: TxUpdate => self ! Retry(tx, 0, None)
     case Retry(tx, retryCount, _) if retryCount < maxRetryCount =>
@@ -38,13 +40,13 @@ trait TxRetryOrDie[T] extends Actor with Logging {
       } recover {
         case ex: Exception =>
           failure(ex)
-          context.system.scheduler.scheduleOnce(calculateWaitTime(retryCount) milliseconds, self,
-            Retry(tx, retryCount+1, Some(ex)))
-        case ex: Error =>
-          logger.error(s"Fatal error: ${ex.getMessage}")
+          self ! ScheduleRetry(calculateWaitTime(retryCount), tx, retryCount + 1, Some(ex))
         }
     case Retry(tx, retryCount, ex) if retryCount >= maxRetryCount =>
       self ! Die(s"Could not process tx ${tx.hash}. ${ex.get.getMessage}")
+
+    case ScheduleRetry(timeout, tx, retryCount, ex) =>
+      timers.startSingleTimer("retry", Retry(tx, retryCount, ex), timeout)
 
     case Die(reason)  =>
       actorDeath(reason)

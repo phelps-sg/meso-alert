@@ -1,4 +1,4 @@
- import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor}
+ import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, RandomProvider, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor}
  import com.google.inject.AbstractModule
  import com.typesafe.config.Config
  import play.libs.akka.AkkaGuiceSupport
@@ -10,6 +10,7 @@ class Module extends AbstractModule with AkkaGuiceSupport {
 
   override def configure(): Unit = {
     bind(classOf[Database]).toProvider(classOf[DatabaseProvider])
+    bind(classOf[scala.util.Random]).toProvider(classOf[RandomProvider])
     bindActor(classOf[HooksManagerActorWeb], "webhooks-actor")
     bindActor(classOf[HooksManagerActorSlackChat], "slack-hooks-actor")
     bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")

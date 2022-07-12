@@ -1,10 +1,18 @@
 import actors.AuthenticationActor.TxInputOutput
+import com.google.inject.Provider
 import play.api.libs.json.{JsObject, Json, Writes}
+import javax.inject.Singleton
 
 import scala.collection.immutable.ArraySeq
 
 //noinspection TypeAnnotation
 package object actors {
+
+
+  @Singleton
+  class RandomProvider extends Provider[scala.util.Random] {
+    lazy val get = scala.util.Random
+  }
 
   // scalafix:off
   implicit val txInputOutputWrites = new Writes[TxInputOutput] {
