@@ -4,18 +4,19 @@ import actors.{Register, Registered, Start, Started, Stop, Stopped, Update, Upda
 import akka.actor.{ActorRef, ActorSystem}
 import dao.{Hook, HookDao}
 import play.api.Logging
+import util.InitialisingComponent
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 trait HooksManagerService[X, Y] {
-  def init(): Future[Seq[Started[Y]]]
+//  def init(): Future[Seq[Started[Y]]]
   def start(key: X): Future[Started[Y]]
   def stop(key: X): Future[Stopped[Y]]
   def register(hook: Y): Future[Registered[Y]]
 }
 
-trait HooksManager[X, Y <: Hook[X]] extends ActorBackend with Logging {
+trait HooksManager[X, Y <: Hook[X]] extends ActorBackend with Logging with InitialisingComponent {
 
   val hookDao: HookDao[X, Y]
   val actor: ActorRef
@@ -23,7 +24,7 @@ trait HooksManager[X, Y <: Hook[X]] extends ActorBackend with Logging {
   implicit val system: ActorSystem
   implicit val executionContext: ExecutionContext
 
-  def init(): Future[Seq[Started[Y]]] = {
+  override def init(): Future[Unit] = {
 
     val initFuture = for {
       _ <- hookDao.init()
@@ -36,7 +37,7 @@ trait HooksManager[X, Y <: Hook[X]] extends ActorBackend with Logging {
       case Failure(exception) => logger.error(f"Failed to load hooks: ${exception.getMessage}")
     }
 
-    initFuture
+    initFuture map {_ => () }
   }
 
   def start(key: X): Future[Started[Y]] = sendAndReceive(Start(key))

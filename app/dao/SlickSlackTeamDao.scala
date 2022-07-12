@@ -1,28 +1,31 @@
 package dao
 
 import com.google.inject.{ImplementedBy, Inject}
+import play.api.Logging
 import services.EncryptionManagerService
 import slick.BtcPostgresProfile.api._
 import slick.jdbc.JdbcBackend.Database
 import slick.{DatabaseExecutionContext, Tables}
+import util.InitialisingComponent
 
 import scala.concurrent.Future
 
 @ImplementedBy(classOf[SlickSlackTeamDao])
 trait SlackTeamDao {
   def insertOrUpdate(slackUser: SlackTeam): Future[Int]
-  def init(): Future[Unit]
+//  def init(): Future[Unit]
   def find(userId: String): Future[Option[SlackTeam]]
 }
 
 class SlickSlackTeamDao  @Inject()(val db: Database,
                                    val databaseExecutionContext: DatabaseExecutionContext,
                                    val encryptionManager: EncryptionManagerService)
-  extends SlickDao[SlackTeamEncrypted] with SlackTeamDao {
+  extends InitialisingComponent with SlickDao[SlackTeamEncrypted] with Logging with SlackTeamDao {
 
   implicit val ec: DatabaseExecutionContext = databaseExecutionContext
+  override def table: TableQuery[Tables.SlackTeams] = Tables.slackTeams
 
-  override val table = Tables.slackTeams
+  initialise()
 
   def insertOrUpdate(slackUser: SlackTeam): Future[Int] = {
     for {

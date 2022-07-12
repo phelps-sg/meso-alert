@@ -7,9 +7,8 @@ import slick.lifted.TableQuery
 import scala.concurrent.Future
 
 trait SlickDao[Y] {
-  val table: TableQuery[_ <: Table[Y]]
-  val db: Database
+  def table: TableQuery[_ <: Table[Y]]
+  def db: Database
 
   def init(): Future[Unit] = db.run(table.schema.createIfNotExists)
-//  def all(): Future[Seq[Y]] = db.run(table.result)
 }

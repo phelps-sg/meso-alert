@@ -8,6 +8,7 @@ import org.bitcoinj.core._
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.utils.BriefLogFormatter
 import play.api.Logging
+import util.InitialisingComponent
 
 import javax.inject.{Inject, Provider, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -15,7 +16,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @ImplementedBy(classOf[MemPoolWatcher])
 trait MemPoolWatcherService {
   def addListener(listener: ActorRef): Unit
-  def init(): Future[Started[PeerGroup]]
+//  def init(): Future[Started[PeerGroup]]
 }
 
 @ImplementedBy(classOf[MainNetPeerGroup])
@@ -33,11 +34,23 @@ class MainNetPeerGroup extends PeerGroupSelection {
 @Singleton
 class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
                               (implicit system: ActorSystem, implicit val executionContext: ExecutionContext)
-  extends MemPoolWatcherService with ActorBackend with Logging {
+  extends MemPoolWatcherService with ActorBackend with Logging with InitialisingComponent {
+
+  initialise()
 
   private val STATISTICS_FREQUENCY_MS: Long = 1000 * 60
 
   import actors.MemPoolWatcherActor._
+
+  override def init(): Future[Unit] = {
+    logger.info("Starting peer group... ")
+    BriefLogFormatter.initVerbose()
+    val statistics = Future { run() }
+    for {
+      started <- startPeerGroup()
+      _ <- statistics
+    } yield started
+  }
 
   def startPeerGroup(): Future[Started[PeerGroup]] = {
     sendAndReceive(StartPeerGroup)
@@ -46,20 +59,12 @@ class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
   def run(): Future[Unit] = {
     Future {
       while (true) {
+        logger.debug("Sleeping")
         Thread.sleep(STATISTICS_FREQUENCY_MS)
+        logger.debug("printing counters")
         printCounters()
       }
     }
-  }
-
-  def init(): Future[Started[PeerGroup]] = {
-    logger.info("Starting peer group... ")
-    BriefLogFormatter.initVerbose()
-    val statistics = Future { run() }
-    for {
-      started <- startPeerGroup()
-      _ <- statistics
-    } yield started
   }
 
   def addListener(listener: ActorRef): Unit = {

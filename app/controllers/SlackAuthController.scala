@@ -17,13 +17,9 @@ class SlackAuthController @Inject()(protected val config: Configuration,
                                     val slackTeamDao: SlackTeamDao,
                                     val controllerComponents: ControllerComponents)
                                    (implicit val ec: ExecutionContext)
-  extends BaseController with SlackClient with Logging with InitialisingController {
+  extends BaseController with SlackClient with Logging {
 
   protected val slackMethods: AsyncMethodsClient = slack.methodsAsync()
-
-  override def init(): Future[Unit] = {
-    slackTeamDao.init()
-  }
 
   def authRedirect(temporaryCode: String): mvc.Action[AnyContent] =
     Action.async { implicit request: Request[AnyContent] =>

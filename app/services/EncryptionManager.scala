@@ -4,8 +4,8 @@ import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
 import akka.actor.{ActorRef, ActorSystem}
 import com.google.inject.name.Named
 import com.google.inject.{ImplementedBy, Inject, Singleton}
-import controllers.InitialisingController
 import play.api.{Configuration, Logging}
+import util.InitialisingComponent
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -19,7 +19,9 @@ trait EncryptionManagerService {
 @Singleton
 class SodiumEncryptionManager @Inject() (@Named("encryption-actor") val actor: ActorRef, val config: Configuration)
   (implicit system: ActorSystem, implicit val executionContext: ExecutionContext)
-  extends EncryptionManagerService with ActorBackend with Logging with InitialisingController {
+  extends EncryptionManagerService with ActorBackend with Logging with InitialisingComponent {
+
+  initialise()
 
   private def secretBase64: String = config.get[String]("sodium.secret")
   private def secret: Array[Byte] = decode(secretBase64)

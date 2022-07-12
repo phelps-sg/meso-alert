@@ -205,34 +205,34 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
   "TxPersistenceActor" should {
 
     trait TestFixtures extends FixtureBindings with ActorGuiceFixtures
-      with TxUpdateFixtures with TxPersistenceActorFixtures
+      with MemPoolWatcherFixtures with TxUpdateFixtures with TxPersistenceActorFixtures
 
     "register itself as a listener to the mem-pool" in new TestFixtures {
-      (mockSlickTransactionUpdateDao.init _).expects().once()
+      (mockTransactionUpdateDao.init _).expects().once()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
     }
 
     "record a new transaction update when it arrives" in new TestFixtures {
-      (mockSlickTransactionUpdateDao.init _).expects().once()
+      (mockTransactionUpdateDao.init _).expects().once()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
-      (mockSlickTransactionUpdateDao.record _).expects(tx).returning(Future(1)).once()
+      (mockTransactionUpdateDao.record _).expects(tx).returning(Future(1)).once()
 
       txPersistenceActor ! tx
     }
 
     "retry to record a transaction if it fails" in new TestFixtures {
-      (mockSlickTransactionUpdateDao.init _).expects().once()
+      (mockTransactionUpdateDao.init _).expects().once()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
-      (mockSlickTransactionUpdateDao.record _).expects(tx).returning(Future.failed[Int](new Exception("error")))
-      (mockSlickTransactionUpdateDao.record _).expects(tx).returning(Future(1))
+      (mockTransactionUpdateDao.record _).expects(tx).returning(Future.failed[Int](new Exception("error")))
+      (mockTransactionUpdateDao.record _).expects(tx).returning(Future(1))
 
       txPersistenceActor ! tx
     }
 
     "terminate the actor if maxRetryCount (3) is reached" in new TestFixtures {
-      (mockSlickTransactionUpdateDao.init _).expects().once()
+      (mockTransactionUpdateDao.init _).expects().once()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
-      (mockSlickTransactionUpdateDao.record _).expects(tx).returning(
+      (mockTransactionUpdateDao.record _).expects(tx).returning(
         Future.failed[Int](new Exception("error"))
       ).repeat(3)
 

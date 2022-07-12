@@ -55,15 +55,15 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       with SlickSlashCommandHistoryDaoFixtures with SlickSlackTeamDaoFixtures with SlackChatActorFixtures
       with SlickSlashCommandFixtures with DatabaseInitializer {
 
-      encryptionManager.init()
+//      encryptionManager.init()
 
       val controller = new SlackSlashCommandController(Helpers.stubControllerComponents(),
         slashCommandHistoryDao = slickSlashCommandHistoryDao,
         slackTeamDao = slickSlackTeamDao, hooksManager = new HooksManagerSlackChat(hookDao, hooksActor)) {
-        override def init(): Future[Unit] = {
+//        override def init(): Future[Unit] = {
           // Do not call createIfNotExists because of issue #68
-          Future { () }
-        }
+//          Future { () }
+//        }
       }
 
 
@@ -80,6 +80,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
             )
             response <- controller.process(command)
             dbContents <- db.run(Tables.slackChatHooks.result)
+            _ <- db.run(Tables.slackChatHooks.delete)
           } yield (response, dbContents)
         }
       }

@@ -4,6 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import slick.BtcPostgresProfile.api._
 import slick.jdbc.JdbcBackend.Database
 import slick.{DatabaseExecutionContext, Tables}
+import util.InitialisingComponent
 
 import java.net.URI
 import scala.concurrent.Future
@@ -12,9 +13,11 @@ import scala.concurrent.Future
 @Singleton
 class SlickWebhookDao @Inject() (val db: Database,
                                  val databaseExecutionContext: DatabaseExecutionContext)
-  extends WebhookDao with SlickHookDao[URI, Webhook, Webhook] {
+  extends WebhookDao with SlickHookDao[URI, Webhook, Webhook] with InitialisingComponent {
 
-  override val table = Tables.webhooks
+  initialise()
+  
+  override def table: TableQuery[Tables.Webhooks] = Tables.webhooks
   override val lookupHookQuery: Webhook => Query[Tables.Webhooks,Webhook,Seq] = (hook: Webhook) => Tables.webhooks.filter(_.url === hook.uri.toString)
   override val lookupKeyQuery: URI => Query[Tables.Webhooks,Webhook,Seq] = (uri: URI) => Tables.webhooks.filter(_.url === uri.toString)
 

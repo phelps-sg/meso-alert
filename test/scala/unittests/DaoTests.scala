@@ -93,10 +93,7 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
     trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures
       with SlickSlackTeamFixtures with ConfigurationFixtures with EncryptionActorFixtures
-      with EncryptionManagerFixtures with SlickSlackTeamDaoFixtures with DatabaseInitializer {
-
-      encryptionManager.init()
-    }
+      with EncryptionManagerFixtures with SlickSlackTeamDaoFixtures with DatabaseInitializer
 
     "record a team in the database" in new TestFixtures {
       afterDbInit {

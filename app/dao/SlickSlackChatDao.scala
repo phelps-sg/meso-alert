@@ -5,6 +5,7 @@ import services.EncryptionManagerService
 import slick.BtcPostgresProfile.api._
 import slick.jdbc.JdbcBackend.Database
 import slick.{DatabaseExecutionContext, Tables}
+import util.InitialisingComponent
 
 import scala.concurrent.Future
 
@@ -13,9 +14,12 @@ import scala.concurrent.Future
 class SlickSlackChatDao @Inject() (val db: Database,
                                    val databaseExecutionContext: DatabaseExecutionContext,
                                    val encryptionManager: EncryptionManagerService)
-  extends SlackChatHookDao with SlickHookDao[SlackChannel, SlackChatHook, SlackChatHookEncrypted] {
+  extends SlackChatHookDao with SlickHookDao[SlackChannel, SlackChatHook, SlackChatHookEncrypted]
+    with InitialisingComponent {
 
-  override val table = Tables.slackChatHooks
+  initialise()
+
+  override def table = Tables.slackChatHooks
   override val lookupHookQuery: SlackChatHook => Query[Tables.SlackChatHooks, SlackChatHookEncrypted, Seq] =
     (hook: SlackChatHook) => Tables.slackChatHooks.filter(_.channel_id === hook.channel.id)
   override val lookupKeyQuery: SlackChannel => Query[Tables.SlackChatHooks, SlackChatHookEncrypted, Seq] =

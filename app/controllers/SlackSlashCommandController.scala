@@ -47,11 +47,7 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
                                             val slackTeamDao: SlackTeamDao,
                                             val hooksManager: HooksManagerSlackChat)
                                            (implicit system: ActorSystem, implicit val ec: ExecutionContext)
-  extends BaseController with Logging with InitialisingController {
-
-  override def init(): Future[Unit] = for {
-    result <- slashCommandHistoryDao.init()
-  } yield result
+  extends BaseController with Logging {
 
   def slashCommand: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { request =>
     logger.debug("received slash command")

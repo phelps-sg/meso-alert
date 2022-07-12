@@ -11,7 +11,6 @@ import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
 import play.api.{Logger, Logging}
-import services.{EncryptionManagerService, HooksManagerSlackChatService, HooksManagerWebService, MemPoolWatcherService, SlickTxManagerService, UserManagerService}
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,22 +21,9 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
-                               val memPoolWatcher: MemPoolWatcherService,
-                               val slickTxManager: SlickTxManagerService,
-                               val userManager: UserManagerService,
-                               val webHooksManager: HooksManagerWebService,
-                               val slackChatHooksManager: HooksManagerSlackChatService,
-                               val encryptionManagerService: EncryptionManagerService,
                                val actorFactory: AuthenticationActor.Factory)
                               (implicit system: ActorSystem, mat: Materializer, implicit val ec: ExecutionContext)
-  extends BaseController with SameOriginCheck with InjectedActorSupport with Logging with InitialisingController {
-
-  override def init(): Future[Unit] = for {
-    _ <- memPoolWatcher.init()
-    _ <- webHooksManager.init()
-    _ <- slackChatHooksManager.init()
-//    _ <- encryptionManagerService.init()
-  } yield ()
+  extends BaseController with SameOriginCheck with InjectedActorSupport with Logging {
 
   implicit val mft: MessageFlowTransformer[Auth, TxUpdate] =
     MessageFlowTransformer.jsonMessageFlowTransformer[Auth, TxUpdate]

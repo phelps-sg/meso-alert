@@ -15,4 +15,7 @@ trait HooksManagerSlackChatService extends HooksManagerService[SlackChannel, Sla
 class HooksManagerSlackChat @Inject()(val hookDao: SlackChatHookDao,
                                       @Named("slack-hooks-actor") val actor: ActorRef)
                                      (implicit val system: ActorSystem, val executionContext: ExecutionContext)
-  extends HooksManagerSlackChatService with HooksManager[SlackChannel, SlackChatHook]
+  extends HooksManagerSlackChatService with HooksManager[SlackChannel, SlackChatHook] {
+
+  initialise()
+}

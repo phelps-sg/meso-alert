@@ -3,9 +3,9 @@ package services
 import actors._
 import akka.actor.ActorSystem
 import com.google.inject.ImplementedBy
-import controllers.InitialisingComponent
 import dao._
 import play.api.Logging
+import util.InitialisingComponent
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -20,6 +20,8 @@ class SlickTxManager @Inject()(val transactionUpdateDao: TransactionUpdateDao, v
                               (implicit system: ActorSystem, implicit val ec: ExecutionContext)
 
   extends SlickTxManagerService with Logging with InitialisingComponent {
+
+  initialise()
 
   override def init(): Future[Unit] = {
     Future {

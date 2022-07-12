@@ -85,7 +85,7 @@ class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       val init = for {
         _ <- database.run(
           DBIO.seq(
-            Tables.schema.create,
+            Tables.webhooks.delete,
             Tables.webhooks ++= hooks,
           )
         )
@@ -93,9 +93,7 @@ class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
         response <- webhooksManager.init()
       } yield response
 
-      init.futureValue should matchPattern {
-        case Seq(Started(`hook1`), Started(`hook2`)) =>
-      }
+      init.futureValue shouldBe ()
 
     }
   }

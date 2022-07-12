@@ -16,4 +16,7 @@ trait HooksManagerWebService extends HooksManagerService[URI, Webhook]
 class HooksManagerWeb @Inject()(val hookDao: WebhookDao,
                                 @Named("webhooks-actor") val actor: ActorRef)
                                (implicit val system: ActorSystem, val executionContext: ExecutionContext)
-  extends HooksManagerWebService with HooksManager[URI, Webhook]
+  extends HooksManagerWebService with HooksManager[URI, Webhook] {
+
+  initialise()
+}

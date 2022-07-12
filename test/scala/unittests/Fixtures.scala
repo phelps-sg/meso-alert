@@ -137,7 +137,11 @@ object Fixtures {
       lazy val get = mockPeerGroup
     }
     val memPoolWatcherActor = actorSystem.actorOf(MemPoolWatcherActor.props(pgs, injector.instanceOf[DatabaseExecutionContext]))
-    val memPoolWatcher = new MemPoolWatcher(memPoolWatcherActor)(actorSystem, executionContext)
+    val memPoolWatcher = new MemPoolWatcher(memPoolWatcherActor)(actorSystem, executionContext) {
+      override def init(): Future[Unit] = {
+        Future { () }
+      }
+    }
   }
 
   trait TransactionFixtures {
@@ -482,10 +486,12 @@ object Fixtures {
 
   trait TxPersistenceActorFixtures extends MockFactory {
     val actorSystem: ActorSystem
-    val executionContext: ExecutionContext
-    val mockMemPoolWatcher: MemPoolWatcherService = mock[MemPoolWatcherService]
-    val mockSlickTransactionUpdateDao = mock[SlickTransactionUpdateDao]
-    val txPersistenceActor = actorSystem.actorOf(TxPersistenceActor.props(mockSlickTransactionUpdateDao, mockMemPoolWatcher, executionContext))
+    val mockMemPoolWatcher: MemPoolWatcherService
+    implicit val executionContext: ExecutionContext
+//    val mockMemPoolWatcher: MemPoolWatcherService = mock[MemPoolWatcherService]
+    val mockTransactionUpdateDao = mock[TransactionUpdateDao]
+    val txPersistenceActor =
+      actorSystem.actorOf(TxPersistenceActor.props(mockTransactionUpdateDao, mockMemPoolWatcher, executionContext))
   }
 
   trait TxWatchActorFixtures {
@@ -515,7 +521,8 @@ object Fixtures {
     val executionContext: ExecutionContext
     val webhookManagerMock = mock[WebhookManagerMock]
     val mockWebhookManagerActor = actorSystem.actorOf(MockWebhookManagerActor.props(webhookManagerMock))
-    val webhooksManager = new HooksManagerWeb(hookDao, actor = mockWebhookManagerActor)(actorSystem, executionContext)
+    val webhooksManager =
+      new HooksManagerWeb(hookDao, actor = mockWebhookManagerActor)(actorSystem, executionContext)
   }
 
   trait EncryptionManagerFixtures {
