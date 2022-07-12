@@ -3,14 +3,12 @@ package services
 import actors._
 import akka.actor.ActorSystem
 import com.google.inject.ImplementedBy
-import controllers.InitialisingController
+import controllers.InitialisingComponent
 import dao._
 import play.api.Logging
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-
-
 
 @ImplementedBy(classOf[SlickTxManager])
 trait SlickTxManagerService {
@@ -21,7 +19,7 @@ trait SlickTxManagerService {
 class SlickTxManager @Inject()(val transactionUpdateDao: TransactionUpdateDao, val memPoolWatcher: MemPoolWatcherService)
                               (implicit system: ActorSystem, implicit val ec: ExecutionContext)
 
-  extends SlickTxManagerService with Logging with InitialisingController {
+  extends SlickTxManagerService with Logging with InitialisingComponent {
 
   override def init(): Future[Unit] = {
     Future {
@@ -29,6 +27,5 @@ class SlickTxManager @Inject()(val transactionUpdateDao: TransactionUpdateDao, v
       system.actorOf(TxPersistenceActor.props(transactionUpdateDao, memPoolWatcher,ec))
     }
   }
-
 
 }
