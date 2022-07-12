@@ -24,6 +24,11 @@ Ensure that docker is logged into the container registry:
 docker login registry.gitlab.com
 ~~~
 
+## Deploying to Slack
+
+Create a [new Slack App](https://api.slack.com/apps?new_app=1) from the [slack-manifest.yml](./slack-manifest.yml) 
+file.
+
 ## Configuration
 
 Run the following in a shell from the project root directory, replacing <password> with the 
