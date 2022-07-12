@@ -8,6 +8,8 @@ play.filters.hosts {
   allowed = [".ngrok.io", "localhost:9000"]
 }
 
+sodium.secret = "${SODIUM_KEY}"
+
 slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"
 
