@@ -10,7 +10,6 @@ play.filters.hosts {
 
 slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"
-slack.botToken = ${SLACK_BOT_TOKEN}
 
 meso-alert.db = {
   connectionPool = "HikariCP" //use HikariCP for our connection pool
