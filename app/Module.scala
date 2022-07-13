@@ -7,12 +7,14 @@ import services.{EncryptionManagerService, HooksManagerSlackChat, HooksManagerSl
 import slick.jdbc.JdbcBackend.Database
 
 import javax.inject.{Inject, Provider, Singleton}
+import scala.util.Random
 
 class Module extends AbstractModule with AkkaGuiceSupport {
 
   override def configure(): Unit = {
 
     bind(classOf[Database]).toProvider(classOf[DatabaseProvider])
+    bind(classOf[scala.util.Random]).toProvider(classOf[RandomProvider])
 
     bindActor(classOf[HooksManagerActorWeb], "webhooks-actor")
     bindActor(classOf[HooksManagerActorSlackChat], "slack-hooks-actor")
@@ -40,4 +42,9 @@ class Module extends AbstractModule with AkkaGuiceSupport {
 @Singleton
 class DatabaseProvider @Inject() (config: Config) extends Provider[Database] {
   lazy val get: Database = Database.forConfig("meso-alert.db", config)
+}
+
+@Singleton
+class RandomProvider extends Provider[scala.util.Random] {
+  lazy val get: Random.type = scala.util.Random
 }

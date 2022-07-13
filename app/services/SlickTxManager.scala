@@ -16,7 +16,8 @@ trait SlickTxManagerService {
 }
 
 @Singleton
-class SlickTxManager @Inject()(val transactionUpdateDao: TransactionUpdateDao, val memPoolWatcher: MemPoolWatcherService)
+class SlickTxManager @Inject()(val transactionUpdateDao: TransactionUpdateDao, val
+memPoolWatcher: MemPoolWatcherService, val random: scala.util.Random)
                               (implicit system: ActorSystem, implicit val ec: ExecutionContext)
 
   extends SlickTxManagerService with Logging with FutureInitialisingComponent {
@@ -26,7 +27,7 @@ class SlickTxManager @Inject()(val transactionUpdateDao: TransactionUpdateDao, v
   override def initialiseFuture(): Future[Unit] = {
     Future {
       logger.info("Starting slick tx manager... ")
-      system.actorOf(TxPersistenceActor.props(transactionUpdateDao, memPoolWatcher,ec))
+      system.actorOf(TxPersistenceActor.props(transactionUpdateDao, memPoolWatcher, random, ec))
     }
   }
 

@@ -497,11 +497,12 @@ object Fixtures {
   trait TxPersistenceActorFixtures extends MockFactory {
     val actorSystem: ActorSystem
     val mockMemPoolWatcher: MemPoolWatcherService
-    implicit val executionContext: ExecutionContext
-//    val mockMemPoolWatcher: MemPoolWatcherService = mock[MemPoolWatcherService]
+    val executionContext: ExecutionContext
+    val injector: Injector
     val mockTransactionUpdateDao = mock[TransactionUpdateDao]
-    val txPersistenceActor =
-      actorSystem.actorOf(TxPersistenceActor.props(mockTransactionUpdateDao, mockMemPoolWatcher, executionContext))
+    val random = injector.instanceOf[scala.util.Random]
+    val txPersistenceActor = actorSystem.actorOf(TxPersistenceActor.props(mockTransactionUpdateDao,
+      mockMemPoolWatcher, random, executionContext))
   }
 
   trait TxWatchActorFixtures {
