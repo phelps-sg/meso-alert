@@ -25,6 +25,7 @@ class Module extends AbstractModule with AkkaGuiceSupport {
     bindActorFactory(classOf[TxFilterActor], classOf[TxFilterActor.Factory])
     bindActorFactory(classOf[TxPersistenceActor], classOf[TxPersistenceActor.Factory])
 
+    // Ensure all components that implement FutureInitialisingComponent are immediately initialised at startup
     bind(classOf[MemPoolWatcherService]).to(classOf[MemPoolWatcher]).asEagerSingleton()
     bind(classOf[HooksManagerWebService]).to(classOf[HooksManagerWeb]).asEagerSingleton()
     bind(classOf[HooksManagerSlackChatService]).to(classOf[HooksManagerSlackChat]).asEagerSingleton()
