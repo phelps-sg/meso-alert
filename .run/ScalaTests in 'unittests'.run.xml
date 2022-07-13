@@ -9,8 +9,8 @@
     <option name="testKind" value="All in package" />
     <option name="classBuf">
       <list>
-        <option value="unittests.ControllerTests" />
         <option value="unittests.ActorTests" />
+        <option value="unittests.ControllerTests" />
         <option value="unittests.FormattingTests" />
         <option value="unittests.ServiceTests" />
         <option value="unittests.DaoTests" />

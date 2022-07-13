@@ -15,6 +15,7 @@ import org.bitcoinj.params.MainNetParams
 import org.scalamock.handlers.CallHandler1
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
+import play.api.i18n.DefaultMessagesApi
 import play.api.inject.Injector
 import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, Json}
@@ -380,6 +381,9 @@ object Fixtures {
     val timeStamp = Some(java.time.LocalDateTime.of(2001, 1, 1, 0, 0))
     val slashCommand = SlashCommand(None, channelId, command, text, teamDomain, teamId, channelName, userId,
       userName, isEnterpriseInstall, timeStamp)
+    val messagesApi = new DefaultMessagesApi(
+      Map("en" -> Map("slackResponse.currencyError" -> "I currently only provide alerts for BTC, but other currencies are coming soon."))
+    )
   }
 
   trait SlickSlashCommandHistoryDaoFixtures {

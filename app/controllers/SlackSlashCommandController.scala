@@ -4,6 +4,7 @@ import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.actor.ActorSystem
 import dao._
 import play.api.Logging
+import play.api.i18n.{Lang, MessagesApi}
 import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.HooksManagerSlackChat
 
@@ -45,9 +46,12 @@ object SlackSlashCommandController {
 class SlackSlashCommandController @Inject()(val controllerComponents: ControllerComponents,
                                             val slashCommandHistoryDao: SlashCommandHistoryDao,
                                             val slackTeamDao: SlackTeamDao,
-                                            val hooksManager: HooksManagerSlackChat)
+                                            val hooksManager: HooksManagerSlackChat,
+                                            messagesApi: MessagesApi)
                                            (implicit system: ActorSystem, implicit val ec: ExecutionContext)
   extends BaseController with Logging {
+
+  implicit val lang: Lang = Lang("en")
 
   def slashCommand: Action[Map[String, Seq[String]]] = Action.async(parse.formUrlEncoded) { request =>
     logger.debug("received slash command")
@@ -104,25 +108,26 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
                     _ <- hooksManager.stop(channel)
                     restarted <- hooksManager.start(channel)
                   } yield restarted
-                  f.map { _ => Ok(s"OK, I have reconfigured the alerts on this channel with a new threshold of $amount BTC.") }
+                  f.map { _ => Ok(messagesApi("slackResponse.cryptoAlertReconfig", amount)) }
               }
 
           case None =>
             logger.debug(s"Invalid amount ${slashCommand.text}")
             Future {
-              Ok("Usage: `/crypto-alert [threshold amount] [currency]`")
+              Ok(messagesApi("slackResponse.generalError"))
             }
 
         }
 
       case Array(_, _) =>
+        val message: String = messagesApi("slackResponse.currencyError")
         Future {
-          Ok("I currently only provide alerts for BTC, but other currencies are coming soon.")
+          Ok(message)
         }
 
       case _ =>
         Future {
-          Ok("Usage: `/crypto-alert [threshold amount] [currency]`")
+          Ok(messagesApi("slackResponse.generalError"))
         }
 
     }
@@ -134,10 +139,10 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
     val f = for {
       stopped <- hooksManager.stop(channel)
     } yield stopped
-    f.map { _ => Ok("OK, I have paused alerts for this channel.") }
+    f.map { _ => Ok(messagesApi("slackResponse.pauseAlerts")) }
       .recover {
         case HookNotStartedException(_) =>
-          Ok("Alerts are not active on this channel.")
+          Ok(messagesApi("slackResponse.pauseAlertsError"))
       }
   }
 
@@ -146,10 +151,10 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
     val f = for {
       stopped <- hooksManager.start(channel)
     } yield stopped
-    f.map { _ => Ok("OK, I will resume alerts on this channel.") }
+    f.map { _ => Ok(messagesApi("slackResponse.resumeAlerts")) }
       .recover {
         case HookAlreadyStartedException(_) =>
-          Ok("Alerts are already active on this channel.")
+          Ok(messagesApi("slackResponse.resumeAlertsError"))
       }
   }
 
