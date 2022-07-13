@@ -8,21 +8,20 @@ import scala.util.{Failure, Success}
 
 /**
  * A mixin for any class which performs initialisation in a Future, e.g. querying the database.
- * The implementing class should call {{{initialise()}}} in its constructor, and should
+ * The implementing class should call `initialise()` in its constructor, and should
  * have a binding in the Guice Module that specifies eager binding, e.g.:
- *
  * {{{
  *  class Module extends AbstractModule with AkkaGuiceSupport {
- *    bind(classOf[MemPoolWatcherService]).to(classOf[MemPoolWatcher]).asEagerSingleton()
+ *    bind(classOf[MemPoolWatcherService]).to(classOf[MemPoolWatcher])
+ *      .asEagerSingleton()
  *  }
  * }}}
- *
  * The component will then be initialised synchronously; i.e. the main thread will block
- * waiting for the initialisation to complete within the {{{initialisationTimeout}}}.
+ * waiting for the initialisation to complete within the `initialisationTimeout`.
  *
  * If the initialisation fails for any reason this is considered a fatal error and the
  * underlying cause is wrapped in a RuntimeException which is then thrown from
- * {{{initialise()}}}.
+ * `initialise()`.
  */
 trait FutureInitialisingComponent extends Logging {
 
