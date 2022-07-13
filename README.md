@@ -33,8 +33,10 @@ postgres password you wish to use for the local staging database:
 cat << EOF > docker/.env
 POSTGRES_PASSWORD=<password>
 SLACK_BOT_TOKEN=<obtain from slack app>
-POSTGRES_PORT=5436
+POSTGRES_PORT=5432
+POSTGRES_HOST=172.17.0.1
 SODIUM_KEY=`sbt "runMain util.GenerateSodiumKey" | awk '/private-key:/ {print $2}'`
+PLAY_KEY=`head -c 32 /dev/urandom | base64`
 EOF
 ~~~
 
@@ -51,9 +53,7 @@ make sbt-run
 To build and run the server in production mode, from the project root directory run:
 
 ~~~bash
-export POSTGRES_PASSWORD=<changeme>
-export PLAY_SECRET=<changeme>
-make -e docker-server-start
+make docker-server-start
 ~~~
 
 ### Websocket client

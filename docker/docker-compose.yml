@@ -10,6 +10,14 @@ services:
     build:
       context: ../
       dockerfile: ./docker/meso-alert.docker
+      args:
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        POSTGRES_PORT: ${POSTGRES_PORT}
+        SODIUM_KEY: ${SODIUM_KEY}
+        PLAY_KEY: ${PLAY_KEY}
+        SLACK_CLIENT_ID: ${SLACK_CLIENT_ID}
+        SLACK_CLIENT_SECRET: ${SLACK_CLIENT_SECRET}
+        POSTGRES_HOST: ${POSTGRES_HOST}
 
   meso-alert-ci:
     image: registry.gitlab.com/mesonomics/meso-alert/ci

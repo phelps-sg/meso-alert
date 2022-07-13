@@ -4,14 +4,20 @@
 
 cd /root
 
-ls -lR /etc/secrets
-
-PLAY_KEY=$(cat /etc/secrets/play/secret | base64)
-POSTGRES_PASSWORD=$(cat /etc/secrets/postgres/password)
-SLACK_BOT_TOKEN=$(cat /etc/secrets/slack/bot_token)
-SLACK_CLIENT_SECRET=$(cat /etc/secrets/slack/client_secret)
-SLACK_CLIENT_ID=$(cat /etc/secrets/slack/client_id)
-SODIUM_KEY=$(cat /etc/secrets/sodium/key)
+if [ -d "/etc/secrets" ]; then
+  echo "Running in k8 environment"
+  PLAY_KEY=$(cat /etc/secrets/play/secret | base64)
+  POSTGRES_PASSWORD=$(cat /etc/secrets/postgres/password)
+  SLACK_BOT_TOKEN=$(cat /etc/secrets/slack/bot_token)
+  SLACK_CLIENT_SECRET=$(cat /etc/secrets/slack/client_secret)
+  SLACK_CLIENT_ID=$(cat /etc/secrets/slack/client_id)
+  SODIUM_KEY=$(cat /etc/secrets/sodium/key)
+  POSTGRES_PORT=5432
+  POSTGRES_HOST="meso-alert-postgres"
+else
+  echo "Running in staging environment"
+  . "/root/meso-alert-config.sh"
+fi
 
 cat <<EOF > application-production.conf
 sodium.secret="${SODIUM_KEY}"
@@ -26,8 +32,8 @@ meso-alert.db = {
   connectionPool = "HikariCP" //use HikariCP for our connection pool
   dataSourceClass = "org.postgresql.ds.PGSimpleDataSource"
   properties = {
-    serverName = "meso-alert-postgres"
-    portNumber = "5432"
+    serverName = "${POSTGRES_HOST}"
+    portNumber = "${POSTGRES_PORT}"
     databaseName = "meso-alert"
     user = "meso-alert"
     password = "${POSTGRES_PASSWORD}"
