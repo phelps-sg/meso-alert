@@ -11,11 +11,7 @@ import scala.util.Random
 
 class Module extends AbstractModule with AkkaGuiceSupport {
 
-  override def configure(): Unit = {
-
-    bind(classOf[Database]).toProvider(classOf[DatabaseProvider])
-    bind(classOf[scala.util.Random]).toProvider(classOf[RandomProvider])
-
+  protected def bindActors(): Unit = {
     bindActor(classOf[HooksManagerActorWeb], "webhooks-actor")
     bindActor(classOf[HooksManagerActorSlackChat], "slack-hooks-actor")
     bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")
@@ -26,7 +22,17 @@ class Module extends AbstractModule with AkkaGuiceSupport {
     bindActorFactory(classOf[AuthenticationActor], classOf[AuthenticationActor.Factory])
     bindActorFactory(classOf[TxFilterActor], classOf[TxFilterActor.Factory])
     bindActorFactory(classOf[TxPersistenceActor], classOf[TxPersistenceActor.Factory])
+  }
 
+  protected def bindDatabase(): Unit = {
+    bind(classOf[Database]).toProvider(classOf[DatabaseProvider])
+  }
+
+  protected def bindPRNG(): Unit = {
+    bind(classOf[scala.util.Random]).toProvider(classOf[RandomProvider])
+  }
+
+  protected def bindFutureInitialisingComponents(): Unit = {
     // Ensure all components that implement FutureInitialisingComponent are immediately initialised at startup
     bind(classOf[MemPoolWatcherService]).to(classOf[MemPoolWatcher]).asEagerSingleton()
     bind(classOf[HooksManagerWebService]).to(classOf[HooksManagerWeb]).asEagerSingleton()
@@ -36,6 +42,13 @@ class Module extends AbstractModule with AkkaGuiceSupport {
     bind(classOf[SlackTeamDao]).to(classOf[SlickSlackTeamDao]).asEagerSingleton()
     bind(classOf[SlackChatHookDao]).to(classOf[SlickSlackChatDao]).asEagerSingleton()
     bind(classOf[TransactionUpdateDao]).to(classOf[SlickTransactionUpdateDao]).asEagerSingleton()
+  }
+
+  override def configure(): Unit = {
+    bindDatabase()
+    bindPRNG()
+    bindActors()
+    bindFutureInitialisingComponents()
   }
 }
 
