@@ -1,7 +1,7 @@
 import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor}
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
-import dao.{SlackChatHookDao, SlackTeamDao, SlickSlackChatDao, SlickSlackTeamDao, SlickTransactionUpdateDao, TransactionUpdateDao}
+import dao._
 import play.libs.akka.AkkaGuiceSupport
 import services.{EncryptionManagerService, HooksManagerSlackChat, HooksManagerSlackChatService, HooksManagerWeb, HooksManagerWebService, MemPoolWatcher, MemPoolWatcherService, SlickTxManager, SlickTxManagerService, SodiumEncryptionManager}
 import slick.jdbc.JdbcBackend.Database
