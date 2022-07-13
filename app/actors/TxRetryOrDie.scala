@@ -51,6 +51,5 @@ trait TxRetryOrDie[T] extends Actor with Timers with Logging {
     case Die(reason)  =>
       actorDeath(reason)
       self ! PoisonPill
-
   }
 }

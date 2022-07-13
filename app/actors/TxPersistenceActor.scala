@@ -20,8 +20,8 @@ object TxPersistenceActor {
 }
 
 class TxPersistenceActor @Inject()(val transactionUpdateDao: TransactionUpdateDao,
-                                  val memPoolWatcher: MemPoolWatcherService, val random: Random, implicit val
-ec: ExecutionContext)
+                                   val memPoolWatcher: MemPoolWatcherService, val random: Random,
+                                   implicit val ec: ExecutionContext)
   extends Actor with TxUpdateActor with TxRetryOrDie[Int] {
 
   override val maxRetryCount = 3

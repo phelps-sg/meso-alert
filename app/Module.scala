@@ -1,5 +1,5 @@
- import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, RandomProvider, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor}
- import com.google.inject.AbstractModule
+ import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor}
+ import com.google.inject.{AbstractModule}
  import com.typesafe.config.Config
  import play.libs.akka.AkkaGuiceSupport
  import slick.jdbc.JdbcBackend.Database
@@ -27,4 +27,9 @@ class Module extends AbstractModule with AkkaGuiceSupport {
 @Singleton
 class DatabaseProvider @Inject() (config: Config) extends Provider[Database] {
   lazy val get: Database = Database.forConfig("meso-alert.db", config)
+}
+
+@Singleton
+class RandomProvider extends Provider[scala.util.Random] {
+  lazy val get = scala.util.Random
 }
