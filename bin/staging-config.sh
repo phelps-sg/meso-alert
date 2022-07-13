@@ -5,7 +5,7 @@
 cat <<EOF > ./conf/application.conf
 
 play.filters.hosts {
-  allowed = [".ngrok.io", "localhost:9000"]
+  allowed = [".ngrok.io", "localhost"]
 }
 play.i18n.langs = ["en"]
 
