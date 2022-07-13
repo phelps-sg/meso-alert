@@ -457,11 +457,17 @@ object Fixtures {
         for {
           registered <- hooksActor ? Register(hook)
           started <- hooksActor ? Start(key)
+          _ <- Future {
+            wait(500.millis) // Wait for child actors to start
+          }
           stopped <- hooksActor ? Stop(key)
           _ <- Future {
             wait(500.millis) // Wait for child actors to die
           }
           restarted <- hooksActor ? Start(key)
+          _ <- Future {
+            wait(500.millis) // Wait for child actors to start
+          }
           finalStop <- hooksActor ? Stop(key)
           _ <- Future {
             wait(500.millis)
