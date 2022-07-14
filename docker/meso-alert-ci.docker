@@ -1,5 +1,4 @@
 FROM registry.gitlab.com/mesonomics/spark-bitcoin-graph/mesonomics-sdk-base
 MAINTAINER sphelps@sphelps.net version: 0.1
 
-RUN apt-get update && \
-    apt-get install -y docker docker.io docker-compose
+RUN apt-get install -y docker docker.io docker-compose
