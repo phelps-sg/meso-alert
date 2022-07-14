@@ -1,5 +1,6 @@
 package actors
 
+import actors.TxMessagingActorSlackChat.BoltException
 import akka.actor.Actor
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
@@ -13,56 +14,46 @@ import slick.SlackChatExecutionContext
 
 import scala.concurrent.Future
 import scala.jdk.FutureConverters._
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Random, Success}
 
 object TxMessagingActorSlackChat  {
 
   trait Factory extends TxMessagingActorFactory[SlackChatHook] {
     def apply(hook: SlackChatHook): Actor
   }
+
+  case class BoltException(msg: String) extends Exception
 }
 
 class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, sce: SlackChatExecutionContext,
+                                          val random: Random,
                                           @Assisted hook: SlackChatHook)
-  extends Actor with SlackClient with Logging {
+  extends Actor with TxRetryOrDie[Any] with SlackClient with Logging {
+
+
 
   protected val slackMethods: AsyncMethodsClient = slack.methodsAsync(hook.token)
 
-  implicit val executionContext: SlackChatExecutionContext = sce
+  implicit val ec: SlackChatExecutionContext = sce
 
-  def sendMessage(message: String): Future[ChatPostMessageResponse] = {
+  override def success() = logger.info("Succesfully posted message")
+  override val maxRetryCount = 3
 
+  override def process(tx: TxUpdate): Future[Any] = {
+    val msg = message(tx)
     val request = ChatPostMessageRequest.builder
       .token(hook.token)
       .username("meso-alert")
       .channel(hook.channel.id)
-      .text(message)
+      .text(msg)
       .build
-
     logger.debug(s"Submitting request: $request")
-
     val chatPostMessageFuture = slackMethods.chatPostMessage(request).asScala
-    chatPostMessageFuture.onComplete {
-      case Success(response) if response.isOk => logger.info(s"Successfully posted message $message to ${hook.channel.id}")
-      case Success(response) if !response.isOk =>
-        logger.error(response.getError)
-        logger.error(response.toString)
-      case Failure(ex) =>
-        logger.error(s"Could not post message $message to ${hook.channel.id}: ${ex.getMessage}")
-        ex.printStackTrace()
+    chatPostMessageFuture map {
+      case response if response.isOk => response
+      case response if !response.isOk => Future.failed(new BoltException(response.getError))
     }
-
-    chatPostMessageFuture
   }
 
-  override def receive: Receive = {
-    case tx: TxUpdate =>
-      logger.debug(s"Received $tx")
-      sendMessage(message(tx))
-  }
 
-  override def postStop(): Unit = {
-    logger.debug("Terminating actor")
-    super.postStop()
-  }
 }
