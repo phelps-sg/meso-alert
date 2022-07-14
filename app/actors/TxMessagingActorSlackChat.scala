@@ -14,7 +14,7 @@ import slick.SlackChatExecutionContext
 
 import scala.concurrent.Future
 import scala.jdk.FutureConverters._
-import scala.util.{Failure, Random, Success, Try}
+import scala.util.Random
 
 object TxMessagingActorSlackChat  {
 
@@ -22,7 +22,7 @@ object TxMessagingActorSlackChat  {
     def apply(hook: SlackChatHook): Actor
   }
 
-  case class BoltException(msg: String) extends Exception
+  case class BoltException(msg: String) extends Exception(msg)
 }
 
 class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, sce: SlackChatExecutionContext,
@@ -30,20 +30,11 @@ class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, 
                                           @Assisted hook: SlackChatHook)
   extends Actor with TxRetryOrDie[ChatPostMessageResponse] with SlackClient with Logging {
 
-  implicit class ChatPostMessageResponseTry(chatPostMessageResponse: ChatPostMessageResponse) {
-    def asTry: Try[ChatPostMessageResponse] =
-      if (chatPostMessageResponse.isOk)
-        Success(chatPostMessageResponse)
-      else
-        Failure(BoltException(chatPostMessageResponse.getError))
-  }
-
   protected val slackMethods: AsyncMethodsClient = slack.methodsAsync(hook.token)
-
   implicit val ec: SlackChatExecutionContext = sce
-
-  override def success(): Unit = logger.info("Succesfully posted message")
   override val maxRetryCount = 3
+
+  override def success(): Unit = logger.info("Successfully posted message")
 
   override def process(tx: TxUpdate): Future[ChatPostMessageResponse] = {
     val msg = message(tx)
@@ -55,10 +46,9 @@ class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, 
       .build
     logger.debug(s"Submitting request: $request")
     val chatPostMessageFuture = slackMethods.chatPostMessage(request).asScala
-    chatPostMessageFuture flatMap {
-          response => Future.fromTry(response.asTry)
+    chatPostMessageFuture map {
+      case response if response.isOk => response
+      case response if !response.isOk => throw BoltException(response.getError)
     }
   }
-
-
 }
