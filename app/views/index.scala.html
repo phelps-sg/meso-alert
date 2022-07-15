@@ -1,7 +1,114 @@
-@()
+@main("Block Insights - Access free real-time mempool data") {
 
-@main("Welcome to Play") {
-  <h1>Welcome to Meso Alert</h1>
+  <main class="main">
+    <div class="header section">
+      <div class="container justify-center">
+        <div style="opacity: 0;
+          -webkit-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
+          -moz-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
+          -ms-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
+          transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)" class="page-load fade-one">
+          <h1 class="heading center">Access free real-time <br> mempool data. </br> </h1>
+        </div>
+        <div style="opacity: 0;
+          -webkit-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
+          -moz-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
+          -ms-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
+          transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)" class="page-load fade-two">
+          <p class="sub-heading center">
+            Mempools are  dark forests routinely prone to risks like sandwich attacks and impermanent loss from time to settle,<br>
+            high transaction fees and more. This activity remains invisible to millions of users across the ecosystem. </br>
+          </p>
+        </div>
+          <!-- Slack link -->
+        <div style="opacity: 0;
+          -webkit-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
+          -moz-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
+          -ms-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
+          transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)" class="page-load fade-three">
+          <a href="https://slack.com/oauth/v2/authorize?client_id=581743246742.3694023852848&scope=commands,chat:write,links:write&user_scope=" class="button slack w-inline-block">
+            <img src="@routes.Assets.versioned("images/slack_logo.svg")" alt="The Slack logo." width="61.5"
+            class="slack-logo"/>
+            <div>Add to Slack</div>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div id="about" class="features section">
+      <div class="container">
+        <h2 class="heading center">Block Insights </h2>
+        <p class="sub-heading center">
+          Block Insights is working to make the mempool accessible to users across the web 3.0 ecosystem. <br>
+          We've built infrastructure to monitor real-time mempool data
+          .</b> </p>
+        <div class="feature-section reverse w-row">
+          <div class="w-col w-col-6 w-col-stack">
+            <figure class="figure">
+              <img src="@routes.Assets.versioned("images/slack-alerts.png")" alt="An image of how Block Inisghts
+        works with Slack by sending anonymous feedback."/>
+            </figure>
+          </div>
+          <div class="w-col w-col-6 w-col-stack">
+            <div class="feature-content">
+              <h3 class="heading medium">Slack</h3>
+              <ul>
+                <li>Easily monitor activity on leading blockchains. Send alerts to your slack or discord.</li>
+                <li>
+                  We constantly capture, normalize, and enriches in-flight transaction data at sub-transaction resolution for Bitcoin.</li>
+                <li>
+                  Our API  is the fast, flexible, and effortless way to integrate real-time blockchain transaction events. Try it for free over on Slack.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="feature-section w-row">
+          <div class="w-col w-col-6">
+            <div id="features" class="feature-content">
+              <h3 class="heading medium">Features</h3>
+              <p class="text">See the future of blockchain events before they happen. </p>
+              <p class="text">
+                Receive free slack notifications for every state change over the transitions entire lifecycle from inception to finality via slash commands. </p>
+            </div>
+          </div>
+          <div class="w-col w-col-6">
+            <figure class="figure">
+              <img src="@routes.Assets.versioned("images/slack-cmd.png")" alt="An image of Block Insights Sack slash
+commands"/>
+            </figure>
+          </div>
+        </div>
+        <div class="feature-section reverse w-row">
+          <div class="w-col w-col-6">
+            <figure class="figure">
+              <img src="@routes.Assets.versioned("images/upcoming.png")" alt="An image of Block Insight upcoming
+features"/>
+            </figure>
+          </div>
+          <div class="w-col w-col-6">
+            <div id="upcoming-release" class="feature-content">
+              <h3 class="heading medium">Planned Releases </h3>
+              <dl>
+                <dt>Support for other Blockchains</dt>
+                <dd>- Ethereum</dd>
+                <dd>- Binance</dd>
+                <dd>- Polygon</dd>
+                <dt>Custom alerts based</dt>
+                <dd>- Volume (pool size) </dd>
+                <dd>- Volatility</dd>
+                <dd>- ETH gas fees</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <a href="https://slack.com/oauth/v2/authorize?client_id=581743246742.3694023852848&scope=commands,chat:write,links:write&user_scope="><img alt="Add to Slack" height="40" width="139" src="https://platform.slack-edge.com/img/add_to_slack.png" srcSet="https://platform.slack-edge.com/img/add_to_slack.png 1x" /></a>
+  </main>
+  <div style="display: block" class="loader">
+    <div class="loader-container">
+      <img src="@routes.Assets.versioned("images/5d49cc30faeb2d9d4b2e9f83_Logo.svg")" alt="" class="loading-logo"/>
+    </div>
+  </div>
+
 }
+
