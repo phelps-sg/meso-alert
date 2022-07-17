@@ -1,6 +1,7 @@
 package functionaltests
 
 import com.google.inject.AbstractModule
+import org.openqa.selenium.firefox.{FirefoxDriverLogLevel, FirefoxOptions, FirefoxProfile}
 import org.scalatest.TestData
 import org.scalatestplus.play.guice.GuiceOneServerPerTest
 import org.scalatestplus.play.{FirefoxFactory, OneBrowserPerSuite, PlaySpec}
@@ -15,6 +16,11 @@ import javax.inject.Provider
 class FunctionalTests extends PlaySpec
   with PostgresContainer
   with OneBrowserPerSuite with FirefoxFactory with GuiceOneServerPerTest {
+
+  override lazy val firefoxOptions: FirefoxOptions =
+    new FirefoxOptions()
+      .setHeadless(true)
+      .setLogLevel(FirefoxDriverLogLevel.INFO)
 
   class TestModule extends AbstractModule {
     override def configure(): Unit = {
