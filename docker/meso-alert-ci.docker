@@ -3,12 +3,13 @@ MAINTAINER sphelps@sphelps.net version: 0.1
 
 ADD ./tz-setup.sh /tmp/tz-setup.sh
 
-RUN apt-get install -y docker docker.io docker-compose; \
+RUN apt-get update; \
+    apt-get install -y docker docker.io docker-compose; \
     apt-get install -y firefox
 
 RUN /tmp/tz-setup.sh
 
 RUN	cd /tmp; \
 	curl -Ls --output - https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux64.tar.gz | tar zxv; \
-	chmod a+x
+	chmod a+x geckodriver; \
 	mv geckodriver /usr/local/bin; \
