@@ -10,5 +10,5 @@ RUN /tmp/tz-setup.sh
 
 RUN	cd /tmp; \
 	curl -Ls --output - https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux64.tar.gz | tar zxv; \
-	cp geckodriver /usr/local/bin; \
-	rm geckodriver
+	chmod a+x
+	mv geckodriver /usr/local/bin; \
