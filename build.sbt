@@ -16,7 +16,8 @@ inThisBuild(
   )
 )
 
-Test / javaOptions += "-Dwebdriver.gecko.driver=/usr/local/bin/geckodriver -Dconfig.file=application.test.conf"
+Test / javaOptions += "-Dwebdriver.gecko.driver=/usr/local/bin/geckodriver"
+Test / javaOptions += "-Dconfig.resource=application.test.conf"
 
 libraryDependencies += guice
 libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
