@@ -1,7 +1,7 @@
 package functionaltests
 
 import com.google.inject.AbstractModule
-import org.openqa.selenium.firefox.{FirefoxDriverLogLevel, FirefoxOptions, FirefoxProfile}
+import org.openqa.selenium.firefox.{FirefoxDriverLogLevel, FirefoxOptions}
 import org.scalatest.TestData
 import org.scalatestplus.play.guice.GuiceOneServerPerTest
 import org.scalatestplus.play.{FirefoxFactory, OneBrowserPerSuite, PlaySpec}
@@ -23,6 +23,7 @@ class FunctionalTests extends PlaySpec
       .setLogLevel(FirefoxDriverLogLevel.INFO)
 
   class TestModule extends AbstractModule {
+
     override def configure(): Unit = {
       bind(classOf[Database]).toProvider(new Provider[Database] {
         val get: jdbc.JdbcBackend.Database = database
