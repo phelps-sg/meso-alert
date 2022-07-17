@@ -16,6 +16,8 @@ inThisBuild(
   )
 )
 
+Test / testForkedParallel := true
+Test / parallelExecution := true
 Test / javaOptions += "-Dwebdriver.gecko.driver=/usr/local/bin/geckodriver"
 Test / javaOptions += "-Dconfig.resource=application.test.conf"
 
