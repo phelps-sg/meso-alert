@@ -1,3 +1,5 @@
+@import helper._
+@()(implicit request: RequestHeader)
 @main("Feedback Form") {
 
     <main class="main">
@@ -13,16 +15,21 @@
                             </div>
                         </div>
                         <div class="contact-form w-form">
-                            <form data-name="Get In Touch Form" name="wf-form-Get-In-Touch-Form" id="email-form" method="get" class="get-in-touch-form">
+                            <form action="@helper.CSRF(routes.HomeController.create())" data-name="Get In Touch Form"
+                            name="wf-form-Get-In-Touch-Form"
+                            id="email-form"
+                            method="post" class="get-in-touch-form">
                                 <label for="name">Name</label><input type="text" class="text-field cc-contact-field w-input" maxlength="256" name="name" data-name="Name" placeholder="Enter your name" id="Name" />
-                                <label for="Email-2">Email Address</label><input type="email" class="text-field cc-contact-field w-input" maxlength="256" name="Email" data-name="Email" placeholder="Enter your email" id="Email" required="" />
+                                <label for="Email-2">Email Address</label><input type="email" class="text-field
+                                cc-contact-field w-input" maxlength="256" name="email" data-name="email"
+                            placeholder="Enter your email" id="Email" required="" />
                                 <label for="Message">Message</label>
                                 <textarea
                                 id="Message"
-                                name="Message"
+                                name="message"
                                 placeholder="Hi there, I was wondering if you were considering ETH as part of the alert service..."
                                 maxlength="5000"
-                                data-name="Message"
+                                data-name="message"
                                 class="text-field cc-textarea cc-contact-field w-input"
                                 ></textarea>
                                 <input type="submit" value="Submit" data-wait="Please wait..." class="nav-button w-button" />

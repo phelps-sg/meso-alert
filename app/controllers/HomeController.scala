@@ -5,15 +5,18 @@ import actors.{AuthenticationActor, TxUpdate}
 import akka.actor.{ActorSystem, Props}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
+import play.api.data.Form
 import play.api.libs.concurrent.InjectedActorSupport
 import play.api.libs.json.Json
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
 import play.api.{Logger, Logging}
+import play.api.data.Forms._
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
+import play.api.data.Mapping
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -28,6 +31,15 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   implicit val mft: MessageFlowTransformer[Auth, TxUpdate] =
     MessageFlowTransformer.jsonMessageFlowTransformer[Auth, TxUpdate]
 
+  case class FeedbackFormData(name: String, email: String, message: String)
+
+  val feedbackFormMapping: Mapping[FeedbackFormData] = mapping(
+    "name" -> text,
+    "email" -> email,
+    "message" -> nonEmptyText
+  )(FeedbackFormData.apply)(FeedbackFormData.unapply)
+
+  val feedbackForm: Form[FeedbackFormData] = Form(feedbackFormMapping)
   /**
    * Create an Action to render an HTML page.
    *
@@ -39,8 +51,16 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     Ok(views.html.index())
   }
 
-  def feedbackForm(): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
+  def feedbackPage(): Action[AnyContent]= Action { implicit request =>
     Ok(views.html.feedback())
+  }
+
+  def create(): Action[AnyContent] = Action { implicit request =>
+    feedbackForm.bindFromRequest.fold(
+      _ => BadRequest,
+      feedbackData => {
+        Ok("created: " + feedbackData)
+      })
   }
 
   def wsFutureFlow(request: RequestHeader): Future[Flow[AuthenticationActor.Auth, TxUpdate, _]] = {
