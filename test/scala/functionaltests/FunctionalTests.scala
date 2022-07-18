@@ -70,7 +70,7 @@ class FunctionalTests extends PlaySpec
   "The home page" must {
     "render" in {
       go to s"http://localhost:$port/"
-      pageTitle mustBe "Welcome to Play"
+      pageTitle mustBe "Welcome to Play 1"
     }
   }
 
