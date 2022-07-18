@@ -66,10 +66,8 @@ class MemPoolWatcherActor @Inject() (val peerGroupSelection: PeerGroupSelection,
         case None =>
 
           logger.debug("Starting peer group.")
-
           startTime = Some(System.currentTimeMillis())
-          peerGroup.setMaxConnections(32)
-          peerGroup.addPeerDiscovery(new DnsDiscovery(params))
+          initialisePeerGroup()
           peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => self ! NewTransaction(tx))
 
           Future {
@@ -95,6 +93,11 @@ class MemPoolWatcherActor @Inject() (val peerGroupSelection: PeerGroupSelection,
       peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => listener ! TxUpdate(tx))
       logger.debug("registration completed")
 
+  }
+
+  protected def initialisePeerGroup(): Unit = {
+    peerGroup.setMaxConnections(32)
+    peerGroup.addPeerDiscovery(new DnsDiscovery(params))
   }
 
 }

@@ -22,6 +22,12 @@ docker-install: apt-update
 libsodium-install:
 	sudo apt-get install -y libsodium-dev
 
+geckodriver-install:
+	cd /tmp; \
+	curl -Ls --output - https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux64.tar.gz | tar zxv; \
+	sudo cp geckodriver /usr/local/bin; \
+	rm geckodriver
+
 sdkman-install:
 	curl -s "https://get.sdkman.io" | bash
 
@@ -34,7 +40,7 @@ sbt-install:
 nvm-install:
 	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 
-install-dev: curl-install sdkman-install jdk-install sbt-install docker-install nvm-install libsodium-install
+install-dev: curl-install sdkman-install jdk-install sbt-install docker-install nvm-install libsodium-install geckodriver-install
 
 staging-config:
 	bin/staging-config.sh
