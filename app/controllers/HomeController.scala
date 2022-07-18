@@ -39,6 +39,10 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     Ok(views.html.index())
   }
 
+  def feedbackForm(): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
+    Ok(views.html.feedback())
+  }
+
   def wsFutureFlow(request: RequestHeader): Future[Flow[AuthenticationActor.Auth, TxUpdate, _]] = {
     Future {
       ActorFlow.actorRef[AuthenticationActor.Auth, TxUpdate] {
