@@ -1,8 +1,26 @@
 
 @main("Installation successful") {
+    <main class="main">
+        <div class="section">
+            <div class="container">
+                <h1>Success! Welcome to Meso Alert.</h1>
 
-    <h1>Welcome to Meso Alert</h1>
-
-    <p>The application has been successfully installed to your workspace.</p>
+                <h3> Getting started:</h3>
+                <ol>
+                    <li> Head over to the slack workspace where you installed the meso-alert bot.</li>
+                    <li> Invite the bot to a channel where you would like to receive updates by issuing the command
+                        <code>@@meso-alert</code>
+                    </li>
+                    <li> Configure a new alert by using the command <code>/crypto-alert X</code> where X stands for
+                        the minimum transaction size you want to receive alerts for. For example, <code>/crypto-alert
+                        50</code> registers a new alert with a minimum transaction size of 50 BTC. </li>
+                    <li> Pause and Resume alerts by using the commands <code>/pause-alerts</code> and
+                        <code>/resume-alerts</code> respectively.</li>
+                    <li> Reconfigure the minimum transaction size by using the command
+                        <code>/crypto-alert Y</code> where Y is the new minimum size.</li>
+                </ol>
+            </div>
+        </div>
+    </main>
 }
 
