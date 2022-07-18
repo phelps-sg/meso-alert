@@ -30,22 +30,25 @@ class TestMemPoolWatcherActor @Inject() (peerGroupSelection: PeerGroupSelection,
 
 class FunctionalTests extends PlaySpec
   with PostgresContainer
-  with OneBrowserPerSuite with FirefoxFactory with GuiceOneServerPerTest {
+  with OneBrowserPerSuite
+  with FirefoxFactory
+  with GuiceOneServerPerTest with
+  MemPoolWatcherFixtures {
+
+  val testPeerGroup = new PeerGroup(mainNetParams)
+
+  @Singleton
+  class TestPeerGroupSelection extends PeerGroupSelection {
+    val params: NetworkParameters = mainNetParams
+    lazy val get: PeerGroup = testPeerGroup
+  }
 
   override lazy val firefoxOptions: FirefoxOptions =
     new FirefoxOptions()
       .setHeadless(true)
       .setLogLevel(FirefoxDriverLogLevel.INFO)
 
-  class TestModule extends AbstractModule with MemPoolWatcherFixtures with AkkaGuiceSupport {
-
-    val testPeerGroup = new PeerGroup(mainNetParams)
-
-    @Singleton
-    class TestPeerGroupSelection extends PeerGroupSelection {
-      val params: NetworkParameters = mainNetParams
-      lazy val get: PeerGroup = testPeerGroup
-    }
+  class TestModule extends AbstractModule with AkkaGuiceSupport {
 
     override def configure(): Unit = {
       bind(classOf[Database]).toProvider(new Provider[Database] {
@@ -54,7 +57,6 @@ class FunctionalTests extends PlaySpec
       bind(classOf[PeerGroupSelection]).toInstance(new TestPeerGroupSelection())
       bindActor(classOf[TestMemPoolWatcherActor], "mem-pool-actor")
     }
-
   }
 
   override def newAppForTest(td: TestData): Application = {
