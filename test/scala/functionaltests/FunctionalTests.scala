@@ -18,6 +18,16 @@ import unittests.Fixtures.MemPoolWatcherFixtures
 
 import javax.inject.{Provider, Singleton}
 
+object TestPeerGroupSelection extends MemPoolWatcherFixtures {
+  val testPeerGroup = new PeerGroup(mainNetParams)
+}
+
+@Singleton
+class TestPeerGroupSelection extends PeerGroupSelection {
+  val params: NetworkParameters = TestPeerGroupSelection.mainNetParams
+  lazy val get: PeerGroup = TestPeerGroupSelection.testPeerGroup
+}
+
 @Singleton
 class TestMemPoolWatcherActor @Inject() (peerGroupSelection: PeerGroupSelection,
                                           databaseExecutionContext: DatabaseExecutionContext)
@@ -35,13 +45,6 @@ class FunctionalTests extends PlaySpec
   with GuiceOneServerPerTest with
   MemPoolWatcherFixtures {
 
-  val testPeerGroup = new PeerGroup(mainNetParams)
-
-  @Singleton
-  class TestPeerGroupSelection extends PeerGroupSelection {
-    val params: NetworkParameters = mainNetParams
-    lazy val get: PeerGroup = testPeerGroup
-  }
 
   override lazy val firefoxOptions: FirefoxOptions =
     new FirefoxOptions()
@@ -54,7 +57,7 @@ class FunctionalTests extends PlaySpec
       bind(classOf[Database]).toProvider(new Provider[Database] {
         val get: jdbc.JdbcBackend.Database = database
       })
-      bind(classOf[PeerGroupSelection]).toInstance(new TestPeerGroupSelection())
+      bind(classOf[PeerGroupSelection]).to(classOf[TestPeerGroupSelection])
       bindActor(classOf[TestMemPoolWatcherActor], "mem-pool-actor")
     }
   }
