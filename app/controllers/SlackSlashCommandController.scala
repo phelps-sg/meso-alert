@@ -89,16 +89,8 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
 
             val f = for {
               team <- slackTeamDao.find(slashCommand.teamId)
-              _ <- {
-                team match {
-                  case Some(SlackTeam(_, _, _, accessToken, _)) =>
-                    hooksManager.update(
-                      SlackChatHook(channel, token = accessToken, amount * 100000000, isRunning = true)
-                    )
-                  case None =>
-                    Future.failed(new IllegalArgumentException(s"No such slack team ${slashCommand.teamId}"))
-                }
-              }
+              _ <- hooksManager.update(SlackChatHook(channel, token = team.accessToken,
+                                         amount * 100000000, isRunning = true))
               started <- hooksManager.start(channel)
             } yield started
             f.map { _ => Ok(s"OK, I will send updates on any BTC transactions exceeding $amount BTC.") }
