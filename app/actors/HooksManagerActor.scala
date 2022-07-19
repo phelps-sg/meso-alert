@@ -39,8 +39,10 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
   implicit class HookFor(key: X) {
     def withHook[R](fn: Hook[X] => R): Unit = {
       dao.find(key) map {
-        case Some(hook) => Success(fn(hook))
-        case None => Failure(HookNotRegisteredException(key))
+        hook => Success(fn(hook))
+      } recover {
+        case _: NoSuchElementException =>
+          Failure(HookNotRegisteredException(key))
       } pipeTo sender()
     }
   }

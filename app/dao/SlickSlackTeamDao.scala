@@ -14,7 +14,7 @@ import scala.concurrent.Future
 trait SlackTeamDao {
   def insertOrUpdate(slackUser: SlackTeam): Future[Int]
 //  def init(): Future[Unit]
-  def find(userId: String): Future[Option[SlackTeam]]
+  def find(userId: String): Future[SlackTeam]
 }
 
 class SlickSlackTeamDao  @Inject()(val db: Database,
@@ -34,18 +34,15 @@ class SlickSlackTeamDao  @Inject()(val db: Database,
     } yield result
   }
 
-  def find(teamId: String): Future[Option[SlackTeam]] = {
-    (for {
+  def find(teamId: String): Future[SlackTeam] = {
+    for {
       queryResult: Seq[SlackTeamEncrypted] <- db.run(table.filter(_.team_id === teamId).result)
       teamEncrypted <- queryResult match {
-          case Seq(x) => fromDB(x)
-          case Seq() => Future.failed(NoResultException)
-          case _ => Future.failed(SchemaConstraintViolation(s"Multiple results returned for uri $teamId"))
+        case Seq(x) => fromDB(x)
+        case Seq() => Future.failed(new NoSuchElementException(teamId))
+        case _ => Future.failed(SchemaConstraintViolation(s"Multiple results returned for uri $teamId"))
       }
-    } yield Some(teamEncrypted))
-      .recover {
-        case NoResultException => None
-      }
+    } yield teamEncrypted
   }
 
   def fromDB(team: SlackTeamEncrypted): Future[SlackTeam] = {

@@ -8,7 +8,6 @@ import scala.concurrent.Future
 
 case class DuplicateHookException[X](uri: X) extends Exception(s"A hook already exists with key $uri")
 case class SchemaConstraintViolation(message: String) extends Exception(message)
-case object NoResultException extends Exception("no result")
 
 trait SlickHookDao[X, Y <: Hook[X], Z] extends SlickDao[Z] with Logging {
 
@@ -23,25 +22,16 @@ trait SlickHookDao[X, Y <: Hook[X], Z] extends SlickDao[Z] with Logging {
 
   protected def toKeys(results: Future[Seq[String]]): Future[Seq[X]]
 
-  def find(key: X): Future[Option[Hook[X]]] = {
+  def find(key: X): Future[Hook[X]] = {
     logger.debug(s"Querying for ${key.toString}")
-    (for {
+    for {
       queryResult <- db.run(lookupKeyQuery(key).result)
       finalResult <- queryResult match {
         case Seq(x) => fromDB(x)
-        case Seq() => Future.failed(NoResultException)
+        case Seq() => Future.failed(new NoSuchElementException(key.toString))
         case _ => Future.failed(SchemaConstraintViolation(s"Multiple results returned for uri ${key.toString}"))
       }
-    } yield Some(finalResult))
-      .recover {
-        case NoResultException => None
-      }
-//    db.run(lookupKeyQuery(key).result).map {
-//      case Seq(result) => Some(fromDB(result))
-//      case Seq() => None
-//      case _ =>
-//        throw SchemaConstraintViolation(s"Multiple results returned for uri ${key.toString}")
-//    }
+    } yield finalResult
   }
 
   def insert(hook: Y): Future[Int] = {

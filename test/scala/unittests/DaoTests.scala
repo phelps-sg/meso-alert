@@ -46,11 +46,11 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     }
 
     "return an existing hook by key" in new TestFixtures {
-      findHook().futureValue should matchPattern { case (1, Some(`hook`)) => }
+      findHook().futureValue should matchPattern { case (1, `hook`) => }
     }
 
-    "return None when attempting to find a non existent hook" in new TestFixtures {
-      findNonExistentHook().futureValue should matchPattern { case None => }
+    "throw NoSuchElementException when attempting to find a non existent hook" in new TestFixtures {
+      findNonExistentHook().failed.futureValue shouldBe a [NoSuchElementException]
     }
 
     "update an existing hook" in new TestFixtures {
@@ -75,11 +75,13 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     }
 
     "return an existing hook by key" in new TestFixtures {
-      findHook().futureValue should matchPattern { case (1, Some(`hook`)) => }
+      findHook().futureValue should matchPattern { case (1, `hook`) => }
     }
 
-    "return None when attempting to find a non existent hook" in new TestFixtures {
-      findNonExistentHook().futureValue should matchPattern { case None => }
+    "throw NoSuchElementException when attempting to find a non existent hook" in new TestFixtures {
+      findNonExistentHook().failed.futureValue should matchPattern {
+        case _: NoSuchElementException =>
+      }
     }
 
     "update an existing hook" in new TestFixtures {
@@ -113,18 +115,18 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
           user <- slickSlackTeamDao.find(teamId)
         } yield (n, user)
       }.futureValue should matchPattern {
-        case (1, Some(`slackTeam`)) =>
+        case (1, `slackTeam`) =>
       }
     }
 
-    "return None when a user with the given user id does not exist" in new TestFixtures {
+    "throw NoSuchElementException when a user with the given user id does not exist" in new TestFixtures {
       afterDbInit {
         for {
-          n <- slickSlackTeamDao.insertOrUpdate(slackTeam)
+          _ <- slickSlackTeamDao.insertOrUpdate(slackTeam)
           user <- slickSlackTeamDao.find("nonexistent")
-        } yield (n, user)
-      }.futureValue should matchPattern {
-        case (1, None) =>
+        } yield user
+      }.failed.futureValue should matchPattern {
+        case _: NoSuchElementException =>
       }
     }
   }
