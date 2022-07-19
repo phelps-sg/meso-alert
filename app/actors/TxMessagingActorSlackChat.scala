@@ -1,6 +1,5 @@
 package actors
 
-import actors.TxMessagingActorSlackChat.BoltException
 import akka.actor.Actor
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
@@ -9,11 +8,11 @@ import com.slack.api.methods.request.chat.ChatPostMessageRequest
 import com.slack.api.methods.response.chat.ChatPostMessageResponse
 import dao.SlackChatHook
 import play.api.{Configuration, Logging}
+import slack.FutureConverters.BoltFuture
 import slack.SlackClient
 import slick.SlackChatExecutionContext
 
 import scala.concurrent.Future
-import scala.jdk.FutureConverters._
 import scala.util.Random
 
 object TxMessagingActorSlackChat  {
@@ -45,10 +44,6 @@ class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, 
       .text(msg)
       .build
     logger.debug(s"Submitting request: $request")
-    val chatPostMessageFuture = slackMethods.chatPostMessage(request).asScala
-    chatPostMessageFuture map {
-      case response if response.isOk => response
-      case response if !response.isOk => throw BoltException(response.getError)
-    }
+    slackMethods.chatPostMessage(request).asScalaFuture
   }
 }
