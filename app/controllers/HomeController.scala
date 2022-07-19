@@ -14,7 +14,7 @@ import play.api.mvc._
 import play.api.{Logger, Logging}
 import play.api.data.Forms._
 import courier._
-
+import play.api.libs.concurrent.CustomExecutionContext
 import scala.util._
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,13 +22,16 @@ import play.api.data.Mapping
 
 import javax.mail.internet.InternetAddress
 
-/**
- * This controller creates an `Action` to handle HTTP requests to the
- * application's home page.
- */
+trait EmailExecutionContext extends ExecutionContext
+
+class EmailExecutionContextImpl @Inject() (system: ActorSystem)
+  extends CustomExecutionContext(system, "email.executor")
+    with EmailExecutionContext
+
 @Singleton
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
-                               val actorFactory: AuthenticationActor.Factory)
+                               val actorFactory: AuthenticationActor.Factory,
+                               val emailExecutionContext: EmailExecutionContext)
                               (implicit system: ActorSystem, mat: Materializer, implicit val ec: ExecutionContext)
   extends BaseController with SameOriginCheck with InjectedActorSupport with Logging {
 
@@ -44,6 +47,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   )(FeedbackFormData.apply)(FeedbackFormData.unapply)
 
   val feedbackForm: Form[FeedbackFormData] = Form(feedbackFormMapping)
+  // email configuration
   val emailHost = "meso_alert_tester@outlook.com"
   val mailer: Mailer = Mailer("smtp-mail.outlook.com", 587)
     .auth(true)
@@ -72,10 +76,12 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
         mailer(Envelope.from(new InternetAddress(emailHost))
           .to(new InternetAddress(emailHost))
           .subject("Feedback - " + feedbackData.name + " " + feedbackData.email)
-          .content(Text(feedbackData.message))).onComplete {
-          case Success(_) => logger.info("feedback email delivered")
-          case Failure(er) => logger.error(er.getMessage)
-        }
+          .content(Text(feedbackData.message)))(emailExecutionContext).onComplete {
+          case Success(_) =>
+            logger.info("feedback email delivered")
+          case Failure(er) =>
+            logger.error(er.getMessage)
+        }(emailExecutionContext)
         Ok(views.html.index())
       })
   }
