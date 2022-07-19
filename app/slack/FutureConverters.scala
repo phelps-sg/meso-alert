@@ -1,11 +1,12 @@
 package slack
 
-import actors.TxMessagingActorSlackChat.BoltException
 import com.slack.api.methods.SlackApiTextResponse
 
 import java.util.concurrent.CompletableFuture
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.FutureConverters.CompletionStageOps
+
+case class BoltException(msg: String) extends Exception(msg)
 
 object FutureConverters {
 

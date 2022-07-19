@@ -21,7 +21,6 @@ object TxMessagingActorSlackChat  {
     def apply(hook: SlackChatHook): Actor
   }
 
-  case class BoltException(msg: String) extends Exception(msg)
 }
 
 class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, sce: SlackChatExecutionContext,

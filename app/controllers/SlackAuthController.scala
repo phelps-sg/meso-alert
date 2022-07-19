@@ -1,13 +1,12 @@
 package controllers
 
-import actors.TxMessagingActorSlackChat.BoltException
 import com.slack.api.methods.AsyncMethodsClient
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
 import dao.{SlackTeam, SlackTeamDao}
 import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
 import play.api.{Configuration, Logging, mvc}
 import slack.FutureConverters.BoltFuture
-import slack.SlackClient
+import slack.{BoltException, SlackClient}
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
