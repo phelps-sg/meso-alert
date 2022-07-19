@@ -24,6 +24,7 @@ Test / javaOptions += "-Dconfig.resource=application.test.conf"
 libraryDependencies += guice
 libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
 libraryDependencies += "org.abstractj.kalium" % "kalium" % "0.8.0"
+libraryDependencies += "com.github.daddykotex" %% "courier" % "3.2.0"
 
 val AkkaVersion = "2.6.19"
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test

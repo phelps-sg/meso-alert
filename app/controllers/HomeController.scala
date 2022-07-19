@@ -13,10 +13,14 @@ import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
 import play.api.{Logger, Logging}
 import play.api.data.Forms._
+import courier._
 
+import scala.util._
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.data.Mapping
+
+import javax.mail.internet.InternetAddress
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -40,6 +44,12 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   )(FeedbackFormData.apply)(FeedbackFormData.unapply)
 
   val feedbackForm: Form[FeedbackFormData] = Form(feedbackFormMapping)
+  val emailHost = "meso_alert_tester@outlook.com"
+  val mailer: Mailer = Mailer("smtp-mail.outlook.com", 587)
+    .auth(true)
+    .as(emailHost, "ficZeq-vutsoj-qypru5")
+    .startTls(true)()
+
   /**
    * Create an Action to render an HTML page.
    *
@@ -59,7 +69,14 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     feedbackForm.bindFromRequest.fold(
       _ => BadRequest,
       feedbackData => {
-        Ok("created: " + feedbackData)
+        mailer(Envelope.from(new InternetAddress(emailHost))
+          .to(new InternetAddress(emailHost))
+          .subject("Feedback - " + feedbackData.name + " " + feedbackData.email)
+          .content(Text(feedbackData.message))).onComplete {
+          case Success(_) => logger.info("feedback email delivered")
+          case Failure(er) => logger.error(er.getMessage)
+        }
+        Ok(views.html.index())
       })
   }
 
