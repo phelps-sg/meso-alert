@@ -1,6 +1,6 @@
 # meso-alert
 
-Mesonomics crypto-currency alert service, written as
+Mesonomics crypto-currency alert service, written as a
 [Scala Play Framework](https://www.playframework.com/documentation/2.8.x/ScalaHome) web application.
 
 ## Development Environment
