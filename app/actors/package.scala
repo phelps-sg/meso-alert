@@ -28,6 +28,7 @@ package object actors {
       case _ => (value.toDouble / 100000000L).toString
     }
   }
+
   def formatOutputAddresses(outputs: Seq[TxInputOutput]): String =
     outputs.filterNot(_.address.isEmpty)
       .map(output => output.address.get)
