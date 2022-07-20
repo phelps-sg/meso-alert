@@ -52,4 +52,10 @@ email.dispatcher {
   }
 }
 
+email.smtpHost = "smtp-mail.outlook.com"
+email.smtpPort = 587
+email.host = "meso_alert_tester@outlook.com"
+email.hostPassword = "ficZeq-vutsoj-qypru5"
+email.destination = "meso_alert_tester@outlook.com"
+
 EOF

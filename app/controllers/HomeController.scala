@@ -14,15 +14,13 @@ import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
 import play.api.{Logger, Logging}
 import play.api.data.Forms._
-import courier._
 import play.api.libs.concurrent.CustomExecutionContext
 
 import scala.util._
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.data.Mapping
-
-import javax.mail.internet.InternetAddress
+import services.MailManager
 
 @ImplementedBy(classOf[EmailExecutionContextImpl])
 trait EmailExecutionContext extends ExecutionContext
@@ -34,7 +32,7 @@ class EmailExecutionContextImpl @Inject() (system: ActorSystem)
 @Singleton
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
                                val actorFactory: AuthenticationActor.Factory,
-                               val emailExecutionContext: EmailExecutionContext)
+                               val mailManager: MailManager)
                               (implicit system: ActorSystem, mat: Materializer, implicit val ec: ExecutionContext)
   extends BaseController with SameOriginCheck with InjectedActorSupport with Logging {
 
@@ -50,20 +48,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   )(FeedbackFormData.apply)(FeedbackFormData.unapply)
 
   val feedbackForm: Form[FeedbackFormData] = Form(feedbackFormMapping)
-  // email configuration
-  val emailHost = "meso_alert_tester@outlook.com"
-  val mailer: Mailer = Mailer("smtp-mail.outlook.com", 587)
-    .auth(true)
-    .as(emailHost, "ficZeq-vutsoj-qypru5")
-    .startTls(true)()
 
-  /**
-   * Create an Action to render an HTML page.
-   *
-   * The configuration in the `routes` file means that this method
-   * will be called when the application receives a `GET` request with
-   * a path of `/`.
-   */
   def index(): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     Ok(views.html.index())
   }
@@ -76,14 +61,12 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
     feedbackForm.bindFromRequest.fold(
       _ => Future { BadRequest },
       feedbackData =>  {
-        mailer(Envelope.from(new InternetAddress(emailHost))
-          .to(new InternetAddress(emailHost))
-          .subject("Feedback - " + feedbackData.name + " " + feedbackData.email)
-          .content(Text(feedbackData.message)))(emailExecutionContext).map {
+        mailManager.sendEmail("Feedback - " + feedbackData.name + " " + feedbackData.email,
+          feedbackData.message).map {
           _ =>
             logger.info("feedback email delivered")
             Ok(views.html.feedback("success"))
-        }(emailExecutionContext) recover {
+        } recover {
           er =>
             logger.error(er.getMessage)
             Ok(views.html.feedback("failed"))
