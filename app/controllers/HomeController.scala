@@ -5,6 +5,7 @@ import actors.{AuthenticationActor, TxUpdate}
 import akka.actor.{ActorSystem, Props}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
+import com.google.inject.ImplementedBy
 import play.api.data.Form
 import play.api.libs.concurrent.InjectedActorSupport
 import play.api.libs.json.Json
@@ -15,6 +16,7 @@ import play.api.{Logger, Logging}
 import play.api.data.Forms._
 import courier._
 import play.api.libs.concurrent.CustomExecutionContext
+
 import scala.util._
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,10 +24,11 @@ import play.api.data.Mapping
 
 import javax.mail.internet.InternetAddress
 
+@ImplementedBy(classOf[EmailExecutionContextImpl])
 trait EmailExecutionContext extends ExecutionContext
 
 class EmailExecutionContextImpl @Inject() (system: ActorSystem)
-  extends CustomExecutionContext(system, "email.executor")
+  extends CustomExecutionContext(system, "email.dispatcher")
     with EmailExecutionContext
 
 @Singleton
@@ -66,25 +69,27 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   }
 
   def feedbackPage(): Action[AnyContent]= Action { implicit request =>
-    Ok(views.html.feedback())
+    Ok(views.html.feedback(""))
   }
 
-  def create(): Action[AnyContent] = Action { implicit request =>
+  def create(): Action[AnyContent] = Action.async { implicit request =>
     feedbackForm.bindFromRequest.fold(
-      _ => BadRequest,
-      feedbackData => {
+      _ => Future { BadRequest },
+      feedbackData =>  {
         mailer(Envelope.from(new InternetAddress(emailHost))
           .to(new InternetAddress(emailHost))
           .subject("Feedback - " + feedbackData.name + " " + feedbackData.email)
-          .content(Text(feedbackData.message)))(emailExecutionContext).onComplete {
-          case Success(_) =>
+          .content(Text(feedbackData.message)))(emailExecutionContext).map {
+          _ =>
             logger.info("feedback email delivered")
-          case Failure(er) =>
+            Ok(views.html.feedback("success"))
+        }(emailExecutionContext) recover {
+          er =>
             logger.error(er.getMessage)
-        }(emailExecutionContext)
-        Ok(views.html.index())
-      })
-  }
+            Ok(views.html.feedback("failed"))
+          }
+        }
+    )}
 
   def wsFutureFlow(request: RequestHeader): Future[Flow[AuthenticationActor.Auth, TxUpdate, _]] = {
     Future {

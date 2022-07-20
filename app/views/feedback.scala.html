@@ -1,5 +1,5 @@
-@import helper._
-@()(implicit request: RequestHeader)
+    @import helper._
+@(emailDeliveryOutcome: String)(implicit request: RequestHeader)
 @main("Feedback Form") {
 
     <main class="main">
@@ -7,6 +7,21 @@
             <div class="container">
                 <div class="w-layout-grid contact-form-grid">
                     <div id="w-node-_3f61509a-fac7-b0d5-3763-509be705858e-d4ef294c" class="contact-form-wrap">
+                        @emailDeliveryOutcome match {
+                            case "failed" => {
+                                <div class="alert failed">
+                                    <span class="closebtn" onclick="this.parentElement.style.display = 'none';">&times;</span>
+                                    There was an error sending your feedback.
+                                </div>
+                            }
+                            case "success" => {
+                                <div class="alert success">
+                                    <span class="closebtn" onclick="this.parentElement.style.display = 'none';">&times;</span>
+                                    Your message has been sent successfully!
+                                </div>
+                            }
+                            case _ => {  }
+                        }
                         <div class="contact-form-heading-wrap">
                             <h2 class="contact-heading">Contact us</h2>
                             <div class="paragraph-light">
