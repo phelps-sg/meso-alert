@@ -33,7 +33,9 @@ trait TxRetryOrDie[T] extends Actor with Timers with Logging {
   }
 
   def receive : Receive = {
+
     case tx: TxUpdate => self ! Retry(tx, 0, None)
+
     case Retry(tx, retryCount, _) if retryCount < maxRetryCount =>
       process(tx) map {
         _ => success()
@@ -42,6 +44,7 @@ trait TxRetryOrDie[T] extends Actor with Timers with Logging {
           failure(ex)
           self ! ScheduleRetry(calculateWaitTime(retryCount), tx, retryCount + 1, Some(ex))
         }
+
     case Retry(tx, retryCount, ex) if retryCount >= maxRetryCount =>
       self ! Die(s"Could not process tx ${tx.hash}. ${ex.get.getMessage}")
 
