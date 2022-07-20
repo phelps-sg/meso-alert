@@ -13,7 +13,6 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[SlickSlackTeamDao])
 trait SlackTeamDao {
   def insertOrUpdate(slackUser: SlackTeam): Future[Int]
-//  def init(): Future[Unit]
   def find(userId: String): Future[SlackTeam]
 }
 
