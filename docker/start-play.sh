@@ -57,6 +57,14 @@ database.dispatcher {
     fixed-pool-size = 12
   }
 }
+
+email.dispatcher {
+  executor = "thread-pool-executor"
+  throughput = 1
+  thread-pool-executor {
+    fixed-pool-size = 2
+  }
+}
 EOF
 
 unzip ./target/universal/meso-alert-1.0-SNAPSHOT.zip
