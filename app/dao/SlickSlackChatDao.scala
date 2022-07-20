@@ -7,20 +7,21 @@ import slick.jdbc.JdbcBackend.Database
 import slick.{DatabaseExecutionContext, Tables}
 import util.FutureInitialisingComponent
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 //noinspection TypeAnnotation
 @Singleton
 class SlickSlackChatDao @Inject() (val db: Database,
                                    val databaseExecutionContext: DatabaseExecutionContext,
                                    val encryptionManager: EncryptionManagerService)
+                                  (implicit val ec: ExecutionContext)
   extends SlackChatHookDao with SlickHookDao[SlackChannel, SlackChatHook, SlackChatHookEncrypted]
     with FutureInitialisingComponent {
 
   initialise()
 
   override def table = Tables.slackChatHooks
-  override val lookupHookQuery: SlackChatHook => Query[Tables.SlackChatHooks, SlackChatHookEncrypted, Seq] =
+  override val lookupValueQuery: SlackChatHook => Query[Tables.SlackChatHooks, SlackChatHookEncrypted, Seq] =
     (hook: SlackChatHook) => Tables.slackChatHooks.filter(_.channel_id === hook.channel.id)
   override val lookupKeyQuery: SlackChannel => Query[Tables.SlackChatHooks, SlackChatHookEncrypted, Seq] =
     (channel: SlackChannel) => Tables.slackChatHooks.filter(_.channel_id === channel.id)

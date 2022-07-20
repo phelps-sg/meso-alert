@@ -302,7 +302,9 @@ object Fixtures {
     val db: Database
     val injector: Injector
     val encryptionManager: EncryptionManagerService
-    val hookDao = new SlickSlackChatDao(db, injector.instanceOf[DatabaseExecutionContext], encryptionManager)
+    val executionContext: ExecutionContext
+    val hookDao =
+      new SlickSlackChatDao(db, injector.instanceOf[DatabaseExecutionContext], encryptionManager)(executionContext)
   }
 
   trait WebhookDaoFixtures {
