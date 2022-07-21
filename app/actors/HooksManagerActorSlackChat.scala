@@ -15,12 +15,6 @@ object HooksManagerActorSlackChat {
             databaseExecutionContext: DatabaseExecutionContext): Props =
     Props(new HooksManagerActorSlackChat(messagingActorFactory, filteringActorFactory, slackChatHookDao, databaseExecutionContext))
 
-//  implicit val startWrites: Writes[Started[Webhook]] = new Writes[Started[Webhook]]() {
-//    def writes(started: Started[Webhook]): JsObject = Json.obj(fields =
-//      "uri" -> started.hook.uri,
-//      "threshold" -> started.hook.threshold
-//    )
-//  }
 }
 
 class HooksManagerActorSlackChat @Inject()(val messagingActorFactory: TxMessagingActorSlackChat.Factory,
