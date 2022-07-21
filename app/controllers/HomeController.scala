@@ -58,7 +58,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   }
 
   def create(): Action[AnyContent] = Action.async { implicit request =>
-    feedbackForm.bindFromRequest.fold(
+    feedbackForm.bindFromRequest().fold(
       _ => Future { BadRequest },
       feedbackData =>  {
         mailManager.sendEmail("Feedback - " + feedbackData.name + " " + feedbackData.email,
