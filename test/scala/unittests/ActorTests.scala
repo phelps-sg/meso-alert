@@ -205,8 +205,8 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "TxPersistenceActor" should {
 
-    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with ActorGuiceFixtures
-      with MemPoolWatcherFixtures with TxUpdateFixtures with TxPersistenceActorFixtures
+    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with MemPoolWatcherFixtures
+     with ActorGuiceFixtures with TxUpdateFixtures with TxPersistenceActorFixtures
 
     "register itself as a listener to the mem-pool" in new TestFixtures {
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()

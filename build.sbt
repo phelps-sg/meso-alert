@@ -12,7 +12,8 @@ inThisBuild(
     scalafixScalaBinaryVersion := "2.13",
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision,
-    scalacOptions += "-Ywarn-unused"
+    scalacOptions += "-Ywarn-unused",
+    scalacOptions += "-Xcheckinit"
   )
 )
 
