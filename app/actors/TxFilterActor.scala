@@ -1,7 +1,7 @@
 package actors
 
 import actors.AuthenticationActor.Die
-import actors.MessageHandlers.UnrecognizedMessageHandler
+import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
@@ -22,7 +22,7 @@ object TxFilterActor {
 
 class TxFilterActor @Inject()(@Assisted val out: ActorRef, @Assisted val filter: TxUpdate => Boolean,
                               val memPoolWatcher: MemPoolWatcherService)
-  extends Actor with TxUpdateActor with Logging with UnrecognizedMessageHandler {
+  extends Actor with TxUpdateActor with Logging with UnrecognizedMessageHandlerFatal {
 
   override def preStart(): Unit = {
     super.preStart()

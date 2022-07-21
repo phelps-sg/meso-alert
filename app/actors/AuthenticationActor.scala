@@ -1,6 +1,6 @@
 package actors
 
-import actors.MessageHandlers.UnrecognizedMessageHandler
+import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
 import com.google.inject.Inject
@@ -47,7 +47,7 @@ object AuthenticationActor {
 //noinspection TypeAnnotation
 class AuthenticationActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: MemPoolWatcherService,
                                     userManager: UserManagerService)(implicit system: ActorSystem)
-  extends Actor with TxUpdateActor with UnrecognizedMessageHandler with Logging {
+  extends Actor with TxUpdateActor with UnrecognizedMessageHandlerFatal with Logging {
 
   import AuthenticationActor._
 

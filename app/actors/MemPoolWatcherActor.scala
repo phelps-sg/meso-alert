@@ -1,5 +1,6 @@
 package actors
 
+import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import akka.actor.{Actor, ActorRef, Props}
 import akka.pattern.pipe
 import com.google.inject.Inject
@@ -30,7 +31,7 @@ object MemPoolWatcherActor {
 
 class MemPoolWatcherActor @Inject() (val peerGroupSelection: PeerGroupSelection,
                                      val databaseExecutionContext: DatabaseExecutionContext)
-  extends Actor with Logging {
+  extends Actor with Logging with UnrecognizedMessageHandlerFatal {
 
   private val TOTAL_KEY: String = "TOTAL"
   //noinspection ActorMutableStateInspection
@@ -92,6 +93,9 @@ class MemPoolWatcherActor @Inject() (val peerGroupSelection: PeerGroupSelection,
       logger.debug(s"Registering new listener $listener")
       peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) => listener ! TxUpdate(tx))
       logger.debug("registration completed")
+
+    case x =>
+      unrecognizedMessage(x)
 
   }
 

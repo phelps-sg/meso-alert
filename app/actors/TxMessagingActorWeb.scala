@@ -1,6 +1,6 @@
 package actors
 
-import actors.MessageHandlers.UnrecognizedMessageHandler
+import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import akka.actor.Actor
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{ImplementedBy, Inject}
@@ -36,7 +36,7 @@ object TxMessagingActorWeb {
 }
 
 class TxMessagingActorWeb @Inject()(backendSelection: HttpBackendSelection, @Assisted hook: Webhook)
-  extends Actor with UnrecognizedMessageHandler with Logging {
+  extends Actor with UnrecognizedMessageHandlerFatal with Logging {
 
   def process(tx: TxUpdate): Future[Unit] = {
 

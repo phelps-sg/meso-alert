@@ -1,6 +1,6 @@
 package actors
 import actors.AuthenticationActor.Die
-import actors.MessageHandlers.UnrecognizedMessageHandler
+import actors.MessageHandlers.{UnrecognizedMessageHandler, UnrecognizedMessageHandlerFatal}
 import akka.actor._
 import play.api.Logging
 
@@ -16,7 +16,7 @@ object TxRetryOrDie {
   case class ScheduleRetry(timeout: FiniteDuration, tx: TxUpdate, retryCount: Int, exception: Option[Exception])
 }
 
-trait TxRetryOrDie[T] extends Actor with Timers with Logging with UnrecognizedMessageHandler {
+trait TxRetryOrDie[T] extends Actor with Timers with Logging with UnrecognizedMessageHandlerFatal {
   import TxRetryOrDie._
   val random: scala.util.Random
   val maxRetryCount: Int

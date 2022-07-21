@@ -1,6 +1,6 @@
 package actors
 
-import actors.MessageHandlers.UnrecognizedMessageHandler
+import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
 import dao.{DuplicateHookException, Hook, HookDao}
@@ -21,7 +21,7 @@ object HooksManagerActor {
 }
 
 abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
-  extends Actor with InjectedActorSupport with Logging with UnrecognizedMessageHandler {
+  extends Actor with InjectedActorSupport with Logging with UnrecognizedMessageHandlerFatal {
 
   import HooksManagerActor._
 
@@ -103,6 +103,9 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
 
     case CreateActors(_: X, _) =>
       logger.error("Not starting child actors; unrecognized hook type")
+
+    case Success(Updated(hook)) =>
+      logger.debug(s"Successfully updated $hook")
 
     case x =>
       unrecognizedMessage(x)
