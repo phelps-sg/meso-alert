@@ -14,6 +14,11 @@ if [ -d "/etc/secrets" ]; then
   SODIUM_KEY=$(cat /etc/secrets/sodium/key)
   POSTGRES_PORT=5432
   POSTGRES_HOST="meso-alert-postgres"
+  EMAIL_SMTP_PORT=587
+  EMAIL_SMTP_HOST="smtp.gmail.com"
+  EMAIL_DESTINATION="alerts-feedback@symbiotica.ai"
+  EMAIL_HOST="alerts-feedback@symbiotica.ai"
+  EMAIL_PASSWORD="TODO"
 else
   echo "Running in staging environment"
   . "/root/meso-alert-config.sh"
