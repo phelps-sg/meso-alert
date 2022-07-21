@@ -56,7 +56,7 @@ EOF
 
 ### Server
 
-The server application can be run in three different modes:
+The server application can be run in four different modes:
 
 1. development mode,
 2. production mode in staging environment, 
@@ -85,7 +85,7 @@ is automatically configured from `docker/.env` by the `staging-config` make targ
 
 Both production modes (2 and 3) use
 the same docker image. For mode 2, application secrets and configuration are obtained
-from `docker/.env`. However, in case 3 application secrets are decrypted
+from `docker/.env`. However, in mode 3 application secrets are decrypted
 from [k8/sealed-secrets.yaml](k8/sealed-secrets.yaml) using
 [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) and then mounted underneath
 `/etc/secrets` inside the docker container. On startup the docker image checks for
