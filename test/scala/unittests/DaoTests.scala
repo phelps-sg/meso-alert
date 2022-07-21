@@ -13,7 +13,7 @@ import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{ConfigurationFixtures, DatabaseGuiceFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, SlickTransactionUpdateDaoFixtures, TxUpdateFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
+import unittests.Fixtures.{ConfigurationFixtures, DatabaseGuiceFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, ProvidesTestBindings, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, SlickTransactionUpdateDaoFixtures, TxUpdateFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
 
 // scalafix:off
 
@@ -25,7 +25,7 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   with BeforeAndAfterAll {
 
   //noinspection TypeAnnotation
-  trait FixtureBindings {
+  trait FixtureBindings extends ProvidesTestBindings {
     val bindModule: GuiceableModule = new UnitTestModule(database, testExecutionContext)
     val executionContext = testExecutionContext
     val actorSystem = system

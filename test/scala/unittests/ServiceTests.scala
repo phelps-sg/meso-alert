@@ -16,7 +16,7 @@ import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import slick.dbio.DBIO
-import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, WebhookActorFixtures, WebhookDaoFixtures, WebhookFixtures, WebhookManagerFixtures}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, ProvidesTestBindings, WebhookActorFixtures, WebhookDaoFixtures, WebhookFixtures, WebhookManagerFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
@@ -32,7 +32,7 @@ class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   with BeforeAndAfterAll {
 
   //noinspection TypeAnnotation
-  trait FixtureBindings {
+  trait FixtureBindings extends ProvidesTestBindings {
     val bindModule: GuiceableModule = new UnitTestModule(database, testExecutionContext)
     val executionContext = testExecutionContext
     val actorSystem = system
@@ -63,8 +63,9 @@ class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
   "WebhooksManager" should {
 
-    trait TestFixtures extends FixtureBindings with MemPoolWatcherFixtures with ActorGuiceFixtures
-      with WebhookDaoFixtures with WebhookFixtures with WebhookActorFixtures with WebhookManagerFixtures
+    trait TestFixtures extends FixtureBindings with MemPoolWatcherFixtures with
+      ActorGuiceFixtures with ConfigurationFixtures with WebhookDaoFixtures with WebhookFixtures
+      with WebhookActorFixtures with WebhookManagerFixtures
 
     "register and start all running hooks stored in the database on initialisation" in new TestFixtures {
 

@@ -22,7 +22,7 @@ import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -36,7 +36,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   with BeforeAndAfterAll {
 
   //noinspection TypeAnnotation
-  trait FixtureBindings {
+  trait FixtureBindings extends ProvidesTestBindings {
     val bindModule: GuiceableModule = new UnitTestModule(database, testExecutionContext)
     val executionContext = testExecutionContext
     val actorSystem = system

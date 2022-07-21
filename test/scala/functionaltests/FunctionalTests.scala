@@ -42,9 +42,8 @@ class FunctionalTests extends PlaySpec
   with PostgresContainer
   with OneBrowserPerSuite
   with FirefoxFactory
-  with GuiceOneServerPerTest with
-  MemPoolWatcherFixtures {
-
+  with GuiceOneServerPerTest
+  with MemPoolWatcherFixtures {
 
   override lazy val firefoxOptions: FirefoxOptions =
     new FirefoxOptions()

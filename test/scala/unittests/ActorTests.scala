@@ -24,7 +24,8 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
-import unittests.Fixtures.{ActorGuiceFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, TransactionFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, TransactionFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
+
 import scala.language.postfixOps
 import java.net.URI
 import scala.concurrent.Future
@@ -53,7 +54,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
   implicit override val patienceConfig =
     PatienceConfig(timeout = Span(20, Seconds), interval = Span(5, Millis))
 
-  trait FixtureBindings {
+  trait FixtureBindings extends ProvidesTestBindings {
     val bindModule: GuiceableModule = new UnitTestModule(database, testExecutionContext)
     val executionContext = testExecutionContext
     val actorSystem = system
@@ -65,8 +66,8 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "MemPoolWatcherActor" should {
 
-    trait TestFixtures extends FixtureBindings with ActorGuiceFixtures with
-      MemPoolWatcherFixtures with MemPoolWatcherActorFixtures {
+    trait TestFixtures extends FixtureBindings with MemPoolWatcherFixtures
+      with ConfigurationFixtures with ActorGuiceFixtures with MemPoolWatcherActorFixtures {
 
       (mockPeerGroup.start _).expects().once()
       (mockPeerGroup.setMaxConnections _).expects(*).once()
@@ -103,8 +104,8 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
   "MemPoolWatcher" should {
 
     trait TextFixtures extends FixtureBindings with MemPoolWatcherFixtures
-      with WebSocketFixtures with ActorGuiceFixtures with MemPoolWatcherActorFixtures with UserFixtures
-      with TransactionFixtures {
+      with WebSocketFixtures with ActorGuiceFixtures with ConfigurationFixtures with MemPoolWatcherActorFixtures
+      with UserFixtures with TransactionFixtures {
     }
 
     "send the correct TxUpdate message when a transaction update is received from " +
@@ -204,7 +205,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "TxPersistenceActor" should {
 
-    trait TestFixtures extends FixtureBindings with ActorGuiceFixtures
+    trait TestFixtures extends FixtureBindings with ActorGuiceFixtures with ConfigurationFixtures
       with MemPoolWatcherFixtures with TxUpdateFixtures with TxPersistenceActorFixtures
 
     "register itself as a listener to the mem-pool" in new TestFixtures {
@@ -242,7 +243,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "TxWatchActor" should {
 
-    trait TestFixtures extends FixtureBindings with MemPoolWatcherFixtures
+    trait TestFixtures extends FixtureBindings with MemPoolWatcherFixtures with ConfigurationFixtures
       with WebSocketFixtures with ActorGuiceFixtures with UserFixtures with TxWatchActorFixtures
 
     trait TestFixturesOneSubscriber extends TestFixtures {
@@ -308,7 +309,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
   "SlackChatManagerActor" should {
 
     trait TestFixtures extends FixtureBindings
-      with MemPoolWatcherFixtures with ActorGuiceFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
+      with MemPoolWatcherFixtures with ActorGuiceFixtures with ConfigurationFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
       with SlackChatHookDaoFixtures with SlackChatActorFixtures with HookActorTestLogic[SlackChannel, SlackChatHook, SlackChatHookEncrypted] {
 
       encryptionManager.initialiseFuture()
@@ -373,8 +374,8 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "WebhookManagerActor" should {
 
-    trait TestFixtures extends FixtureBindings with
-      MemPoolWatcherFixtures with ActorGuiceFixtures with WebhookFixtures
+    trait TestFixtures extends FixtureBindings with MemPoolWatcherFixtures
+      with ActorGuiceFixtures with ConfigurationFixtures with WebhookFixtures
       with WebhookActorFixtures with HookActorTestLogic[URI, Webhook, Webhook] {
     }
 

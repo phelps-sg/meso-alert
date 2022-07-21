@@ -9,11 +9,11 @@
     <option name="testKind" value="All in package" />
     <option name="classBuf">
       <list>
-        <option value="unittests.ServiceTests" />
-        <option value="unittests.ActorTests" />
-        <option value="unittests.DaoTests" />
-        <option value="unittests.ControllerTests" />
         <option value="unittests.FormattingTests" />
+        <option value="unittests.ServiceTests" />
+        <option value="unittests.ControllerTests" />
+        <option value="unittests.DaoTests" />
+        <option value="unittests.ActorTests" />
       </list>
     </option>
     <option name="javaOptions" value="-Dconfig.resource=application.test.conf" />
