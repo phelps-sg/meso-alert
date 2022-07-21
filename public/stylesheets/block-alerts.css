@@ -3,6 +3,36 @@
    normalize.css v3.0.3 | MIT License | github.com/necolas/normalize.css 
    ========================================================================== */
 /*! normalize.css v3.0.3 | MIT License | github.com/necolas/normalize.css */
+.alert {
+    padding: 10px;
+    margin-bottom: 35px;
+}
+
+.alert.failed {
+    background-color: #f44336;
+    color: white;
+}
+
+.alert.success {
+    background-color: lightgreen;
+    color: black;
+}
+
+.closebtn {
+    margin-left: 15px;
+    color: black;
+    font-weight: bold;
+    float: right;
+    font-size: 22px;
+    line-height: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.closebtn:hover {
+    color: white;
+}
+
 html {
     font-family: sans-serif;
     -ms-text-size-adjust: 100%;

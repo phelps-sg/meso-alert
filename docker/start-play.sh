@@ -29,6 +29,11 @@ play.http.secret.key="${PLAY_KEY}"
 slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"
 slack.botToken = "${SLACK_BOT_TOKEN}"
+email.smtpHost = "${EMAIL_SMTP_HOST}"
+email.smtpPort = "${EMAIL_SMTP_PORT}"
+email.host = "${EMAIL_HOST}"
+email.hostPassword = "${EMAIL_PASSWORD}"
+email.destination = "${EMAIL_DESTINATION}"
 play.filters.disabled+=play.filters.hosts.AllowedHostsFilter
 play.i18n.langs = ["en"]
 
@@ -61,6 +66,15 @@ database.dispatcher {
     fixed-pool-size = 12
   }
 }
+
+email.dispatcher {
+  executor = "thread-pool-executor"
+  throughput = 1
+  thread-pool-executor {
+    fixed-pool-size = 2
+  }
+}
+
 EOF
 
 unzip ./target/universal/meso-alert-1.0-SNAPSHOT.zip

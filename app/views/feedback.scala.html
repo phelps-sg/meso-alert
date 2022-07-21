@@ -1,3 +1,5 @@
+
+@(emailDeliveryOutcome: String)(implicit request: RequestHeader)
 @main("Feedback Form") {
 
     <main class="main">
@@ -5,6 +7,21 @@
             <div class="container">
                 <div class="w-layout-grid contact-form-grid">
                     <div id="w-node-_3f61509a-fac7-b0d5-3763-509be705858e-d4ef294c" class="contact-form-wrap">
+                        @emailDeliveryOutcome match {
+                            case "failed" => {
+                                <div class="alert failed">
+                                    <span class="closebtn" onclick="this.parentElement.style.display = 'none';">&times;</span>
+                                    There was an error sending your feedback.
+                                </div>
+                            }
+                            case "success" => {
+                                <div class="alert success">
+                                    <span class="closebtn" onclick="this.parentElement.style.display = 'none';">&times;</span>
+                                    Your message has been sent successfully!
+                                </div>
+                            }
+                            case _ => {  }
+                        }
                         <div class="contact-form-heading-wrap">
                             <h2 class="contact-heading">Contact us</h2>
                             <div class="paragraph-light">
@@ -13,16 +30,21 @@
                             </div>
                         </div>
                         <div class="contact-form w-form">
-                            <form data-name="Get In Touch Form" name="wf-form-Get-In-Touch-Form" id="email-form" method="get" class="get-in-touch-form">
+                            <form action="@helper.CSRF(routes.HomeController.create())" data-name="Get In Touch Form"
+                            name="wf-form-Get-In-Touch-Form"
+                            id="email-form"
+                            method="post" class="get-in-touch-form">
                                 <label for="name">Name</label><input type="text" class="text-field cc-contact-field w-input" maxlength="256" name="name" data-name="Name" placeholder="Enter your name" id="Name" />
-                                <label for="Email-2">Email Address</label><input type="email" class="text-field cc-contact-field w-input" maxlength="256" name="Email" data-name="Email" placeholder="Enter your email" id="Email" required="" />
+                                <label for="Email-2">Email Address</label><input type="email" class="text-field
+                                cc-contact-field w-input" maxlength="256" name="email" data-name="email"
+                            placeholder="Enter your email" id="Email" required="" />
                                 <label for="Message">Message</label>
                                 <textarea
                                 id="Message"
-                                name="Message"
+                                name="message"
                                 placeholder="Hi there, I was wondering if you were considering ETH as part of the alert service..."
                                 maxlength="5000"
-                                data-name="Message"
+                                data-name="message"
                                 class="text-field cc-textarea cc-contact-field w-input"
                                 ></textarea>
                                 <input type="submit" value="Submit" data-wait="Please wait..." class="nav-button w-button" />

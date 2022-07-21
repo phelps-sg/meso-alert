@@ -14,4 +14,5 @@ POST    /api/webhooks/stop          controllers.WebhooksController.stop
 POST    /api/webhooks/register      controllers.WebhooksController.register
 POST    /api/slack/slash            controllers.SlackSlashCommandController.slashCommand
 GET     /api/slack/auth             controllers.SlackAuthController.authRedirect(code: String)
-GET     /feedback                   controllers.HomeController.feedbackForm()
+GET     /feedback                   controllers.HomeController.feedbackPage()
+POST    /feedback                   controllers.HomeController.create()

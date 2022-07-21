@@ -5,43 +5,72 @@ import actors.{AuthenticationActor, TxUpdate}
 import akka.actor.{ActorSystem, Props}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
-import play.api.libs.concurrent.InjectedActorSupport
+import com.google.inject.ImplementedBy
+import play.api.data.Forms._
+import play.api.data.{Form, Mapping}
+import play.api.libs.concurrent.{CustomExecutionContext, InjectedActorSupport}
 import play.api.libs.json.Json
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
 import play.api.mvc._
 import play.api.{Logger, Logging}
+import services.MailManager
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util._
 
-/**
- * This controller creates an `Action` to handle HTTP requests to the
- * application's home page.
- */
+@ImplementedBy(classOf[EmailExecutionContextImpl])
+trait EmailExecutionContext extends ExecutionContext
+
+class EmailExecutionContextImpl @Inject() (system: ActorSystem)
+  extends CustomExecutionContext(system, "email.dispatcher")
+    with EmailExecutionContext
+
 @Singleton
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
-                               val actorFactory: AuthenticationActor.Factory)
+                               val actorFactory: AuthenticationActor.Factory,
+                               val mailManager: MailManager)
                               (implicit system: ActorSystem, mat: Materializer, implicit val ec: ExecutionContext)
   extends BaseController with SameOriginCheck with InjectedActorSupport with Logging {
 
   implicit val mft: MessageFlowTransformer[Auth, TxUpdate] =
     MessageFlowTransformer.jsonMessageFlowTransformer[Auth, TxUpdate]
 
-  /**
-   * Create an Action to render an HTML page.
-   *
-   * The configuration in the `routes` file means that this method
-   * will be called when the application receives a `GET` request with
-   * a path of `/`.
-   */
+  case class FeedbackFormData(name: String, email: String, message: String)
+
+  val feedbackFormMapping: Mapping[FeedbackFormData] = mapping(
+    "name" -> text,
+    "email" -> email,
+    "message" -> nonEmptyText
+  )(FeedbackFormData.apply)(FeedbackFormData.unapply)
+
+  val feedbackForm: Form[FeedbackFormData] = Form(feedbackFormMapping)
+
   def index(): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     Ok(views.html.index())
   }
 
-  def feedbackForm(): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
-    Ok(views.html.feedback())
+  def feedbackPage(): Action[AnyContent]= Action { implicit request =>
+    Ok(views.html.feedback(""))
   }
+
+  def create(): Action[AnyContent] = Action.async { implicit request =>
+    feedbackForm.bindFromRequest().fold(
+      _ => Future { BadRequest },
+      feedbackData =>  {
+        mailManager.sendEmail("Feedback - " + feedbackData.name + " " + feedbackData.email,
+          feedbackData.message).map {
+          _ =>
+            logger.info("feedback email delivered")
+            Ok(views.html.feedback("success"))
+        } recover {
+          er =>
+            logger.error(er.getMessage)
+            Ok(views.html.feedback("failed"))
+          }
+        }
+    )}
 
   def wsFutureFlow(request: RequestHeader): Future[Flow[AuthenticationActor.Auth, TxUpdate, _]] = {
     Future {

@@ -19,8 +19,10 @@ import play.api.i18n.DefaultMessagesApi
 import play.api.inject.Injector
 import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, Json}
+import play.api.test.FakeRequest
+import play.api.test.Helpers.POST
 import play.api.{Configuration, Logging, inject}
-import services.{HooksManagerSlackChat, HooksManagerWeb, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, SodiumEncryptionManager, User, UserManagerService}
+import services.{HooksManagerSlackChat, HooksManagerWeb, MailManager, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, SodiumEncryptionManager, User, UserManagerService}
 import slick.BtcPostgresProfile.api._
 import slick.dbio.{DBIO, Effect}
 import slick.jdbc.JdbcBackend.Database
@@ -494,6 +496,16 @@ object Fixtures {
   trait UserFixtures extends MockFactory {
     val mockUser = mock[User]
     val mockUserManager = mock[UserManagerService]
+  }
+
+  trait MockMailManagerFixtures extends MockFactory {
+    val emailName = "testName"
+    val emailAddress = "test@test.com"
+    val feedbackMessage = "This is a test feedback message."
+    val expectedValidEmailSubject = "Feedback - testName test@test.com"
+    val fakeRequestFormSubmission = FakeRequest(POST, "/").withFormUrlEncodedBody(("name", emailName),
+      ("email", emailAddress), ("message", feedbackMessage))
+    val mockMailManager = mock[MailManager]
   }
 
   trait TxPersistenceActorFixtures extends MockFactory {

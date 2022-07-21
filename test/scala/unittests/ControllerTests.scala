@@ -1,10 +1,11 @@
 package unittests
 
+import actors.AuthenticationActor
 import actors.EncryptionActor.Encrypted
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import akka.util.Timeout
-import controllers.SlackSlashCommandController
+import controllers.{HomeController, SlackSlashCommandController}
 import dao.{SlackChannel, SlackChatHookEncrypted, SlackTeamEncrypted, SlashCommand}
 import org.scalamock.handlers.CallHandler1
 import org.scalatest.BeforeAndAfterAll
@@ -15,14 +16,15 @@ import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.http.Status.OK
 import play.api.inject.guice.GuiceableModule
-import play.api.mvc.Result
-import play.api.test.Helpers
-import play.api.test.Helpers.contentAsString
+import play.api.mvc.{Result, Results}
+import play.api.test.CSRFTokenHelper._
+import play.api.test.Helpers.{contentAsString, status}
+import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -33,6 +35,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   with PostgresContainer
   with should.Matchers
   with ScalaFutures
+  with Results
   with BeforeAndAfterAll {
 
   //noinspection TypeAnnotation
@@ -46,6 +49,57 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
   implicit override val patienceConfig: PatienceConfig =
     PatienceConfig(timeout = Span(2, Seconds), interval = Span(5, Millis))
+
+  "HomeController" should {
+    trait TestFixtures extends FixtureBindings
+      with ConfigurationFixtures with TxWatchActorFixtures with MockMailManagerFixtures
+      with ActorGuiceFixtures with UserFixtures with MemPoolWatcherFixtures with WebSocketFixtures {
+
+      val actorFactory = injector.instanceOf[AuthenticationActor.Factory]
+      val controller = new HomeController(Helpers.stubControllerComponents(), actorFactory, mockMailManager)
+    }
+
+    "render feedback form without email delivery outcome message when using http method GET at /feedback" in new
+        TestFixtures {
+      val result = controller.feedbackPage().apply(FakeRequest().withCSRFToken)
+      val body = contentAsString(result)
+      status(result) mustEqual OK
+      body should include ("<form action=\"/feedback")
+      body should not include "<div class=\"alert failed\">"
+      body should not include "<div class=\"alert success\">"
+    }
+    "send an email when feedback form is submitted with valid data" in
+      new TestFixtures {
+        (mockMailManager.sendEmail _)
+          .expects(expectedValidEmailSubject, feedbackMessage)
+          .returning(Future(()))
+
+        val request = fakeRequestFormSubmission
+        controller.create().apply(request.withCSRFToken)
+      }
+    "notify user of successful email delivery" in new TestFixtures {
+      (mockMailManager.sendEmail _)
+        .expects(expectedValidEmailSubject, feedbackMessage)
+        .returning(Future(()))
+
+      val request = fakeRequestFormSubmission
+      val result = controller.create().apply(request.withCSRFToken)
+      val body = contentAsString(result)
+      status(result) mustEqual OK
+      body should include ("<div class=\"alert success\">")
+    }
+    "notify user of failed email delivery" in new TestFixtures {
+      (mockMailManager.sendEmail _)
+        .expects(expectedValidEmailSubject, feedbackMessage)
+        .returning(Future.failed(new Exception("error")))
+
+      val request = fakeRequestFormSubmission
+      val result = controller.create().apply(request.withCSRFToken)
+      val body = contentAsString(result)
+      status(result) mustEqual OK
+      body should include ("<div class=\"alert failed\">")
+    }
+  }
 
   "SlackSlashCommandController" should {
 

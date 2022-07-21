@@ -44,4 +44,18 @@ slackChat.dispatcher {
   }
 }
 
+email.dispatcher {
+  executor = "thread-pool-executor"
+  throughput = 1
+  thread-pool-executor {
+    fixed-pool-size = 2
+  }
+}
+
+email.smtpHost = "smtp-mail.outlook.com"
+email.smtpPort = 587
+email.host = "meso_alert_tester@outlook.com"
+email.hostPassword = "ficZeq-vutsoj-qypru5"
+email.destination = "meso_alert_tester@outlook.com"
+
 EOF
