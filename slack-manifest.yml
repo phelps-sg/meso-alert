@@ -1,8 +1,8 @@
 display_information:
-  name: Meso Alert
+  name: Block Insights
 features:
   bot_user:
-    display_name: meso-alert
+    display_name: block-insights
     always_online: false
   slash_commands:
     - command: /crypto-alert
