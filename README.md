@@ -55,9 +55,9 @@ EOF
 The server application can be run in three different modes:
 
 1. development mode,
-2. production mode in staging environment, and
-3. production mode in the production environment.
-
+2. production mode in staging environment, 
+3. production mode in the production environment, and
+4. functional testing mode.
 
 To build and run the server in development mode (1), from the project root directory run:
 
@@ -86,7 +86,13 @@ from [k8/sealed-secrets.yaml](k8/sealed-secrets.yaml) using
 [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) and then mounted underneath
 `/etc/secrets` inside the docker container. On startup the docker image checks for
 `/etc/secrets`, and if present it loads the corresponding secrets and settings in `docker/.env`
-are ignored.
+are ignored.  
+
+Non-secret configuration changes for kubernetes production mode (3) should be made directly
+to [docker/start-play.sh](docker/start-play.sh).
+
+For functional testing, make configuration changes to
+[test/resources/application.test.conf](test/resources/application.test.conf).
 
 ### Websocket client
 

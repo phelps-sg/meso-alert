@@ -19,6 +19,10 @@ else
   . "/root/meso-alert-config.sh"
 fi
 
+#
+# Non-secret k8 configuration changes should be made directly below without
+# using an environment variable.
+#
 cat <<EOF > application-production.conf
 sodium.secret="${SODIUM_KEY}"
 play.http.secret.key="${PLAY_KEY}"
