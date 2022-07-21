@@ -46,7 +46,7 @@ object AuthenticationActor {
 //noinspection TypeAnnotation
 class AuthenticationActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: MemPoolWatcherService,
                                     userManager: UserManagerService)(implicit system: ActorSystem)
-  extends Actor with TxUpdateActor with Logging {
+  extends Actor with TxUpdateActor with UnrecognizedMessageHandler with Logging {
 
   import AuthenticationActor._
 
@@ -59,11 +59,13 @@ class AuthenticationActor @Inject()(@Assisted val out: ActorRef, val memPoolWatc
   }
 
   def unauthorized: Receive = deathHandler.orElse {
+
     case auth: Auth =>
       logger.info(s"Received auth request for id ${auth.id}")
       authenticate(auth)
+
     case x =>
-      logger.warn(s"Unrecognized message $x")
+      unrecognizedMessage(x)
   }
 
   def authenticate(auth: Auth): Unit = {
@@ -81,6 +83,9 @@ class AuthenticationActor @Inject()(@Assisted val out: ActorRef, val memPoolWatc
 
       case Failure(ex: Exception) =>
         self ! Die(ex.getMessage)
+
+      case x =>
+        unrecognizedMessage(x)
     }
   }
 

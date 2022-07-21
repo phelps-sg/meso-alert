@@ -20,7 +20,7 @@ object HooksManagerActor {
 }
 
 abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
-  extends Actor with InjectedActorSupport with Logging {
+  extends Actor with InjectedActorSupport with Logging with UnrecognizedMessageHandler {
 
   import HooksManagerActor._
 
@@ -102,6 +102,9 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
 
     case CreateActors(_: X, _) =>
       logger.error("Not starting child actors; unrecognized hook type")
+
+    case x =>
+      unrecognizedMessage(x)
 
   }
 

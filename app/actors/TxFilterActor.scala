@@ -21,7 +21,7 @@ object TxFilterActor {
 
 class TxFilterActor @Inject()(@Assisted val out: ActorRef, @Assisted val filter: TxUpdate => Boolean,
                               val memPoolWatcher: MemPoolWatcherService)
-  extends Actor with TxUpdateActor with Logging {
+  extends Actor with TxUpdateActor with Logging with UnrecognizedMessageHandler {
 
   override def preStart(): Unit = {
     super.preStart()
@@ -31,6 +31,7 @@ class TxFilterActor @Inject()(@Assisted val out: ActorRef, @Assisted val filter:
   override def receive: Receive = {
     case tx: TxUpdate => if (filter(tx)) out ! tx
     case Die => self ! PoisonPill
+    case x => unrecognizedMessage(x)
   }
 
 }

@@ -21,12 +21,9 @@ object EncryptionActor {
 
 }
 
-class EncryptionActor extends Actor with Logging {
+class EncryptionActor extends Actor with Logging with UnRecognizedMessageHandlerWithBounce {
 
   import actors.EncryptionActor._
-
-  def unrecognizedMessage(message: Any): Unit =
-    sender() ! Failure(new RuntimeException(s"Unrecognized message: $message"))
 
   override def receive: Receive = {
 

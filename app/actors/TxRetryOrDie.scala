@@ -15,7 +15,7 @@ object TxRetryOrDie {
   case class ScheduleRetry(timeout: FiniteDuration, tx: TxUpdate, retryCount: Int, exception: Option[Exception])
 }
 
-trait TxRetryOrDie[T] extends Actor with Timers with Logging {
+trait TxRetryOrDie[T] extends Actor with Timers with Logging with UnrecognizedMessageHandler {
   import TxRetryOrDie._
   val random: scala.util.Random
   val maxRetryCount: Int
@@ -55,5 +55,8 @@ trait TxRetryOrDie[T] extends Actor with Timers with Logging {
     case Die(reason)  =>
       actorDeath(reason)
       self ! PoisonPill
+
+    case x =>
+      unrecognizedMessage(x)
   }
 }
