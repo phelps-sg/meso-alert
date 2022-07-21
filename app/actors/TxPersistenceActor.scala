@@ -4,8 +4,9 @@ import akka.actor.{Actor, ActorRef, Props}
 import com.google.inject.Inject
 import dao._
 import services.MemPoolWatcherService
-import scala.util.Random
+
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Random
 
 object TxPersistenceActor {
 

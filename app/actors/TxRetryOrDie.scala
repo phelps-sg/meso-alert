@@ -2,10 +2,11 @@ package actors
 import actors.AuthenticationActor.Die
 import akka.actor._
 import play.api.Logging
+
 import scala.concurrent.duration._
-import scala.math.{min, pow}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
+import scala.math.{min, pow}
 
 
 object TxRetryOrDie {

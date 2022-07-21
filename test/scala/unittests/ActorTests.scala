@@ -26,10 +26,10 @@ import postgres.PostgresContainer
 import services._
 import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, TransactionFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
 
-import scala.language.postfixOps
 import java.net.URI
 import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
 // scalafix:off

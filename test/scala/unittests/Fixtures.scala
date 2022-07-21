@@ -20,7 +20,7 @@ import play.api.inject.Injector
 import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, Json}
 import play.api.{Configuration, Logging, inject}
-import services.{EncryptionManagerService, HooksManagerSlackChat, HooksManagerWeb, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, SodiumEncryptionManager, User, UserManagerService}
+import services.{HooksManagerSlackChat, HooksManagerWeb, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, SodiumEncryptionManager, User, UserManagerService}
 import slick.BtcPostgresProfile.api._
 import slick.dbio.{DBIO, Effect}
 import slick.jdbc.JdbcBackend.Database
