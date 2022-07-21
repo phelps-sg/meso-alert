@@ -48,9 +48,7 @@ class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
     logger.info("Starting peer group... ")
     BriefLogFormatter.initVerbose()
     scheduleStatistics()
-    for {
-      started <- startPeerGroup()
-    } yield started
+    startPeerGroup() map { _ => () }
   }
 
   def startPeerGroup(): Future[Started[PeerGroup]] = {
