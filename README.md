@@ -54,7 +54,6 @@ EOF
 
 ## Running
 
-
 ### Server
 
 The server application can be run in three different modes:
