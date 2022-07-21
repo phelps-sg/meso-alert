@@ -541,13 +541,10 @@ object Fixtures {
   }
 
   trait EncryptionManagerFixtures {
-    env: HasExecutionContext with HasActorSystem with ConfigurationFixtures with EncryptionActorFixtures =>
+    env: HasExecutionContext with ConfigurationFixtures with EncryptionActorFixtures =>
 
     val executionContext: ExecutionContext
-    val actorSystem: ActorSystem
-//    val config: Configuration
-//    val encryptionActor: ActorRef
-    val encryptionManager = new SodiumEncryptionManager(encryptionActor, config)(actorSystem, executionContext)
+    val encryptionManager = new SodiumEncryptionManager(encryptionActor, config)(executionContext)
   }
 
   trait EncryptionActorFixtures { env: HasActorSystem =>

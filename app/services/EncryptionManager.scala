@@ -17,7 +17,7 @@ trait EncryptionManagerService {
 
 @Singleton
 class SodiumEncryptionManager @Inject() (@Named("encryption-actor") val actor: ActorRef, val config: Configuration)
-  (implicit system: ActorSystem, implicit val executionContext: ExecutionContext)
+  (implicit val executionContext: ExecutionContext)
   extends EncryptionManagerService with ActorBackend with Logging with FutureInitialisingComponent {
 
   initialise()
