@@ -60,8 +60,12 @@ sbt-scalafix-check:
 sbt-scalafix:
 	$(SDK_INIT); sbt "scalafixAll"
 
-docker-push: docker-build
-	sudo docker push registry.gitlab.com/mesonomics/meso-alert/play-server; \
+docker-push: docker-build docker-play-server-push docker-ci-push
+
+docker-play-server-push:
+	sudo docker push registry.gitlab.com/mesonomics/meso-alert/play-server
+
+docker-ci-push:
 	sudo docker push registry.gitlab.com/mesonomics/meso-alert/ci
 
 docker-server-start: docker-build
