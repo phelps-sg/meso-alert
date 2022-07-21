@@ -25,6 +25,11 @@ play.http.secret.key="${PLAY_KEY}"
 slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"
 slack.botToken = "${SLACK_BOT_TOKEN}"
+email.smtpHost = "${EMAIL_SMTP_HOST}"
+email.smtpPort = "${EMAIL_SMTP_PORT}"
+email.host = "${EMAIL_HOST}"
+email.hostPassword = "${EMAIL_PASSWORD}"
+email.destination = "${EMAIL_DESTINATION}"
 play.filters.disabled+=play.filters.hosts.AllowedHostsFilter
 play.i18n.langs = ["en"]
 
@@ -66,11 +71,6 @@ email.dispatcher {
   }
 }
 
-email.smtpHost = "smtp-mail.outlook.com"
-email.smtpPort = 587
-email.host = "meso_alert_tester@outlook.com"
-email.hostPassword = "ficZeq-vutsoj-qypru5"
-email.destination = "meso_alert_tester@outlook.com"
 EOF
 
 unzip ./target/universal/meso-alert-1.0-SNAPSHOT.zip

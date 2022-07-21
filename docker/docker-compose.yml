@@ -18,6 +18,11 @@ services:
         SLACK_CLIENT_ID: ${SLACK_CLIENT_ID}
         SLACK_CLIENT_SECRET: ${SLACK_CLIENT_SECRET}
         POSTGRES_HOST: ${POSTGRES_HOST}
+        EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST}
+        EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT}
+        EMAIL_HOST: ${EMAIL_HOST}
+        EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+        EMAIL_DESTINATION: ${EMAIL_DESTINATION}
 
   meso-alert-ci:
     image: registry.gitlab.com/mesonomics/meso-alert/ci
