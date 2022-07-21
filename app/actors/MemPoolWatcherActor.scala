@@ -55,7 +55,7 @@ class MemPoolWatcherActor @Inject() (val peerGroupSelection: PeerGroupSelection,
       logger.debug(s"tx ${tx.getTxId} result $result")
       self ! IncrementCounter(result.name)
       if (result eq RiskAnalysis.Result.NON_STANDARD)
-        self ! IncrementCounter(RiskAnalysis.Result.NON_STANDARD + "-" + DefaultRiskAnalysis.isStandard(tx))
+        self ! IncrementCounter(s"${RiskAnalysis.Result.NON_STANDARD} - ${DefaultRiskAnalysis.isStandard(tx)}")
 
     case StartPeerGroup =>
 
