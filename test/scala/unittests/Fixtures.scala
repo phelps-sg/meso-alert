@@ -521,10 +521,10 @@ object Fixtures {
       mockMemPoolWatcher, random, executionContext))
   }
 
-  trait TxWatchActorFixtures { env: HasActorSystem with MemPoolWatcherFixtures =>
+  trait TxWatchActorFixtures {
+    env: HasActorSystem with MemPoolWatcherFixtures with WebSocketFixtures with UserFixtures =>
+
     val actorSystem: ActorSystem
-    val mockWsActor: ActorRef
-    val mockUserManager: UserManagerService
 
     val txWatchActor =
       actorSystem.actorOf(AuthenticationActor.props(mockWsActor, mockMemPoolWatcher, mockUserManager)(actorSystem))

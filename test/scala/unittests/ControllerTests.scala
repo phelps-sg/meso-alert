@@ -53,8 +53,8 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   "HomeController" should {
 
     trait TestFixtures extends FixtureBindings
-      with ConfigurationFixtures with TxWatchActorFixtures with MockMailManagerFixtures
-      with ActorGuiceFixtures with UserFixtures with MemPoolWatcherFixtures with WebSocketFixtures {
+      with ConfigurationFixtures with WebSocketFixtures with UserFixtures with MemPoolWatcherFixtures
+      with TxWatchActorFixtures with MockMailManagerFixtures with ActorGuiceFixtures {
 
       val actorFactory = injector.instanceOf[AuthenticationActor.Factory]
       val controller = new HomeController(Helpers.stubControllerComponents(), actorFactory, mockMailManager)
