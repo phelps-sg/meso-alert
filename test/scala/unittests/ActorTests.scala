@@ -52,7 +52,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   // whenReady timeout
   implicit override val patienceConfig =
-    PatienceConfig(timeout = Span(20, Seconds), interval = Span(5, Millis))
+    PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   trait FixtureBindings extends ProvidesTestBindings {
     val bindModule: GuiceableModule = new UnitTestModule(database, testExecutionContext)

@@ -33,7 +33,7 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   }
 
   implicit override val patienceConfig: PatienceConfig =
-    PatienceConfig(timeout = Span(20, Seconds), interval = Span(5, Millis))
+    PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   "WebhookDao" should {
 
