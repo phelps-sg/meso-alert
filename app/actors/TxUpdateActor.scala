@@ -1,12 +1,11 @@
 package actors
 
-import akka.actor.ActorRef
-import play.api.Logger
+import akka.actor.Actor
+import play.api.Logging
 import services.MemPoolWatcherService
 
-trait TxUpdateActor {
-  protected val logger: Logger
-  val self: ActorRef
+trait TxUpdateActor { env: Actor with Logging =>
+
   val memPoolWatcher: MemPoolWatcherService
 
   def registerWithWatcher(): Unit = {
