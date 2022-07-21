@@ -49,19 +49,44 @@ EOF
 
 ## Running
 
+
 ### Server
 
-To build and run the server in development mode, from the project root directory run:
+The server application can be run in three different modes:
+
+1. development mode,
+2. production mode in staging environment, and
+3. production mode in the production environment.
+
+
+To build and run the server in development mode (1), from the project root directory run:
 
 ~~~bash
 make sbt-run
 ~~~
 
-To build and run the server in production mode, from the project root directory run:
+To build and run the server in production mode in a staging environment (2), from the project root directory run:
 
 ~~~bash
 make docker-server-start
 ~~~
+
+#### A note on server configuration
+
+For modes 1 and 2, the application can be run on a local development machine.  For mode 3,
+the application is deployed into a kubernetes cluster.
+
+In mode 1, the application configuration is stored in `conf/application.conf`.  This file
+is automatically configured from `docker/.env` by the `staging-config` make target.
+
+Both production modes (2 and 3) use
+the same docker image. For mode 2, application secrets and configuration are obtained
+from `docker/.env`. However, in case 3 application secrets are decrypted
+from [k8/sealed-secrets.yaml](k8/sealed-secrets.yaml) using
+[Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) and then mounted underneath
+`/etc/secrets` inside the docker container. On startup the docker image checks for
+`/etc/secrets`, and if present it loads the corresponding secrets and settings in `docker/.env`
+are ignored.
 
 ### Websocket client
 
