@@ -1,6 +1,7 @@
 package actors
 
-import akka.actor.Actor
+import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
+import akka.actor.{Actor, Timers}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import com.slack.api.methods.AsyncMethodsClient
@@ -26,7 +27,12 @@ object TxMessagingActorSlackChat  {
 class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, sce: SlackChatExecutionContext,
                                           val random: Random,
                                           @Assisted hook: SlackChatHook)
-  extends Actor with TxRetryOrDie[ChatPostMessageResponse] with SlackClient with Logging {
+  extends Actor
+    with TxRetryOrDie[ChatPostMessageResponse]
+    with SlackClient
+    with Timers
+    with UnrecognizedMessageHandlerFatal
+    with Logging {
 
   protected val slackMethods: AsyncMethodsClient = slack.methodsAsync(hook.token)
   implicit val ec: SlackChatExecutionContext = sce
