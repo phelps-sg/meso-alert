@@ -1,7 +1,6 @@
 package controllers
 
 import actors.{HookAlreadyStartedException, HookNotStartedException}
-import akka.actor.ActorSystem
 import dao._
 import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}
@@ -48,7 +47,7 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
                                             val slackTeamDao: SlackTeamDao,
                                             val hooksManager: HooksManagerSlackChat,
                                             messagesApi: MessagesApi)
-                                           (implicit system: ActorSystem, implicit val ec: ExecutionContext)
+                                           (implicit val ec: ExecutionContext)
   extends BaseController with Logging {
 
   implicit val lang: Lang = Lang("en")
