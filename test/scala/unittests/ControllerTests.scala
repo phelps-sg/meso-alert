@@ -51,6 +51,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     PatienceConfig(timeout = Span(2, Seconds), interval = Span(5, Millis))
 
   "HomeController" should {
+
     trait TestFixtures extends FixtureBindings
       with ConfigurationFixtures with TxWatchActorFixtures with MockMailManagerFixtures
       with ActorGuiceFixtures with UserFixtures with MemPoolWatcherFixtures with WebSocketFixtures {
@@ -68,6 +69,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       body should not include "<div class=\"alert failed\">"
       body should not include "<div class=\"alert success\">"
     }
+
     "send an email when feedback form is submitted with valid data" in
       new TestFixtures {
         (mockMailManager.sendEmail _)
@@ -77,6 +79,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
         val request = fakeRequestFormSubmission
         controller.create().apply(request.withCSRFToken)
       }
+
     "notify user of successful email delivery" in new TestFixtures {
       (mockMailManager.sendEmail _)
         .expects(expectedValidEmailSubject, feedbackMessage)
@@ -88,6 +91,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       status(result) mustEqual OK
       body should include ("<div class=\"alert success\">")
     }
+
     "notify user of failed email delivery" in new TestFixtures {
       (mockMailManager.sendEmail _)
         .expects(expectedValidEmailSubject, feedbackMessage)
