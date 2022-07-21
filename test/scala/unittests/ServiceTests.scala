@@ -42,7 +42,7 @@ class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
   // whenReady timeout
   implicit override val patienceConfig: PatienceConfig =
-    PatienceConfig(timeout = Span(20, Seconds), interval = Span(5, Millis))
+    PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   "EncryptionManager" should {
 
