@@ -1,5 +1,6 @@
 package actors
 
+import actors.MessageHandlers.UnrecognizedMessageHandler
 import akka.actor.Actor
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{ImplementedBy, Inject}

@@ -1,6 +1,7 @@
 package actors
 
 import actors.AuthenticationActor.Die
+import actors.MessageHandlers.UnrecognizedMessageHandler
 import akka.actor.{Actor, ActorRef, PoisonPill, Props}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted

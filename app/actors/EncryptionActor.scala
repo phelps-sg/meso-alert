@@ -1,5 +1,6 @@
 package actors
 
+import actors.MessageHandlers.UnRecognizedMessageHandlerWithBounce
 import akka.actor.{Actor, Props}
 import org.abstractj.kalium.NaCl
 import org.abstractj.kalium.crypto.{Random, SecretBox}

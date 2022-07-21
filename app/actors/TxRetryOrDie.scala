@@ -1,5 +1,6 @@
 package actors
 import actors.AuthenticationActor.Die
+import actors.MessageHandlers.UnrecognizedMessageHandler
 import akka.actor._
 import play.api.Logging
 

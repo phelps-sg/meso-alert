@@ -1,5 +1,6 @@
 package actors
 
+import actors.MessageHandlers.UnrecognizedMessageHandler
 import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import akka.http.scaladsl.model.ws.TextMessage
 import com.google.inject.Inject

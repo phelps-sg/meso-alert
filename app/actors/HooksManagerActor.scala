@@ -1,5 +1,6 @@
 package actors
 
+import actors.MessageHandlers.UnrecognizedMessageHandler
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
 import dao.{DuplicateHookException, Hook, HookDao}
