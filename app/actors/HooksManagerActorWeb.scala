@@ -19,16 +19,22 @@ object HooksManagerActorWeb {
   implicit val startWrites: Writes[Started[Hook[_]]] = new Writes[Started[Hook[_]]]() {
     def writes(started: Started[Hook[_]]): JsObject = {
       started match {
+
         case Started(hook: Webhook) =>
           Json.obj(fields =
             "uri" -> hook.uri.toString,
             "threshold" -> hook.threshold
           )
+
         case Started(hook: SlackChatHookEncrypted) =>
           Json.obj(fields =
             "channel" -> hook.channel.toString,
             "threshold" -> hook.threshold
           )
+
+        case Started(x) =>
+          throw new IllegalArgumentException(x.toString)
+
       }
     }
   }
