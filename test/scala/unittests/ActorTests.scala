@@ -103,8 +103,8 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
   //noinspection ZeroIndexToHead
   "MemPoolWatcher" should {
 
-    trait TextFixtures extends FixtureBindings with MemPoolWatcherFixtures
-      with WebSocketFixtures with ActorGuiceFixtures with ConfigurationFixtures with MemPoolWatcherActorFixtures
+    trait TextFixtures extends FixtureBindings with ConfigurationFixtures with MemPoolWatcherFixtures
+      with WebSocketFixtures with ActorGuiceFixtures with MemPoolWatcherActorFixtures
       with UserFixtures with TransactionFixtures {
     }
 
@@ -205,7 +205,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "TxPersistenceActor" should {
 
-    trait TestFixtures extends FixtureBindings with ActorGuiceFixtures with ConfigurationFixtures
+    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with ActorGuiceFixtures
       with MemPoolWatcherFixtures with TxUpdateFixtures with TxPersistenceActorFixtures
 
     "register itself as a listener to the mem-pool" in new TestFixtures {
@@ -243,7 +243,7 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "TxWatchActor" should {
 
-    trait TestFixtures extends FixtureBindings with MemPoolWatcherFixtures with ConfigurationFixtures
+    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with MemPoolWatcherFixtures
       with WebSocketFixtures with ActorGuiceFixtures with UserFixtures with TxWatchActorFixtures
 
     trait TestFixturesOneSubscriber extends TestFixtures {
@@ -308,9 +308,10 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "SlackChatManagerActor" should {
 
-    trait TestFixtures extends FixtureBindings
-      with MemPoolWatcherFixtures with ActorGuiceFixtures with ConfigurationFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
-      with SlackChatHookDaoFixtures with SlackChatActorFixtures with HookActorTestLogic[SlackChannel, SlackChatHook, SlackChatHookEncrypted] {
+    trait TestFixtures extends FixtureBindings with ConfigurationFixtures
+      with MemPoolWatcherFixtures with ActorGuiceFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
+      with SlackChatHookDaoFixtures with SlackChatActorFixtures
+      with HookActorTestLogic[SlackChannel, SlackChatHook, SlackChatHookEncrypted] {
 
       encryptionManager.initialiseFuture()
 
@@ -374,8 +375,8 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "WebhookManagerActor" should {
 
-    trait TestFixtures extends FixtureBindings with MemPoolWatcherFixtures
-      with ActorGuiceFixtures with ConfigurationFixtures with WebhookFixtures
+    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with MemPoolWatcherFixtures
+      with ActorGuiceFixtures with WebhookFixtures
       with WebhookActorFixtures with HookActorTestLogic[URI, Webhook, Webhook] {
     }
 
