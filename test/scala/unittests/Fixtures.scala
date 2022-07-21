@@ -524,7 +524,6 @@ object Fixtures {
   trait TxWatchActorFixtures { env: HasActorSystem with MemPoolWatcherFixtures =>
     val actorSystem: ActorSystem
     val mockWsActor: ActorRef
-    val mockMemPoolWatcher: MemPoolWatcherService
     val mockUserManager: UserManagerService
 
     val txWatchActor =
