@@ -13,7 +13,8 @@ object HooksManagerActorSlackChat {
             filteringActorFactory: TxFilterActor.Factory,
             slackChatHookDao: SlackChatHookDao,
             databaseExecutionContext: DatabaseExecutionContext): Props =
-    Props(new HooksManagerActorSlackChat(messagingActorFactory, filteringActorFactory, slackChatHookDao, databaseExecutionContext))
+    Props(new HooksManagerActorSlackChat(messagingActorFactory, filteringActorFactory,
+      slackChatHookDao, databaseExecutionContext))
 
 }
 
