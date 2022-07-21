@@ -1,3 +1,10 @@
+#
+# IMPORTANT: After making changes to this file run:
+#
+#   make docker-ci-push
+#
+#
+
 FROM registry.gitlab.com/mesonomics/spark-bitcoin-graph/mesonomics-sdk-base
 MAINTAINER sphelps@sphelps.net version: 0.1
 

@@ -1,3 +1,11 @@
+#
+# IMPORTANT: After making changes to this file, before committing your changes
+#   ensure that the play application starts up correctly in production mode
+#   by running:
+#
+#   make docker-server-start
+#
+
 FROM registry.gitlab.com/mesonomics/spark-bitcoin-graph/mesonomics-sdk-base
 MAINTAINER sphelps@sphelps.net version: 0.1
 
