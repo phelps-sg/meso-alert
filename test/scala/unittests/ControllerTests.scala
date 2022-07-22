@@ -57,7 +57,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       with TxWatchActorFixtures with MockMailManagerFixtures with ActorGuiceFixtures {
 
       val actorFactory = injector.instanceOf[AuthenticationActor.Factory]
-      val controller = new HomeController(Helpers.stubControllerComponents(), actorFactory, mockMailManager)
+      val controller = new HomeController(Helpers.stubControllerComponents(), mockMailManager)
     }
 
     "render feedback form without email delivery outcome message when using http method GET at /feedback" in new
