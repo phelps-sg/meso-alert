@@ -11,7 +11,7 @@ if [ -d "/etc/secrets" ]; then
 
   POSTGRES_PASSWORD=$(cat /etc/secrets/postgres/password)
 
-  SLACK_BOT_TOKEN=$(cat /etc/secrets/slack/bot_token)
+  SLACK_BOT_TOKEN=""
   SLACK_CLIENT_SECRET=$(cat /etc/secrets/slack/client_secret)
   SLACK_CLIENT_ID=$(cat /etc/secrets/slack/client_id)
 
