@@ -54,6 +54,9 @@ spec:
             - name: sodium-secret
               mountPath: "/etc/secrets/sodium"
               readOnly: true
+            - name: email-secret
+              mountPath: "/etc/secrets/email"
+              readOnly: true
       volumes:
         - name: postgres-cred
           secret:
@@ -67,5 +70,8 @@ spec:
         - name: sodium-secret
           secret:
             secretName: meso-alert-sodium-secret
+        - name: email-secret
+          secret:
+            secretName: meso-alert-email-secret
       imagePullSecrets:
         - name: regcred

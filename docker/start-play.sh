@@ -6,22 +6,31 @@ cd /root
 
 if [ -d "/etc/secrets" ]; then
   echo "Running in k8 environment"
+
   PLAY_KEY=$(cat /etc/secrets/play/secret | base64)
+
   POSTGRES_PASSWORD=$(cat /etc/secrets/postgres/password)
+
   SLACK_BOT_TOKEN=$(cat /etc/secrets/slack/bot_token)
   SLACK_CLIENT_SECRET=$(cat /etc/secrets/slack/client_secret)
   SLACK_CLIENT_ID=$(cat /etc/secrets/slack/client_id)
+
   SODIUM_KEY=$(cat /etc/secrets/sodium/key)
+
   POSTGRES_PORT=5432
   POSTGRES_HOST="meso-alert-postgres"
+
+  EMAIL_SMTP_HOST=smtp-relay.gmail.com
   EMAIL_SMTP_PORT=587
-  EMAIL_SMTP_HOST="smtp.gmail.com"
-  EMAIL_DESTINATION="alerts-feedback@symbiotica.ai"
-  EMAIL_HOST="alerts-feedback@symbiotica.ai"
-  EMAIL_PASSWORD="TODO"
+  EMAIL_HOST=$(cat /etc/secrets/email/username)
+  EMAIL_HOST_PASSWORD=$(cat /etc/secrets/email/password)
+  EMAIL_DESTINATION=steve@symbiotica.ai
+
 else
+
   echo "Running in staging environment"
   . "/root/meso-alert-config.sh"
+
 fi
 
 #
