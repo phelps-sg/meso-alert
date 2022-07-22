@@ -52,10 +52,10 @@ email.dispatcher {
   }
 }
 
-email.smtpHost = "smtp-mail.outlook.com"
-email.smtpPort = 587
-email.host = "meso_alert_tester@outlook.com"
-email.hostPassword = "ficZeq-vutsoj-qypru5"
-email.destination = "meso_alert_tester@outlook.com"
+email.smtpHost = "${EMAIL_SMTP_HOST}"
+email.smtpPort = ${EMAIL_SMTP_PORT}
+email.host = "${EMAIL_HOST}"
+email.hostPassword = "${EMAIL_HOST_PASSWORD}"
+email.destination = "${EMAIL_DESTINATION}"
 
 EOF
