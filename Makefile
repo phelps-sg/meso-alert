@@ -32,7 +32,7 @@ sdkman-install:
 	curl -s "https://get.sdkman.io" | bash
 
 jdk-install:
-	$(SDK_INIT); sdk install java $(JAVA_VERSION); sdk default java 11.0.12-open
+	$(SDK_INIT); sdk install java $(JAVA_VERSION); sdk default java $(JAVA_VERSION)
 
 sbt-install:
 	$(SDK_INIT); sdk install sbt
