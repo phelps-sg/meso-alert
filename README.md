@@ -102,11 +102,26 @@ For automated functional testing (4), make configuration changes to
 If new application configuration variables are added, then all the following files need to be updated:
 
 - docker/.env
+- [bin/staging-config.sh](bin/staging-config.sh)
 - [docker/docker-compose.yml](docker/docker-compose.yml)
 - [docker/meso-alert.docker](docker/meso-alert.docker)
 - [docker/start-play.sh](docker/start-play.sh)
-- [k8/sealed-secrets.yaml](k8/sealed-secrets.yaml)
+- [test/resources/application.test.conf](test/resources/application.test.conf)
 - This file
+
+If the new configuration involves secret values such as passwords, then the following files also need to be updated:
+
+- [k8/web-application.yaml](k8/web-application.yaml)
+- [k8/sealed-secrets.yaml](k8/sealed-secrets.yaml)
+
+For the latter, use a command similar to the following from within the production k8 cluster:
+
+~~~bash
+cat secret.yaml | kubeseal --controller-namespace default --controller-name sealed-secrets --format yaml > sealed-secret.yaml
+~~~
+
+and then edit [k8/sealed-secrets.yaml](k8/sealed-secrets.yaml) with the contents of `sealed-secret.yaml`, taking 
+care to delete the temporary file once the application is successfully deployed.
 
 ### Websocket client
 
