@@ -47,7 +47,7 @@ PLAY_KEY=`head -c 32 /dev/urandom | base64`
 EMAIL_SMTP_HOST='smtp-relay.gmail.com'
 EMAIL_SMTP_PORT=587
 EMAIL_HOST='<source address>'
-EMAIL_PASSWORD='<changeMe>'
+EMAIL_HOST_PASSWORD='<changeMe>'
 EMAIL_DESTINATION='feedback@symbiotica.ai'
 SLACK_DEPLOY_URL='<copy from Slack / Manage Distribution / Sharable URL>'
 EOF
