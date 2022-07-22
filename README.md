@@ -98,6 +98,17 @@ to [docker/start-play.sh](docker/start-play.sh).
 For automated functional testing (4), make configuration changes to
 [test/resources/application.test.conf](test/resources/application.test.conf).
 
+##### Summary: adding new configuration variables
+
+If new application configuration variables are added, then all the following files need to be updated:
+
+- docker/.env
+- [docker/docker-compose.yml](docker/docker-compose.yml)
+- [docker/meso-alert.docker](docker/meso-alert.docker)
+- [docker/start-play.sh](docker/start-play.sh)
+- [k8/sealed-secrets.yaml](k8/sealed-secrets.yaml)
+- This file
+
 ### Websocket client
 
 To start the javascript websocket client:
