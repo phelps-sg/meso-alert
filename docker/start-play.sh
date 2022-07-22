@@ -29,18 +29,22 @@ fi
 # using an environment variable.
 #
 cat <<EOF > application-production.conf
-sodium.secret="${SODIUM_KEY}"
-play.http.secret.key="${PLAY_KEY}"
-slack.clientId = "${SLACK_CLIENT_ID}"
-slack.clientSecret = "${SLACK_CLIENT_SECRET}"
-slack.botToken = "${SLACK_BOT_TOKEN}"
+
 email.smtpHost = "${EMAIL_SMTP_HOST}"
 email.smtpPort = "${EMAIL_SMTP_PORT}"
 email.host = "${EMAIL_HOST}"
 email.hostPassword = "${EMAIL_PASSWORD}"
 email.destination = "${EMAIL_DESTINATION}"
+
 play.filters.disabled+=play.filters.hosts.AllowedHostsFilter
+play.http.secret.key="${PLAY_KEY}"
 play.i18n.langs = ["en"]
+
+slack.clientId = "${SLACK_CLIENT_ID}"
+slack.clientSecret = "${SLACK_CLIENT_SECRET}"
+slack.botToken = "${SLACK_BOT_TOKEN}"
+
+sodium.secret="${SODIUM_KEY}"
 
 meso-alert.db = {
   connectionPool = "HikariCP" //use HikariCP for our connection pool
