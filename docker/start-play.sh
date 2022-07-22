@@ -42,7 +42,7 @@ cat <<EOF > application-production.conf
 email.smtpHost = "${EMAIL_SMTP_HOST}"
 email.smtpPort = "${EMAIL_SMTP_PORT}"
 email.host = "${EMAIL_HOST}"
-email.hostPassword = "${EMAIL_PASSWORD}"
+email.hostPassword = "${EMAIL_HOST_PASSWORD}"
 email.destination = "${EMAIL_DESTINATION}"
 
 play.filters.disabled+=play.filters.hosts.AllowedHostsFilter
