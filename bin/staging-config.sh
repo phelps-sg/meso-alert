@@ -13,6 +13,7 @@ sodium.secret = "${SODIUM_KEY}"
 
 slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"
+slack.deployURL = "${SLACK_DEPLOY_URL}"
 
 meso-alert.db = {
   connectionPool = "HikariCP" //use HikariCP for our connection pool

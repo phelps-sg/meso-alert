@@ -52,6 +52,7 @@ play.i18n.langs = ["en"]
 slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"
 slack.botToken = "${SLACK_BOT_TOKEN}"
+slack.deployURL = "${SLACK_DEPLOY_URL}"
 
 sodium.secret="${SODIUM_KEY}"
 

@@ -44,11 +44,12 @@ POSTGRES_PORT=5432
 POSTGRES_HOST=172.17.0.1
 SODIUM_KEY=`sbt "runMain util.GenerateSodiumKey" | awk '/private-key:/ {print $2}'`
 PLAY_KEY=`head -c 32 /dev/urandom | base64`
-EMAIL_SMTP_HOST= <changeMe>
-EMAIL_SMTP_PORT = <changeMe>
-EMAIL_HOST = <changeMe>
-EMAIL_PASSWORD = <changeMe>
-EMAIL_DESTINATION = <changeMe>
+EMAIL_SMTP_HOST=<changeMe>
+EMAIL_SMTP_PORT=<changeMe>
+EMAIL_HOST=<changeMe>
+EMAIL_PASSWORD=<changeMe>
+EMAIL_DESTINATION=<changeMe>
+SLACK_DEPLOY_URL='<changeMe>'
 EOF
 ~~~
 

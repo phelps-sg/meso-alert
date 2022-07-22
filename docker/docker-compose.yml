@@ -23,6 +23,7 @@ services:
         EMAIL_HOST: ${EMAIL_HOST}
         EMAIL_PASSWORD: ${EMAIL_PASSWORD}
         EMAIL_DESTINATION: ${EMAIL_DESTINATION}
+        SLACK_DEPLOY_URL: ${SLACK_DEPLOY_URL}
 
   meso-alert-ci:
     image: registry.gitlab.com/mesonomics/meso-alert/ci
