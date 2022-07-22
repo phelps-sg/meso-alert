@@ -6,7 +6,7 @@ import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.mvc._
-import play.api.Logging
+import play.api.{Configuration, Logging}
 import services.MailManager
 
 import javax.inject._
@@ -21,6 +21,7 @@ class EmailExecutionContextImpl @Inject() (system: ActorSystem)
 
 @Singleton
 class HomeController @Inject()(val controllerComponents: ControllerComponents,
+                               protected val config: Configuration,
                                val mailManager: MailManager)
                               (implicit val ec: ExecutionContext)
   extends BaseController with Logging {
@@ -34,9 +35,10 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   )(FeedbackFormData.apply)(FeedbackFormData.unapply)
 
   val feedbackForm: Form[FeedbackFormData] = Form(feedbackFormMapping)
+  val slackDeployURL: String = config.get[String]("slack.deployURL")
 
   def index(): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
-    Ok(views.html.index())
+    Ok(views.html.index(slackDeployURL))
   }
 
   def feedbackPage(): Action[AnyContent] = Action { implicit request =>

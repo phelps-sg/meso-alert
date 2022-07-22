@@ -37,18 +37,19 @@ postgres password you wish to use for the local staging database:
 
 ~~~bash
 cat << EOF > docker/.env
-POSTGRES_PASSWORD=<password>
-SLACK_CLIENT_ID=<obtain from slack app>
-SLACK_CLIENT_SECRET=<obtain from slack app>
+POSTGRES_PASSWORD='<password>'
+SLACK_CLIENT_ID=<copy from Slack / Basic Information / App Credentials / Client ID>
+SLACK_CLIENT_SECRET=<copy from Slack / Basic Information / App Credentials / Client Secret>
 POSTGRES_PORT=5432
-POSTGRES_HOST=172.17.0.1
+POSTGRES_HOST='172.17.0.1'
 SODIUM_KEY=`sbt "runMain util.GenerateSodiumKey" | awk '/private-key:/ {print $2}'`
 PLAY_KEY=`head -c 32 /dev/urandom | base64`
-EMAIL_SMTP_HOST= <changeMe>
-EMAIL_SMTP_PORT = <changeMe>
-EMAIL_HOST = <changeMe>
-EMAIL_PASSWORD = <changeMe>
-EMAIL_DESTINATION = <changeMe>
+EMAIL_SMTP_HOST='smtp-relay.gmail.com'
+EMAIL_SMTP_PORT=587
+EMAIL_HOST='<source address>'
+EMAIL_HOST_PASSWORD='<changeMe>'
+EMAIL_DESTINATION='feedback@symbiotica.ai'
+SLACK_DEPLOY_URL='<copy from Slack / Manage Distribution / Sharable URL>'
 EOF
 ~~~
 
