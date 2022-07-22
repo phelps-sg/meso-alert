@@ -47,7 +47,7 @@ PLAY_KEY=`head -c 32 /dev/urandom | base64`
 EMAIL_SMTP_HOST= <changeMe>
 EMAIL_SMTP_PORT = <changeMe>
 EMAIL_HOST = <changeMe>
-EMAIL_HOST_PASSWORD = <changeMe>
+EMAIL_PASSWORD = <changeMe>
 EMAIL_DESTINATION = <changeMe>
 EOF
 ~~~
