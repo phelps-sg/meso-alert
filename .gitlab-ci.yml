@@ -44,3 +44,5 @@ k8:
     - kubectl rollout restart deployment/meso-alert-deployment
   only:
     - master
+  environment:
+    name: production
