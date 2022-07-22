@@ -44,7 +44,7 @@ class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, 
     val msg = message(tx)
     val request = ChatPostMessageRequest.builder
       .token(hook.token)
-      .username("meso-alert")
+      .username("block-insights")
       .channel(hook.channel.id)
       .text(msg)
       .build
