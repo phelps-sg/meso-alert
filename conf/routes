@@ -8,7 +8,7 @@ GET     /                           controllers.HomeController.index()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
-GET     /ws                         controllers.HomeController.websocket
+GET     /ws                         controllers.WebsocketController.websocket
 POST    /api/webhooks/start         controllers.WebhooksController.start
 POST    /api/webhooks/stop          controllers.WebhooksController.stop
 POST    /api/webhooks/register      controllers.WebhooksController.register
