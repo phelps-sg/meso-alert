@@ -17,23 +17,11 @@ inThisBuild(
   )
 )
 
-Test / testForkedParallel := true
-Test / parallelExecution := true
-Test / javaOptions += "-Dwebdriver.gecko.driver=/usr/local/bin/geckodriver"
-Test / javaOptions += "-Dconfig.resource=application.test.conf"
-
 libraryDependencies += guice
 libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
 libraryDependencies += "org.abstractj.kalium" % "kalium" % "0.8.0"
 libraryDependencies += "com.github.daddykotex" %% "courier" % "3.2.0"
 
-val AkkaVersion = "2.6.19"
-libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test
-libraryDependencies += "org.awaitility" % "awaitility-scala" % "4.2.0" % Test
-libraryDependencies += "org.scalamock" %% "scalamock" % "5.2.0" % Test
-libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % Test
-libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.12" % Test
-libraryDependencies += "com.google.guava" % "guava" % "31.1-jre" % Test
 
 libraryDependencies ++= List(
   "com.softwaremill.sttp.client3" %% "async-http-client-backend-monix" % "3.6.2",
@@ -55,3 +43,16 @@ libraryDependencies ++= List(
   "com.slack.api" % "bolt-servlet" %  "1.22.2",
   "com.slack.api" % "bolt-jetty" %  "1.22.2",
 )
+
+Test / testForkedParallel := true
+Test / parallelExecution := true
+Test / javaOptions += "-Dwebdriver.gecko.driver=/usr/local/bin/geckodriver"
+Test / javaOptions += "-Dconfig.resource=application.test.conf"
+
+val AkkaVersion = "2.6.19"
+libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test
+libraryDependencies += "org.awaitility" % "awaitility-scala" % "4.2.0" % Test
+libraryDependencies += "org.scalamock" %% "scalamock" % "5.2.0" % Test
+libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % Test
+libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.12" % Test
+libraryDependencies += "com.google.guava" % "guava" % "31.1-jre" % Test
