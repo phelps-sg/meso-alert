@@ -59,8 +59,8 @@ EOF
 The server application can be run in four different modes:
 
 1. development mode,
-2. production mode in staging environment, 
-3. production mode in the production environment, and
+2. production mode in local development environment, 
+3. production mode in the actual production environment, and
 4. automated functional testing mode.
 
 To build and run the server in development mode (1), from the project root directory run:
@@ -69,7 +69,7 @@ To build and run the server in development mode (1), from the project root direc
 make sbt-run
 ~~~
 
-To build and run the server in production mode in a staging environment (2), from the project root directory run:
+To build and run the server in production mode in a local environment (2), from the project root directory run:
 
 ~~~bash
 make docker-server-start
@@ -83,9 +83,8 @@ the application is deployed into a kubernetes cluster.
 In mode 1, the application configuration is stored in `conf/application.conf`.  This file
 is automatically configured from `docker/.env` by the `staging-config` make target.
 
-Both production modes (2 and 3) use
-the same docker image. For mode 2, application secrets and configuration are obtained
-from `docker/.env`. However, in mode 3 application secrets are decrypted
+Both production modes (2 and 3) use the same docker image. For mode 2, application secrets 
+and configuration are obtained from `docker/.env`. However, in mode 3 application secrets are decrypted
 from [k8/sealed-secrets.yaml](k8/sealed-secrets.yaml) using
 [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) and then mounted underneath
 `/etc/secrets` inside the docker container. On startup the docker image checks for
