@@ -37,11 +37,11 @@ postgres password you wish to use for the local staging database:
 
 ~~~bash
 cat << EOF > docker/.env
-POSTGRES_PASSWORD=<password>
+POSTGRES_PASSWORD='<password>'
 SLACK_CLIENT_ID=<copy from Slack / Basic Information / App Credentials / Client ID>
 SLACK_CLIENT_SECRET=<copy from Slack / Basic Information / App Credentials / Client Secret>
 POSTGRES_PORT=5432
-POSTGRES_HOST=172.17.0.1
+POSTGRES_HOST='172.17.0.1'
 SODIUM_KEY=`sbt "runMain util.GenerateSodiumKey" | awk '/private-key:/ {print $2}'`
 PLAY_KEY=`head -c 32 /dev/urandom | base64`
 EMAIL_SMTP_HOST='smtp-relay.gmail.com'
