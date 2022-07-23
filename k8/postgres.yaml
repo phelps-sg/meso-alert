@@ -29,6 +29,8 @@ spec:
               value: "meso-alert"
             - name: POSTGRES_USER
               value: "meso-alert"
+            - name: PGDATA
+              value: "meso-alert"
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: postgredb
@@ -36,19 +38,6 @@ spec:
         - name: postgredb
           persistentVolumeClaim:
             claimName: meso-alert-postgres-pv-claim
----
-
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: meso-alert-postgres-pv-claim
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
 ---
 apiVersion: v1
 kind: Service
