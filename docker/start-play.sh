@@ -14,7 +14,7 @@ if [ -d "/etc/secrets" ]; then
   SLACK_BOT_TOKEN=""
   SLACK_CLIENT_SECRET=$(cat /etc/secrets/slack/client_secret)
   SLACK_CLIENT_ID=$(cat /etc/secrets/slack/client_id)
-  SLACK_DEPLOY_URL='https://slack.com/oauth/v2/authorize?client_id=581743246742.3822254705591&scope=commands,chat:write,links:write&user_scope='
+  SLACK_DEPLOY_URL=$(cat /etc/secrets/slack/deploy_url)
 
   SODIUM_KEY=$(cat /etc/secrets/sodium/key)
 
