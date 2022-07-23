@@ -57,8 +57,8 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
             logger.info("feedback email delivered")
             Ok(views.html.feedback("success"))
         } recover {
-          er =>
-            logger.error(er.getMessage)
+          case ex: Exception =>
+            logger.error(ex.getMessage)
             Ok(views.html.feedback("failed"))
         }
       }
