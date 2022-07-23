@@ -52,7 +52,7 @@ trait TxRetryOrDie[T] {
         }
 
     case Retry(tx, retryCount, Some(ex)) if retryCount >= maxRetryCount =>
-      self ! Die(s"Could not process tx ${tx.hash}. ${ex.getMessage}")
+      self ! Die(s"Could not process tx $tx. ${ex.getMessage}")
 
     case ScheduleRetry(timeout, tx, retryCount, ex) =>
       timers.startSingleTimer("retry", Retry(tx, retryCount, ex), timeout)
