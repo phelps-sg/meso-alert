@@ -10,4 +10,3 @@ target
 /nodejs/node_modules/
 /conf/application.conf
 /docker/.env
-/slack-manifest-staging.yml

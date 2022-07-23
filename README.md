@@ -35,11 +35,6 @@ kubectl create secret docker-registry regcred --docker-server=registry.gitlab.co
         --docker-email=<Gitlab email>
 ~~~
 
-## Deploying to Slack
-
-Create a [new Slack App](https://api.slack.com/apps?new_app=1) from the [slack-manifest.yml](./slack-manifest.yml) 
-file.
-
 ## Configuration
 
 Run the following in a shell from the project root directory, replacing <password> with the 
@@ -89,10 +84,10 @@ ngrok http 9000
 2. Make a note of the public ngrok address that is used to forward requests. This is shown in the _Forwarding_ field.
 3. Login to slack in a browser and head over to https://api.slack.com/apps.
 4. Click **Create New App** -> **From an app manifest** and select a test workspace to deploy the app.
-5. Copy the contents from `slack-manifest.yml` into the YAML input, **making sure to change the urls in the manifest to your own ngrok forwarding url from step 3**.
+5. Copy the contents from [slack-manifest-staging.yml](./slack-manifest-staging.yml) into the YAML input, **making sure to change the urls in the manifest to your own ngrok forwarding url from step 3**.
 6. After creating the app, copy the _Client ID_ and _Client Secret_ into your `docker/.env` file.
 7. From your app's home page, head over to **Basic Information** -> **Manage Distribution** -> **Distribute App**, and copy the _Sharable URL_ into the _SLACK_DEPLOY_URL_ in _docker/.env_
-8. After filling in the rest of the configuration fields in _docker/.env_, run the app with the command
+8. After filling in the rest of the configuration fields in `docker/.env`, run the app with the command
 9. With the app running, head over to http://localhost:9000, and add the app to a test workspace.
 10. In the test workspace where you deployed the app, issue the command `@block-insights` to a channel where you want to receive alerts.
 ~~~bash

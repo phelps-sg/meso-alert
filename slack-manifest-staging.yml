@@ -1,0 +1,32 @@
+display_information:
+  name: Block Insights (Staging)
+features:
+  bot_user:
+    display_name: block-insights-staging
+    always_online: false
+  slash_commands:
+    - command: /crypto-alert
+      url: https://f34d1cfcb2d9.eu.ngrok.io/api/slack/slash
+      description: Configures alert for cryptocurrency
+      usage_hint: "[threshold in BTC]"
+      should_escape: false
+    - command: /pause-alerts
+      url: https://f34d1cfcb2d9.eu.ngrok.io/api/slack/slash
+      description: Pause active alerts for this channel
+      should_escape: false
+    - command: /resume-alerts
+      url: https://f34d1cfcb2d9.eu.ngrok.io/api/slack/slash
+      description: Resume alerts for this channel
+      should_escape: false
+oauth_config:
+  redirect_urls:
+    - https://f34d1cfcb2d9.eu.ngrok.io/api/slack/auth
+  scopes:
+    bot:
+      - commands
+      - chat:write
+      - links:write
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false
