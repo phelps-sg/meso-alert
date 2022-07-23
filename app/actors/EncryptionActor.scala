@@ -38,9 +38,7 @@ class EncryptionActor extends Actor with Logging with UnRecognizedMessageHandler
       } else {
         sender() ! Success(result)
       }
-      val rng = new Random()
-      val box = new SecretBox(secretKey)
-      context.become(initialised(box, rng))
+      context.become(initialised(box = new SecretBox(secretKey), rng = new Random()))
 
     case message =>
       unrecognizedMessage(message)
