@@ -25,7 +25,7 @@ if [ -d "/etc/secrets" ]; then
   EMAIL_SMTP_PORT=587
   EMAIL_HOST=$(cat /etc/secrets/email/username)
   EMAIL_HOST_PASSWORD=$(cat /etc/secrets/email/password)
-  EMAIL_DESTINATION=steve@symbiotica.ai
+  EMAIL_DESTINATION=feedback@symbiotica.ai
 
 else
 
