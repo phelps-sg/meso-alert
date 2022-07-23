@@ -1,6 +1,6 @@
 # meso-alert
 
-Mesonomics crypto-currency alert service, written as a
+Mesonomics cryptocurrency alert service, written as a
 [Scala Play Framework](https://www.playframework.com/documentation/2.8.x/ScalaHome) web application.
 
 ## Development Environment
@@ -92,7 +92,7 @@ ngrok http 9000
 5. Copy the contents from `slack-manifest.yml` into the YAML input, **making sure to change the urls in the manifest to your own ngrok forwarding url from step 3**.
 6. After creating the app, copy the _Client ID_ and _Client Secret_ into your `docker/.env` file.
 7. From your app's home page, head over to **Basic Information** -> **Manage Distribution** -> **Distribute App**, and copy the _Sharable URL_ into the _SLACK_DEPLOY_URL_ in _docker/.env_
-8. After filling in the rest of the cofiguration fields in _docker/.env_, run the app with the command
+8. After filling in the rest of the configuration fields in _docker/.env_, run the app with the command
 9. With the app running, head over to http://localhost:9000, and add the app to a test workspace.
 10. In the test workspace where you deployed the app, issue the command `@block-insights` to a channel where you want to receive alerts.
 ~~~bash
