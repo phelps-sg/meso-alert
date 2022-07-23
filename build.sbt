@@ -22,7 +22,6 @@ libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
 libraryDependencies += "org.abstractj.kalium" % "kalium" % "0.8.0"
 libraryDependencies += "com.github.daddykotex" %% "courier" % "3.2.0"
 
-
 libraryDependencies ++= List(
   "com.softwaremill.sttp.client3" %% "async-http-client-backend-monix" % "3.6.2",
   "com.softwaremill.sttp.client3" %% "circe" % "3.6.2",
