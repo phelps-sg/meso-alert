@@ -89,7 +89,7 @@ curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trust
 ~~~bash
 ngrok http 9000
 ~~~
-3. Make a note of the public ngrok address that is used to forward requests. This is show in the _Forwarding_ field.
+3. Make a note of the public ngrok address that is used to forward requests. This is shown in the _Forwarding_ field.
 4. Login to slack in a browser and head over to https://api.slack.com/apps.
 5. Click **Create New App** -> **From an app manifest** and select a test workspace to deploy the app.
 6. Copy the contents from _slack-manifest.yml_ into the YAML input, **making sure to change the urls in the manifest to your own ngrok forwarding url from step 3**.
