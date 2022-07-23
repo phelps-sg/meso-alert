@@ -61,4 +61,4 @@ k8-digitalocean:
   only:
     - master
   environment:
-    name: production
+    name: production-digitalocean
