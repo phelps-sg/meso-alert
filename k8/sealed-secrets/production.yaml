@@ -63,7 +63,7 @@ spec:
       name: meso-alert-email-secret
       namespace: default
 ---
-apiversion: bitnami.com/v1alpha1
+apiVersion: bitnami.com/v1alpha1
 kind: sealedsecret
 metadata:
   creationtimestamp: null
