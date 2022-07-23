@@ -19,10 +19,20 @@ To install the tools needed to build and run the application from the shell run:
 make install-dev
 ~~~
 
-Ensure that docker is logged into the container registry:
+### Ensure that docker is logged into the container registry
+
+#### On local development machines
 
 ~~~bash
 docker login registry.gitlab.com
+~~~
+
+#### On Kubernetes clusters 
+
+~~~bash
+kubectl create secret docker-registry regcred --docker-server=registry.gitlab.com \
+        --docker-username=<Gitlab username> --docker-password=<Gitlab access-token> \
+        --docker-email=<Gitlab email>
 ~~~
 
 ## Deploying to Slack
