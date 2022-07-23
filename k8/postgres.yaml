@@ -37,21 +37,7 @@ spec:
           persistentVolumeClaim:
             claimName: meso-alert-postgres-pv-claim
 ---
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: meso-alert-postgres-pv
-  labels:
-    type: local
-spec:
-  storageClassName: manual
-  capacity:
-    storage: 10Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/data/1/meso-alert"
----
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
