@@ -65,7 +65,7 @@ meso-alert.db = {
     portNumber = "${POSTGRES_PORT}"
     databaseName = "meso-alert"
     user = "meso-alert"
-    password = ""${POSTGRES_PASSWORD}""
+    password = "${POSTGRES_PASSWORD}"
   }
   numThreads = 12
   queueSize = 50000
