@@ -68,7 +68,7 @@ class FunctionalTests extends PlaySpec
 
   "The home page" must {
     "render" in {
-      go to s"http://localhost:$port/"
+      go to s"https://f34d1cfcb2d9.eu.ngrok.io/"
       pageTitle mustBe "Block Insights - Access free real-time mempool data"
     }
   }

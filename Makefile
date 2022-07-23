@@ -54,6 +54,12 @@ sbt-run: staging-config docker-db-start
 sbt-test:
 	$(SDK_INIT); sbt test
 
+sbt-unit-tests:
+	$(SDK_INIT); sbt "testOnly unittests.*"
+
+sbt-functional-tests:
+	$(SDK_INIT); sbt "testOnly functionaltests.*"
+
 sbt-build:
 	$(SDK_INIT); sbt dist
 

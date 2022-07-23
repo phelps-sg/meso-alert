@@ -1,20 +1,27 @@
 stages:
   - build
-  - test
+  - pre-deploy-tests
   - push
-  - deploy
+  - deploy-staging
+  - functional-tests
+  - deploy-production
 
 image:
   name: registry.gitlab.com/mesonomics/meso-alert/ci
   entrypoint: [""]
 
-scalatest:
-  stage: test
+unit-tests:
+  stage: pre-deploy-tests
   script:
-    - make sbt-test
+    - make sbt-unit-tests
+
+functional-tests:
+  stage: functional-tests
+  script:
+    - make sbt-functional-tests
 
 scalafix:
-  stage: test
+  stage: pre-deploy-tests
   script:
     - make sbt-scalafix-check
 
@@ -31,8 +38,8 @@ docker:
   only:
     - master
 
-k8:
-  stage: deploy
+k8-staging:
+  stage: deploy-staging
   image:
     name: bitnami/kubectl:latest
     entrypoint: ['']
@@ -47,10 +54,10 @@ k8:
   only:
     - master
   environment:
-    name: production
+    name: staging
 
-k8-digitalocean:
-  stage: deploy
+k8-production:
+  stage: deploy-production
   image:
     name: bitnami/kubectl:latest
     entrypoint: ['']
@@ -65,4 +72,4 @@ k8-digitalocean:
   only:
     - master
   environment:
-    name: production-digitalocean
+    name: production
