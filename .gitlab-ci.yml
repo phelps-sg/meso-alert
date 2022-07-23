@@ -39,9 +39,10 @@ k8:
   script:
     - kubectl config use-context mesonomics/meso-alert:meso-alert-k8agent
     - kubectl apply -f k8/staging/sealed-secrets.yaml
-    - kubectl apply -f k8/web-application.yaml
+    - kubectl apply -f k8/staging/meso-alert-service.yaml
     - kubectl apply -f k8/staging/postgres-pv.yaml
     - kubectl apply -f k8/postgres.yaml
+    - kubectl apply -f k8/web-application.yaml
     - kubectl rollout restart deployment/meso-alert-deployment
   only:
     - master
@@ -56,9 +57,10 @@ k8-digitalocean:
   script:
     - kubectl config use-context mesonomics/meso-alert:digitalocean-production
     - kubectl apply -f k8/production/sealed-secrets.yaml
-    - kubectl apply -f k8/web-application.yaml
+    - kubectl apply -f k8/production/meso-alert-service.yaml
     - kubectl apply -f k8/production/postgres-pv.yaml
     - kubectl apply -f k8/postgres.yaml
+    - kubectl apply -f k8/web-application.yaml
     - kubectl rollout restart deployment/meso-alert-deployment
   only:
     - master
