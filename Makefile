@@ -40,7 +40,10 @@ sbt-install:
 nvm-install:
 	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 
-install-dev: curl-install sdkman-install jdk-install sbt-install docker-install nvm-install libsodium-install geckodriver-install
+ngrok-install:
+	curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list; sudo apt update; sudo apt install ngrok
+
+install-dev: curl-install sdkman-install jdk-install sbt-install docker-install nvm-install libsodium-install geckodriver-install ngrok-install
 
 staging-config:
 	bin/staging-config.sh
