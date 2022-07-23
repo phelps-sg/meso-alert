@@ -54,7 +54,7 @@ k8-digitalocean:
     entrypoint: ['']
   script:
     - kubectl config use-context mesonomics/meso-alert:digitalocean-production
-    - kubectl apply -f k8/sealed-secrets.yaml
+    - kubectl apply -f k8/sealed-secrets/production.yaml
     - kubectl apply -f k8/web-application.yaml
     - kubectl apply -f k8/postgres.yaml
     - kubectl rollout restart deployment/meso-alert-deployment

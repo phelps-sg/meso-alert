@@ -1,0 +1,47 @@
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  creationTimestamp: null
+  name: meso-alert-postgres-password
+  namespace: default
+spec:
+  encryptedData:
+    password: AgAtfb7Uj/cdxP/e5A+87BYsCzwIchamBqBusLITZiW07OsToUBaU1tJozIsUnGRdUqlpantvEMnP3F3xIzak+Qqvm/eqDdDbssIw7H08vh3cEd5LV6qoI9D/x0Egh13fnMQwhBJjtcu/StbHtZoIxunwg3849EzNZbdmKdR2bCKgQmnTFL/bI2t5DkGlOg8GdSt2N4rgw/uXhz0V+CLE5+zcEZCbK2ZDNcwi8lBEoG+D4dg4Xs8lhIFQ4LzToNaWTLKbi6D9zC15PpsexekLzvzuvdjeQ0+icO+VmDB0TvYM4+naLzCghI3PJM1Tq5SJztaBW6RlaUsvCTuNbWZ1hGO5qIFo/Q5tdgi3hPV/3UsROxQFEEhTi3+b1AYvCXakWV/EFnzDphceahS8RCBdmNbFacsx8jEQjf0MVnq9rSVb9gtmwctJqnVDviaWBLj3KW9AI9MTpirnkxQGvEA8ILSKO7UGbCU9Q4c8wGUYBIbkrwGzPNYHPfjBS+h19DN+rzCnS7AsbbzWwXmNSmEljGt+vnYZTZY/+Gvgau5K2bZP8V0/644VYkNXLZFxVEpKTCI5/2H4oCAkku3Avux0LY87pdotCC9hO0XiotQaD14wevmSnnsN+AGzYE6Yjz9we8YkqsuavKdEg5xR6VgeKIVex7NcGgPBrt0+jNVewtFXw105D+4+lgLRK0bYzRF0pqjkqMvqkkwztscxoaZqwQKvsc=
+  template:
+    data: null
+    metadata:
+      creationTimestamp: null
+      name: meso-alert-postgres-password
+      namespace: default
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  creationTimestamp: null
+  name: meso-alert-play-secret
+  namespace: default
+spec:
+  encryptedData:
+    secret: AgAqxWgnWsrP0l8lU3HorwX/tzEFOcsvDX8IyOPFkiUBQcW9GjU95QL6AIb6QV8pHJlcUAUBjEYQgXeBYXWQIOwfj9AMeWChReeYfra1CNFAhiJjku2KnpzquT/C2nYUmsV9L3qvv8BDHEywdgRSv+soCpkdgIdRn0Rw4wfKJVFQWV92EkZXeE2SvYLn6IFYWPPT53ffZMtcdbQjBbwQCk1EfprY/xUnQ95yA7ll8AJGmoN4uuM2tgoPqRuIWSYkjTZn/eE9oeC+tXB2EWD6krVdxMTcHcAYRykxO9M3Lm5nvtzFjyPb0+U/YMg4owEpuwElAMZZEq4DqnK/zpQzNB3vvpcsQjfxf9yj6lk2TZU/OmtZoNPuegeXWt7v6dbwcohMe9Ln+5LcrQGbdx8nKoFCmhCz/Om4v6HTCBcIdqVJ9GCKOpXd8ZDK/YyObiXn6l6qhUCNIKLzpOBA6QjHXrW2n9QMrUxjihs5DM6SqLFZVEEIWMr2p9CqYEQrWpZCddXT2w0up8L7mSc9cNDJk4od6198DjBVewKDLQKZXPRxWUPOYQxh0UjG2di1VODIeivE+2gQmCgYT4n4UnX4LSIS4yNQ7uTw4vomZYycTSNuscQeuk3Nn1BVGAq0r33il9h2o/044ETFkkCWaMzLX/n4SsocJNFmDTYuD0iW9MGfznw+GL4rF9MYnnaEMAsDf1XO5e+9AjmzHmE+x4kEFSaRXIO8Pt8nDcPwOYBpV4AW8g==
+  template:
+    data: null
+    metadata:
+      creationTimestamp: null
+      name: meso-alert-play-secret
+      namespace: default
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  creationTimestamp: null
+  name: meso-alert-sodium-secret
+  namespace: default
+spec:
+  encryptedData:
+    key: AgALULfSLAwAl32lMlkVOkhm2iOtgZMclQTSZRJwokXz4EW0G512YOkVv4VxMm3i6Y0/UbZyqWv0rjsFpcKD23JYMw4i2t1CDPFzcjlqUZ8fsnOdhMp79WipjiOntAW8jUhaM5RbSFzgV5HVbVBnAQ+Vsf89Sz18FOFTnurhMto98tsvSL8KXzSg45SzqLoey3UdOz8uoFEIoi4ZbVVvULDMCPJBQnWeHx0zLbyXngsjLa2hVV7B1dVi+XAmqNcFKY7ZuoG6ZbzhoCyEo28tHDCXDpA9Xcq2p5jho10D7e/zO3KJ+EKysrfb83Vjx8sW8FGydWIRkkxTxUHbg031EpyrhnqwLpdFzAgGGRJaY0DlfohoMMmsmyFjkTkhEqjloy1KoDMEyeVB6m4V9BsHahlmHOki3lZgYLifi2bZwlRwiV9fU2VMXst30AfV6ICSKVU1Ve9Lo+vjOCyXj0iKxLdUfn6U2X6V3PaCr1/yniKchufHtR0RJC2yYN1UE+P5YaMYV+KysRBZwY4pEKvu9FyPK0ECJUnSD8oy6Fbh7M35k6SgzyoGgDPEKXJmjluPVXqYGfUmXVmFy8IZD1u+HmXEJsRRmEV1BWEC/Rf1voMN4xvTzMrQqSDQeq+AJefHbhs58t9KVA3jtV0IaZHJ0O000NgKhcJUgQE1RsHRqfRAhd+ws3XO+6Gq1wEb/N1gIZ7iXKpweskfqkMpYAqU5A8+zi8fGhhC/ixbOnb64ibEK01saTr8VwiihLGEdyA=
+  template:
+    data: null
+    metadata:
+      creationTimestamp: null
+      name: meso-alert-sodium-secret
+      namespace: default
