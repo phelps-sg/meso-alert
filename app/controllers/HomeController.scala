@@ -59,6 +59,7 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
         } recover {
           case ex: Exception =>
             logger.error(ex.getMessage)
+            ex.printStackTrace()
             Ok(views.html.feedback("failed"))
         }
       }
