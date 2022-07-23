@@ -1,12 +1,14 @@
+kind: PersistentVolumeClaim
 apiVersion: v1
-kind: PersistentVolume
 metadata:
-  name: meso-alert-postgres-pv
+  name: meso-alert-postgres-pv-claim
+  namespace: default
   labels:
     type: local
 spec:
-  storageClassName: do-block-storage
-  capacity:
-    storage: 10Gi
   accessModes:
     - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: do-block-storage
