@@ -181,6 +181,21 @@ curl -X POST http://localhost:9000/api/webhooks/stop --data \
 -H 'Content-Type: application/json'
 ~~~
 
+## Connecting to the production database
+
+Use a command similar to the following:
+
+~~~
+kubectl port-forward <postgres-pod-name> 5454:5432
+~~~
+
+The above will forward connections to port 5454 on localhost to the production postgres instance.  To
+obtain pod names, run the command:
+
+~~~
+kubectl get pods
+~~~
+
 ## Making changes to the code
 
 Please read the [contributing guidelines](CONTRIBUTING.md) before making any changes.
