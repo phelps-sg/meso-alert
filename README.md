@@ -156,6 +156,9 @@ make client-start
 There is a REST API to manage
 [Slack webhooks](https://slack.com/intl/en-gb/help/articles/115005265063-Incoming-webhooks-for-Slack).
 
+Currently, this functionality is disabled by default.  To enable it un-comment the relevant lines in 
+[/conf/routes](/conf/routes).
+
 #### Registering a new webhook
 
 The following example registers a new webhook with a threshold of 20000000 Satoshi.
