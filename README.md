@@ -102,13 +102,13 @@ the application is deployed into a kubernetes cluster.
 In mode 1, the application configuration is stored in `conf/application.conf`.  This file
 is automatically configured from `docker/.env` by the `staging-config` make target.
 
-Both production modes (2 and 3) use the same docker image. For mode 2, application secrets 
+Both production modes (2 and 3) use the same docker image. For mode 2, application secrets
 and configuration are obtained from `docker/.env`. However, in mode 3 application secrets are decrypted
 from [k8/staging/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml) using
 [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) and then mounted underneath
 `/etc/secrets` inside the docker container. On startup the docker image checks for
-`/etc/secrets`, and if present it loads the corresponding secrets and settings in `docker/.env`
-are ignored.  
+`/etc/secrets`. If this directory is present it loads the corresponding secrets, and ignores the 
+settings in `docker/.env`.
 
 Non-secret configuration changes for kubernetes production mode (3) should be made directly
 to [docker/start-play.sh](docker/start-play.sh).
