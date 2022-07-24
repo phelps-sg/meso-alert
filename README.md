@@ -185,14 +185,14 @@ curl -X POST http://localhost:9000/api/webhooks/stop --data \
 
 Use a command similar to the following:
 
-~~~
+~~~bash
 kubectl port-forward <postgres-pod-name> 5454:5432
 ~~~
 
 The above will forward connections to port 5454 on localhost to the production postgres instance.  To
 obtain pod names, run the command:
 
-~~~
+~~~bash
 kubectl get pods
 ~~~
 
