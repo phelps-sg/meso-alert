@@ -104,7 +104,7 @@ is automatically configured from `docker/.env` by the `staging-config` make targ
 
 Both production modes (2 and 3) use the same docker image. For mode 2, application secrets 
 and configuration are obtained from `docker/.env`. However, in mode 3 application secrets are decrypted
-from [k8/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml) using
+from [k8/staging/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml) using
 [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) and then mounted underneath
 `/etc/secrets` inside the docker container. On startup the docker image checks for
 `/etc/secrets`, and if present it loads the corresponding secrets and settings in `docker/.env`
@@ -131,7 +131,8 @@ If new application configuration variables are added, then all the following fil
 If the new configuration involves secret values such as passwords, then the following files also need to be updated:
 
 - [k8/web-application.yaml](k8/web-application.yaml)
-- [k8/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml)
+- [k8/staging/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml)
+- [k8/production/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml)
 
 For the latter, use a command similar to the following from within the production k8 cluster:
 
@@ -139,7 +140,7 @@ For the latter, use a command similar to the following from within the productio
 cat secret.yaml | kubeseal --controller-namespace default --controller-name sealed-secrets --format yaml > sealed-secret.yaml
 ~~~
 
-and then edit [k8/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml) with the contents of `sealed-secret.yaml`, taking 
+and then edit [k8/staging/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml) with the contents of `sealed-secret.yaml`, taking 
 care to delete the temporary file once the application is successfully deployed.
 
 ### Websocket client
