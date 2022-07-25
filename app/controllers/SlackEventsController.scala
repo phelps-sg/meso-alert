@@ -11,7 +11,7 @@ import services.HooksManagerSlackChat
 
 import scala.concurrent.{ExecutionContext}
 
-class EventsController @Inject()(val controllerComponents: ControllerComponents,
+class SlackEventsController @Inject()(val controllerComponents: ControllerComponents,
                                  val hooksManager: HooksManagerSlackChat)
                                 (implicit ec: ExecutionContext)
   extends BaseController with Logging {
