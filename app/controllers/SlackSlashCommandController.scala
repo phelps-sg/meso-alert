@@ -163,8 +163,13 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
     eventType match {
       case "channel_deleted" =>
         val channel = (request.body \ "event" \ "channel").as[String]
-        logger.info(s"Channel deleted ${channel}")
-        //TODO: implement logic for terminating hook
+        val f = for {
+          stopped <- hooksManager.stop(SlackChannel(channel))
+        } yield stopped
+        f.map { result => logger.info(s"Stopping hook ${result.hook} because channel was deleted.") }
+          .recover {
+            case HookNotStartedException(_) => logger.info("Channel with inactive hook was deleted.")
+          }
       case _ => logger.info("Different event")
     }
     Ok("ok")
