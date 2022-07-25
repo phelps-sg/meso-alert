@@ -140,8 +140,8 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
   def resumeAlerts(implicit slashCommand: SlashCommand): Future[Result] = {
     logger.debug("Resuming alerts")
     val f = for {
-      stopped <- hooksManager.start(channel)
-    } yield stopped
+      started <- hooksManager.start(channel)
+    } yield started
     f.map { _ => Ok(messagesApi("slackResponse.resumeAlerts")) }
       .recover {
         case HookAlreadyStartedException(_) =>
