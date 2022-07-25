@@ -4,7 +4,7 @@ import actors.{HookAlreadyStartedException, HookNotStartedException}
 import dao._
 import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue}
 import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.HooksManagerSlackChat
 
