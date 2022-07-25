@@ -145,6 +145,9 @@ care to delete the temporary file once the application is successfully deployed.
 
 ### Websocket client
 
+Currently, this functionality is disabled by default.  To enable it un-comment the relevant line in
+[/conf/routes](/conf/routes).
+
 To start the javascript websocket client:
 
 ~~~bash
