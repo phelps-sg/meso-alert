@@ -367,6 +367,7 @@ object Fixtures {
     val teamId = "testTeamId"
     val teamName = "testTeam"
     val slackTeam = SlackTeam(teamId, userId, botId, accessToken, teamName)
+    val updatedSlackTeam = slackTeam.copy(teamName = "updated")
   }
 
   trait SlickSlashCommandFixtures {

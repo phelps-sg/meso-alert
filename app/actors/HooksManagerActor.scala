@@ -3,7 +3,7 @@ package actors
 import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import akka.actor.{Actor, ActorRef, PoisonPill}
 import akka.pattern.pipe
-import dao.{DuplicateHookException, Hook, HookDao}
+import dao.{DuplicateKeyException, Hook, HookDao}
 import play.api.Logging
 import play.api.libs.concurrent.InjectedActorSupport
 import slick.DatabaseExecutionContext
@@ -62,7 +62,7 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
       dao.insert(hook) map {
         _ => Success(Registered(hook))
       } recover {
-        case DuplicateHookException(_) => Failure(HookAlreadyRegisteredException(hook))
+        case DuplicateKeyException(_) => Failure(HookAlreadyRegisteredException(hook))
       } pipeTo sender()
 
     case Update(newHook: Y) =>

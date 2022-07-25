@@ -48,7 +48,7 @@ trait SlickPrimaryKeyDao[X, Y, Z] { slickDao: SlickDao[Z] with Logging =>
   def insertOrUpdate(value: Y): Future[Int] = {
     for {
       storedValue <- toDB(value)
-      result <- db.run(table += storedValue )
+      result <- db.run(table.insertOrUpdate(storedValue))
     } yield result
   }
 
@@ -59,7 +59,7 @@ trait SlickPrimaryKeyDao[X, Y, Z] { slickDao: SlickDao[Z] with Logging =>
       storedHook <- storeHook
       result <-
         if (n > 0) {
-          Future.failed(DuplicateHookException(value))
+          Future.failed(DuplicateKeyException(value))
         } else {
           db.run(table += storedHook)
         }

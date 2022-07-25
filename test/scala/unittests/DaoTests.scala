@@ -3,7 +3,7 @@ package unittests
 import actors.EncryptionActor.Encrypted
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
-import dao.{SlackChatHookEncrypted, SlackTeamEncrypted, SlashCommand, TransactionUpdate}
+import dao.{DuplicateKeyException, SlackChatHookEncrypted, SlackTeamEncrypted, SlashCommand, TransactionUpdate}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should
@@ -122,11 +122,34 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     "throw NoSuchElementException when a user with the given user id does not exist" in new TestFixtures {
       afterDbInit {
         for {
-          _ <- slickSlackTeamDao.insertOrUpdate(slackTeam)
+          _ <- slickSlackTeamDao.insert(slackTeam)
           user <- slickSlackTeamDao.find("nonexistent")
         } yield user
       }.failed.futureValue should matchPattern {
         case _: NoSuchElementException =>
+      }
+    }
+
+    "throw an error if inserting an existing team" in new TestFixtures {
+      afterDbInit {
+        for {
+          _ <- slickSlackTeamDao.insert(slackTeam)
+          error <- slickSlackTeamDao.insert(updatedSlackTeam)
+        } yield error
+      }.failed.futureValue should matchPattern {
+        case DuplicateKeyException(_) =>
+      }
+    }
+
+    "update an existing team" in new TestFixtures {
+      afterDbInit {
+        for {
+          _ <- slickSlackTeamDao.insert(slackTeam)
+          _ <- slickSlackTeamDao.insertOrUpdate(updatedSlackTeam)
+          team <- slickSlackTeamDao.find(teamId)
+        } yield team
+      }.futureValue should matchPattern {
+        case `updatedSlackTeam` =>
       }
     }
   }
