@@ -47,6 +47,8 @@ Test / testForkedParallel := true
 Test / parallelExecution := true
 Test / javaOptions += "-Dwebdriver.gecko.driver=/usr/local/bin/geckodriver"
 Test / javaOptions += "-Dconfig.resource=application.test.conf"
+Test / scalaSource := baseDirectory.value / "test/scala"
+Test / resourceDirectory := baseDirectory.value / "test/resources"
 
 val AkkaVersion = "2.6.19"
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test
