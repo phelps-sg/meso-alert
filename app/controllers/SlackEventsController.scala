@@ -20,23 +20,23 @@ class EventsController @Inject()(val controllerComponents: ControllerComponents,
     val requestBody = request.body
     // deal with the one-time challenge sent from the Events api to verify ownership of url
     val isChallenge = (requestBody \ "challenge").asOpt[String]
-    if (!isChallenge.isEmpty) {
-      Ok(isChallenge.get)
-    } else {
-      val eventType = (requestBody \ "event" \ "type").as[String]
-      eventType match {
-        case "channel_deleted" =>
-          val channel = (requestBody \ "event" \ "channel").as[String]
-          val f = for {
-            stopped <- hooksManager.stop(SlackChannel(channel))
-          } yield stopped
-          f.map { result => logger.info(s"Stopping hook ${result.hook} because channel was deleted.") }
-            .recover {
-              case HookNotStartedException(_) => logger.info("Channel with inactive hook was deleted.")
-            }
-        case _ => logger.info("Different event")
-      }
-      Ok("")
+    isChallenge match {
+      case Some(challengeValue) => Ok(challengeValue)
+      case None =>
+        val eventType = (requestBody \ "event" \ "type").as[String]
+        eventType match {
+          case "channel_deleted" =>
+            val channel = (requestBody \ "event" \ "channel").as[String]
+            val f = for {
+              stopped <- hooksManager.stop(SlackChannel(channel))
+            } yield stopped
+            f.map { result => logger.info(s"Stopping hook ${result.hook} because channel was deleted.") }
+              .recover {
+                case HookNotStartedException(_) => logger.info("Channel with inactive hook was deleted.")
+              }
+          case _ => logger.info("Different event")
+        }
+        Ok("")
     }
   }
 }
