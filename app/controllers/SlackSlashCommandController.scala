@@ -4,6 +4,7 @@ import actors.{HookAlreadyStartedException, HookNotStartedException}
 import dao._
 import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}
+import play.api.libs.json.JsValue
 import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.HooksManagerSlackChat
 
@@ -155,6 +156,18 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
       case "/pause-alerts" => pauseAlerts
       case "/resume-alerts" => resumeAlerts
     }
+  }
+
+  def eventsAPI(): Action[JsValue] = Action(parse.json) { implicit request =>
+    val eventType = (request.body \ "event" \ "type").as[String]
+    eventType match {
+      case "channel_deleted" =>
+        val channel = (request.body \ "event" \ "channel").as[String]
+        logger.info(s"Channel deleted ${channel}")
+        //TODO: implement logic for terminating hook
+      case _ => logger.info("Different event")
+    }
+    Ok("ok")
   }
 
 }
