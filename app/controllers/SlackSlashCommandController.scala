@@ -176,9 +176,6 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
             .recover {
               case HookNotStartedException(_) => logger.info("Channel with inactive hook was deleted.")
             }
-        case "url_verification" =>
-          val challenge = (requestBody \ "event" \ "challenge").as[String]
-          Ok(challenge)
         case _ => logger.info("Different event")
       }
       Ok("")
