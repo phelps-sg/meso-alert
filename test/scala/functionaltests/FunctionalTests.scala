@@ -1,76 +1,18 @@
 package functionaltests
 
-import actors.MemPoolWatcherActor
-import com.google.inject.{AbstractModule, Inject}
-import org.bitcoinj.core.{NetworkParameters, PeerGroup}
-import org.openqa.selenium.firefox.{FirefoxDriverLogLevel, FirefoxOptions}
-import org.scalatest.TestData
-import org.scalatestplus.play.guice.GuiceOneServerPerTest
-import org.scalatestplus.play.{FirefoxFactory, OneBrowserPerSuite, PlaySpec}
-import play.api.Application
-import play.api.inject.guice.GuiceApplicationBuilder
-import play.libs.akka.AkkaGuiceSupport
-import postgres.PostgresContainer
-import services.PeerGroupSelection
-import slick.jdbc.JdbcBackend.Database
-import slick.{DatabaseExecutionContext, jdbc}
-import unittests.Fixtures.MemPoolWatcherFixtures
+import org.openqa.selenium.firefox.{FirefoxDriver, FirefoxOptions}
+import org.scalatest.flatspec
+import org.scalatest.matchers.should
+import org.scalatestplus.selenium.WebBrowser
 
-import javax.inject.{Provider, Singleton}
+class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with WebBrowser {
 
-object TestPeerGroupSelection extends MemPoolWatcherFixtures {
-  val testPeerGroup = new PeerGroup(mainNetParams)
-}
+  private val options = new FirefoxOptions().setHeadless(true)
+  implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
 
-@Singleton
-class TestPeerGroupSelection extends PeerGroupSelection {
-  val params: NetworkParameters = TestPeerGroupSelection.mainNetParams
-  lazy val get: PeerGroup = TestPeerGroupSelection.testPeerGroup
-}
-
-@Singleton
-class TestMemPoolWatcherActor @Inject() (peerGroupSelection: PeerGroupSelection,
-                                          databaseExecutionContext: DatabaseExecutionContext)
-  extends MemPoolWatcherActor(peerGroupSelection, databaseExecutionContext)  {
-
-  override def initialisePeerGroup(): Unit = {
-    logger.debug("No initialisation in test environment")
-  }
-}
-
-class FunctionalTests extends PlaySpec
-  with PostgresContainer
-  with OneBrowserPerSuite
-  with FirefoxFactory
-  with GuiceOneServerPerTest
-  with MemPoolWatcherFixtures {
-
-  override lazy val firefoxOptions: FirefoxOptions =
-    new FirefoxOptions()
-      .setHeadless(true)
-      .setLogLevel(FirefoxDriverLogLevel.INFO)
-
-  class TestModule extends AbstractModule with AkkaGuiceSupport {
-
-    override def configure(): Unit = {
-      bind(classOf[Database]).toProvider(new Provider[Database] {
-        val get: jdbc.JdbcBackend.Database = database
-      })
-      bind(classOf[PeerGroupSelection]).to(classOf[TestPeerGroupSelection])
-      bindActor(classOf[TestMemPoolWatcherActor], "mem-pool-actor")
-    }
-  }
-
-  override def newAppForTest(td: TestData): Application = {
-    val builder = GuiceApplicationBuilder(overrides = List(new TestModule()))
-    builder.build()
-  }
-
-  "The home page" must {
-    "render" in {
-      go to "https://f34d1cfcb2d9.eu.ngrok.io/"
-      pageTitle mustBe "Block Insights - Access free real-time mempool data"
-    }
+  "The home page" should "render" in {
+    go to "https://f34d1cfcb2d9.eu.ngrok.io/"
+    pageTitle should be("Block Insights - Access free real-time mempool data")
   }
 
 }
