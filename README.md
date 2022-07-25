@@ -86,7 +86,7 @@ ngrok http 9000
 4. Click **Create New App** -> **From an app manifest** and select a test workspace to deploy the app.
 5. Copy the contents from [slack-manifest-staging.yml](./slack-manifest-staging.yml) into the YAML input, **making sure to change the urls in the manifest to your own ngrok forwarding url from step 3**.
 6. After creating the app, copy the _Client ID_ and _Client Secret_ into your `docker/.env` file.
-7. From your app's home page, head over to **Basic Information** -> **Manage Distribution** -> **Distribute App**, and copy the _Sharable URL_ into the _SLACK_DEPLOY_URL_ in _docker/.env_
+7. From your app's home page, head over to **Basic Information** -> **Manage Distribution** -> **Distribute App**, and copy the _Sharable URL_ into the `SLACK_DEPLOY_URL` in `docker/.env`
 8. After filling in the rest of the configuration fields in `docker/.env`, run the app with the command:
 ~~~bash
 make docker-server-start
