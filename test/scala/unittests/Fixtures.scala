@@ -18,7 +18,7 @@ import org.scalamock.util.Defaultable
 import play.api.i18n.DefaultMessagesApi
 import play.api.inject.Injector
 import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
-import play.api.libs.json.{JsArray, Json}
+import play.api.libs.json.{JsArray, JsValue, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
 import play.api.{Configuration, Logging, inject}
@@ -549,6 +549,18 @@ object Fixtures {
     val mockWebhookManagerActor = actorSystem.actorOf(MockWebhookManagerActor.props(webhookManagerMock))
     val webhooksManager =
       new HooksManagerWeb(hookDao, actor = mockWebhookManagerActor)(actorSystem, executionContext)
+  }
+
+  trait SlackEventsControllerFixtures {
+    val deleteChannelRequestBody: JsValue = Json.parse("""
+  {
+    "event" :
+    {
+      "type" : "channel_deleted",
+      "channel" : "1234"
+    }
+  }
+  """)
   }
 
   trait EncryptionManagerFixtures {
