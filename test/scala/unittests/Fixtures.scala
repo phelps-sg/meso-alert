@@ -387,6 +387,18 @@ object Fixtures {
     val messagesApi = new DefaultMessagesApi(
       Map("en" -> Map("slackResponse.currencyError" -> "I currently only provide alerts for BTC, but other currencies are coming soon."))
     )
+    def fakeRequestValid(command:String, amount: String) =  FakeRequest(POST, "/").withFormUrlEncodedBody(
+      "token"-> testToken,
+      "team_id" -> teamId,
+      "team_domain" -> "",
+      "channel_id" -> channelId,
+      "channel_name" -> "testChannel",
+      "user_id" -> "91011",
+      "user_name" -> "test-user",
+      "command" -> command,
+      "text" -> amount,
+      "is_enterprise_install" -> "false"
+    )
   }
 
   trait SlickSlashCommandHistoryDaoFixtures { env: ProvidesInjector =>

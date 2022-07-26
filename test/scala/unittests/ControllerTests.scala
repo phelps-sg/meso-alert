@@ -18,7 +18,7 @@ import play.api.http.Status.OK
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{Result, Results}
 import play.api.test.CSRFTokenHelper._
-import play.api.test.Helpers.{contentAsString, status}
+import play.api.test.Helpers.{POST, call, contentAsString, status, writeableOf_AnyContentAsFormUrlEncoded}
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
@@ -181,6 +181,54 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       val response = controller.process(cryptoAlertCommand)
 
       contentAsString(response) mustEqual "I currently only provide alerts for BTC, but other currencies are coming soon."
+    }
+
+    "return http status 200 when receiving an ssl_check due to url change" in new TestFixtures {
+      val fakeRequest = FakeRequest(POST, "/").withFormUrlEncodedBody(("ssl_check","1"))
+      val result = call(controller.slashCommand, fakeRequest)
+      status(result) mustEqual OK
+    }
+
+    "return correct message when issuing a valid /crypto-alert command" in new TestFixtures {
+      val result = call(controller.slashCommand, fakeRequestValid("/crypto-alert" ,"5"))
+      status(result) mustEqual OK
+      contentAsString(result) mustEqual "slackResponse.cryptoAlertNew"
+    }
+
+    "return reconfigure message when reconfiguring alerts" in new TestFixtures {
+      val result = call(controller.slashCommand, fakeRequestValid("/crypto-alert","10"))
+      status(result) mustEqual OK
+      contentAsString(result) mustEqual "slackResponse.cryptoAlertReconfig"
+    }
+
+    "return error message when not supplying amount to /crypto-alert" in new TestFixtures {
+      val result = call(controller.slashCommand, fakeRequestValid("/crypto-alert",""))
+      status(result) mustEqual OK
+      contentAsString(result) mustEqual "slackResponse.generalError"
+    }
+
+    "return correct message when pausing alerts" in new TestFixtures {
+      val result = call(controller.slashCommand, fakeRequestValid("/pause-alerts", ""))
+      status(result) mustEqual OK
+      contentAsString(result) mustEqual "slackResponse.pauseAlerts"
+    }
+
+    "return error message when pausing alerts when there are no alerts active" in new TestFixtures {
+      val result = call(controller.slashCommand, fakeRequestValid("/pause-alerts", ""))
+      status(result) mustEqual OK
+      contentAsString(result) mustEqual "slackResponse.pauseAlertsError"
+    }
+
+    "return correct message when resuming alerts" in new TestFixtures {
+      val result = call(controller.slashCommand, fakeRequestValid("/resume-alerts", ""))
+      status(result) mustEqual OK
+      contentAsString(result) mustEqual "slackResponse.resumeAlerts"
+    }
+
+    "return error message when resuming alerts when there are no alerts active" in new TestFixtures {
+      val result = call(controller.slashCommand, fakeRequestValid("/resume-alerts", ""))
+      status(result) mustEqual OK
+      contentAsString(result) mustEqual "slackResponse.resumeAlertsError"
     }
 
   }
