@@ -386,6 +386,10 @@ object Fixtures {
     val messagesApi = new DefaultMessagesApi(
       Map("en" -> Map("slackResponse.currencyError" -> "I currently only provide alerts for BTC, but other currencies are coming soon."))
     )
+    val cryptoAlertCommand =
+      SlashCommand(None, channelId, "/crypto-alert", "5 BTC",
+        teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall, None)
+
   }
 
   trait SlickSlashCommandHistoryDaoFixtures { env: ProvidesInjector =>

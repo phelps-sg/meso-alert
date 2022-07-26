@@ -6,7 +6,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import akka.util.Timeout
 import controllers.{HomeController, SlackEventsController, SlackSlashCommandController}
-import dao.{SlackChannel, SlackChatHookEncrypted, SlackTeamEncrypted, SlashCommand}
+import dao.{SlackChannel, SlackChatHookEncrypted, SlackTeam, SlackTeamEncrypted, SlashCommand}
 import org.scalamock.handlers.CallHandler1
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
@@ -119,16 +119,13 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
         slashCommandHistoryDao = slickSlashCommandHistoryDao,
         slackTeamDao = slickSlackTeamDao, hooksManager = new HooksManagerSlackChat(hookDao, hooksActor), messagesApi)
     }
-    "stop a running hook when channel is deleted" in new TestFixtures {
-      val cryptoAlertCommand =
-        SlashCommand(None, channelId, "/crypto-alert", "5 BTC",
-          teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall, None)
 
+    "stop a running hook when channel is deleted" in new TestFixtures {
        afterDbInit {
-        for {
-          encrypted <- encryptionManager.encrypt(testToken.getBytes)
+         for {
+           slackTeamEncrypted <- slickSlackTeamDao.toDB(SlackTeam(teamId, "test-user", "test-bot", testToken, "test-team"))
           _ <- db.run(
-            Tables.slackTeams += SlackTeamEncrypted(teamId, "test-user", "test-bot", encrypted, "test-team")
+            Tables.slackTeams += slackTeamEncrypted
           )
           response <- commandController.process(cryptoAlertCommand)
           dbContents <- db.run(Tables.slackChatHooks.result)
@@ -140,10 +137,10 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       val fakeRequest = FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
       val result = controller.eventsAPI().apply(fakeRequest)
       status(result) mustEqual OK
-      Thread.sleep(5000)
+      Thread.sleep(3000)
       val dbContents = db.run(Tables.slackChatHooks.result).futureValue
 
-      eventually (Eventually.timeout(Span(5, Seconds))) {
+      eventually {
         dbContents should matchPattern {
           case (Vector(SlackChatHookEncrypted(SlackChannel(`channelId`), _: Encrypted, 500000000, false))) =>
         }
@@ -185,11 +182,6 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     }
 
     "start a chat hook specifying BTC" in new TestFixtures {
-
-      val cryptoAlertCommand =
-        SlashCommand(None, channelId, "/crypto-alert", "5 BTC",
-          teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall, None)
-
       val futureValue = submitCommand(cryptoAlertCommand).futureValue
 
       futureValue should matchPattern {
@@ -203,7 +195,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     }
 
     "start a chat hook without specifying currency" in new TestFixtures {
-      val cryptoAlertCommand =
+      override val cryptoAlertCommand =
         SlashCommand(None, channelId, "/crypto-alert", "5",
           teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall, None)
 
@@ -220,7 +212,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     }
 
     "return a friendly error message if non-BTC currency is specified" in new TestFixtures {
-      val cryptoAlertCommand =
+      override val cryptoAlertCommand =
         SlashCommand(None, channelId, "/crypto-alert", "5 ETH",
           teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall, None)
 
