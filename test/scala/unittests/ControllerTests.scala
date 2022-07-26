@@ -66,8 +66,8 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       val body = contentAsString(result)
       status(result) mustEqual OK
       body should include ("<form action=\"/feedback")
-      body should not include "<div class=\"alert failed\">"
-      body should not include "<div class=\"alert success\">"
+      body should not include "<div class=\"alert failed\" id=\"alert-failed\">"
+      body should not include "<div class=\"alert success\" id=\"alert-success\">"
     }
 
     "send an email when feedback form is submitted with valid data" in
@@ -89,7 +89,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       val result = controller.create().apply(request.withCSRFToken)
       val body = contentAsString(result)
       status(result) mustEqual OK
-      body should include ("<div class=\"alert success\">")
+      body should include ("<div class=\"alert success\" id=\"alert-success\">")
     }
 
     "notify user of failed email delivery" in new TestFixtures {
@@ -101,7 +101,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       val result = controller.create().apply(request.withCSRFToken)
       val body = contentAsString(result)
       status(result) mustEqual OK
-      body should include ("<div class=\"alert failed\">")
+      body should include ("<div class=\"alert failed\" id=\"alert-failed\">")
     }
   }
 
