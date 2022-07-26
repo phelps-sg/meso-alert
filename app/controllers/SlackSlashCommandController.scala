@@ -56,25 +56,29 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
     logger.debug("received slash command")
     request.body.foreach { x => logger.debug(s"${x._1} = ${x._2}") }
 
-    if (request.body contains "ssl_check") {
-      Future { Ok }
-    } else {
+    SlackSlashCommandController.param("ssl_check")(request.body) match {
 
-      SlackSlashCommandController.toCommand(request.body) match {
+      case Some("1") =>
 
-        case Success(slashCommand) =>
-          val recordCommand = slashCommandHistoryDao.record(slashCommand)
-          for {
-            _ <- recordCommand
-            result <- process(slashCommand)
-          } yield result
+        Future { Ok }
 
-        case Failure(ex) =>
-          logger.error(ex.getMessage)
-          Future {
-            ServiceUnavailable(ex.getMessage)
-          }
-      }
+      case _ =>
+
+        SlackSlashCommandController.toCommand(request.body) match {
+
+          case Success(slashCommand) =>
+            val recordCommand = slashCommandHistoryDao.record(slashCommand)
+            for {
+              _ <- recordCommand
+              result <- process(slashCommand)
+            } yield result
+
+          case Failure(ex) =>
+            logger.error(ex.getMessage)
+            Future {
+              ServiceUnavailable(ex.getMessage)
+            }
+        }
     }
   }
 
