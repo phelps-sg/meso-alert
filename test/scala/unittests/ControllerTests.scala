@@ -230,7 +230,5 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.resumeAlertsError"
     }
-
   }
-
 }
