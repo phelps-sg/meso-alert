@@ -1,15 +1,14 @@
 package controllers
 
 import actors.HookNotStartedException
-
-import javax.inject.Inject
 import dao.SlackChannel
 import play.api.Logging
 import play.api.libs.json.JsValue
 import play.api.mvc.{Action, BaseController, ControllerComponents}
 import services.HooksManagerSlackChat
 
-import scala.concurrent.{ExecutionContext}
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
 class SlackEventsController @Inject()(val controllerComponents: ControllerComponents,
                                  val hooksManager: HooksManagerSlackChat)
