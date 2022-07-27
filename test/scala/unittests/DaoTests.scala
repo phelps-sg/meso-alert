@@ -3,7 +3,7 @@ package unittests
 import actors.EncryptionActor.Encrypted
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
-import dao.{DuplicateKeyException, SlackChatHookEncrypted, SlackTeamEncrypted, SlashCommand, TransactionUpdate}
+import dao._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should

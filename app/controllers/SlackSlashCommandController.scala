@@ -103,7 +103,7 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
                                          amount * 100000000, isRunning = true))
               started <- hooksManager.start(channel)
             } yield started
-            f.map { _ => Ok(s"OK, I will send updates on any BTC transactions exceeding $amount BTC.") }
+            f.map { _ => Ok(messagesApi("slackResponse.cryptoAlertNew", amount)) }
               .recoverWith {
                 case HookAlreadyStartedException(_) =>
                   val f = for {
@@ -122,9 +122,8 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
         }
 
       case Array(_, _) =>
-        val message: String = messagesApi("slackResponse.currencyError")
         Future {
-          Ok(message)
+          Ok(messagesApi("slackResponse.currencyError"))
         }
 
       case _ =>

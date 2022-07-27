@@ -391,6 +391,18 @@ object Fixtures {
       SlashCommand(None, channelId, "/crypto-alert", "5 BTC",
         teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall, None)
 
+    def fakeRequestValid(command:String, amount: String) =  FakeRequest(POST, "/").withFormUrlEncodedBody(
+      "token"-> testToken,
+      "team_id" -> teamId,
+      "team_domain" -> "",
+      "channel_id" -> channelId,
+      "channel_name" -> "testChannel",
+      "user_id" -> "91011",
+      "user_name" -> "test-user",
+      "command" -> command,
+      "text" -> amount,
+      "is_enterprise_install" -> "false"
+    )
   }
 
   trait SlickSlashCommandHistoryDaoFixtures { env: ProvidesInjector =>
