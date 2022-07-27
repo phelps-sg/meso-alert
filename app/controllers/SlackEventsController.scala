@@ -31,7 +31,7 @@ class SlackEventsController @Inject()(val controllerComponents: ControllerCompon
             } yield stopped
             f.map { result => logger.info(s"Stopping hook ${result.hook} because channel was deleted.") }
               .recover {
-                case HookNotStartedException(key) => logger.info(s"Channel with inactive hook ${key} was deleted.")
+                case HookNotStartedException(key) => logger.info(s"Channel with inactive hook $key was deleted.")
               }
           case ev => logger.debug(s"Received unhandled event $ev")
         }
