@@ -16,3 +16,4 @@ POST    /api/slack/slash            controllers.SlackSlashCommandController.slas
 GET     /api/slack/auth             controllers.SlackAuthController.authRedirect(code: String)
 GET     /feedback                   controllers.HomeController.feedbackPage()
 POST    /feedback                   controllers.HomeController.create()
+POST    /events-api                 controllers.SlackEventsController.eventsAPI()

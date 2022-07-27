@@ -167,5 +167,4 @@ class SlackSlashCommandController @Inject()(val controllerComponents: Controller
       case "/resume-alerts" => resumeAlerts
     }
   }
-
 }

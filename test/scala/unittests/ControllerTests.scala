@@ -5,11 +5,11 @@ import actors.EncryptionActor.Encrypted
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import akka.util.Timeout
-import controllers.{HomeController, SlackSlashCommandController}
-import dao.{SlackChannel, SlackChatHookEncrypted, SlackTeamEncrypted, SlashCommand}
+import controllers.{HomeController, SlackEventsController, SlackSlashCommandController}
+import dao.{SlackChannel, SlackChatHookEncrypted, SlackTeam, SlackTeamEncrypted, SlashCommand}
 import org.scalamock.handlers.CallHandler1
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -18,13 +18,13 @@ import play.api.http.Status.OK
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{Result, Results}
 import play.api.test.CSRFTokenHelper._
-import play.api.test.Helpers.{contentAsString, status}
+import play.api.test.Helpers.{POST, contentAsString, status}
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackEventsControllerFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -36,6 +36,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
   with should.Matchers
   with ScalaFutures
   with Results
+  with Eventually
   with BeforeAndAfterAll {
 
   //noinspection TypeAnnotation
@@ -105,6 +106,48 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     }
   }
 
+  "SlackEventsController" should {
+    trait TestFixtures extends FixtureBindings
+      with ConfigurationFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
+      with MemPoolWatcherFixtures with ActorGuiceFixtures with SlackChatHookDaoFixtures
+      with SlackChatActorFixtures with SlickSlashCommandHistoryDaoFixtures with SlickSlashCommandFixtures
+      with DatabaseInitializer with SlickSlackTeamDaoFixtures with SlackEventsControllerFixtures {
+
+      val controller = new SlackEventsController(Helpers.stubControllerComponents(),
+        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor))
+      val commandController = new SlackSlashCommandController(Helpers.stubControllerComponents(),
+        slashCommandHistoryDao = slickSlashCommandHistoryDao,
+        slackTeamDao = slickSlackTeamDao, hooksManager = new HooksManagerSlackChat(hookDao, hooksActor), messagesApi)
+    }
+
+    "stop a running hook when channel is deleted" in new TestFixtures {
+       afterDbInit {
+         for {
+           slackTeamEncrypted <- slickSlackTeamDao.toDB(SlackTeam(teamId, "test-user", "test-bot", testToken, "test-team"))
+          _ <- db.run(
+            Tables.slackTeams += slackTeamEncrypted
+          )
+          response <- commandController.process(cryptoAlertCommand)
+          dbContents <- db.run(Tables.slackChatHooks.result)
+        } yield (response, dbContents)
+      }.futureValue should matchPattern {
+         case (_: Result, Seq(SlackChatHookEncrypted(SlackChannel(`channelId`), _: Encrypted, 500000000, true))) =>
+       }
+
+      val fakeRequest = FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
+      val result = controller.eventsAPI().apply(fakeRequest)
+      status(result) mustEqual OK
+      Thread.sleep(3000)
+      val dbContents = db.run(Tables.slackChatHooks.result).futureValue
+
+      eventually {
+        dbContents should matchPattern {
+          case (Vector(SlackChatHookEncrypted(SlackChannel(`channelId`), _: Encrypted, 500000000, false))) =>
+        }
+      }
+    }
+  }
+
   "SlackSlashCommandController" should {
 
     trait TestFixtures extends FixtureBindings
@@ -139,11 +182,6 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     }
 
     "start a chat hook specifying BTC" in new TestFixtures {
-
-      val cryptoAlertCommand =
-        SlashCommand(None, channelId, "/crypto-alert", "5 BTC",
-          teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall, None)
-
       val futureValue = submitCommand(cryptoAlertCommand).futureValue
 
       futureValue should matchPattern {
@@ -157,7 +195,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     }
 
     "start a chat hook without specifying currency" in new TestFixtures {
-      val cryptoAlertCommand =
+      override val cryptoAlertCommand =
         SlashCommand(None, channelId, "/crypto-alert", "5",
           teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall, None)
 
@@ -174,7 +212,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     }
 
     "return a friendly error message if non-BTC currency is specified" in new TestFixtures {
-      val cryptoAlertCommand =
+      override val cryptoAlertCommand =
         SlashCommand(None, channelId, "/crypto-alert", "5 ETH",
           teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall, None)
 
