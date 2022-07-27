@@ -34,7 +34,7 @@ class SlackEventsController @Inject()(val controllerComponents: ControllerCompon
               .recover {
                 case HookNotStartedException(key) => logger.info(s"Channel with inactive hook ${key} was deleted.")
               }
-          case _ => logger.debug("Different event")
+          case ev => logger.debug(s"Received unhandled event $ev")
         }
         Ok("")
     }
