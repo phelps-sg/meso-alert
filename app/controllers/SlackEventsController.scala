@@ -36,7 +36,7 @@ class SlackEventsController @Inject()(val controllerComponents: ControllerCompon
               }
           case ev => logger.debug(s"Received unhandled event $ev")
         }
-        Ok("")
+        Ok
     }
   }
 }
