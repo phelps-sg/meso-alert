@@ -31,6 +31,10 @@ services:
     build:
       context: ./
       dockerfile: meso-alert-ci.docker
+      args:
+        SLACK_TEST_EMAIL: ${SLACK_TEST_EMAIL}
+        SLACK_TEST_PASSWORD: ${SLACK_TEST_PASSWORD}
+        SLACK_TEST_WORKSPACE: ${SLACK_TEST_WORKSPACE}
 
   postgres-db:
     container_name: postgres-db
