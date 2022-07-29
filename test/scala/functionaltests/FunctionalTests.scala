@@ -6,15 +6,14 @@ import org.scalatest.flatspec
 import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
 import org.scalatestplus.selenium.WebBrowser
-import unittests.Fixtures.ConfigurationFixtures
 
 class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with WebBrowser {
 
-  val workspace = System.getenv("SLACK_TEST_WORKSPACE")
+  val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
   implicitlyWait(Span(10, Seconds))
-  val slackEmail = System.getenv("SLACK_TEST_EMAIL")
-  val slackPassword = System.getenv("SLACK_TEST_PASSWORD")
+  val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
+  val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
   private val options = new FirefoxOptions().setHeadless(true)
 
 
@@ -65,7 +64,7 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     }
   }
 
-  def createChannel(name: String) = {
+  def createChannel(name: String): Unit = {
     cleanUp()
     find(xpath("//span[text()='Add channels']")).map(elem => click on(elem))
     Thread.sleep(400)
@@ -78,7 +77,7 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     Thread.sleep(2000)
   }
 
-  def cleanUp() = {
+  def cleanUp(): Unit = {
     val testChannel = find(xpath("//span[contains(@class, 'p-channel_sidebar__name') and text()='test']"))
     testChannel match {
       case Some(elem) =>
@@ -89,7 +88,7 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     Thread.sleep(1000)
   }
 
-  def deleteChannel(name: String) = {
+  def deleteChannel(name: String): Unit = {
     find(xpath(s"//span[contains(@class, 'p-view_header__channel_title') and text()='$name']"))
       .map(elem => click on(elem))
     Thread.sleep(1000)
