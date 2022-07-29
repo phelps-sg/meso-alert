@@ -8,7 +8,7 @@ import org.scalatest.time.{Seconds, Span}
 import org.scalatestplus.selenium.WebBrowser
 import unittests.Fixtures.ConfigurationFixtures
 
-class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with WebBrowser with ConfigurationFixtures {
+class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with WebBrowser {
 
   val workspace = System.getenv("SLACK_TEST_WORKSPACE")
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
