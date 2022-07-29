@@ -13,7 +13,7 @@ ARG SLACK_TEST_PASSWORD
 ARG SLACK_TEST_WORKSPACE
 
 ADD ./tz-setup.sh /tmp/tz-setup.sh
-ADD ./docker/test-setup.sh /root/test-setup.sh
+ADD ./test-setup.sh /root/test-setup.sh
 
 RUN apt-get update; \
     apt-get install -y docker docker.io docker-compose; \

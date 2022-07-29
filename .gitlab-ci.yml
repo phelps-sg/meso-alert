@@ -18,7 +18,8 @@ unit-tests:
 functional-tests:
   stage: functional-tests
   script:
-    - make sbt-functional-tests
+    - sh meso-alert-ci-config.sh
+    - make -e sbt-functional-tests
 
 scalafix:
   stage: pre-deploy-tests

@@ -8,43 +8,14 @@ import org.scalatest.time.{Seconds, Span}
 import org.scalatestplus.selenium.WebBrowser
 import unittests.Fixtures.ConfigurationFixtures
 
-import java.util.Properties
-import javax.mail.Folder
-import javax.mail.Session
-import javax.mail.Store
-import javax.mail.Message
-
-trait EmailFetcher {
-  val properties = new Properties()
-  properties.put("mail.pop3.host", "pop.gmail.com")
-  properties.put("mail.pop3.port", "995")
-  properties.put("mail.pop3.starttls.enable", "true")
-  val emailSession: Session = Session.getDefaultInstance(properties)
-  val store: Store = emailSession.getStore("pop3s")
-
-  def connect(): Unit = {
-    store.connect("pop.gmail.com", "", "")
-  }
-
-  def getLatestMessage(): Message = {
-    val emailFolder = getInbox()
-    emailFolder.open(Folder.READ_ONLY)
-    val messages = emailFolder.getMessages
-    messages(0)
-  }
-
-  def getInbox(name: String = "INBOX"): Folder = store.getFolder("INBOX")
-
-}
-
 class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with WebBrowser with ConfigurationFixtures {
 
-  val workspace = config.get[String]("slack.testWorkspace")
+  val workspace = System.getenv("SLACK_TEST_WORKSPACE")
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
   implicitlyWait(Span(10, Seconds))
-  val slackEmail = config.get[String]("slack.testEmail")
-  val slackPassword = config.get[String]("slack.testPassword")
-  private val options = new FirefoxOptions().setHeadless(false)
+  val slackEmail = System.getenv("SLACK_TEST_EMAIL")
+  val slackPassword = System.getenv("SLACK_TEST_PASSWORD")
+  private val options = new FirefoxOptions().setHeadless(true)
 
 
   val stagingURL: String = "https://f34d1cfcb2d9.eu.ngrok.io"
@@ -64,14 +35,6 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     Thread.sleep(15000)
   }
 
-  def checkForCookieMessage(): Unit = {
-    val cookies = find("onetrust-reject-all-handler")
-    cookies match {
-      case Some(_) => click on id("onetrust-reject-all-handler")
-      case None =>
-    }
-  }
-
   def inviteToChannel(botName: String): Unit = {
     pressKeys(s"@$botName")
     Thread.sleep(400)
@@ -80,6 +43,7 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     pressKeys(Keys.ENTER.toString)
     Thread.sleep(400)
     pressKeys(Keys.ENTER.toString)
+    Thread.sleep(3000)
   }
 
   def removeFromChannel(botName: String): Unit = {
@@ -90,6 +54,15 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     pressKeys(Keys.ENTER.toString)
     Thread.sleep(400)
     click on className("c-button--danger")
+    Thread.sleep(3000)
+  }
+
+  def checkForCookieMessage(): Unit = {
+    val cookies = find("onetrust-reject-all-handler")
+    cookies match {
+      case Some(_) => click on id("onetrust-reject-all-handler")
+      case None =>
+    }
   }
 
   def createChannel(name: String) = {
@@ -102,6 +75,7 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     click on className("c-button--primary")
     Thread.sleep(400)
     click on className("c-sk-modal__close_button")
+    Thread.sleep(2000)
   }
 
   def cleanUp() = {
@@ -112,6 +86,7 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
         deleteChannel("test")
       case None =>
     }
+    Thread.sleep(1000)
   }
 
   def deleteChannel(name: String) = {
@@ -125,6 +100,7 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     click on className("c-input_checkbox")
     Thread.sleep(1000)
     click on className("c-button--danger")
+    Thread.sleep(3000)
   }
 
   "The home page" should "render" in {
@@ -168,9 +144,7 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
   "inviting bot to a channel using the '@' command" should "be successful" in {
     slackSignIn(workspace, slackEmail,slackPassword)
     createChannel("test")
-    Thread.sleep(2000)
     inviteToChannel("block-insights-staging")
-    Thread.sleep(3000)
     removeFromChannel("block-insights-staging")
   }
 
@@ -180,7 +154,6 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
       .map(elem => click on(elem))
     Thread.sleep(2000)
     inviteToChannel("block-insights-staging")
-    Thread.sleep(1000)
     pressKeys("/crypto-alert 10")
     Thread.sleep(400)
     pressKeys(Keys.ENTER.toString)
@@ -211,13 +184,13 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     val result = find(xpath("//span[text()='OK, I will resume alerts on this channel.']"))
     assert(!result.isEmpty)
     removeFromChannel("block-insights-staging")
-    Thread.sleep(1000)
     deleteChannel("test")
   }
 
   "deleting the test channel" should "produce no errors" in {
     slackSignIn(workspace, slackEmail,slackPassword)
     reloadPage()
+    Thread.sleep(5000)
     cleanUp()
   }
 }
