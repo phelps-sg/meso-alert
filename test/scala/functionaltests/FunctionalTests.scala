@@ -12,9 +12,9 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
   val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
   implicitlyWait(Span(10, Seconds))
+  private val options = new FirefoxOptions()
   val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
-  private val options = new FirefoxOptions().setHeadless(true)
 
   val stagingURL: String = "https://f34d1cfcb2d9.eu.ngrok.io"
 
