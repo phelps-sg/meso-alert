@@ -16,7 +16,6 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
   private val options = new FirefoxOptions().setHeadless(true)
 
-
   val stagingURL: String = "https://f34d1cfcb2d9.eu.ngrok.io"
 
   def slackSignIn(workspace: String, email: String, pwd: String): Unit = {
@@ -36,22 +35,22 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
 
   def inviteToChannel(botName: String): Unit = {
     pressKeys(s"@$botName")
-    Thread.sleep(400)
+    Thread.sleep(1500)
     pressKeys(Keys.ENTER.toString)
-    Thread.sleep(400)
+    Thread.sleep(1500)
     pressKeys(Keys.ENTER.toString)
-    Thread.sleep(400)
+    Thread.sleep(1500)
     pressKeys(Keys.ENTER.toString)
     Thread.sleep(3000)
   }
 
   def removeFromChannel(botName: String): Unit = {
     pressKeys(s"/kick @$botName")
-    Thread.sleep(400)
+    Thread.sleep(1500)
     pressKeys(Keys.ENTER.toString)
-    Thread.sleep(400)
+    Thread.sleep(1500)
     pressKeys(Keys.ENTER.toString)
-    Thread.sleep(400)
+    Thread.sleep(1500)
     click on className("c-button--danger")
     Thread.sleep(3000)
   }
@@ -67,12 +66,12 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
   def createChannel(name: String): Unit = {
     cleanUp()
     find(xpath("//span[text()='Add channels']")).map(elem => click on(elem))
-    Thread.sleep(400)
+    Thread.sleep(1500)
     find(xpath("//div[text()='Create a new channel']")).map(elem => click on(elem))
-    Thread.sleep(400)
+    Thread.sleep(1500)
     pressKeys(s"$name")
     click on className("c-button--primary")
-    Thread.sleep(400)
+    Thread.sleep(1500)
     click on className("c-sk-modal__close_button")
     Thread.sleep(2000)
   }
@@ -134,7 +133,7 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     pressKeys(slackEmail)
     pwdField("password").value=slackPassword
     pressKeys(Keys.ENTER.toString)
-    Thread.sleep(8000)
+    Thread.sleep(15000)
     click on className("c-button--primary")
     Thread.sleep(8000)
     pageTitle should be("Installation successful")
@@ -147,16 +146,16 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     removeFromChannel("block-insights-staging")
   }
 
-  "issuing command /crypto-alert 10" should "result in correct response message" in {
+  "issuing command /crypto-alert 100" should "result in correct response message" in {
     slackSignIn(workspace, slackEmail,slackPassword)
     find(xpath("//span[contains(@class, 'p-channel_sidebar__name') and text()='test']"))
       .map(elem => click on(elem))
     Thread.sleep(2000)
     inviteToChannel("block-insights-staging")
-    pressKeys("/crypto-alert 10")
+    pressKeys("/crypto-alert 100")
     Thread.sleep(400)
     pressKeys(Keys.ENTER.toString)
-    val result = find(xpath("//span[text()='OK, I will send updates on any BTC transactions exceeding 10 BTC.']"))
+    val result = find(xpath("//span[text()='OK, I will send updates on any BTC transactions exceeding 100 BTC.']"))
     assert(!result.isEmpty)
   }
 
