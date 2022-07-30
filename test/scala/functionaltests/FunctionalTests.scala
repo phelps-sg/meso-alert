@@ -9,12 +9,12 @@ import org.scalatestplus.selenium.WebBrowser
 
 class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with WebBrowser {
 
+  val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
+  private val options = new FirefoxOptions().setHeadless(true)
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
   implicitlyWait(Span(10, Seconds))
-  private val options = new FirefoxOptions()
   val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
-  val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
 
 
   val stagingURL: String = "https://f34d1cfcb2d9.eu.ngrok.io"
