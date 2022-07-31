@@ -71,6 +71,7 @@ The server application can be run in three different modes:
 To build and run the server in development mode (1), from the project root directory run:
 
 ~~~bash
+bin/db-init.sh
 make sbt-run
 ~~~
 
