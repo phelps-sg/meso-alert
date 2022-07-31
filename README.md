@@ -62,7 +62,7 @@ EOF
 
 ### Server
 
-The server application can be run in four different modes:
+The server application can be run in three different modes:
 
 1. development mode,
 2. production mode in local development environment, and
