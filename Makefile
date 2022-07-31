@@ -97,6 +97,9 @@ dir-postgres-create:
 docker-db-start: dir-postgres-create
 	$(EXPORT_ENV); cd docker; sudo -E docker-compose up -d postgres-db
 
+db-init: docker-db-start
+	psql --user meso-alert --db meso-alert --port ${POSTGRES_PORT} --host ${POSTGRES_HOST} -f sql/schema.sql
+
 nodejs-install:
 	$(NVM_INIT); nvm install 16.15.0
 
