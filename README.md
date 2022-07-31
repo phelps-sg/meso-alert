@@ -65,9 +65,8 @@ EOF
 The server application can be run in four different modes:
 
 1. development mode,
-2. production mode in local development environment, 
-3. production mode in the actual production environment, and
-4. automated functional testing mode.
+2. production mode in local development environment, and
+3. production mode in the actual production environment.
 
 To build and run the server in development mode (1), from the project root directory run:
 
@@ -75,7 +74,7 @@ To build and run the server in development mode (1), from the project root direc
 make sbt-run
 ~~~
 
-### Building the app from scratch in production mode in a local environment.
+### Building and running the app from scratch in production mode in a local environment.
 
 1. Start a new ngrok tunnel on port 9000 by running the following in a byobu session:
 ~~~bash
@@ -96,7 +95,7 @@ make docker-server-start
 
 #### A note on server configuration
 
-For modes 1, 2 and 4, the application can be run on a local development machine.  For mode 3,
+For modes 1 and 2, the application can be run on a local development machine.  For mode 3,
 the application is deployed into a kubernetes cluster.
 
 In mode 1, the application configuration is stored in `conf/application.conf`.  This file
@@ -113,7 +112,7 @@ settings in `docker/.env`.
 Non-secret configuration changes for kubernetes production mode (3) should be made directly
 to [docker/start-play.sh](docker/start-play.sh).
 
-For automated functional testing (4), make configuration changes to
+For changes that affect the unit-testing environment, make configuration changes to
 [test/resources/application.test.conf](test/resources/application.test.conf).
 
 ##### Summary: adding new configuration variables
