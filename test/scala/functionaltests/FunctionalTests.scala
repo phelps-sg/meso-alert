@@ -1,18 +1,23 @@
 package functionaltests
 
-import org.openqa.selenium.Keys
+import org.openqa.selenium.{By, ElementClickInterceptedException, JavascriptExecutor, Keys, StaleElementReferenceException, WebElement}
+import org.openqa.selenium.support.ui.ExpectedConditions
+import org.openqa.selenium.support.ui.WebDriverWait
 import org.openqa.selenium.firefox.{FirefoxDriver, FirefoxOptions}
 import org.scalatest.flatspec
 import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
 import org.scalatestplus.selenium.WebBrowser
 
+import java.time.Duration
+
+
 class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with WebBrowser {
 
   val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
   private val options = new FirefoxOptions().setHeadless(true)
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
-  implicitlyWait(Span(10, Seconds))
+  implicitlyWait(Span(20, Seconds))
   val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
 
@@ -22,38 +27,32 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
   def slackSignIn(workspace: String, email: String, pwd: String): Unit = {
     go to "https://slack.com/workspace-signin"
     delete all cookies
+
     reloadPage()
     checkForCookieMessage
     textField("domain").value = workspace
     pressKeys(Keys.ENTER.toString)
-    Thread.sleep(3000)
     click on id("email")
     pressKeys(email)
     pwdField("password").value=pwd
     pressKeys(Keys.ENTER.toString)
-    Thread.sleep(15000)
   }
 
   def inviteToChannel(botName: String): Unit = {
+    find(xpath("//wait"))
     pressKeys(s"@$botName")
-    Thread.sleep(1500)
+    clickOn(By.xpath("/html/body/div[9]/div/div/div/div/div/ul/li/div"))
+    clickOn(By.xpath("/html/body/div[2]/div/div[2]/div[4]/div/div/div[3]/div/div[2]/div/div/div/div[2]/div/div/div/div[3]/div[3]/span/button[1]"))
     pressKeys(Keys.ENTER.toString)
-    Thread.sleep(1500)
-    pressKeys(Keys.ENTER.toString)
-    Thread.sleep(1500)
-    pressKeys(Keys.ENTER.toString)
-    Thread.sleep(3000)
   }
 
   def removeFromChannel(botName: String): Unit = {
-    pressKeys(s"/kick @$botName")
-    Thread.sleep(1500)
+    clickOnWithJs(By.xpath("//span[contains(@class, 'p-channel_sidebar__name') and text()='testing']"))
+    webDriver.findElement(By.className("ql-editor")).sendKeys(s"/kick @$botName")
+    find(xpath("//wait"))
     pressKeys(Keys.ENTER.toString)
-    Thread.sleep(1500)
     pressKeys(Keys.ENTER.toString)
-    Thread.sleep(1500)
     click on className("c-button--danger")
-    Thread.sleep(3000)
   }
 
   def checkForCookieMessage(): Unit = {
@@ -64,42 +63,47 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     }
   }
 
+  def clickOnWithJs(locator: By) = {
+    val element =webDriver
+      .findElement(locator);
+    val ex: JavascriptExecutor = webDriver;
+    ex.executeScript("arguments[0].click()", element);
+  }
+
   def createChannel(name: String): Unit = {
     cleanUp()
     find(xpath("//span[text()='Add channels']")).map(elem => click on(elem))
-    Thread.sleep(1500)
     find(xpath("//div[text()='Create a new channel']")).map(elem => click on(elem))
-    Thread.sleep(1500)
-    pressKeys(s"$name")
-    click on className("c-button--primary")
-    Thread.sleep(1500)
-    click on className("c-sk-modal__close_button")
-    Thread.sleep(2000)
-  }
-
-  def cleanUp(): Unit = {
-    val testChannel = find(xpath("//span[contains(@class, 'p-channel_sidebar__name') and text()='test']"))
-    testChannel match {
-      case Some(elem) =>
-        click on(elem)
-        deleteChannel("test")
-      case None =>
-    }
-    Thread.sleep(1000)
+    enter(s"$name")
+    clickOn(By.xpath("//button[text()='Create']"))
+    clickOn(By.xpath("/html/body/div[9]/div/div/div[3]/div/div/div/button"))
   }
 
   def deleteChannel(name: String): Unit = {
     find(xpath(s"//span[contains(@class, 'p-view_header__channel_title') and text()='$name']"))
       .map(elem => click on(elem))
-    Thread.sleep(1000)
     find(xpath("//span[text()='Settings']")).map(elem => click on(elem))
-    Thread.sleep(1000)
     find(xpath("//h3[text()='Delete this channel']")).map(elem => click on(elem))
-    Thread.sleep(1000)
     click on className("c-input_checkbox")
-    Thread.sleep(1000)
     click on className("c-button--danger")
-    Thread.sleep(3000)
+  }
+
+  def cleanUp(): Unit = {
+    val testChannel = find(xpath("//span[contains(@class, 'p-channel_sidebar__name') and text()='testing']"))
+    testChannel match {
+      case Some(elem) =>
+        click on(elem)
+        deleteChannel("testing")
+      case None =>
+    }
+  }
+
+  def clickOn(locator: By) = {
+    new WebDriverWait(webDriver, Duration.ofSeconds(10))
+      .ignoring(classOf[StaleElementReferenceException])
+      .ignoring(classOf[ElementClickInterceptedException])
+      .until(ExpectedConditions.elementToBeClickable(locator))
+    webDriver.findElement(locator).click
   }
 
   "The home page" should "render" in {
@@ -125,36 +129,33 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     "result in the successful installation page" in {
     go to stagingURL
     click on id("addToSlackBtn")
-    Thread.sleep(3000)
     checkForCookieMessage
     textField("domain").value=workspace
     pressKeys(Keys.ENTER.toString)
-    Thread.sleep(3000)
     click on id("email")
     pressKeys(slackEmail)
     pwdField("password").value=slackPassword
-    pressKeys(Keys.ENTER.toString)
-    Thread.sleep(15000)
-    click on className("c-button--primary")
-    Thread.sleep(8000)
+    click on xpath("//*[@id=\"signin_btn\"]")
+    new WebDriverWait(webDriver, Duration.ofSeconds(10)).ignoring(classOf[StaleElementReferenceException])
+      .until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/div[1]/div/form/div/div[2]/button")))
+    webDriver.findElement(By.xpath("/html/body/div[1]/div/form/div/div[2]/button")).click
+//    click on className("c-button--primary")
     pageTitle should be("Installation successful")
   }
 
   "inviting bot to a channel using the '@' command" should "be successful" in {
     slackSignIn(workspace, slackEmail,slackPassword)
-    createChannel("test")
+    createChannel("testing")
     inviteToChannel("block-insights-staging")
     removeFromChannel("block-insights-staging")
   }
-
+//
   "issuing command /crypto-alert 100" should "result in correct response message" in {
     slackSignIn(workspace, slackEmail,slackPassword)
     find(xpath("//span[contains(@class, 'p-channel_sidebar__name') and text()='test']"))
       .map(elem => click on(elem))
-    Thread.sleep(2000)
     inviteToChannel("block-insights-staging")
-    pressKeys("/crypto-alert 100")
-    Thread.sleep(400)
+    webDriver.findElement(By.className("ql-editor")).sendKeys("/crypto-alert 100")
     pressKeys(Keys.ENTER.toString)
     val result = find(xpath("//span[text()='OK, I will send updates on any BTC transactions exceeding 100 BTC.']"))
     assert(!result.isEmpty)
@@ -162,11 +163,9 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
 
   "issuing command /pause-alerts" should "result in correct response message" in {
     slackSignIn(workspace, slackEmail,slackPassword)
-    find(xpath("//span[contains(@class, 'p-channel_sidebar__name') and text()='test']"))
+    find(xpath("//span[contains(@class, 'p-channel_sidebar__name') and text()='testing']"))
       .map(elem => click on(elem))
-    Thread.sleep(2000)
     pressKeys("/pause-alerts")
-    Thread.sleep(400)
     pressKeys(Keys.ENTER.toString)
     val result = find(xpath("//span[text()='OK, I have paused alerts for this channel.']"))
     assert(!result.isEmpty)
@@ -174,22 +173,12 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
 
   "issuing command /resume-alerts" should "result in correct response message" in {
     slackSignIn(workspace, slackEmail,slackPassword)
-    find(xpath("//span[contains(@class, 'p-channel_sidebar__name') and text()='test']"))
+    find(xpath("//span[contains(@class, 'p-channel_sidebar__name') and text()='testing']"))
       .map(elem => click on(elem))
-    Thread.sleep(2000)
     pressKeys("/resume-alerts")
-    Thread.sleep(400)
     pressKeys(Keys.ENTER.toString)
     val result = find(xpath("//span[text()='OK, I will resume alerts on this channel.']"))
     assert(!result.isEmpty)
-    removeFromChannel("block-insights-staging")
-    deleteChannel("test")
-  }
-
-  "deleting the test channel" should "produce no errors" in {
-    slackSignIn(workspace, slackEmail,slackPassword)
-    reloadPage()
-    Thread.sleep(5000)
-    cleanUp()
+    deleteChannel("testing")
   }
 }
