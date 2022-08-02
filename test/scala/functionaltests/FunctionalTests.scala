@@ -1,6 +1,6 @@
 package functionaltests
 
-import org.openqa.selenium.{By, ElementClickInterceptedException, JavascriptExecutor, Keys, StaleElementReferenceException, WebElement}
+import org.openqa.selenium.{By, ElementClickInterceptedException, JavascriptExecutor, Keys, StaleElementReferenceException}
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import org.openqa.selenium.firefox.{FirefoxDriver, FirefoxOptions}
@@ -63,7 +63,7 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     }
   }
 
-  def clickOnWithJs(locator: By) = {
+  def clickOnWithJs(locator: By): Object = {
     val element =webDriver
       .findElement(locator);
     val ex: JavascriptExecutor = webDriver;
@@ -98,7 +98,7 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
     }
   }
 
-  def clickOn(locator: By) = {
+  def clickOn(locator: By): Unit = {
     new WebDriverWait(webDriver, Duration.ofSeconds(10))
       .ignoring(classOf[StaleElementReferenceException])
       .ignoring(classOf[ElementClickInterceptedException])
