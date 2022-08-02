@@ -14,6 +14,6 @@ GET     /assets/*file               controllers.Assets.versioned(path="/public",
 #POST    /api/webhooks/register      controllers.WebhooksController.register
 POST    /api/slack/slash            controllers.SlackSlashCommandController.slashCommand
 GET     /api/slack/auth             controllers.SlackAuthController.authRedirect(code: String)
+POST    /api/slack/events           controllers.SlackEventsController.eventsAPI()
 GET     /feedback                   controllers.HomeController.feedbackPage()
 POST    /feedback                   controllers.HomeController.create()
-POST    /events-api                 controllers.SlackEventsController.eventsAPI()

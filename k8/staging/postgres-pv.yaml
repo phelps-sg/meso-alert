@@ -12,3 +12,15 @@ spec:
     - ReadWriteOnce
   hostPath:
     path: "/data/1/meso-alert"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: meso-alert-postgres-pv-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

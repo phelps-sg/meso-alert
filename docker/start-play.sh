@@ -21,7 +21,7 @@ if [ -d "/etc/secrets" ]; then
   POSTGRES_PORT=5432
   POSTGRES_HOST="meso-alert-postgres"
 
-  EMAIL_SMTP_HOST=smtp.mailgun.org
+  EMAIL_SMTP_HOST=smtp.eu.mailgun.org
   EMAIL_SMTP_PORT=587
   EMAIL_HOST=$(cat /etc/secrets/email/username)
   EMAIL_HOST_PASSWORD=$(cat /etc/secrets/email/password)
