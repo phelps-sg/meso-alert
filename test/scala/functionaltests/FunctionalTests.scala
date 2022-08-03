@@ -45,7 +45,7 @@ class FunctionalTests
   }
 
   def inviteToChannel(botName: String): Unit = {
-    find(xpath("//wait"))
+    explicitWait()
     pressKeys(s"@$botName")
     clickOn(By.xpath("/html/body/div[9]/div/div/div/div/div/ul/li/div"))
     clickOn(
@@ -56,21 +56,7 @@ class FunctionalTests
     pressKeys(Keys.ENTER.toString)
   }
 
-  def removeFromChannel(botName: String): Unit = {
-    find(xpath("//wait"))
-    clickOnWithJs(
-      By.xpath(
-        "//span[contains(@class, 'p-channel_sidebar__name') and text()='testing']"
-      )
-    )
-    webDriver
-      .findElement(By.className("ql-editor"))
-      .sendKeys(s"/kick @$botName")
-    find(xpath("//wait"))
-    pressKeys(Keys.ENTER.toString)
-    pressKeys(Keys.ENTER.toString)
-    click on className("c-button--danger")
-  }
+  def explicitWait():Option[Element] = find(xpath("//wait"))
 
   def checkForCookieMessage(): Unit = {
     val cookies = find("onetrust-reject-all-handler")
@@ -135,6 +121,21 @@ class FunctionalTests
     webDriver.findElement(locator).click()
   }
 
+  def removeFromChannel(botName: String): Unit = {
+    explicitWait()
+    clickOnWithJs(
+      By.xpath(
+        "//span[contains(@class, 'p-channel_sidebar__name') and text()='testing']"
+      )
+    )
+    webDriver.findElement(By.className("ql-editor"))
+      .sendKeys(s"/kick @$botName")
+    explicitWait()
+    pressKeys(Keys.ENTER.toString)
+    pressKeys(Keys.ENTER.toString)
+    click on className("c-button--danger")
+  }
+
   "The home page" should "render" in {
     go to stagingURL
     pageTitle should be("Block Insights - Access free real-time mempool data")
@@ -172,10 +173,8 @@ class FunctionalTests
             By.xpath("/html/body/div[1]/div/form/div/div[2]/button")
           )
         )
-      webDriver
-        .findElement(By.xpath("/html/body/div[1]/div/form/div/div[2]/button"))
+      webDriver.findElement(By.xpath("/html/body/div[1]/div/form/div/div[2]/button"))
         .click()
-//    click on className("c-button--primary")
       pageTitle should be("Installation successful")
     }
 
@@ -195,8 +194,7 @@ class FunctionalTests
     )
       .foreach(elem => click on elem)
     inviteToChannel("block-insights-staging")
-    webDriver
-      .findElement(By.className("ql-editor"))
+    webDriver.findElement(By.className("ql-editor"))
       .sendKeys("/crypto-alert 100")
     pressKeys(Keys.ENTER.toString)
     val result = find(
