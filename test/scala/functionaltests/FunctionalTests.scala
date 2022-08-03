@@ -47,6 +47,7 @@ class FunctionalTests extends flatspec.AnyFlatSpec with should.Matchers with Web
   }
 
   def removeFromChannel(botName: String): Unit = {
+    find(xpath("//wait"))
     clickOnWithJs(By.xpath("//span[contains(@class, 'p-channel_sidebar__name') and text()='testing']"))
     webDriver.findElement(By.className("ql-editor")).sendKeys(s"/kick @$botName")
     find(xpath("//wait"))
