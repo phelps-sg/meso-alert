@@ -23,13 +23,16 @@ class FunctionalTests
     with WebBrowser {
 
   val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
-  private val options = new FirefoxOptions().setHeadless(true)
-  implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
-  implicitlyWait(Span(20, Seconds))
   val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
 
+  private val options = new FirefoxOptions().setHeadless(true)
+
+  implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
+
   val stagingURL: String = "https://f34d1cfcb2d9.eu.ngrok.io"
+
+  implicitlyWait(Span(20, Seconds))
 
   def slackSignIn(workspace: String, email: String, pwd: String): Unit = {
     go to "https://slack.com/workspace-signin"
@@ -186,7 +189,7 @@ class FunctionalTests
     inviteToChannel("block-insights-staging")
     removeFromChannel("block-insights-staging")
   }
-//
+
   "issuing command /crypto-alert 100" should "result in correct response message" in {
     slackSignIn(workspace, slackEmail, slackPassword)
     find(
