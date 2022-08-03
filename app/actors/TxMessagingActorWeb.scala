@@ -25,7 +25,8 @@ trait HttpBackendSelection {
 
 @Singleton
 class MonixBackend extends HttpBackendSelection {
-  def backend(): Task[SttpBackend[Task, MonixStreams with WebSockets]] = AsyncHttpClientMonixBackend()
+  def backend(): Task[SttpBackend[Task, MonixStreams with WebSockets]] =
+    AsyncHttpClientMonixBackend()
 }
 
 object TxMessagingActorWeb {
@@ -35,8 +36,12 @@ object TxMessagingActorWeb {
   }
 }
 
-class TxMessagingActorWeb @Inject()(backendSelection: HttpBackendSelection, @Assisted hook: Webhook)
-  extends Actor with UnrecognizedMessageHandlerFatal with Logging {
+class TxMessagingActorWeb @Inject() (
+    backendSelection: HttpBackendSelection,
+    @Assisted hook: Webhook
+) extends Actor
+    with UnrecognizedMessageHandlerFatal
+    with Logging {
 
   def process(tx: TxUpdate): Future[Unit] = {
 
@@ -47,7 +52,13 @@ class TxMessagingActorWeb @Inject()(backendSelection: HttpBackendSelection, @Ass
         .post(Uri(javaUri = hook.uri))
 
       r.send(backend)
-        .flatMap { response => Task(logger.debug(s"""Got ${response.code} response, body:\n${response.body}""")) }
+        .flatMap { response =>
+          Task(
+            logger.debug(
+              s"""Got ${response.code} response, body:\n${response.body}"""
+            )
+          )
+        }
         .guarantee(backend.close())
     }
 
@@ -66,7 +77,7 @@ class TxMessagingActorWeb @Inject()(backendSelection: HttpBackendSelection, @Ass
 
   override def receive: Receive = {
     case tx: TxUpdate => process(tx)
-    case x => unrecognizedMessage(x)
+    case x            => unrecognizedMessage(x)
   }
 
 }

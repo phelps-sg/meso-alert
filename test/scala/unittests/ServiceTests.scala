@@ -16,7 +16,18 @@ import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import slick.dbio.DBIO
-import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, ProvidesTestBindings, WebhookActorFixtures, WebhookDaoFixtures, WebhookFixtures, WebhookManagerFixtures}
+import unittests.Fixtures.{
+  ActorGuiceFixtures,
+  ConfigurationFixtures,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  MemPoolWatcherFixtures,
+  ProvidesTestBindings,
+  WebhookActorFixtures,
+  WebhookDaoFixtures,
+  WebhookFixtures,
+  WebhookManagerFixtures
+}
 
 import java.net.URI
 import scala.concurrent.Future
@@ -24,16 +35,18 @@ import scala.concurrent.duration.DurationInt
 import scala.util.Success
 
 //noinspection TypeAnnotation
-class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
-  with AnyWordSpecLike
-  with PostgresContainer
-  with should.Matchers
-  with ScalaFutures
-  with BeforeAndAfterAll {
+class ServiceTests
+    extends TestKit(ActorSystem("meso-alert-dao-tests"))
+    with AnyWordSpecLike
+    with PostgresContainer
+    with should.Matchers
+    with ScalaFutures
+    with BeforeAndAfterAll {
 
-  //noinspection TypeAnnotation
+  // noinspection TypeAnnotation
   trait FixtureBindings extends ProvidesTestBindings {
-    val bindModule: GuiceableModule = new UnitTestModule(database, testExecutionContext)
+    val bindModule: GuiceableModule =
+      new UnitTestModule(database, testExecutionContext)
     val executionContext = testExecutionContext
     val actorSystem = system
     val db = database
@@ -46,8 +59,11 @@ class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
   "EncryptionManager" should {
 
-    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with EncryptionActorFixtures
-      with EncryptionManagerFixtures
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
 
     "decrypt ciphertext to the correct plain text" in new TestFixtures {
       (for {
@@ -63,9 +79,15 @@ class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
   "WebhooksManager" should {
 
-    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with MemPoolWatcherFixtures
-      with ActorGuiceFixtures with WebhookDaoFixtures with WebhookFixtures
-      with WebhookActorFixtures with WebhookManagerFixtures
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with MemPoolWatcherFixtures
+        with ActorGuiceFixtures
+        with WebhookDaoFixtures
+        with WebhookFixtures
+        with WebhookActorFixtures
+        with WebhookManagerFixtures
 
     "register and start all running hooks stored in the database on initialisation" in new TestFixtures {
 
@@ -76,18 +98,22 @@ class ServiceTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       val hooks = List(hook1, hook2, hook3)
 
       hooks foreach { hook =>
-        (webhookManagerMock.register _).expects(hook).returning(Success(Registered(hook)))
+        (webhookManagerMock.register _)
+          .expects(hook)
+          .returning(Success(Registered(hook)))
       }
 
       hooks.filter(_.isRunning).foreach { hook =>
-        (webhookManagerMock.start _).expects(hook.uri).returning(Success(Started(hook)))
+        (webhookManagerMock.start _)
+          .expects(hook.uri)
+          .returning(Success(Started(hook)))
       }
 
       val init = for {
         _ <- database.run(
           DBIO.seq(
             Tables.webhooks.delete,
-            Tables.webhooks ++= hooks,
+            Tables.webhooks ++= hooks
           )
         )
         _ <- Future.sequence(hooks.map(webhooksManager.register))

@@ -5,7 +5,11 @@ import actors.EncryptionActor.Encrypted
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import akka.util.Timeout
-import controllers.{HomeController, SlackEventsController, SlackSlashCommandController}
+import controllers.{
+  HomeController,
+  SlackEventsController,
+  SlackSlashCommandController
+}
 import dao._
 import org.scalamock.handlers.CallHandler1
 import org.scalatest.BeforeAndAfterAll
@@ -18,30 +22,56 @@ import play.api.http.Status.OK
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{Result, Results}
 import play.api.test.CSRFTokenHelper._
-import play.api.test.Helpers.{POST, call, contentAsString, status, writeableOf_AnyContentAsFormUrlEncoded}
+import play.api.test.Helpers.{
+  POST,
+  call,
+  contentAsString,
+  status,
+  writeableOf_AnyContentAsFormUrlEncoded
+}
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackEventsControllerFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
+import unittests.Fixtures.{
+  ActorGuiceFixtures,
+  ConfigurationFixtures,
+  DatabaseInitializer,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  MemPoolWatcherFixtures,
+  MockMailManagerFixtures,
+  ProvidesTestBindings,
+  SlackChatActorFixtures,
+  SlackChatHookDaoFixtures,
+  SlackEventsControllerFixtures,
+  SlickSlackTeamDaoFixtures,
+  SlickSlashCommandFixtures,
+  SlickSlashCommandHistoryDaoFixtures,
+  TxWatchActorFixtures,
+  UserFixtures,
+  WebSocketFixtures
+}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
 //noinspection TypeAnnotation
-class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
-  with AnyWordSpecLike
-  with PostgresContainer
-  with should.Matchers
-  with ScalaFutures
-  with Results
-  with Eventually
-  with BeforeAndAfterAll {
+class ControllerTests
+    extends TestKit(ActorSystem("meso-alert-dao-tests"))
+    with AnyWordSpecLike
+    with PostgresContainer
+    with should.Matchers
+    with ScalaFutures
+    with Results
+    with Eventually
+    with BeforeAndAfterAll {
 
-  //noinspection TypeAnnotation
+  // noinspection TypeAnnotation
   trait FixtureBindings extends ProvidesTestBindings {
-    val bindModule: GuiceableModule = new UnitTestModule(database, testExecutionContext)
+    val bindModule: GuiceableModule =
+      new UnitTestModule(database, testExecutionContext)
     val executionContext = testExecutionContext
     val actorSystem = system
     val db = database
@@ -53,20 +83,29 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
   "HomeController" should {
 
-    trait TestFixtures extends FixtureBindings
-      with ConfigurationFixtures with WebSocketFixtures with UserFixtures with MemPoolWatcherFixtures
-      with TxWatchActorFixtures with MockMailManagerFixtures with ActorGuiceFixtures {
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with WebSocketFixtures
+        with UserFixtures
+        with MemPoolWatcherFixtures
+        with TxWatchActorFixtures
+        with MockMailManagerFixtures
+        with ActorGuiceFixtures {
 
       val actorFactory = injector.instanceOf[AuthenticationActor.Factory]
-      val controller = new HomeController(Helpers.stubControllerComponents(), config, mockMailManager)
+      val controller = new HomeController(
+        Helpers.stubControllerComponents(),
+        config,
+        mockMailManager
+      )
     }
 
-    "render feedback form without email delivery outcome message when using http method GET at /feedback" in new
-        TestFixtures {
+    "render feedback form without email delivery outcome message when using http method GET at /feedback" in new TestFixtures {
       val result = controller.feedbackPage().apply(FakeRequest().withCSRFToken)
       val body = contentAsString(result)
       status(result) mustEqual OK
-      body should include ("<form action=\"/feedback")
+      body should include("<form action=\"/feedback")
       body should not include "<div class=\"alert failed\" id=\"alert-failed\">"
       body should not include "<div class=\"alert success\" id=\"alert-success\">"
     }
@@ -90,7 +129,7 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       val result = controller.create().apply(request.withCSRFToken)
       val body = contentAsString(result)
       status(result) mustEqual OK
-      body should include ("<div class=\"alert success\" id=\"alert-success\">")
+      body should include("<div class=\"alert success\" id=\"alert-success\">")
     }
 
     "notify user of failed email delivery" in new TestFixtures {
@@ -102,28 +141,45 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       val result = controller.create().apply(request.withCSRFToken)
       val body = contentAsString(result)
       status(result) mustEqual OK
-      body should include ("<div class=\"alert failed\" id=\"alert-failed\">")
+      body should include("<div class=\"alert failed\" id=\"alert-failed\">")
     }
   }
 
   "SlackEventsController" should {
-    trait TestFixtures extends FixtureBindings
-      with ConfigurationFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
-      with MemPoolWatcherFixtures with ActorGuiceFixtures with SlackChatHookDaoFixtures
-      with SlackChatActorFixtures with SlickSlashCommandHistoryDaoFixtures with SlickSlashCommandFixtures
-      with DatabaseInitializer with SlickSlackTeamDaoFixtures with SlackEventsControllerFixtures {
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
+        with MemPoolWatcherFixtures
+        with ActorGuiceFixtures
+        with SlackChatHookDaoFixtures
+        with SlackChatActorFixtures
+        with SlickSlashCommandHistoryDaoFixtures
+        with SlickSlashCommandFixtures
+        with DatabaseInitializer
+        with SlickSlackTeamDaoFixtures
+        with SlackEventsControllerFixtures {
 
-      val controller = new SlackEventsController(Helpers.stubControllerComponents(),
-        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor))
-      val commandController = new SlackSlashCommandController(Helpers.stubControllerComponents(),
+      val controller = new SlackEventsController(
+        Helpers.stubControllerComponents(),
+        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor)
+      )
+      val commandController = new SlackSlashCommandController(
+        Helpers.stubControllerComponents(),
         slashCommandHistoryDao = slickSlashCommandHistoryDao,
-        slackTeamDao = slickSlackTeamDao, hooksManager = new HooksManagerSlackChat(hookDao, hooksActor), messagesApi)
+        slackTeamDao = slickSlackTeamDao,
+        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
+        messagesApi
+      )
     }
 
     "stop a running hook when channel is deleted" in new TestFixtures {
-       afterDbInit {
-         for {
-           slackTeamEncrypted <- slickSlackTeamDao.toDB(SlackTeam(teamId, "test-user", "test-bot", testToken, "test-team"))
+      afterDbInit {
+        for {
+          slackTeamEncrypted <- slickSlackTeamDao.toDB(
+            SlackTeam(teamId, "test-user", "test-bot", testToken, "test-team")
+          )
           _ <- db.run(
             Tables.slackTeams += slackTeamEncrypted
           )
@@ -131,10 +187,21 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
           dbContents <- db.run(Tables.slackChatHooks.result)
         } yield (response, dbContents)
       }.futureValue should matchPattern {
-         case (_: Result, Seq(SlackChatHookEncrypted(SlackChannel(`channelId`), _: Encrypted, 500000000, true))) =>
-       }
+        case (
+              _: Result,
+              Seq(
+                SlackChatHookEncrypted(
+                  SlackChannel(`channelId`),
+                  _: Encrypted,
+                  500000000,
+                  true
+                )
+              )
+            ) =>
+      }
 
-      val fakeRequest = FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
+      val fakeRequest =
+        FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
       val result = controller.eventsAPI().apply(fakeRequest)
       status(result) mustEqual OK
       Thread.sleep(3000)
@@ -142,7 +209,14 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
       eventually {
         dbContents should matchPattern {
-          case Vector(SlackChatHookEncrypted(SlackChannel(`channelId`), _: Encrypted, 500000000, false)) =>
+          case Vector(
+                SlackChatHookEncrypted(
+                  SlackChannel(`channelId`),
+                  _: Encrypted,
+                  500000000,
+                  false
+                )
+              ) =>
         }
       }
     }
@@ -150,28 +224,50 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
   "SlackSlashCommandController" should {
 
-    trait TestFixtures extends FixtureBindings
-      with ConfigurationFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
-      with MemPoolWatcherFixtures with ActorGuiceFixtures with SlackChatHookDaoFixtures
-      with SlickSlashCommandHistoryDaoFixtures with SlickSlackTeamDaoFixtures with SlackChatActorFixtures
-      with SlickSlashCommandFixtures with DatabaseInitializer {
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
+        with MemPoolWatcherFixtures
+        with ActorGuiceFixtures
+        with SlackChatHookDaoFixtures
+        with SlickSlashCommandHistoryDaoFixtures
+        with SlickSlackTeamDaoFixtures
+        with SlackChatActorFixtures
+        with SlickSlashCommandFixtures
+        with DatabaseInitializer {
 
 //      encryptionManager.init()
 
-      val controller = new SlackSlashCommandController(Helpers.stubControllerComponents(),
+      val controller = new SlackSlashCommandController(
+        Helpers.stubControllerComponents(),
         slashCommandHistoryDao = slickSlashCommandHistoryDao,
-        slackTeamDao = slickSlackTeamDao, hooksManager = new HooksManagerSlackChat(hookDao, hooksActor), messagesApi)
+        slackTeamDao = slickSlackTeamDao,
+        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
+        messagesApi
+      )
 
-      override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]): CallHandler1[ActorRef, Unit] = {
+      override def memPoolWatcherExpectations(
+          ch: CallHandler1[ActorRef, Unit]
+      ): CallHandler1[ActorRef, Unit] = {
         ch.once()
       }
 
-      def submitCommand(command: SlashCommand): Future[(Result, Seq[SlackChatHookEncrypted])] = {
+      def submitCommand(
+          command: SlashCommand
+      ): Future[(Result, Seq[SlackChatHookEncrypted])] = {
         afterDbInit {
           for {
             encrypted <- encryptionManager.encrypt(testToken.getBytes)
             _ <- db.run(
-              Tables.slackTeams += SlackTeamEncrypted(teamId, "test-user", "test-bot", encrypted, "test-team")
+              Tables.slackTeams += SlackTeamEncrypted(
+                teamId,
+                "test-user",
+                "test-bot",
+                encrypted,
+                "test-team"
+              )
             )
             response <- controller.process(command)
             dbContents <- db.run(Tables.slackChatHooks.result)
@@ -185,7 +281,17 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
       val futureValue = submitCommand(cryptoAlertCommand).futureValue
 
       futureValue should matchPattern {
-       case (_: Result, Seq(SlackChatHookEncrypted(SlackChannel(`channelId`), _: Encrypted, 500000000, true))) =>
+        case (
+              _: Result,
+              Seq(
+                SlackChatHookEncrypted(
+                  SlackChannel(`channelId`),
+                  _: Encrypted,
+                  500000000,
+                  true
+                )
+              )
+            ) =>
       }
 
       futureValue match {
@@ -196,13 +302,34 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
     "start a chat hook without specifying currency" in new TestFixtures {
       override val cryptoAlertCommand =
-        SlashCommand(None, channelId, "/crypto-alert", "5",
-          teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall, None)
+        SlashCommand(
+          None,
+          channelId,
+          "/crypto-alert",
+          "5",
+          teamDomain,
+          teamId,
+          channelName,
+          userId,
+          userName,
+          isEnterpriseInstall,
+          None
+        )
 
       val futureValue = submitCommand(cryptoAlertCommand).futureValue
 
       futureValue should matchPattern {
-        case (_: Result, Seq(SlackChatHookEncrypted(SlackChannel(`channelId`), _: Encrypted, 500000000, true))) =>
+        case (
+              _: Result,
+              Seq(
+                SlackChatHookEncrypted(
+                  SlackChannel(`channelId`),
+                  _: Encrypted,
+                  500000000,
+                  true
+                )
+              )
+            ) =>
       }
 
       futureValue match {
@@ -213,58 +340,79 @@ class ControllerTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
     "return a friendly error message if non-BTC currency is specified" in new TestFixtures {
       override val cryptoAlertCommand =
-        SlashCommand(None, channelId, "/crypto-alert", "5 ETH",
-          teamDomain, teamId, channelName, userId, userName, isEnterpriseInstall, None)
+        SlashCommand(
+          None,
+          channelId,
+          "/crypto-alert",
+          "5 ETH",
+          teamDomain,
+          teamId,
+          channelName,
+          userId,
+          userName,
+          isEnterpriseInstall,
+          None
+        )
 
       val response = controller.process(cryptoAlertCommand)
 
-      contentAsString(response) mustEqual "I currently only provide alerts for BTC, but other currencies are coming soon."
+      contentAsString(
+        response
+      ) mustEqual "I currently only provide alerts for BTC, but other currencies are coming soon."
     }
 
     "return http status 200 when receiving an ssl_check due to url change" in new TestFixtures {
-      val fakeRequest = FakeRequest(POST, "/").withFormUrlEncodedBody(("ssl_check","1"))
+      val fakeRequest =
+        FakeRequest(POST, "/").withFormUrlEncodedBody(("ssl_check", "1"))
       val result = call(controller.slashCommand, fakeRequest)
       status(result) mustEqual OK
     }
 
     "return correct message when issuing a valid /crypto-alert command" in new TestFixtures {
-      val result = call(controller.slashCommand, fakeRequestValid("/crypto-alert" ,"5"))
+      val result =
+        call(controller.slashCommand, fakeRequestValid("/crypto-alert", "5"))
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.cryptoAlertNew"
     }
 
     "return reconfigure message when reconfiguring alerts" in new TestFixtures {
-      val result = call(controller.slashCommand, fakeRequestValid("/crypto-alert","10"))
+      val result =
+        call(controller.slashCommand, fakeRequestValid("/crypto-alert", "10"))
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.cryptoAlertReconfig"
     }
 
     "return error message when not supplying amount to /crypto-alert" in new TestFixtures {
-      val result = call(controller.slashCommand, fakeRequestValid("/crypto-alert",""))
+      val result =
+        call(controller.slashCommand, fakeRequestValid("/crypto-alert", ""))
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.generalError"
     }
 
     "return correct message when pausing alerts" in new TestFixtures {
-      val result = call(controller.slashCommand, fakeRequestValid("/pause-alerts", ""))
+      val result =
+        call(controller.slashCommand, fakeRequestValid("/pause-alerts", ""))
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.pauseAlerts"
     }
 
     "return error message when pausing alerts when there are no alerts active" in new TestFixtures {
-      val result = call(controller.slashCommand, fakeRequestValid("/pause-alerts", ""))
+      val result =
+        call(controller.slashCommand, fakeRequestValid("/pause-alerts", ""))
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.pauseAlertsError"
     }
 
     "return correct message when resuming alerts" in new TestFixtures {
-      val result = call(controller.slashCommand, fakeRequestValid("/resume-alerts", ""))
+      val result =
+        call(controller.slashCommand, fakeRequestValid("/resume-alerts", ""))
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.resumeAlerts"
     }
 
     "return error message when resuming alerts when there are no alerts active" in new TestFixtures {
-      val result = call(controller.slashCommand, fakeRequestValid("/resume-alerts", ""))
+      val result =
+        call(controller.slashCommand, fakeRequestValid("/resume-alerts", ""))
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.resumeAlertsError"
     }

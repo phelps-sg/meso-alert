@@ -16,7 +16,7 @@ import slick.SlackChatExecutionContext
 import scala.concurrent.Future
 import scala.util.Random
 
-object TxMessagingActorSlackChat  {
+object TxMessagingActorSlackChat {
 
   trait Factory extends TxMessagingActorFactory[SlackChatHook] {
     def apply(hook: SlackChatHook): Actor
@@ -24,17 +24,20 @@ object TxMessagingActorSlackChat  {
 
 }
 
-class TxMessagingActorSlackChat @Inject()(protected val config : Configuration, sce: SlackChatExecutionContext,
-                                          val random: Random,
-                                          @Assisted hook: SlackChatHook)
-  extends Actor
+class TxMessagingActorSlackChat @Inject() (
+    protected val config: Configuration,
+    sce: SlackChatExecutionContext,
+    val random: Random,
+    @Assisted hook: SlackChatHook
+) extends Actor
     with TxRetryOrDie[ChatPostMessageResponse]
     with SlackClient
     with Timers
     with UnrecognizedMessageHandlerFatal
     with Logging {
 
-  protected val slackMethods: AsyncMethodsClient = slack.methodsAsync(hook.token)
+  protected val slackMethods: AsyncMethodsClient =
+    slack.methodsAsync(hook.token)
   implicit val ec: SlackChatExecutionContext = sce
   override val maxRetryCount = 3
 

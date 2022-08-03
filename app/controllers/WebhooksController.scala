@@ -10,9 +10,11 @@ import java.net.URI
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class WebhooksController @Inject()(val controllerComponents: ControllerComponents,
-                                   val slackWebHooksManager: HooksManagerWebService)
-                                  (implicit system: ActorSystem, ex: ExecutionContext) extends BaseController {
+class WebhooksController @Inject() (
+    val controllerComponents: ControllerComponents,
+    val slackWebHooksManager: HooksManagerWebService
+)(implicit system: ActorSystem, ex: ExecutionContext)
+    extends BaseController {
 
   case class UriDto(uri: String)
   case class HookDto(uri: String, threshold: Long)
@@ -21,7 +23,9 @@ class WebhooksController @Inject()(val controllerComponents: ControllerComponent
   implicit val hookJson: OFormat[HookDto] = Json.format[HookDto]
 
   def checkEx[T](f: Future[T]): Future[Result] =
-    f map(_ => Ok("Success")) recover { case ex => ServiceUnavailable(ex.getMessage) }
+    f map (_ => Ok("Success")) recover { case ex =>
+      ServiceUnavailable(ex.getMessage)
+    }
 
   def start: Action[UriDto] = Action.async(parse.json[UriDto]) { request =>
     checkEx(slackWebHooksManager.start(new URI(request.body.uri)))
@@ -32,7 +36,15 @@ class WebhooksController @Inject()(val controllerComponents: ControllerComponent
   }
 
   def register: Action[HookDto] = Action.async(parse.json[HookDto]) { request =>
-    checkEx(slackWebHooksManager.register(Webhook(new URI(request.body.uri), request.body.threshold, isRunning = true)))
+    checkEx(
+      slackWebHooksManager.register(
+        Webhook(
+          new URI(request.body.uri),
+          request.body.threshold,
+          isRunning = true
+        )
+      )
+    )
   }
 
 }

@@ -15,16 +15,15 @@ unit-tests:
   script:
     - make sbt-unit-tests
 
-functional-tests:
-  stage: functional-tests
-  script:
-    - source meso-alert-ci-config.sh
-    - make -e sbt-functional-tests
-
 scalafix:
   stage: pre-deploy-tests
   script:
     - make sbt-scalafix-check
+
+scalafmt:
+  stage: pre-deploy-tests
+  script:
+    - make sbt-scalafmt-check-all
 
 docker:
   stage: push
@@ -38,6 +37,12 @@ docker:
     - docker push registry.gitlab.com/mesonomics/meso-alert/play-server
   only:
     - master
+
+functional-tests:
+  stage: functional-tests
+  script:
+    - source meso-alert-ci-config.sh
+    - make -e sbt-functional-tests
 
 k8-staging:
   stage: deploy-staging

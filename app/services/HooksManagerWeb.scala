@@ -13,10 +13,12 @@ import scala.concurrent.ExecutionContext
 trait HooksManagerWebService extends HooksManagerService[URI, Webhook]
 
 @Singleton
-class HooksManagerWeb @Inject()(val hookDao: WebhookDao,
-                                @Named("webhooks-actor") val actor: ActorRef)
-                               (implicit val system: ActorSystem, val executionContext: ExecutionContext)
-  extends HooksManagerWebService with HooksManager[URI, Webhook] {
+class HooksManagerWeb @Inject() (
+    val hookDao: WebhookDao,
+    @Named("webhooks-actor") val actor: ActorRef
+)(implicit val system: ActorSystem, val executionContext: ExecutionContext)
+    extends HooksManagerWebService
+    with HooksManager[URI, Webhook] {
 
   initialise()
 }

@@ -1,6 +1,5 @@
 package dao
 
-
 import play.api.Logging
 import slick.BtcPostgresProfile.api._
 import slick.DatabaseExecutionContext
@@ -9,19 +8,23 @@ import slick.lifted.TableQuery
 
 import scala.concurrent.Future
 
-/**
- * Mixin for DAO classes that store a case class (value) in a Slick database table with
- * a primary key.  The mixin allows two different types of value: the type in the DAO interface
- * versus the type stored in the Slick table, with translation performed using the
- * `toDB` and `fromDB` methods.  The typical use-case for the latter is to allow
- * e.g. `User` to be used in the DAO methods, whereas `UserEncrypted` is stored in the database
- * with an encrypted password field.  If this functionality is not required then `Y` and `Z`
- * can be the same type, and `toDB` and `fromDB` can simply return `Future { value }`.
- *
- * @tparam X  The type of the key
- * @tparam Y  The value type understood by the DAO
- * @tparam Z  The value type as stored in the Slick table
- */
+/** Mixin for DAO classes that store a case class (value) in a Slick database
+  * table with a primary key. The mixin allows two different types of value: the
+  * type in the DAO interface versus the type stored in the Slick table, with
+  * translation performed using the `toDB` and `fromDB` methods. The typical
+  * use-case for the latter is to allow e.g. `User` to be used in the DAO
+  * methods, whereas `UserEncrypted` is stored in the database with an encrypted
+  * password field. If this functionality is not required then `Y` and `Z` can
+  * be the same type, and `toDB` and `fromDB` can simply return `Future { value
+  * }`.
+  *
+  * @tparam X
+  *   The type of the key
+  * @tparam Y
+  *   The value type understood by the DAO
+  * @tparam Z
+  *   The value type as stored in the Slick table
+  */
 trait SlickPrimaryKeyDao[X, Y, Z] { slickDao: SlickDao[Z] with Logging =>
 
   def table: TableQuery[_ <: Table[Z]]
@@ -39,8 +42,13 @@ trait SlickPrimaryKeyDao[X, Y, Z] { slickDao: SlickDao[Z] with Logging =>
       queryResult <- db.run(lookupKeyQuery(key).result)
       finalResult <- queryResult match {
         case Seq(x) => fromDB(x)
-        case Seq() => Future.failed(new NoSuchElementException(key.toString))
-        case _ => Future.failed(SchemaConstraintViolation(s"Multiple results returned for uri ${key.toString}"))
+        case Seq()  => Future.failed(new NoSuchElementException(key.toString))
+        case _ =>
+          Future.failed(
+            SchemaConstraintViolation(
+              s"Multiple results returned for uri ${key.toString}"
+            )
+          )
       }
     } yield finalResult
   }

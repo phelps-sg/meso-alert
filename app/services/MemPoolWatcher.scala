@@ -33,9 +33,13 @@ class MainNetPeerGroup extends PeerGroupSelection {
 }
 
 @Singleton
-class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
-                              (implicit system: ActorSystem, implicit val executionContext: ExecutionContext)
-  extends MemPoolWatcherService with ActorBackend with Logging with FutureInitialisingComponent {
+class MemPoolWatcher @Inject() (@Named("mem-pool-actor") val actor: ActorRef)(
+    implicit system: ActorSystem,
+    implicit val executionContext: ExecutionContext
+) extends MemPoolWatcherService
+    with ActorBackend
+    with Logging
+    with FutureInitialisingComponent {
 
   initialise()
 
@@ -61,6 +65,11 @@ class MemPoolWatcher @Inject()(@Named("mem-pool-actor") val actor: ActorRef)
 
   private def scheduleStatistics() = {
     logger.debug(s"actor = $actor")
-    system.scheduler.scheduleWithFixedDelay(statisticsInitialDelay, statisticsInterval, actor, LogCounters)
+    system.scheduler.scheduleWithFixedDelay(
+      statisticsInitialDelay,
+      statisticsInterval,
+      actor,
+      LogCounters
+    )
   }
 }

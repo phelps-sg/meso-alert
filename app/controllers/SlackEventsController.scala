@@ -10,10 +10,12 @@ import services.HooksManagerSlackChat
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
-class SlackEventsController @Inject()(val controllerComponents: ControllerComponents,
-                                 val hooksManager: HooksManagerSlackChat)
-                                (implicit ec: ExecutionContext)
-  extends BaseController with Logging {
+class SlackEventsController @Inject() (
+    val controllerComponents: ControllerComponents,
+    val hooksManager: HooksManagerSlackChat
+)(implicit ec: ExecutionContext)
+    extends BaseController
+    with Logging {
 
   def eventsAPI(): Action[JsValue] = Action(parse.json) { implicit request =>
     val requestBody = request.body
@@ -29,11 +31,13 @@ class SlackEventsController @Inject()(val controllerComponents: ControllerCompon
             val f = for {
               stopped <- hooksManager.stop(SlackChannel(channel))
             } yield stopped
-            f.map { result => logger.info(s"Stopping hook ${result.hook} because channel was deleted.") }
-              .recover {
-                case HookNotStartedException(key) =>
-                  logger.info(s"Channel with inactive hook $key was deleted.")
-              }
+            f.map { result =>
+              logger.info(
+                s"Stopping hook ${result.hook} because channel was deleted."
+              )
+            }.recover { case HookNotStartedException(key) =>
+              logger.info(s"Channel with inactive hook $key was deleted.")
+            }
           case ev => logger.debug(s"Received unhandled event $ev")
         }
         Ok

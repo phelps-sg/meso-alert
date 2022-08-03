@@ -14,24 +14,30 @@ trait MailManager {
 }
 
 @Singleton
-class MailManagerService @Inject()(protected val config: Configuration,
-                                   implicit val emailExecutionContext: EmailExecutionContext) extends MailManager {
+class MailManagerService @Inject() (
+    protected val config: Configuration,
+    implicit val emailExecutionContext: EmailExecutionContext
+) extends MailManager {
 
   protected val emailSmtpHost: String = config.get[String]("email.smtpHost")
   protected val emailSmtpPort: Int = config.get[Int]("email.smtpPort")
   protected val emailHost: String = config.get[String]("email.host")
   protected val emailPassword: String = config.get[String]("email.hostPassword")
-  protected val emailDestination: String = config.get[String]("email.destination")
+  protected val emailDestination: String =
+    config.get[String]("email.destination")
 
-  val mailer: Mailer = Mailer(emailSmtpHost,emailSmtpPort)
+  val mailer: Mailer = Mailer(emailSmtpHost, emailSmtpPort)
     .auth(true)
     .as(emailHost, emailPassword)
     .startTls(true)()
 
-  def sendEmail(subject: String, content: String): Future[Unit] =  {
-    mailer(Envelope.from(new InternetAddress(emailHost))
-      .to(new InternetAddress(emailDestination))
-      .subject(subject)
-      .content(Text(content)))
+  def sendEmail(subject: String, content: String): Future[Unit] = {
+    mailer(
+      Envelope
+        .from(new InternetAddress(emailHost))
+        .to(new InternetAddress(emailDestination))
+        .subject(subject)
+        .content(Text(content))
+    )
   }
 }

@@ -16,13 +16,17 @@ object EncryptionActor {
   case class Decrypted(plainText: Array[Byte]) {
     def asString: String = plainText.map(_.toChar).mkString
   }
-  case class SodiumInitialisationError(message: String) extends Exception(message)
+  case class SodiumInitialisationError(message: String)
+      extends Exception(message)
 
   def props(): Props = Props(new EncryptionActor())
 
 }
 
-class EncryptionActor extends Actor with Logging with UnRecognizedMessageHandlerWithBounce {
+class EncryptionActor
+    extends Actor
+    with Logging
+    with UnRecognizedMessageHandlerWithBounce {
 
   import actors.EncryptionActor._
 
@@ -31,14 +35,18 @@ class EncryptionActor extends Actor with Logging with UnRecognizedMessageHandler
     case Init(secretKey: Array[Byte]) =>
       val result = NaCl.init()
       if (result < 0) {
-        sender() ! Failure(SodiumInitialisationError(s"sodium_init() returned $result"))
+        sender() ! Failure(
+          SodiumInitialisationError(s"sodium_init() returned $result")
+        )
       } else if (result > 0) {
         logger.warn("Sodium library already initialised")
         sender() ! Success(result)
       } else {
         sender() ! Success(result)
       }
-      context.become(initialised(box = new SecretBox(secretKey), rng = new Random()))
+      context.become(
+        initialised(box = new SecretBox(secretKey), rng = new Random())
+      )
 
     case message =>
       unrecognizedMessage(message)
@@ -47,7 +55,9 @@ class EncryptionActor extends Actor with Logging with UnRecognizedMessageHandler
   def initialised(box: SecretBox, rng: Random): Receive = {
 
     case Encrypt(plainText: Array[Byte]) =>
-      val nonce = rng.randomBytes(NaCl.Sodium.CRYPTO_SECRETBOX_XSALSA20POLY1305_NONCEBYTES)
+      val nonce = rng.randomBytes(
+        NaCl.Sodium.CRYPTO_SECRETBOX_XSALSA20POLY1305_NONCEBYTES
+      )
       val cipherText = box.encrypt(nonce, plainText)
       sender() ! Success(Encrypted(nonce, cipherText))
 

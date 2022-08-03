@@ -13,20 +13,41 @@ import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{ConfigurationFixtures, DatabaseGuiceFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, ProvidesTestBindings, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, SlickTransactionUpdateDaoFixtures, TxUpdateFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
+import unittests.Fixtures.{
+  ConfigurationFixtures,
+  DatabaseGuiceFixtures,
+  DatabaseInitializer,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  ProvidesTestBindings,
+  SlackChatDaoTestLogic,
+  SlackChatHookDaoFixtures,
+  SlackChatHookFixtures,
+  SlickSlackTeamDaoFixtures,
+  SlickSlackTeamFixtures,
+  SlickSlashCommandFixtures,
+  SlickSlashCommandHistoryDaoFixtures,
+  SlickTransactionUpdateDaoFixtures,
+  TxUpdateFixtures,
+  WebhookDaoFixtures,
+  WebhookDaoTestLogic,
+  WebhookFixtures
+}
 
 // scalafix:off
 
-class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
-  with AnyWordSpecLike
-  with PostgresContainer
-  with should.Matchers
-  with ScalaFutures
-  with BeforeAndAfterAll {
+class DaoTests
+    extends TestKit(ActorSystem("meso-alert-dao-tests"))
+    with AnyWordSpecLike
+    with PostgresContainer
+    with should.Matchers
+    with ScalaFutures
+    with BeforeAndAfterAll {
 
-  //noinspection TypeAnnotation
+  // noinspection TypeAnnotation
   trait FixtureBindings extends ProvidesTestBindings {
-    val bindModule: GuiceableModule = new UnitTestModule(database, testExecutionContext)
+    val bindModule: GuiceableModule =
+      new UnitTestModule(database, testExecutionContext)
     val executionContext = testExecutionContext
     val actorSystem = system
     val db = database
@@ -37,9 +58,12 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
   "WebhookDao" should {
 
-    trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures
-      with WebhookDaoFixtures with WebhookFixtures with WebhookDaoTestLogic {
-    }
+    trait TestFixtures
+        extends FixtureBindings
+        with DatabaseGuiceFixtures
+        with WebhookDaoFixtures
+        with WebhookFixtures
+        with WebhookDaoTestLogic {}
 
     "record a web hook in the database" in new TestFixtures {
       insertHook().futureValue should matchPattern { case (1, Seq(`hook`)) => }
@@ -50,27 +74,47 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
     }
 
     "throw NoSuchElementException when attempting to find a non existent hook" in new TestFixtures {
-      findNonExistentHook().failed.futureValue shouldBe a [NoSuchElementException]
+      findNonExistentHook().failed.futureValue shouldBe a[
+        NoSuchElementException
+      ]
     }
 
     "update an existing hook" in new TestFixtures {
-      updateHook().futureValue should matchPattern { case (1, 1, Seq(`newHook`)) => }
+      updateHook().futureValue should matchPattern {
+        case (1, 1, Seq(`newHook`)) =>
+      }
     }
 
   }
 
   "SlackChatHookDao" should {
 
-    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with DatabaseGuiceFixtures
-      with EncryptionActorFixtures with EncryptionManagerFixtures
-      with SlackChatHookDaoFixtures with SlackChatHookFixtures with SlackChatDaoTestLogic {
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with DatabaseGuiceFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
+        with SlackChatHookDaoFixtures
+        with SlackChatHookFixtures
+        with SlackChatDaoTestLogic {
 
       encryptionManager.initialiseFuture()
     }
 
     "record a slack chat hook in the database" in new TestFixtures {
       insertHook().futureValue should matchPattern {
-        case (1, Seq(SlackChatHookEncrypted(`key`, _: Encrypted, `originalThreshold`, true))) =>
+        case (
+              1,
+              Seq(
+                SlackChatHookEncrypted(
+                  `key`,
+                  _: Encrypted,
+                  `originalThreshold`,
+                  true
+                )
+              )
+            ) =>
       }
     }
 
@@ -86,16 +130,33 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
 
     "update an existing hook" in new TestFixtures {
       updateHook().futureValue should matchPattern {
-        case (1, 1, Seq(SlackChatHookEncrypted(`key`, _: Encrypted, `newThreshold`, true))) =>
+        case (
+              1,
+              1,
+              Seq(
+                SlackChatHookEncrypted(
+                  `key`,
+                  _: Encrypted,
+                  `newThreshold`,
+                  true
+                )
+              )
+            ) =>
       }
     }
   }
 
   "SlickSlackTeamDao" should {
 
-    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with DatabaseGuiceFixtures
-      with SlickSlackTeamFixtures with EncryptionActorFixtures
-      with EncryptionManagerFixtures with SlickSlackTeamDaoFixtures with DatabaseInitializer
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with DatabaseGuiceFixtures
+        with SlickSlackTeamFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
+        with SlickSlackTeamDaoFixtures
+        with DatabaseInitializer
 
     "record a team in the database" in new TestFixtures {
       afterDbInit {
@@ -104,7 +165,18 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
           r <- db.run(Tables.slackTeams.result)
         } yield (n, r)
       }.futureValue should matchPattern {
-        case (1, Seq(SlackTeamEncrypted(`teamId`, `userId`, `botId`, _: Encrypted, `teamName`))) =>
+        case (
+              1,
+              Seq(
+                SlackTeamEncrypted(
+                  `teamId`,
+                  `userId`,
+                  `botId`,
+                  _: Encrypted,
+                  `teamName`
+                )
+              )
+            ) =>
       }
     }
 
@@ -114,8 +186,7 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
           n <- slickSlackTeamDao.insertOrUpdate(slackTeam)
           user <- slickSlackTeamDao.find(teamId)
         } yield (n, user)
-      }.futureValue should matchPattern {
-        case (1, `slackTeam`) =>
+      }.futureValue should matchPattern { case (1, `slackTeam`) =>
       }
     }
 
@@ -148,16 +219,19 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
           _ <- slickSlackTeamDao.insertOrUpdate(updatedSlackTeam)
           team <- slickSlackTeamDao.find(teamId)
         } yield team
-      }.futureValue should matchPattern {
-        case `updatedSlackTeam` =>
+      }.futureValue should matchPattern { case `updatedSlackTeam` =>
       }
     }
   }
 
   "SlickSlashCommandHistoryDao" should {
 
-    trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures with SlickSlashCommandFixtures
-      with SlickSlashCommandHistoryDaoFixtures with DatabaseInitializer
+    trait TestFixtures
+        extends FixtureBindings
+        with DatabaseGuiceFixtures
+        with SlickSlashCommandFixtures
+        with SlickSlashCommandHistoryDaoFixtures
+        with DatabaseInitializer
 
     "record a slack slash command history" in new TestFixtures {
       afterDbInit {
@@ -166,16 +240,36 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
           r <- database.run(Tables.slashCommandHistory.result)
         } yield (n, r)
       }.futureValue should matchPattern {
-        case (1, Seq(SlashCommand(Some(_: Int), `channelId`, `command`, `text`, `teamDomain`, `teamId`,
-        `channelName`, `userId`, `userName`, `isEnterpriseInstall`, `timeStamp`))) =>
+        case (
+              1,
+              Seq(
+                SlashCommand(
+                  Some(_: Int),
+                  `channelId`,
+                  `command`,
+                  `text`,
+                  `teamDomain`,
+                  `teamId`,
+                  `channelName`,
+                  `userId`,
+                  `userName`,
+                  `isEnterpriseInstall`,
+                  `timeStamp`
+                )
+              )
+            ) =>
       }
     }
   }
 
   "SlickTransactionUpdateDao" should {
 
-    trait TestFixtures extends FixtureBindings with DatabaseGuiceFixtures with SlickTransactionUpdateDaoFixtures
-      with TxUpdateFixtures with DatabaseInitializer
+    trait TestFixtures
+        extends FixtureBindings
+        with DatabaseGuiceFixtures
+        with SlickTransactionUpdateDaoFixtures
+        with TxUpdateFixtures
+        with DatabaseInitializer
 
     "record a TxUpdate" in new TestFixtures {
       afterDbInit {
@@ -184,7 +278,19 @@ class DaoTests extends TestKit(ActorSystem("meso-alert-dao-tests"))
           r <- database.run(Tables.transactionUpdates.result)
         } yield (n, r)
       }.futureValue should matchPattern {
-        case (1, Seq(TransactionUpdate(Some(_: Long), "testHash", 10, `timeStamp`, true ))) =>      }
+        case (
+              1,
+              Seq(
+                TransactionUpdate(
+                  Some(_: Long),
+                  "testHash",
+                  10,
+                  `timeStamp`,
+                  true
+                )
+              )
+            ) =>
+      }
     }
   }
 

@@ -26,7 +26,8 @@ object MessageHandlers {
     }
   }
 
-  trait UnRecognizedMessageHandlerWithBounce extends UnrecognizedMessageHandler {
+  trait UnRecognizedMessageHandlerWithBounce
+      extends UnrecognizedMessageHandler {
     env: Actor with Logging =>
 
     override def unrecognizedMessage(message: Any): Unit = {

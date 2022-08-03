@@ -15,17 +15,28 @@ trait TransactionUpdateDao {
   def record(txUpdate: TxUpdate): Future[Int]
 }
 
-class SlickTransactionUpdateDao @Inject()(val db: Database,
-                                            val databaseExecutionContext: DatabaseExecutionContext)
-                                         (implicit val ec: ExecutionContext)
-    extends TransactionUpdateDao with Logging with SlickDao[TransactionUpdate] with FutureInitialisingComponent {
+class SlickTransactionUpdateDao @Inject() (
+    val db: Database,
+    val databaseExecutionContext: DatabaseExecutionContext
+)(implicit val ec: ExecutionContext)
+    extends TransactionUpdateDao
+    with Logging
+    with SlickDao[TransactionUpdate]
+    with FutureInitialisingComponent {
 
   initialise()
 
-  override def table: TableQuery[Tables.TransactionUpdates] = Tables.transactionUpdates
+  override def table: TableQuery[Tables.TransactionUpdates] =
+    Tables.transactionUpdates
 
   def record(txUpdate: TxUpdate): Future[Int] = {
-    val slickTxUpdate = TransactionUpdate(None, txUpdate.hash, txUpdate.value, txUpdate.time, txUpdate.isPending)
+    val slickTxUpdate = TransactionUpdate(
+      None,
+      txUpdate.hash,
+      txUpdate.value,
+      txUpdate.time,
+      txUpdate.isPending
+    )
     db.run(Tables.transactionUpdates += slickTxUpdate)
   }
 

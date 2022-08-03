@@ -38,8 +38,21 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
           "text" -> Vector(text)
         )
       SlackSlashCommandController.toCommand(paramMap) should matchPattern {
-        case Success(SlashCommand(None, `channelId`, `command`, `text`,
-        None, `teamId`, None, None, None, None, Some(_: java.time.LocalDateTime))) =>
+        case Success(
+              SlashCommand(
+                None,
+                `channelId`,
+                `command`,
+                `text`,
+                None,
+                `teamId`,
+                None,
+                None,
+                None,
+                None,
+                Some(_: java.time.LocalDateTime)
+              )
+            ) =>
       }
     }
 

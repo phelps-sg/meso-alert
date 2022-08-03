@@ -80,6 +80,9 @@ sbt-scalafix-check:
 sbt-scalafix:
 	$(SDK_INIT); sbt "scalafixAll"
 
+sbt-scalafmt-check-all:
+	$(SDK_INIT); sbt "scalafmtCheckAll"
+
 docker-push: docker-build docker-play-server-push docker-ci-push
 
 docker-play-server-push:
