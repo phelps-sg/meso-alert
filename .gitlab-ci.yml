@@ -43,6 +43,8 @@ functional-tests:
   script:
     - source meso-alert-ci-config.sh
     - make -e sbt-functional-tests
+  only:
+    - master
 
 k8-staging:
   stage: deploy-staging
