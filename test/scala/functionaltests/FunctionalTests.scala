@@ -34,9 +34,8 @@ class FunctionalTests
   def slackSignIn(workspace: String, email: String, pwd: String): Unit = {
     go to "https://slack.com/workspace-signin"
     delete all cookies
-
     reloadPage()
-    checkForCookieMessage
+    checkForCookieMessage()
     textField("domain").value = workspace
     pressKeys(Keys.ENTER.toString)
     click on id("email")
@@ -83,35 +82,20 @@ class FunctionalTests
 
   def clickOnWithJs(locator: By): Object = {
     val element = webDriver
-      .findElement(locator);
-    val ex: JavascriptExecutor = webDriver;
-    ex.executeScript("arguments[0].click()", element);
+      .findElement(locator)
+    val ex: JavascriptExecutor = webDriver
+    ex.executeScript("arguments[0].click()", element)
   }
 
   def createChannel(name: String): Unit = {
     cleanUp()
-    find(xpath("//span[text()='Add channels']")).map(elem => click on (elem))
-    find(xpath("//div[text()='Create a new channel']")).map(elem =>
-      click on (elem)
+    find(xpath("//span[text()='Add channels']")).foreach(elem => click on elem)
+    find(xpath("//div[text()='Create a new channel']")).foreach(elem =>
+      click on elem
     )
     enter(s"$name")
     clickOn(By.xpath("//button[text()='Create']"))
     clickOn(By.xpath("/html/body/div[9]/div/div/div[3]/div/div/div/button"))
-  }
-
-  def deleteChannel(name: String): Unit = {
-    find(
-      xpath(
-        s"//span[contains(@class, 'p-view_header__channel_title') and text()='$name']"
-      )
-    )
-      .map(elem => click on (elem))
-    find(xpath("//span[text()='Settings']")).map(elem => click on (elem))
-    find(xpath("//h3[text()='Delete this channel']")).map(elem =>
-      click on (elem)
-    )
-    click on className("c-input_checkbox")
-    click on className("c-button--danger")
   }
 
   def cleanUp(): Unit = {
@@ -122,10 +106,25 @@ class FunctionalTests
     )
     testChannel match {
       case Some(elem) =>
-        click on (elem)
+        click on elem
         deleteChannel("testing")
       case None =>
     }
+  }
+
+  def deleteChannel(name: String): Unit = {
+    find(
+      xpath(
+        s"//span[contains(@class, 'p-view_header__channel_title') and text()='$name']"
+      )
+    )
+      .foreach(elem => click on elem)
+    find(xpath("//span[text()='Settings']")).foreach(elem => click on elem)
+    find(xpath("//h3[text()='Delete this channel']")).foreach(elem =>
+      click on elem
+    )
+    click on className("c-input_checkbox")
+    click on className("c-button--danger")
   }
 
   def clickOn(locator: By): Unit = {
@@ -133,7 +132,7 @@ class FunctionalTests
       .ignoring(classOf[StaleElementReferenceException])
       .ignoring(classOf[ElementClickInterceptedException])
       .until(ExpectedConditions.elementToBeClickable(locator))
-    webDriver.findElement(locator).click
+    webDriver.findElement(locator).click()
   }
 
   "The home page" should "render" in {
@@ -152,14 +151,14 @@ class FunctionalTests
     emailField("email").value = "test@example.com"
     textArea("message").value = "An example feedback message."
     submit()
-    assert(!find("alert-success").isEmpty)
+    assert(find("alert-success").isDefined)
   }
 
   "clicking on 'add to slack' and installing the app to a workspace" should
     "result in the successful installation page" in {
       go to stagingURL
       click on id("addToSlackBtn")
-      checkForCookieMessage
+      checkForCookieMessage()
       textField("domain").value = workspace
       pressKeys(Keys.ENTER.toString)
       click on id("email")
@@ -175,7 +174,7 @@ class FunctionalTests
         )
       webDriver
         .findElement(By.xpath("/html/body/div[1]/div/form/div/div[2]/button"))
-        .click
+        .click()
 //    click on className("c-button--primary")
       pageTitle should be("Installation successful")
     }
@@ -194,7 +193,7 @@ class FunctionalTests
         "//span[contains(@class, 'p-channel_sidebar__name') and text()='test']"
       )
     )
-      .map(elem => click on (elem))
+      .foreach(elem => click on elem)
     inviteToChannel("block-insights-staging")
     webDriver
       .findElement(By.className("ql-editor"))
@@ -205,7 +204,7 @@ class FunctionalTests
         "//span[text()='OK, I will send updates on any BTC transactions exceeding 100 BTC.']"
       )
     )
-    assert(!result.isEmpty)
+    assert(result.isDefined)
   }
 
   "issuing command /pause-alerts" should "result in correct response message" in {
@@ -215,12 +214,12 @@ class FunctionalTests
         "//span[contains(@class, 'p-channel_sidebar__name') and text()='testing']"
       )
     )
-      .map(elem => click on (elem))
+      .foreach(elem => click on elem)
     pressKeys("/pause-alerts")
     pressKeys(Keys.ENTER.toString)
     val result =
       find(xpath("//span[text()='OK, I have paused alerts for this channel.']"))
-    assert(!result.isEmpty)
+    assert(result.isDefined)
   }
 
   "issuing command /resume-alerts" should "result in correct response message" in {
@@ -230,12 +229,12 @@ class FunctionalTests
         "//span[contains(@class, 'p-channel_sidebar__name') and text()='testing']"
       )
     )
-      .map(elem => click on (elem))
+      .foreach(elem => click on elem)
     pressKeys("/resume-alerts")
     pressKeys(Keys.ENTER.toString)
     val result =
       find(xpath("//span[text()='OK, I will resume alerts on this channel.']"))
-    assert(!result.isEmpty)
+    assert(result.isDefined)
     deleteChannel("testing")
   }
 }
