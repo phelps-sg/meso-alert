@@ -9,7 +9,7 @@ import slack.FutureConverters.BoltFuture
 import slack.{BoltException, SlackClient}
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 case class InvalidUserException(str: String) extends Exception(str)
 
@@ -24,41 +24,48 @@ class SlackAuthController @Inject() (
 
   protected val slackMethods: AsyncMethodsClient = slack.methodsAsync()
 
-  def authRedirect(temporaryCode: String): mvc.Action[AnyContent] =
+  def authRedirect(
+      temporaryCode: Option[String],
+      error: Option[String]
+  ): mvc.Action[AnyContent] =
     Action.async { implicit request: Request[AnyContent] =>
       logger.debug("Received slash auth redirect")
 
-      val slackRequest = OAuthV2AccessRequest.builder
-        .clientId(slackClientId)
-        .clientSecret(slackClientSecret)
-        .code(temporaryCode)
-        .build()
+      error match {
+        case Some("access_denied") =>
+          logger.info("User cancelled OAuth during 'Add to Slack'")
+          Future { Ok(views.html.index(config.get[String]("slack.deployURL"))) }
+        case None =>
+          val slackRequest = OAuthV2AccessRequest.builder
+            .clientId(slackClientId)
+            .clientSecret(slackClientSecret)
+            .code(temporaryCode.get)
+            .build()
 
-      val f = for {
+          val f = for {
 
-        response <- slackMethods.oauthV2Access(slackRequest).asScalaFuture
+            response <- slackMethods.oauthV2Access(slackRequest).asScalaFuture
 
-        n <- {
-          val slackTeam =
-            SlackTeam(
-              teamId = response.getTeam.getId,
-              userId = response.getAuthedUser.getId,
-              botId = response.getBotUserId,
-              accessToken = response.getAccessToken,
-              teamName = response.getTeam.getName
-            )
-          logger.debug(s"user = $slackTeam")
-          slackTeamDao.insertOrUpdate(slackTeam)
-        }
+            n <- {
+              val slackTeam =
+                SlackTeam(
+                  teamId = response.getTeam.getId,
+                  userId = response.getAuthedUser.getId,
+                  botId = response.getBotUserId,
+                  accessToken = response.getAccessToken,
+                  teamName = response.getTeam.getName
+                )
+              logger.debug(s"user = $slackTeam")
+              slackTeamDao.insertOrUpdate(slackTeam)
+            }
 
-      } yield n
+          } yield n
 
-      f map { case 1 =>
-        Ok(views.html.installed())
-      } recover { case BoltException(message) =>
-        ServiceUnavailable(s"Invalid user: $message")
+          f map { case 1 =>
+            Ok(views.html.installed())
+          } recover { case BoltException(message) =>
+            ServiceUnavailable(s"Invalid user: $message")
+          }
       }
-
     }
-
 }
