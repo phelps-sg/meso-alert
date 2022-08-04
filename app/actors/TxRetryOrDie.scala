@@ -9,11 +9,15 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 import scala.math.{min, pow}
 
-
 object TxRetryOrDie {
   //  message types
   case class Retry(tx: TxUpdate, retryCount: Int, exception: Option[Exception])
-  case class ScheduleRetry(timeout: FiniteDuration, tx: TxUpdate, retryCount: Int, exception: Option[Exception])
+  case class ScheduleRetry(
+      timeout: FiniteDuration,
+      tx: TxUpdate,
+      retryCount: Int,
+      exception: Option[Exception]
+  )
 }
 
 trait TxRetryOrDie[T] {
@@ -29,27 +33,33 @@ trait TxRetryOrDie[T] {
   val base = 500
   val cap = 10000
 
-  def process(tx: TxUpdate) : Future[T]
+  def process(tx: TxUpdate): Future[T]
   def success(): Unit
-  def failure(ex: Throwable): Unit = logger.error(s"Failed to process tx, ${ex.getMessage}.")
-  def actorDeath(reason: String): Unit = logger.info(s"${this.getClass.getName} terminating because $reason")
+  def failure(ex: Throwable): Unit =
+    logger.error(s"Failed to process tx, ${ex.getMessage}.")
+  def actorDeath(reason: String): Unit =
+    logger.info(s"${this.getClass.getName} terminating because $reason")
 
   def calculateWaitTime(retryCount: Int): FiniteDuration = {
     random.between(0, min(cap, base * pow(2, retryCount))) milliseconds
   }
 
-  def receive : Receive = {
+  def receive: Receive = {
 
     case tx: TxUpdate => self ! Retry(tx, 0, None)
 
     case Retry(tx, retryCount, _) if retryCount < maxRetryCount =>
-      process(tx) map {
-        _ => success()
-      } recover {
-        case ex: Exception =>
-          failure(ex)
-          self ! ScheduleRetry(calculateWaitTime(retryCount), tx, retryCount + 1, Some(ex))
-        }
+      process(tx) map { _ =>
+        success()
+      } recover { case ex: Exception =>
+        failure(ex)
+        self ! ScheduleRetry(
+          calculateWaitTime(retryCount),
+          tx,
+          retryCount + 1,
+          Some(ex)
+        )
+      }
 
     case Retry(tx, retryCount, Some(ex)) if retryCount >= maxRetryCount =>
       self ! Die(s"Could not process tx $tx. ${ex.getMessage}")
@@ -57,7 +67,7 @@ trait TxRetryOrDie[T] {
     case ScheduleRetry(timeout, tx, retryCount, ex) =>
       timers.startSingleTimer("retry", Retry(tx, retryCount, ex), timeout)
 
-    case Die(reason)  =>
+    case Die(reason) =>
       actorDeath(reason)
       self ! PoisonPill
 

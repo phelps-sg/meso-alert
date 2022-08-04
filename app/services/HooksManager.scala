@@ -1,6 +1,15 @@
 package services
 
-import actors.{Register, Registered, Start, Started, Stop, Stopped, Update, Updated}
+import actors.{
+  Register,
+  Registered,
+  Start,
+  Started,
+  Stop,
+  Stopped,
+  Update,
+  Updated
+}
 import akka.actor.{ActorRef, ActorSystem}
 import dao.{Hook, HookDao}
 import play.api.Logging
@@ -16,7 +25,10 @@ trait HooksManagerService[X, Y] {
   def register(hook: Y): Future[Registered[Y]]
 }
 
-trait HooksManager[X, Y <: Hook[X]] extends ActorBackend with Logging with FutureInitialisingComponent {
+trait HooksManager[X, Y <: Hook[X]]
+    extends ActorBackend
+    with Logging
+    with FutureInitialisingComponent {
 
   val hookDao: HookDao[X, Y]
   val actor: ActorRef
@@ -33,10 +45,11 @@ trait HooksManager[X, Y <: Hook[X]] extends ActorBackend with Logging with Futur
 
     initFuture.onComplete {
       case Success(x) => logger.info(f"Started ${x.size} hooks.")
-      case Failure(exception) => logger.error(f"Failed to load hooks: ${exception.getMessage}")
+      case Failure(exception) =>
+        logger.error(f"Failed to load hooks: ${exception.getMessage}")
     }
 
-    initFuture map {_ => () }
+    initFuture map { _ => () }
   }
 
   def start(key: X): Future[Started[Y]] = sendAndReceive(Start(key))

@@ -16,7 +16,7 @@ trait ActorBackend {
   def sendAndReceive[T, R](message: T): Future[R] = {
     (actor ? message) map {
       case Success(x: R) => x
-      case Failure(ex) => throw ex
+      case Failure(ex)   => throw ex
     }
   }
 }

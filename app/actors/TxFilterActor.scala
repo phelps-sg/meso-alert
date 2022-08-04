@@ -16,13 +16,22 @@ object TxFilterActor {
 
   case class Die()
 
-  def props(out: ActorRef, filter: TxUpdate => Boolean, memPoolWatcher: MemPoolWatcherService): Props =
+  def props(
+      out: ActorRef,
+      filter: TxUpdate => Boolean,
+      memPoolWatcher: MemPoolWatcherService
+  ): Props =
     Props(new TxFilterActor(out, filter, memPoolWatcher))
 }
 
-class TxFilterActor @Inject()(@Assisted val out: ActorRef, @Assisted val filter: TxUpdate => Boolean,
-                              val memPoolWatcher: MemPoolWatcherService)
-  extends Actor with TxUpdateActor with Logging with UnrecognizedMessageHandlerFatal {
+class TxFilterActor @Inject() (
+    @Assisted val out: ActorRef,
+    @Assisted val filter: TxUpdate => Boolean,
+    val memPoolWatcher: MemPoolWatcherService
+) extends Actor
+    with TxUpdateActor
+    with Logging
+    with UnrecognizedMessageHandlerFatal {
 
   override def preStart(): Unit = {
     super.preStart()
@@ -31,8 +40,8 @@ class TxFilterActor @Inject()(@Assisted val out: ActorRef, @Assisted val filter:
 
   override def receive: Receive = {
     case tx: TxUpdate => if (filter(tx)) out ! tx
-    case Die => self ! PoisonPill
-    case x => unrecognizedMessage(x)
+    case Die          => self ! PoisonPill
+    case x            => unrecognizedMessage(x)
   }
 
 }

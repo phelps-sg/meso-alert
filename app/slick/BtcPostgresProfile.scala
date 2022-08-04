@@ -8,10 +8,10 @@ trait BtcPostgresProfile extends ExPostgresProfile { // with PgArraySupport {
   override protected def computeCapabilities: Set[Capability] =
     super.computeCapabilities + slick.jdbc.JdbcCapabilities.insertOrUpdate
 
-  //noinspection TypeAnnotation
+  // noinspection TypeAnnotation
 //  override val api = MyAPI
 
-  //noinspection TypeAnnotation
+  // noinspection TypeAnnotation
 //  object MyAPI extends API with ArrayImplicits {
 //    implicit val simpleLongBufferTypeMapper =
 //      new SimpleArrayJdbcType[Long]("_int8").to(_.toBuffer[Long], (v: mutable.Buffer[Long]) => v.toSeq)

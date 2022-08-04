@@ -8,7 +8,11 @@ import com.google.inject.assistedinject.Assisted
 import play.api.Logging
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
-import services.{InvalidCredentialsException, MemPoolWatcherService, UserManagerService}
+import services.{
+  InvalidCredentialsException,
+  MemPoolWatcherService,
+  UserManagerService
+}
 
 import scala.util.{Failure, Success}
 
@@ -19,14 +23,19 @@ object AuthenticationActor {
     def apply(out: ActorRef): Actor
   }
 
-  def props(out: ActorRef, memPoolWatcher: MemPoolWatcherService, userManager: UserManagerService)
-           (implicit system: ActorSystem): Props =
+  def props(
+      out: ActorRef,
+      memPoolWatcher: MemPoolWatcherService,
+      userManager: UserManagerService
+  )(implicit system: ActorSystem): Props =
     Props(new AuthenticationActor(out, memPoolWatcher, userManager))
 
   case class TxInputOutput(address: Option[String], value: Option[Long])
 
   case class Auth(id: String, token: String) {
-    def message: TextMessage.Strict = TextMessage(authWrites.writes(this).toString())
+    def message: TextMessage.Strict = TextMessage(
+      authWrites.writes(this).toString()
+    )
   }
   case class Die(message: String)
 
@@ -40,23 +49,30 @@ object AuthenticationActor {
   // scalafix:on
 
   implicit val authReads: Reads[Auth] =
-    ((JsPath \ "id").read[String] and (JsPath \ "token").read[String])(Auth.apply _)
+    ((JsPath \ "id").read[String] and (JsPath \ "token").read[String])(
+      Auth.apply _
+    )
 
 }
 
 //noinspection TypeAnnotation
-class AuthenticationActor @Inject()(@Assisted val out: ActorRef, val memPoolWatcher: MemPoolWatcherService,
-                                    userManager: UserManagerService)(implicit system: ActorSystem)
-  extends Actor with TxUpdateActor with UnrecognizedMessageHandlerFatal with Logging {
+class AuthenticationActor @Inject() (
+    @Assisted val out: ActorRef,
+    val memPoolWatcher: MemPoolWatcherService,
+    userManager: UserManagerService
+)(implicit system: ActorSystem)
+    extends Actor
+    with TxUpdateActor
+    with UnrecognizedMessageHandlerFatal
+    with Logging {
 
   import AuthenticationActor._
 
   override def receive: Receive = unauthorized
 
-  private def deathHandler: Receive = {
-    case Die(reason) =>
-      logger.info(s"Died due to reason: $reason")
-      self ! PoisonPill
+  private def deathHandler: Receive = { case Die(reason) =>
+    logger.info(s"Died due to reason: $reason")
+    self ! PoisonPill
   }
 
   def unauthorized: Receive = deathHandler.orElse {
@@ -73,9 +89,10 @@ class AuthenticationActor @Inject()(@Assisted val out: ActorRef, val memPoolWatc
     userManager.authenticate(auth.id) match {
 
       case Success(user) =>
-        val filterActor = system.actorOf(TxFilterActor.props(out, user.filter, memPoolWatcher))
-        def authorized: Receive = deathHandler.orElse {
-          message => filterActor ! message
+        val filterActor =
+          system.actorOf(TxFilterActor.props(out, user.filter, memPoolWatcher))
+        def authorized: Receive = deathHandler.orElse { message =>
+          filterActor ! message
         }
         context.become(authorized)
 

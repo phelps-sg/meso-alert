@@ -8,13 +8,20 @@
 FROM registry.gitlab.com/mesonomics/spark-bitcoin-graph/mesonomics-sdk-base
 MAINTAINER sphelps@sphelps.net version: 0.1
 
+ARG SLACK_TEST_EMAIL
+ARG SLACK_TEST_PASSWORD
+ARG SLACK_TEST_WORKSPACE
+
 ADD ./tz-setup.sh /tmp/tz-setup.sh
+ADD ./test-setup.sh /root/test-setup.sh
 
 RUN apt-get update; \
     apt-get install -y docker docker.io docker-compose; \
     apt-get install -y firefox
 
 RUN /tmp/tz-setup.sh
+
+RUN /root/test-setup.sh $SLACK_TEST_EMAIL $SLACK_TEST_PASSWORD $SLACK_TEST_WORKSPACE
 
 RUN	cd /tmp; \
 	curl -Ls --output - https://github.com/mozilla/geckodriver/releases/download/v0.31.0/geckodriver-v0.31.0-linux64.tar.gz | tar zxv; \

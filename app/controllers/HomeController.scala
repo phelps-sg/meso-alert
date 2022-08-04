@@ -16,15 +16,17 @@ import scala.concurrent.{ExecutionContext, Future}
 trait EmailExecutionContext extends ExecutionContext
 
 class EmailExecutionContextImpl @Inject() (system: ActorSystem)
-  extends CustomExecutionContext(system, "email.dispatcher")
+    extends CustomExecutionContext(system, "email.dispatcher")
     with EmailExecutionContext
 
 @Singleton
-class HomeController @Inject()(val controllerComponents: ControllerComponents,
-                               protected val config: Configuration,
-                               val mailManager: MailManager)
-                              (implicit val ec: ExecutionContext)
-  extends BaseController with Logging {
+class HomeController @Inject() (
+    val controllerComponents: ControllerComponents,
+    protected val config: Configuration,
+    val mailManager: MailManager
+)(implicit val ec: ExecutionContext)
+    extends BaseController
+    with Logging {
 
   case class FeedbackFormData(name: String, email: String, message: String)
 
@@ -37,8 +39,9 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   val feedbackForm: Form[FeedbackFormData] = Form(feedbackFormMapping)
   val slackDeployURL: String = config.get[String]("slack.deployURL")
 
-  def index(): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
-    Ok(views.html.index(slackDeployURL))
+  def index(): Action[AnyContent] = Action {
+    implicit request: Request[AnyContent] =>
+      Ok(views.html.index(slackDeployURL))
   }
 
   def feedbackPage(): Action[AnyContent] = Action { implicit request =>
@@ -46,25 +49,28 @@ class HomeController @Inject()(val controllerComponents: ControllerComponents,
   }
 
   def create(): Action[AnyContent] = Action.async { implicit request =>
-    feedbackForm.bindFromRequest().fold(
-      _ => Future {
-        BadRequest
-      },
-      feedbackData => {
-        mailManager.sendEmail("Feedback - " + feedbackData.name + " " + feedbackData.email,
-          feedbackData.message).map {
-          _ =>
-            logger.info("feedback email delivered")
-            Ok(views.html.feedback("success"))
-        } recover {
-          case ex: Exception =>
+    feedbackForm
+      .bindFromRequest()
+      .fold(
+        _ =>
+          Future {
+            BadRequest
+          },
+        feedbackData => {
+          mailManager
+            .sendEmail(
+              "Feedback - " + feedbackData.name + " " + feedbackData.email,
+              feedbackData.message
+            )
+            .map { _ =>
+              logger.info("feedback email delivered")
+              Ok(views.html.feedback("success"))
+            } recover { case ex: Exception =>
             logger.error(ex.getMessage)
             ex.printStackTrace()
             Ok(views.html.feedback("failed"))
+          }
         }
-      }
-    )
+      )
   }
 }
-
-

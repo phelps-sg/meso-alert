@@ -22,12 +22,17 @@ trait PostgresContainer extends ForAllTestContainer {
     //    dockerImageNameOverride = "postgres:14.2",
     databaseName = "meso-alert-test",
     username = "meso-alert-test",
-    password = "meso-alert-test")
+    password = "meso-alert-test"
+  )
 
   implicit def database: jdbc.JdbcBackend.DatabaseDef = {
     logger.info(s"Returning database definition from url ${container.jdbcUrl}")
-    Database.forURL(url = container.jdbcUrl, user = container.username,
-      password = container.password, driver = container.driverClassName)
+    Database.forURL(
+      url = container.jdbcUrl,
+      user = container.username,
+      password = container.password,
+      driver = container.driverClassName
+    )
   }
 
   implicit val timeout: Duration = Duration(1, "min")

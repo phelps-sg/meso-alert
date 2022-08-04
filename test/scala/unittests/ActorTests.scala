@@ -2,8 +2,22 @@ package unittests
 
 import actors.AuthenticationActor.{Auth, TxInputOutput}
 import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
-import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
-import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxUpdate, Updated}
+import actors.MemPoolWatcherActor.{
+  PeerGroupAlreadyStartedException,
+  StartPeerGroup
+}
+import actors.{
+  AuthenticationActor,
+  HookAlreadyRegisteredException,
+  HookAlreadyStartedException,
+  HookNotRegisteredException,
+  HookNotStartedException,
+  Registered,
+  Started,
+  Stopped,
+  TxUpdate,
+  Updated
+}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -24,7 +38,26 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
-import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, TransactionFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
+import unittests.Fixtures.{
+  ActorGuiceFixtures,
+  ConfigurationFixtures,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  HookActorTestLogic,
+  MemPoolWatcherActorFixtures,
+  MemPoolWatcherFixtures,
+  ProvidesTestBindings,
+  SlackChatActorFixtures,
+  SlackChatHookDaoFixtures,
+  TransactionFixtures,
+  TxPersistenceActorFixtures,
+  TxUpdateFixtures,
+  TxWatchActorFixtures,
+  UserFixtures,
+  WebSocketFixtures,
+  WebhookActorFixtures,
+  WebhookFixtures
+}
 
 import java.net.URI
 import scala.concurrent.Future
@@ -35,14 +68,15 @@ import scala.util.{Failure, Success}
 // scalafix:off
 
 //noinspection TypeAnnotation
-class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
-  with AnyWordSpecLike
-  with PostgresContainer
-  with should.Matchers
-  with MockFactory
-  with ScalaFutures
-  with BeforeAndAfterAll
-  with ImplicitSender {
+class ActorTests
+    extends TestKit(ActorSystem("meso-alert-test"))
+    with AnyWordSpecLike
+    with PostgresContainer
+    with should.Matchers
+    with MockFactory
+    with ScalaFutures
+    with BeforeAndAfterAll
+    with ImplicitSender {
 
   // akka timeout
   implicit val akkaTimeout = Timeout(5.seconds)
@@ -55,7 +89,8 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
   trait FixtureBindings extends ProvidesTestBindings {
-    val bindModule: GuiceableModule = new UnitTestModule(database, testExecutionContext)
+    val bindModule: GuiceableModule =
+      new UnitTestModule(database, testExecutionContext)
     val executionContext = testExecutionContext
     val actorSystem = system
     val timeout: Timeout = 20.seconds
@@ -66,13 +101,20 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "MemPoolWatcherActor" should {
 
-    trait TestFixtures extends FixtureBindings with MemPoolWatcherFixtures
-      with ConfigurationFixtures with ActorGuiceFixtures with MemPoolWatcherActorFixtures {
+    trait TestFixtures
+        extends FixtureBindings
+        with MemPoolWatcherFixtures
+        with ConfigurationFixtures
+        with ActorGuiceFixtures
+        with MemPoolWatcherActorFixtures {
 
       (mockPeerGroup.start _).expects().once()
       (mockPeerGroup.setMaxConnections _).expects(*).once()
       (mockPeerGroup.addPeerDiscovery _).expects(*).once()
-      (mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener)).expects(*).once()
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .once()
     }
 
     "return a successful acknowledgement when initialising the peer group" in new TestFixtures {
@@ -81,8 +123,9 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
         _ <- Future {
           expectNoMessage()
         }
-      } yield started)
-        .futureValue should matchPattern { case Success(Started(_: PeerGroup)) => }
+      } yield started).futureValue should matchPattern {
+        case Success(Started(_: PeerGroup)) =>
+      }
     }
 
     "return an error when initialising an already-initialised peer group" in new TestFixtures {
@@ -92,121 +135,182 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
         _ <- Future {
           expectNoMessage()
         }
-      } yield (started, error))
-        .futureValue should matchPattern {
-        case (Success(Started(_: PeerGroup)), Failure(PeerGroupAlreadyStartedException)) =>
+      } yield (started, error)).futureValue should matchPattern {
+        case (
+              Success(Started(_: PeerGroup)),
+              Failure(PeerGroupAlreadyStartedException)
+            ) =>
       }
     }
 
   }
 
-  //noinspection ZeroIndexToHead
+  // noinspection ZeroIndexToHead
   "MemPoolWatcher" should {
 
-    trait TextFixtures extends FixtureBindings with ConfigurationFixtures with MemPoolWatcherFixtures
-      with WebSocketFixtures with ActorGuiceFixtures with MemPoolWatcherActorFixtures
-      with UserFixtures with TransactionFixtures {
-    }
+    trait TextFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with MemPoolWatcherFixtures
+        with WebSocketFixtures
+        with ActorGuiceFixtures
+        with MemPoolWatcherActorFixtures
+        with UserFixtures
+        with TransactionFixtures {}
 
     "send the correct TxUpdate message when a transaction update is received from " +
       "the bitcoinj peer group" in new TextFixtures {
 
-      // Configure user to not filter events.
-      (mockUser.filter _).expects(*).returning(true).atLeastOnce()
-      // The user will authenticate  successfully with id "test".
-      (mockUserManager.authenticate _).expects("test").returning(Success(mockUser))
+        // Configure user to not filter events.
+        (mockUser.filter _).expects(*).returning(true).atLeastOnce()
+        // The user will authenticate  successfully with id "test".
+        (mockUserManager.authenticate _)
+          .expects("test")
+          .returning(Success(mockUser))
 
-      // Capture the update messages sent to the web socket for later verification.
-      val updateCapture = CaptureAll[TxUpdate]()
-      (mockWs.update _).expects(capture(updateCapture)).atLeastOnce()
+        // Capture the update messages sent to the web socket for later verification.
+        val updateCapture = CaptureAll[TxUpdate]()
+        (mockWs.update _).expects(capture(updateCapture)).atLeastOnce()
 
-      // This is required for raw types (see https://scalamock.org/user-guide/advanced_topics/).
-      implicit val d = new Defaultable[ListenableFuture[_]] {
-        override val default = null
-      }
+        // This is required for raw types (see https://scalamock.org/user-guide/advanced_topics/).
+        implicit val d = new Defaultable[ListenableFuture[_]] {
+          override val default = null
+        }
 
-      // Capture the listeners.  The second listener will be the txWatchActor
-      val listenerCapture = CaptureAll[OnTransactionBroadcastListener]()
-      (mockPeerGroup.addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-        .expects(capture(listenerCapture)).atLeastOnce()
+        // Capture the listeners.  The second listener will be the txWatchActor
+        val listenerCapture = CaptureAll[OnTransactionBroadcastListener]()
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(capture(listenerCapture))
+          .atLeastOnce()
 
-      val txWatchActor =
-        actorSystem.actorOf(AuthenticationActor.props(mockWsActor, memPoolWatcher, mockUserManager))
+        val txWatchActor =
+          actorSystem.actorOf(
+            AuthenticationActor.props(
+              mockWsActor,
+              memPoolWatcher,
+              mockUserManager
+            )
+          )
 
-      memPoolWatcher.addListener(txWatchActor)
+        memPoolWatcher.addListener(txWatchActor)
 
-      // Authenticate the user so that the actor is ready send updates.
-      txWatchActor ! Auth("test", "test")
-      expectNoMessage()
-
-      val listener = listenerCapture.value
-
-      def broadcastTransaction(tx: Transaction): Unit = {
-        // Simulate a broadcast of the transaction from PeerGroup.
-        listener.onTransaction(null, tx)
-        // We have to wait for the actors to process their messages.
+        // Authenticate the user so that the actor is ready send updates.
+        txWatchActor ! Auth("test", "test")
         expectNoMessage()
-      }
 
-      // Configure a test bitcoinj transaction.
-      val transaction = new Transaction(mainNetParams)
+        val listener = listenerCapture.value
 
-      //noinspection SpellCheckingInspection
-      val outputAddress1 = "1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"
-      val value1 = 100L
-      transaction.addOutput(Coin.valueOf(value1), Address.fromString(mainNetParams, outputAddress1))
+        def broadcastTransaction(tx: Transaction): Unit = {
+          // Simulate a broadcast of the transaction from PeerGroup.
+          listener.onTransaction(null, tx)
+          // We have to wait for the actors to process their messages.
+          expectNoMessage()
+        }
 
-      //noinspection SpellCheckingInspection
-      val outputAddress2 = "1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"
-      val value2 = 200L
-      transaction.addOutput(Coin.valueOf(value2), Address.fromString(mainNetParams, outputAddress2))
+        // Configure a test bitcoinj transaction.
+        val transaction = new Transaction(mainNetParams)
 
-      broadcastTransaction(transaction)
-
-      updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
-        case TxUpdate(_, totalValue, _, _, Seq(
-        TxInputOutput(Some(`outputAddress1`), Some(`value1`)),
-        TxInputOutput(Some(`outputAddress2`), Some(`value2`)),
-        ), Seq()) if totalValue == value1 + value2 =>
-      }
+        val outputAddress1 = "1A5PFH8NdhLy1raKXKxFoqUgMAPUaqivqp"
+        val value1 = 100L
+        transaction.addOutput(
+          Coin.valueOf(value1),
+          Address.fromString(mainNetParams, outputAddress1)
+        )
 
-      broadcastTransaction(transactions.head)
-      updateCapture.value should matchPattern {
-        case TxUpdate(_, 1000000, _, _, Seq(TxInputOutput(Some("1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"), _)), Seq(_)) =>
-      }
-
-      // https://www.blockchain.com/btc/tx/6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4
-      broadcastTransaction(transactions(1))
-      updateCapture.value should matchPattern {
         // noinspection SpellCheckingInspection
-        case TxUpdate("6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4", 300000000, _, _, Seq(
-        TxInputOutput(Some("1H8ANdafjpqYntniT3Ddxh4xPBMCSz33pj"), _),
-        TxInputOutput(Some("1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"), _)
-        ), Seq(
-        TxInputOutput(Some("15vScfMHNrXN4QvWe54q5hwfVoYwG79CS1"), _)
-        )) =>
-      }
+        val outputAddress2 = "1G47mSr3oANXMafVrR8UC4pzV7FEAzo3r9"
+        val value2 = 200L
+        transaction.addOutput(
+          Coin.valueOf(value2),
+          Address.fromString(mainNetParams, outputAddress2)
+        )
 
-      // https://www.blockchain.com/btc/tx/73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259
-      broadcastTransaction(transactions(2))
-      updateCapture.value should matchPattern {
-        // noinspection SpellCheckingInspection
-        case TxUpdate("73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259", 923985, _, _,
-        Seq(
-        TxInputOutput(Some("1AyQnFZk9MbjLFXSWJ7euNbGhaNpjPvrSq"), _),
-        TxInputOutput(Some("bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"), _)
-        ),
-        Seq(_)) =>
-      }
+        broadcastTransaction(transaction)
 
-    }
+        updateCapture.value should matchPattern {
+          // noinspection SpellCheckingInspection
+          case TxUpdate(
+                _,
+                totalValue,
+                _,
+                _,
+                Seq(
+                  TxInputOutput(Some(`outputAddress1`), Some(`value1`)),
+                  TxInputOutput(Some(`outputAddress2`), Some(`value2`))
+                ),
+                Seq()
+              ) if totalValue == value1 + value2 =>
+        }
+
+        broadcastTransaction(transactions.head)
+        updateCapture.value should matchPattern {
+          case TxUpdate(
+                _,
+                1000000,
+                _,
+                _,
+                Seq(
+                  TxInputOutput(Some("1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"), _)
+                ),
+                Seq(_)
+              ) =>
+        }
+
+        // https://www.blockchain.com/btc/tx/6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4
+        broadcastTransaction(transactions(1))
+        updateCapture.value should matchPattern {
+          // noinspection SpellCheckingInspection
+          case TxUpdate(
+                "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
+                300000000,
+                _,
+                _,
+                Seq(
+                  TxInputOutput(Some("1H8ANdafjpqYntniT3Ddxh4xPBMCSz33pj"), _),
+                  TxInputOutput(Some("1Am9UTGfdnxabvcywYG2hvzr6qK8T3oUZT"), _)
+                ),
+                Seq(
+                  TxInputOutput(Some("15vScfMHNrXN4QvWe54q5hwfVoYwG79CS1"), _)
+                )
+              ) =>
+        }
+
+        // https://www.blockchain.com/btc/tx/73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259
+        broadcastTransaction(transactions(2))
+        updateCapture.value should matchPattern {
+          // noinspection SpellCheckingInspection
+          case TxUpdate(
+                "73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259",
+                923985,
+                _,
+                _,
+                Seq(
+                  TxInputOutput(Some("1AyQnFZk9MbjLFXSWJ7euNbGhaNpjPvrSq"), _),
+                  TxInputOutput(
+                    Some(
+                      "bc1qwqdg6squsna38e46795at95yu9atm8azzmyvckulcc7kytlcckxswvvzej"
+                    ),
+                    _
+                  )
+                ),
+                Seq(_)
+              ) =>
+        }
+
+      }
   }
 
   "TxPersistenceActor" should {
 
-    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with MemPoolWatcherFixtures
-     with ActorGuiceFixtures with TxUpdateFixtures with TxPersistenceActorFixtures
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with MemPoolWatcherFixtures
+        with ActorGuiceFixtures
+        with TxUpdateFixtures
+        with TxPersistenceActorFixtures
 
     "register itself as a listener to the mem-pool" in new TestFixtures {
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
@@ -214,14 +318,19 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
     "record a new transaction update when it arrives" in new TestFixtures {
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
-      (mockTransactionUpdateDao.record _).expects(tx).returning(Future(1)).once()
+      (mockTransactionUpdateDao.record _)
+        .expects(tx)
+        .returning(Future(1))
+        .once()
 
       txPersistenceActor ! tx
     }
 
     "retry to record a transaction if it fails" in new TestFixtures {
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
-      (mockTransactionUpdateDao.record _).expects(tx).returning(Future.failed[Int](new Exception("error")))
+      (mockTransactionUpdateDao.record _)
+        .expects(tx)
+        .returning(Future.failed[Int](new Exception("error")))
       (mockTransactionUpdateDao.record _).expects(tx).returning(Future(1))
 
       txPersistenceActor ! tx
@@ -229,9 +338,12 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
     "terminate the actor if maxRetryCount (3) is reached" in new TestFixtures {
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
-      (mockTransactionUpdateDao.record _).expects(tx).returning(
-        Future.failed[Int](new Exception("error"))
-      ).repeat(3)
+      (mockTransactionUpdateDao.record _)
+        .expects(tx)
+        .returning(
+          Future.failed[Int](new Exception("error"))
+        )
+        .repeat(3)
 
       val probe = TestProbe()
       probe.watch(txPersistenceActor)
@@ -243,21 +355,38 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "TxWatchActor" should {
 
-    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with MemPoolWatcherFixtures
-      with WebSocketFixtures with ActorGuiceFixtures with UserFixtures with TxWatchActorFixtures
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with MemPoolWatcherFixtures
+        with WebSocketFixtures
+        with ActorGuiceFixtures
+        with UserFixtures
+        with TxWatchActorFixtures
 
     trait TestFixturesOneSubscriber extends TestFixtures {
-      override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
+      override def memPoolWatcherExpectations(
+          ch: CallHandler1[ActorRef, Unit]
+      ) = {
         ch.once()
       }
     }
 
     "provide updates when user is authenticated" in new TestFixturesOneSubscriber {
 
-      val tx = TxUpdate("testHash", 10, java.time.LocalDateTime.now(), isPending = true, List(), List())
+      val tx = TxUpdate(
+        "testHash",
+        10,
+        java.time.LocalDateTime.now(),
+        isPending = true,
+        List(),
+        List()
+      )
 
       (mockUser.filter _).expects(tx).returning(true)
-      (mockUserManager.authenticate _).expects("test").returning(Success(mockUser))
+      (mockUserManager.authenticate _)
+        .expects("test")
+        .returning(Success(mockUser))
       (mockWs.update _).expects(tx)
 
       txWatchActor ! Auth("test", "test")
@@ -269,9 +398,18 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
     "not provide updates when credentials are invalid" in new TestFixtures {
 
-      val tx = TxUpdate("testHash", 10, java.time.LocalDateTime.now(), isPending = true, List(), List())
+      val tx = TxUpdate(
+        "testHash",
+        10,
+        java.time.LocalDateTime.now(),
+        isPending = true,
+        List(),
+        List()
+      )
 
-      (mockUserManager.authenticate _).expects("test").returning(Failure(InvalidCredentialsException))
+      (mockUserManager.authenticate _)
+        .expects("test")
+        .returning(Failure(InvalidCredentialsException))
 
       val probe = TestProbe()
       probe.watch(txWatchActor)
@@ -287,10 +425,26 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
     "only provide updates according to the user's filter" in new TestFixturesOneSubscriber {
 
-      val tx1 = TxUpdate("testHash1", 10, java.time.LocalDateTime.now(), isPending = true, List(), List())
-      val tx2 = TxUpdate("testHash2", 1, java.time.LocalDateTime.now(), isPending = true, List(), List())
+      val tx1 = TxUpdate(
+        "testHash1",
+        10,
+        java.time.LocalDateTime.now(),
+        isPending = true,
+        List(),
+        List()
+      )
+      val tx2 = TxUpdate(
+        "testHash2",
+        1,
+        java.time.LocalDateTime.now(),
+        isPending = true,
+        List(),
+        List()
+      )
 
-      (mockUserManager.authenticate _).expects("test").returning(Success(mockUser))
+      (mockUserManager.authenticate _)
+        .expects("test")
+        .returning(Success(mockUser))
 
       txWatchActor ! Auth("test", "test")
       expectNoMessage()
@@ -308,30 +462,47 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
 
   "SlackChatManagerActor" should {
 
-    trait TestFixtures extends FixtureBindings with ConfigurationFixtures
-      with MemPoolWatcherFixtures with ActorGuiceFixtures with EncryptionActorFixtures with EncryptionManagerFixtures
-      with SlackChatHookDaoFixtures with SlackChatActorFixtures
-      with HookActorTestLogic[SlackChannel, SlackChatHook, SlackChatHookEncrypted] {
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with MemPoolWatcherFixtures
+        with ActorGuiceFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
+        with SlackChatHookDaoFixtures
+        with SlackChatActorFixtures
+        with HookActorTestLogic[
+          SlackChannel,
+          SlackChatHook,
+          SlackChatHookEncrypted
+        ] {
 
       encryptionManager.initialiseFuture()
 
-      override def wait(duration: FiniteDuration): Unit = expectNoMessage(duration)
+      override def wait(duration: FiniteDuration): Unit =
+        expectNoMessage(duration)
     }
 
     trait TestFixturesTwoSubscribers extends TestFixtures {
-      override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
+      override def memPoolWatcherExpectations(
+          ch: CallHandler1[ActorRef, Unit]
+      ) = {
         ch.twice()
       }
     }
 
     trait TestFixturesOneSubscriber extends TestFixtures {
-      override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
+      override def memPoolWatcherExpectations(
+          ch: CallHandler1[ActorRef, Unit]
+      ) = {
         ch.once()
       }
     }
 
     "return WebhookNotRegistered when trying to start an unregistered hook" in new TestFixtures {
-      startHook().futureValue should matchPattern { case Failure(HookNotRegisteredException(`key`)) => }
+      startHook().futureValue should matchPattern {
+        case Failure(HookNotRegisteredException(`key`)) =>
+      }
     }
 
     "return Registered and record a new hook in the database when registering a new hook" in new TestFixtures {
@@ -347,7 +518,9 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
     }
 
     "return an exception when stopping a hook that is not started" in new TestFixtures {
-      stopHook().futureValue should matchPattern { case Failure(HookNotStartedException(`key`)) => }
+      stopHook().futureValue should matchPattern {
+        case Failure(HookNotStartedException(`key`)) =>
+      }
     }
 
     "return an exception when registering a pre-existing hook" in new TestFixtures {
@@ -357,74 +530,102 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
     }
 
     "return an exception when starting a hook that has already been started" in new TestFixturesOneSubscriber {
-      registerStartStart().futureValue should matchPattern { case Failure(HookAlreadyStartedException(`key`)) => }
+      registerStartStart().futureValue should matchPattern {
+        case Failure(HookAlreadyStartedException(`key`)) =>
+      }
     }
 
     "correctly register, start, stop and restart a web hook" in new TestFixturesTwoSubscribers {
       registerStartStopRestartStop().futureValue should matchPattern {
         case (
-          Success(Registered(`hook`)),
-          Success(Started(`hook`)),
-          Success(Stopped(`hook`)),
-          Success(Started(`hook`)),
-          Success(Stopped(`hook`)),
-          Seq(_: SlackChatHookEncrypted)) =>
+              Success(Registered(`hook`)),
+              Success(Started(`hook`)),
+              Success(Stopped(`hook`)),
+              Success(Started(`hook`)),
+              Success(Stopped(`hook`)),
+              Seq(_: SlackChatHookEncrypted)
+            ) =>
       }
     }
   }
 
   "WebhookManagerActor" should {
 
-    trait TestFixtures extends FixtureBindings with ConfigurationFixtures with MemPoolWatcherFixtures
-      with ActorGuiceFixtures with WebhookFixtures
-      with WebhookActorFixtures with HookActorTestLogic[URI, Webhook, Webhook] {
-    }
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with MemPoolWatcherFixtures
+        with ActorGuiceFixtures
+        with WebhookFixtures
+        with WebhookActorFixtures
+        with HookActorTestLogic[URI, Webhook, Webhook] {}
 
-    trait TestFixturesTwoSubscribers extends TestFixtures with ActorGuiceFixtures {
-      override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
+    trait TestFixturesTwoSubscribers
+        extends TestFixtures
+        with ActorGuiceFixtures {
+      override def memPoolWatcherExpectations(
+          ch: CallHandler1[ActorRef, Unit]
+      ) = {
         ch.twice()
       }
     }
 
-    trait TestFixturesOneSubscriber extends TestFixtures with ActorGuiceFixtures {
-      override def memPoolWatcherExpectations(ch: CallHandler1[ActorRef, Unit]) = {
+    trait TestFixturesOneSubscriber
+        extends TestFixtures
+        with ActorGuiceFixtures {
+      override def memPoolWatcherExpectations(
+          ch: CallHandler1[ActorRef, Unit]
+      ) = {
         ch.once()
       }
     }
 
     "return WebhookNotRegistered when trying to start an unregistered hook" in new TestFixtures {
-      startHook().futureValue should matchPattern { case Failure(HookNotRegisteredException(`key`)) => }
+      startHook().futureValue should matchPattern {
+        case Failure(HookNotRegisteredException(`key`)) =>
+      }
     }
 
     "return Registered and record a new hook in the database when registering a new hook" in new TestFixtures {
-      registerHook().futureValue should matchPattern { case (Success(Registered(`hook`)), Seq(`hook`)) => }
+      registerHook().futureValue should matchPattern {
+        case (Success(Registered(`hook`)), Seq(`hook`)) =>
+      }
     }
 
     "return Updated when updating an existing hook" in new TestFixtures {
-      updateHook().futureValue should matchPattern { case (Success(Updated(`newHook`)), Seq(`newHook`)) => }
+      updateHook().futureValue should matchPattern {
+        case (Success(Updated(`newHook`)), Seq(`newHook`)) =>
+      }
     }
 
     "return an exception when stopping a hook that is not started" in new TestFixtures {
-      stopHook().futureValue should matchPattern { case Failure(HookNotStartedException(`key`)) => }
+      stopHook().futureValue should matchPattern {
+        case Failure(HookNotStartedException(`key`)) =>
+      }
     }
 
     "return an exception when registering a pre-existing hook" in new TestFixtures {
-      registerExistingHook().futureValue should matchPattern { case Failure(HookAlreadyRegisteredException(`hook`)) => }
+      registerExistingHook().futureValue should matchPattern {
+        case Failure(HookAlreadyRegisteredException(`hook`)) =>
+      }
     }
 
     "return an exception when starting a hook that has already been started" in new TestFixturesOneSubscriber {
-      registerStartStart().futureValue should matchPattern { case Failure(HookAlreadyStartedException(`key`)) => }
+      registerStartStart().futureValue should matchPattern {
+        case Failure(HookAlreadyStartedException(`key`)) =>
+      }
     }
 
     "correctly register, start, stop and restart a web hook" in new TestFixturesTwoSubscribers {
       registerStartStopRestartStop().futureValue should matchPattern {
         case (
-          Success(Registered(`hook`)),
-          Success(Started(`hook`)),
-          Success(Stopped(`hook`)),
-          Success(Started(`hook`)),
-          Success(Stopped(`hook`)),
-          Seq(`stoppedHook`)) =>
+              Success(Registered(`hook`)),
+              Success(Started(`hook`)),
+              Success(Stopped(`hook`)),
+              Success(Started(`hook`)),
+              Success(Stopped(`hook`)),
+              Seq(`stoppedHook`)
+            ) =>
       }
     }
   }
@@ -445,9 +646,12 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
               fail(s"Invalid message from actor $encryptedResult")
           }
         }
-      } yield (init, encryptedResult, decryptedResult))
-      .futureValue match {
-        case (Success(_), Success(Encrypted(_, _)), Success(decrypted: Decrypted)) =>
+      } yield (init, encryptedResult, decryptedResult)).futureValue match {
+        case (
+              Success(_),
+              Success(Encrypted(_, _)),
+              Success(decrypted: Decrypted)
+            ) =>
           decrypted.asString shouldEqual plainText
         case _ =>
           fail()
@@ -458,10 +662,19 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
       (for {
         init <- encryptionActor ? Init(secret)
         encryptedResult <- encryptionActor ? Encrypt(plainTextBinary)
-        secondEncryptedResult <- encryptionActor ? Encrypt(secondPlainTextBinary)
-      } yield (init, encryptedResult, secondEncryptedResult)).futureValue should matchPattern {
-        case (Success(_), Success(Encrypted(_, nonce1)), Success(Encrypted(_, nonce2)))
-          if !(nonce1 sameElements nonce2) =>
+        secondEncryptedResult <- encryptionActor ? Encrypt(
+          secondPlainTextBinary
+        )
+      } yield (
+        init,
+        encryptedResult,
+        secondEncryptedResult
+      )).futureValue should matchPattern {
+        case (
+              Success(_),
+              Success(Encrypted(_, nonce1)),
+              Success(Encrypted(_, nonce2))
+            ) if !(nonce1 sameElements nonce2) =>
       }
     }
 
@@ -475,7 +688,9 @@ class ActorTests extends TestKit(ActorSystem("meso-alert-test"))
       (for {
         init <- encryptionActor ? Init(secret)
         error <- encryptionActor ? Init(secret)
-      } yield (init, error)).futureValue should matchPattern { case (Success(_), Failure(_)) => }
+      } yield (init, error)).futureValue should matchPattern {
+        case (Success(_), Failure(_)) =>
+      }
     }
 
   }

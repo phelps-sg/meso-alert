@@ -18,8 +18,14 @@ case class Updated[X](hook: Hook[X])
 case class Start[X](key: X)
 case class Stop[X](key: X)
 
-case class TxUpdate(hash: String, value: Long, time: java.time.LocalDateTime, isPending: Boolean,
-                    outputs: Seq[TxInputOutput], inputs: Seq[TxInputOutput])
+case class TxUpdate(
+    hash: String,
+    value: Long,
+    time: java.time.LocalDateTime,
+    isPending: Boolean,
+    outputs: Seq[TxInputOutput],
+    inputs: Seq[TxInputOutput]
+)
 
 object TxUpdate {
 
@@ -29,19 +35,25 @@ object TxUpdate {
       value = tx.getOutputSum.value,
       time = java.time.LocalDateTime.now(),
       isPending = tx.isPending,
-      inputs =
-        (for (input <- tx.getInputs.asScala)
-          yield AuthenticationActor.TxInputOutput(address(input), value(input))).toSeq,
-      outputs =
-        (for (output <- tx.getOutputs.asScala)
-          yield AuthenticationActor.TxInputOutput(address(output), value(output))).toSeq,
+      inputs = (for (input <- tx.getInputs.asScala)
+        yield AuthenticationActor
+          .TxInputOutput(address(input), value(input))).toSeq,
+      outputs = (for (output <- tx.getOutputs.asScala)
+        yield AuthenticationActor
+          .TxInputOutput(address(output), value(output))).toSeq
     )
 
   // https://bitcoin.stackexchange.com/questions/83481/bitcoinj-java-library-not-decoding-input-addresses-for-some-transactions
-  def address(input: TransactionInput)(implicit params: NetworkParameters): Option[String] = {
+  def address(
+      input: TransactionInput
+  )(implicit params: NetworkParameters): Option[String] = {
     val chunks = input.getScriptSig.getChunks.asScala
     if (chunks.isEmpty) {
-      Some(LegacyAddress.fromScriptHash(params, Utils.sha256hash160(input.getScriptBytes)).toString)
+      Some(
+        LegacyAddress
+          .fromScriptHash(params, Utils.sha256hash160(input.getScriptBytes))
+          .toString
+      )
     } else {
       val pubKey = chunks.takeRight(1).head
       val hash = Utils.sha256hash160(pubKey.data)
@@ -52,7 +64,9 @@ object TxUpdate {
     }
   }
 
-  def address(output: TransactionOutput)(implicit params: NetworkParameters): Option[String] = {
+  def address(
+      output: TransactionOutput
+  )(implicit params: NetworkParameters): Option[String] = {
     try {
       Some(output.getScriptPubKey.getToAddress(params).toString)
     } catch {
@@ -67,15 +81,15 @@ object TxUpdate {
   def value(output: TransactionOutput): Option[Long] =
     if (output.getValue == null) None else Some(output.getValue.value)
 
-  //noinspection ConvertExpressionToSAM
+  // noinspection ConvertExpressionToSAM
   implicit val txUpdateWrites: Writes[TxUpdate] = new Writes[TxUpdate] {
-    def writes(tx: TxUpdate): JsObject = Json.obj(fields =
-      "hash" -> tx.hash,
+    def writes(tx: TxUpdate): JsObject = Json.obj(
+      fields = "hash" -> tx.hash,
       "value" -> tx.value,
       "time" -> tx.time.toString(),
       "isPending" -> tx.isPending,
       "outputs" -> Json.arr(tx.outputs),
-      "inputs" -> Json.arr(tx.inputs),
+      "inputs" -> Json.arr(tx.inputs)
     )
   }
 }

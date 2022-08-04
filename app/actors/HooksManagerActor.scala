@@ -20,8 +20,11 @@ object HooksManagerActor {
   case class CreateActors[X](uri: X, hook: Hook[X])
 }
 
-abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
-  extends Actor with InjectedActorSupport with Logging with UnrecognizedMessageHandlerFatal {
+abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
+    extends Actor
+    with InjectedActorSupport
+    with Logging
+    with UnrecognizedMessageHandlerFatal {
 
   import HooksManagerActor._
 
@@ -39,11 +42,10 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
 
   implicit class HookFor(key: X) {
     def withHook[R](fn: Hook[X] => R): Unit = {
-      dao.find(key) map {
-        hook => Success(fn(hook))
-      } recover {
-        case _: NoSuchElementException =>
-          Failure(HookNotRegisteredException(key))
+      dao.find(key) map { hook =>
+        Success(fn(hook))
+      } recover { case _: NoSuchElementException =>
+        Failure(HookNotRegisteredException(key))
       } pipeTo sender()
     }
   }
@@ -52,53 +54,69 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X] : ClassTag]
     sender() ! Failure(ex)
   }
 
-  def provided(condition: => Boolean, block: => Unit, ex: => Exception): Unit = {
+  def provided(
+      condition: => Boolean,
+      block: => Unit,
+      ex: => Exception
+  ): Unit = {
     if (condition) block else fail(ex)
   }
 
   override def receive: Receive = {
 
     case Register(hook: Y) =>
-      dao.insert(hook) map {
-        _ => Success(Registered(hook))
-      } recover {
-        case DuplicateKeyException(_) => Failure(HookAlreadyRegisteredException(hook))
+      dao.insert(hook) map { _ =>
+        Success(Registered(hook))
+      } recover { case DuplicateKeyException(_) =>
+        Failure(HookAlreadyRegisteredException(hook))
       } pipeTo sender()
 
     case Update(newHook: Y) =>
-      dao.update(newHook) map {
-        _ => Success(Updated(newHook))
+      dao.update(newHook) map { _ =>
+        Success(Updated(newHook))
       } pipeTo sender()
 
     case Start(uri: X) =>
       logger.debug(s"Received start request for $uri")
-      provided(!(actors contains uri), uri withHook (hook => {
-        self ! CreateActors(uri, hook)
-        val startedHook = hook.newStatus(isRunning = true)
-        self ! Update(startedHook)
-        Started(startedHook)
-      }), HookAlreadyStartedException(uri))
+      provided(
+        !(actors contains uri),
+        uri withHook (hook => {
+          self ! CreateActors(uri, hook)
+          val startedHook = hook.newStatus(isRunning = true)
+          self ! Update(startedHook)
+          Started(startedHook)
+        }),
+        HookAlreadyStartedException(uri)
+      )
 
     case Stop(key: X) =>
       logger.debug(s"Stopping actor with key $key")
-      provided (actors contains key, {
-        actors(key).foreach(_ ! PoisonPill)
-        actors -= key
-        key withHook (hook => {
-          self ! Update(hook.newStatus(isRunning = false))
-          Stopped(hook)
-        })
-      }, HookNotStartedException(key))
+      provided(
+        actors contains key, {
+          actors(key).foreach(_ ! PoisonPill)
+          actors -= key
+          key withHook (hook => {
+            self ! Update(hook.newStatus(isRunning = false))
+            Stopped(hook)
+          })
+        },
+        HookNotStartedException(key)
+      )
 
     case CreateActors(key: X, hook: Y) =>
       logger.debug(s"Creating child actors for key $key and hook $hook")
       val actorId = encodeKey(key)
       logger.debug(s"actorId = $actorId")
       val messagingActor =
-        injectedChild(messagingActorFactory(hook), name = s"$hookTypePrefix-messenger-$actorId")
+        injectedChild(
+          messagingActorFactory(hook),
+          name = s"$hookTypePrefix-messenger-$actorId"
+        )
       val filteringActor =
-        injectedChild(filteringActorFactory(messagingActor, hook.filter),
-          name = s"$hookTypePrefix-filter-$actorId")
+        injectedChild(
+          filteringActorFactory(messagingActor, hook.filter),
+          name = s"$hookTypePrefix-filter-$actorId"
+        )
       actors += key -> Array(messagingActor, filteringActor)
 
     case CreateActors(_: X, _) =>

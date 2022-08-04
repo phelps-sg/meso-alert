@@ -9,13 +9,16 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
 
 @ImplementedBy(classOf[HooksManagerSlackChat])
-trait HooksManagerSlackChatService extends HooksManagerService[SlackChannel, SlackChatHook]
+trait HooksManagerSlackChatService
+    extends HooksManagerService[SlackChannel, SlackChatHook]
 
 @Singleton
-class HooksManagerSlackChat @Inject()(val hookDao: SlackChatHookDao,
-                                      @Named("slack-hooks-actor") val actor: ActorRef)
-                                     (implicit val system: ActorSystem, val executionContext: ExecutionContext)
-  extends HooksManagerSlackChatService with HooksManager[SlackChannel, SlackChatHook] {
+class HooksManagerSlackChat @Inject() (
+    val hookDao: SlackChatHookDao,
+    @Named("slack-hooks-actor") val actor: ActorRef
+)(implicit val system: ActorSystem, val executionContext: ExecutionContext)
+    extends HooksManagerSlackChatService
+    with HooksManager[SlackChannel, SlackChatHook] {
 
   initialise()
 }

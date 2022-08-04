@@ -8,7 +8,9 @@ object GenerateSodiumKey {
   def main(args: Array[String]): Unit = {
     val result = NaCl.init()
     if (result < 0) {
-      throw new RuntimeException(s"Could not initialise sodium library: $result")
+      throw new RuntimeException(
+        s"Could not initialise sodium library: $result"
+      )
     }
     val rng = new Random()
     val encoder = java.util.Base64.getEncoder
