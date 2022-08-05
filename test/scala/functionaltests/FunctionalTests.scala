@@ -159,6 +159,21 @@ class FunctionalTests
     assert(find("alert-success").isDefined)
   }
 
+  "canceling bot installation during 'add to slack'" should "redirect to home page " in {
+    go to stagingURL
+    click on id("addToSlackBtn")
+    checkForCookieMessage()
+    textField("domain").value = workspace
+    pressKeys(Keys.ENTER.toString)
+    click on id("email")
+    pressKeys(slackEmail)
+    pwdField("password").value = slackPassword
+    click on xpath("//*[@id=\"signin_btn\"]")
+    explicitWait()
+    click on xpath("/html/body/div[1]/div/form/div/div[2]/a")
+    pageTitle should be("Block Insights - Access free real-time mempool data")
+  }
+
   "clicking on 'add to slack' and installing the app to a workspace" should
     "result in the successful installation page" in {
       go to stagingURL

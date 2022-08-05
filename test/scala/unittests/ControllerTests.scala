@@ -1,12 +1,12 @@
 package unittests
 
-import actors.AuthenticationActor
 import actors.EncryptionActor.Encrypted
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import akka.util.Timeout
 import controllers.{
   HomeController,
+  SlackAuthController,
   SlackEventsController,
   SlackSlashCommandController
 }
@@ -23,10 +23,12 @@ import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{Result, Results}
 import play.api.test.CSRFTokenHelper._
 import play.api.test.Helpers.{
+  GET,
   POST,
   call,
   contentAsString,
   status,
+  writeableOf_AnyContentAsEmpty,
   writeableOf_AnyContentAsFormUrlEncoded
 }
 import play.api.test.{FakeRequest, Helpers}
@@ -93,7 +95,6 @@ class ControllerTests
         with MockMailManagerFixtures
         with ActorGuiceFixtures {
 
-      val actorFactory = injector.instanceOf[AuthenticationActor.Factory]
       val controller = new HomeController(
         Helpers.stubControllerComponents(),
         config,
@@ -415,6 +416,37 @@ class ControllerTests
         call(controller.slashCommand, fakeRequestValid("/resume-alerts", ""))
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.resumeAlertsError"
+    }
+  }
+
+  "SlackAuthController" should {
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
+        with MemPoolWatcherFixtures
+        with ActorGuiceFixtures
+        with SlackChatHookDaoFixtures
+        with SlickSlackTeamDaoFixtures
+        with SlickSlashCommandFixtures {
+
+      val controller = new SlackAuthController(
+        config,
+        slickSlackTeamDao,
+        Helpers.stubControllerComponents()
+      )
+    }
+    "redirect to home page when a users cancels installation" in new TestFixtures {
+      val result = call(
+        controller.authRedirect(None, Some("access_denied")),
+        FakeRequest(GET, "?error=access_denied&state=")
+      )
+      val body = contentAsString(result)
+      status(result) mustEqual OK
+      body should include(
+        "<title>Block Insights - Access free real-time mempool data</title>"
+      )
     }
   }
 }
