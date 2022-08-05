@@ -179,12 +179,6 @@ class FunctionalTests
       go to stagingURL
       click on id("addToSlackBtn")
       checkForCookieMessage()
-      textField("domain").value = workspace
-      pressKeys(Keys.ENTER.toString)
-      click on id("email")
-      pressKeys(slackEmail)
-      pwdField("password").value = slackPassword
-      click on xpath("//*[@id=\"signin_btn\"]")
       new WebDriverWait(webDriver, Duration.ofSeconds(10))
         .ignoring(classOf[StaleElementReferenceException])
         .until(
