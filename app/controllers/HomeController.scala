@@ -2,8 +2,10 @@ package controllers
 
 import akka.actor.ActorSystem
 import com.google.inject.ImplementedBy
+import controllers.HomeController.FeedbackFormData
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
+import play.api.i18n.I18nSupport
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.mvc._
 import play.api.{Configuration, Logging}
@@ -19,6 +21,10 @@ class EmailExecutionContextImpl @Inject() (system: ActorSystem)
     extends CustomExecutionContext(system, "email.dispatcher")
     with EmailExecutionContext
 
+object HomeController {
+  case class FeedbackFormData(name: String, email: String, message: String)
+}
+
 @Singleton
 class HomeController @Inject() (
     val controllerComponents: ControllerComponents,
@@ -26,9 +32,8 @@ class HomeController @Inject() (
     val mailManager: MailManager
 )(implicit val ec: ExecutionContext)
     extends BaseController
-    with Logging {
-
-  case class FeedbackFormData(name: String, email: String, message: String)
+    with Logging
+    with I18nSupport {
 
   val feedbackFormMapping: Mapping[FeedbackFormData] = mapping(
     "name" -> text,
@@ -45,7 +50,7 @@ class HomeController @Inject() (
   }
 
   def feedbackPage(): Action[AnyContent] = Action { implicit request =>
-    Ok(views.html.feedback(""))
+    Ok(views.html.feedback("", feedbackForm))
   }
 
   def create(): Action[AnyContent] = Action.async { implicit request =>
@@ -64,11 +69,22 @@ class HomeController @Inject() (
             )
             .map { _ =>
               logger.info("feedback email delivered")
-              Ok(views.html.feedback("success"))
+              Ok(views.html.feedback("success", feedbackForm))
             } recover { case ex: Exception =>
             logger.error(ex.getMessage)
             ex.printStackTrace()
-            Ok(views.html.feedback("failed"))
+            Ok(
+              views.html.feedback(
+                "failed",
+                feedbackForm.fill(
+                  FeedbackFormData(
+                    feedbackData.name,
+                    feedbackData.email,
+                    feedbackData.message
+                  )
+                )
+              )
+            )
           }
         }
       )
