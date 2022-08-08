@@ -1,64 +1,62 @@
+@import controllers.HomeController.FeedbackFormData
+@(emailDeliveryOutcome: String, feedbackForm: Form[FeedbackFormData])(implicit request: RequestHeader, messages: Messages)
+    @main("Feedback Form") {
 
-@(emailDeliveryOutcome: String)(implicit request: RequestHeader)
-@main("Feedback Form") {
-
-    <main class="main">
-        <div class="section">
-            <div class="container">
-                <div class="w-layout-grid contact-form-grid">
-                    <div id="w-node-_3f61509a-fac7-b0d5-3763-509be705858e-d4ef294c" class="contact-form-wrap">
-                        @emailDeliveryOutcome match {
-                            case "failed" => {
-                                <div class="alert failed" id="alert-failed">
-                                    <span class="closebtn" onclick="this.parentElement.style.display = 'none';">&times;</span>
-                                    There was an error sending your feedback.
-                                </div>
+        <main class="main">
+            <div class="section">
+                <div class="container">
+                    <div class="w-layout-grid contact-form-grid">
+                        <div id="w-node-_3f61509a-fac7-b0d5-3763-509be705858e-d4ef294c" class="contact-form-wrap">
+                            @emailDeliveryOutcome match {
+                                case "failed" => {
+                                    <div class="alert failed" id="alert-failed">
+                                        <span class="closebtn" onclick="this.parentElement.style.display = 'none';">&times;</span>
+                                        There was an error sending your feedback. Please try again later.
+                                    </div>
+                                }
+                                case "success" => {
+                                    <div class="alert success" id="alert-success">
+                                        <span class="closebtn" onclick="this.parentElement.style.display = 'none';">&times;</span>
+                                        Your message has been sent successfully!
+                                    </div>
+                                }
+                                case _ => {}
                             }
-                            case "success" => {
-                                <div class="alert success" id="alert-success">
-                                    <span class="closebtn" onclick="this.parentElement.style.display = 'none';">&times;</span>
-                                    Your message has been sent successfully!
+                            <div class="contact-form-heading-wrap">
+                                <h2 class="contact-heading">Contact us</h2>
+                                <div class="paragraph-light">
+                                    If you want a new type of alert, or you have any other feedback to share,
+                                    we would love to hear from you.
                                 </div>
-                            }
-                            case _ => { }
-                        }
-                        <div class="contact-form-heading-wrap">
-                            <h2 class="contact-heading">Contact us</h2>
-                            <div class="paragraph-light">
-                                If you want a new type of alert, or you have any other feedback to share,
-                                we would love to hear from you.
                             </div>
-                        </div>
-                        <div class="contact-form w-form">
-                            <form action="@helper.CSRF(routes.HomeController.create())" data-name="Get In Touch Form"
-                            name="wf-form-Get-In-Touch-Form"
-                            id="email-form"
-                            method="post" class="get-in-touch-form">
-                                <label for="name">Name</label><input type="text" class="text-field cc-contact-field w-input" maxlength="256" name="name" data-name="Name" placeholder="Enter your name" id="Name" />
-                                <label for="Email-2">Email Address</label><input type="email" class="text-field
-                                cc-contact-field w-input" maxlength="256" name="email" data-name="email"
-                            placeholder="Enter your email" id="Email" required="" />
-                                <label for="Message">Message</label>
-                                <textarea
-                                id="Message"
-                                name="message"
-                                placeholder="Hi there, I was wondering when you plan to issue alerts for DAI ..."
-                                maxlength="5000"
-                                data-name="message"
-                                class="text-field cc-textarea cc-contact-field w-input"
-                                ></textarea>
-                                <input type="submit" value="Submit" data-wait="Please wait..." class="nav-button w-button" />
-                            </form>
-                            <div class="status-message cc-success-message w-form-done">
-                                <div>Thank you! Your submission has been received!</div>
-                            </div>
-                            <div class="status-message cc-error-message w-form-fail">
-                                <div>Oops! Something went wrong while submitting the form.</div>
+                            <div class="contact-form w-form">
+                                <form action="@helper.CSRF(routes.HomeController.create())" data-name="Get In Touch Form"
+                                name="wf-form-Get-In-Touch-Form"
+                                id="email-form"
+                                method="post" class="get-in-touch-form">
+                                    @helper.inputText(feedbackForm("name"), Symbol("class") -> "text-field cc-contact-field w-input",
+                                        Symbol("maxlength") -> 256, Symbol("name") -> "name", Symbol("date-name") -> "Name",
+                                        Symbol("placeholder") -> "Enter your name", Symbol("id") -> "Name")
+                                    @helper.inputText(feedbackForm("email"), Symbol("type") -> "email", Symbol("class") -> "text-field cc-contact-field w-input",
+                                        Symbol("maxlength") -> 256, Symbol("name") -> "email", Symbol("date-name") -> "email",
+                                        Symbol("placeholder") -> "Enter your email", Symbol("id") -> "Email", Symbol("_showConstraints") -> false,
+                                        Symbol("required") -> "")
+                                    @helper.textarea(feedbackForm("message"), Symbol("class") -> "text-field cc-textarea cc-contact-field w-input",
+                                        Symbol("maxlength") -> 5000, Symbol("name") -> "message", Symbol("date-name") -> "message",
+                                        Symbol("placeholder") -> "Hi there, I was wondering when you plan to issue alerts for DAI ...", Symbol("id") -> "Message",
+                                        Symbol("_showConstraints") -> false, Symbol("required") -> "")
+                                    <input type="submit" value="Submit" data-wait="Please wait..." class="nav-button w-button" />
+                                </form>
+                                <div class="status-message cc-success-message w-form-done">
+                                    <div>Thank you! Your submission has been received!</div>
+                                </div>
+                                <div class="status-message cc-error-message w-form-fail">
+                                    <div>Oops! Something went wrong while submitting the form.</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
-}
+        </main>
+    }
