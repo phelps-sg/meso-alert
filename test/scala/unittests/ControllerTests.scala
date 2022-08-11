@@ -144,6 +144,19 @@ class ControllerTests
       status(result) mustEqual OK
       body should include("<div class=\"alert failed\" id=\"alert-failed\">")
     }
+
+    "persist form data in case of a transient smtp failure" in new TestFixtures {
+      (mockMailManager.sendEmail _)
+        .expects(expectedValidEmailSubject, feedbackMessage)
+        .returning(Future.failed(new Exception("error")))
+      val request = fakeRequestFormSubmission
+      val result = controller.create().apply(request.withCSRFToken)
+      val body = contentAsString(result)
+      status(result) mustEqual OK
+      body should include("value=\"testName\"")
+      body should include("value=\"test@test.com\"")
+      body should include(">This is a test feedback message.<")
+    }
   }
 
   "SlackEventsController" should {
