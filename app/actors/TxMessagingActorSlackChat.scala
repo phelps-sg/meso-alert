@@ -14,6 +14,9 @@ import slack.SlackClient
 import slick.SlackChatExecutionContext
 
 import scala.concurrent.Future
+import scala.concurrent.duration.{DurationDouble, FiniteDuration}
+import scala.language.postfixOps
+import scala.math.{min, pow}
 import scala.util.Random
 
 object TxMessagingActorSlackChat {
@@ -40,6 +43,12 @@ class TxMessagingActorSlackChat @Inject() (
     slack.methodsAsync(hook.token)
   implicit val ec: SlackChatExecutionContext = sce
   override val maxRetryCount = 3
+  override val base = 2000
+  override val cap = 20000
+
+  override def calculateWaitTime(retryCount: Int): FiniteDuration = {
+    random.between(1500, min(cap, base * pow(2, retryCount))) milliseconds
+  }
 
   override def success(): Unit = logger.info("Successfully posted message")
 
