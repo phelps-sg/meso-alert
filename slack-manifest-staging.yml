@@ -6,21 +6,21 @@ features:
     always_online: false
   slash_commands:
     - command: /crypto-alert
-      url: https://meso-alert-staging.eu.ngrok.io//api/slack/slash
+      url: https://meso-alert-staging.eu.ngrok.io/api/slack/slash
       description: Configures alert for cryptocurrency
       usage_hint: "[threshold in BTC]"
       should_escape: false
     - command: /pause-alerts
-      url: https://meso-alert-staging.eu.ngrok.io//api/slack/slash
+      url: https://meso-alert-staging.eu.ngrok.io/api/slack/slash
       description: Pause active alerts for this channel
       should_escape: false
     - command: /resume-alerts
-      url: https://meso-alert-staging.eu.ngrok.io//api/slack/slash
+      url: https://meso-alert-staging.eu.ngrok.io/api/slack/slash
       description: Resume alerts for this channel
       should_escape: false
 oauth_config:
   redirect_urls:
-    - https://meso-alert-staging.eu.ngrok.io//api/slack/auth
+    - https://meso-alert-staging.eu.ngrok.io/api/slack/auth
   scopes:
     user:
       - channels:read
@@ -31,7 +31,7 @@ oauth_config:
       - channels:read
 settings:
   event_subscriptions:
-    request_url: https://f34d1cfcb2d9.eu.ngrok.io/api/slack/events
+    request_url: https://meso-alert-staging.eu.ngrok.io/api/slack/events
     user_events:
       - channel_deleted
     bot_events:
