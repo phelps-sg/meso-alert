@@ -30,7 +30,7 @@ class FunctionalTests
 
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
 
-  val stagingURL: String = "https://f34d1cfcb2d9.eu.ngrok.io"
+  val stagingURL: String = "https://meso-alert-staging.eu.ngrok.io"
 
   implicitlyWait(Span(20, Seconds))
 
