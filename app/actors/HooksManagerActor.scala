@@ -54,14 +54,6 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
     sender() ! Failure(ex)
   }
 
-  def provided(
-      condition: => Boolean,
-      block: => Unit,
-      ex: => Exception
-  ): Unit = {
-    if (condition) block else fail(ex)
-  }
-
   override def receive: Receive = {
 
     case Register(hook: Y) =>
@@ -78,30 +70,25 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
 
     case Start(uri: X) =>
       logger.debug(s"Received start request for $uri")
-      provided(
-        !(actors contains uri),
+      if (!(actors contains uri)) {
         uri withHook (hook => {
           self ! CreateActors(uri, hook)
           val startedHook = hook.newStatus(isRunning = true)
           self ! Update(startedHook)
           Started(startedHook)
-        }),
-        HookAlreadyStartedException(uri)
-      )
+        })
+      } else fail(HookAlreadyStartedException(uri))
 
     case Stop(key: X) =>
       logger.debug(s"Stopping actor with key $key")
-      provided(
-        actors contains key, {
-          actors(key).foreach(_ ! PoisonPill)
-          actors -= key
-          key withHook (hook => {
-            self ! Update(hook.newStatus(isRunning = false))
-            Stopped(hook)
-          })
-        },
-        HookNotStartedException(key)
-      )
+      if (actors contains key) {
+        actors(key).foreach(_ ! PoisonPill)
+        actors -= key
+        key withHook (hook => {
+          self ! Update(hook.newStatus(isRunning = false))
+          Stopped(hook)
+        })
+      } else fail(HookNotStartedException(key))
 
     case CreateActors(key: X, hook: Y) =>
       logger.debug(s"Creating child actors for key $key and hook $hook")
