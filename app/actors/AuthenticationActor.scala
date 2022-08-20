@@ -8,7 +8,11 @@ import com.google.inject.assistedinject.Assisted
 import play.api.Logging
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
-import services.{InvalidCredentialsException, MemPoolWatcherService, UserManagerService}
+import services.{
+  InvalidCredentialsException,
+  MemPoolWatcherService,
+  UserManagerService
+}
 
 import scala.util.{Failure, Success}
 
