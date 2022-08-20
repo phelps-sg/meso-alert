@@ -33,8 +33,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick-hikaricp" % "3.3.3",
   "org.postgresql" % "postgresql" % "42.3.6",
   "com.github.tminglei" %% "slick-pg_play-json" % "0.20.3",
-  "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.8" % "test",
-  "com.dimafeng" %% "testcontainers-scala-postgresql" % "0.40.8" % "test"
+  "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
+  "com.dimafeng" %% "testcontainers-scala-postgresql" % "0.40.10" % "test"
 )
 
 libraryDependencies ++= List(
