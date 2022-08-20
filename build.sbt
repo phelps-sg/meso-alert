@@ -38,9 +38,9 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies ++= List(
-  "com.slack.api" % "bolt" % "1.22.2",
-  "com.slack.api" % "bolt-servlet" %  "1.22.2",
-  "com.slack.api" % "bolt-jetty" %  "1.22.2",
+  "com.slack.api" % "bolt" % "1.24.0",
+  "com.slack.api" % "bolt-servlet" %  "1.24.0",
+  "com.slack.api" % "bolt-jetty" %  "1.24.0",
 )
 
 Test / testForkedParallel := true
