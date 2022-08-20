@@ -43,11 +43,11 @@ class TxMessagingActorSlackChat @Inject() (
     slack.methodsAsync(hook.token)
   implicit val ec: SlackChatExecutionContext = sce
   override val maxRetryCount = 3
-  override val base = 2000
-  override val cap = 20000
+  override val backoffPolicyBaseMilliseconds = 2000
+  override val backoffPolicyCapMilliseconds = 20000
 
   override def calculateWaitTime(retryCount: Int): FiniteDuration = {
-    random.between(1500, min(cap, base * pow(2, retryCount))) milliseconds
+    random.between(1500, min(backoffPolicyCapMilliseconds, backoffPolicyBaseMilliseconds * pow(2, retryCount))) milliseconds
   }
 
   override def success(): Unit = logger.info("Successfully posted message")
