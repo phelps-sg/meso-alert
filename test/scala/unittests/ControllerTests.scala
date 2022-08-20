@@ -187,6 +187,8 @@ class ControllerTests
         hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
         messagesApi
       )
+
+      memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*)).anyNumberOfTimes()
     }
 
     "stop a running hook when channel is deleted" in new TestFixtures {
