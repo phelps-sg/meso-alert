@@ -31,6 +31,7 @@ trait TxRetryOrDie[T] {
 
   val backoffPolicyBaseMilliseconds = 500
   val backoffPolicyCapMilliseconds = 10000
+  val backoffPolicyMinMilliseconds = 0
 
   def process(tx: TxUpdate): Future[T]
   def success(): Unit
@@ -40,7 +41,7 @@ trait TxRetryOrDie[T] {
     logger.info(s"${this.getClass.getName} terminating because $reason")
 
   def calculateWaitTime(retryCount: Int): FiniteDuration = {
-    random.between(0,
+    random.between(backoffPolicyMinMilliseconds,
       min(backoffPolicyCapMilliseconds, backoffPolicyBaseMilliseconds * pow(2, retryCount))) milliseconds
   }
 
