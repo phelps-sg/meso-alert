@@ -41,8 +41,14 @@ trait TxRetryOrDie[T] {
     logger.info(s"${this.getClass.getName} terminating because $reason")
 
   def calculateWaitTime(retryCount: Int): FiniteDuration = {
-    random.between(backoffPolicyMin.toMillis,
-      min(backoffPolicyCap.toMillis, backoffPolicyBase.toMillis * pow(2, retryCount))) milliseconds
+    random
+      .between(
+        backoffPolicyMin.toMillis,
+        min(
+          backoffPolicyCap.toMillis,
+          backoffPolicyBase.toMillis * pow(2, retryCount)
+        )
+      ) milliseconds
   }
 
   def receive: Receive = {
