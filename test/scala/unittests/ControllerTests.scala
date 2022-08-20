@@ -453,6 +453,7 @@ class ControllerTests
         Helpers.stubControllerComponents()
       )
     }
+
     "redirect to home page when a users cancels installation" in new TestFixtures {
       val result = call(
         controller.authRedirect(None, Some("access_denied")),
