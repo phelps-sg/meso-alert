@@ -18,6 +18,7 @@ import play.api.mvc.{
 import play.api.{Logger, Logging}
 
 import javax.inject.Inject
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Left, Right}
 
@@ -57,7 +58,7 @@ class WebsocketController @Inject() (
     }
 
   def wsFutureFlow(
-      request: RequestHeader
+      @unused request: RequestHeader
   ): Future[Flow[AuthenticationActor.Auth, TxUpdate, _]] = {
     Future {
       ActorFlow.actorRef[AuthenticationActor.Auth, TxUpdate] { out =>

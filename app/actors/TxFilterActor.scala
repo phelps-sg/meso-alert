@@ -8,10 +8,12 @@ import com.google.inject.assistedinject.Assisted
 import play.api.Logging
 import services.MemPoolWatcherService
 
+import scala.annotation.unused
+
 object TxFilterActor {
 
   trait Factory {
-    def apply(out: ActorRef, filter: TxUpdate => Boolean): Actor
+    def apply(@unused out: ActorRef, @unused filter: TxUpdate => Boolean): Actor
   }
 
   case class Die()

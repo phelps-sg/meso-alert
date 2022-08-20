@@ -1,28 +1,20 @@
 package services
 
-import actors.{
-  Register,
-  Registered,
-  Start,
-  Started,
-  Stop,
-  Stopped,
-  Update,
-  Updated
-}
+import actors.{Register, Registered, Start, Started, Stop, Stopped, Update, Updated}
 import akka.actor.{ActorRef, ActorSystem}
 import dao.{Hook, HookDao}
 import play.api.Logging
 import util.FutureInitialisingComponent
 
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 trait HooksManagerService[X, Y] {
 //  def init(): Future[Seq[Started[Y]]]
-  def start(key: X): Future[Started[Y]]
-  def stop(key: X): Future[Stopped[Y]]
-  def register(hook: Y): Future[Registered[Y]]
+  def start(@unused key: X): Future[Started[Y]]
+  def stop(@unused key: X): Future[Stopped[Y]]
+  def register(@unused hook: Y): Future[Registered[Y]]
 }
 
 trait HooksManager[X, Y <: Hook[X]]

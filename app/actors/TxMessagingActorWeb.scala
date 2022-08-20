@@ -15,6 +15,7 @@ import sttp.client3.asynchttpclient.monix._
 import sttp.model.Uri
 
 import javax.inject.Singleton
+import scala.annotation.unused
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
@@ -32,7 +33,7 @@ class MonixBackend extends HttpBackendSelection {
 object TxMessagingActorWeb {
 
   trait Factory extends TxMessagingActorFactory[Webhook] {
-    def apply(hook: Webhook): Actor
+    def apply(@unused hook: Webhook): Actor
   }
 }
 

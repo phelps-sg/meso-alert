@@ -7,13 +7,14 @@ import dao._
 import play.api.Logging
 import services.MemPoolWatcherService
 
+import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Random
 
 object TxPersistenceActor {
 
   trait Factory {
-    def apply(out: ActorRef): Actor
+    def apply(@unused out: ActorRef): Actor
   }
 
   def props(

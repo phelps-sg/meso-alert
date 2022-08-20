@@ -8,19 +8,16 @@ import com.google.inject.assistedinject.Assisted
 import play.api.Logging
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
-import services.{
-  InvalidCredentialsException,
-  MemPoolWatcherService,
-  UserManagerService
-}
+import services.{InvalidCredentialsException, MemPoolWatcherService, UserManagerService}
 
+import scala.annotation.unused
 import scala.util.{Failure, Success}
 
 //noinspection TypeAnnotation
 object AuthenticationActor {
 
   trait Factory {
-    def apply(out: ActorRef): Actor
+    def apply(@unused out: ActorRef): Actor
   }
 
   def props(

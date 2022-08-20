@@ -8,12 +8,13 @@ import slick.jdbc.JdbcBackend.Database
 import slick.{BtcPostgresProfile, DatabaseExecutionContext, Tables}
 import util.FutureInitialisingComponent
 
+import scala.annotation.unused
 import scala.concurrent.Future
 
 @ImplementedBy(classOf[SlickSlackTeamDao])
 trait SlackTeamDao {
-  def insertOrUpdate(slackUser: SlackTeam): Future[Int]
-  def find(userId: String): Future[SlackTeam]
+  def insertOrUpdate(@unused slackUser: SlackTeam): Future[Int]
+  def find(@unused userId: String): Future[SlackTeam]
 }
 
 class SlickSlackTeamDao @Inject() (

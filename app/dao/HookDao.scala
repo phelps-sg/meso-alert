@@ -3,6 +3,7 @@ package dao
 import com.google.inject.ImplementedBy
 
 import java.net.URI
+import scala.annotation.unused
 import scala.concurrent.Future
 
 trait HookDao[X, Y <: Hook[X]] {
@@ -10,9 +11,9 @@ trait HookDao[X, Y <: Hook[X]] {
 //  def all(): Future[Seq[Hook[X]]]
   def allKeys(): Future[Seq[_ <: X]]
   def allRunningKeys(): Future[Seq[_ <: X]]
-  def find(key: X): Future[_ <: Hook[X]]
-  def insert(hook: Y): Future[Int]
-  def update(hook: Y): Future[Int]
+  def find(@unused key: X): Future[_ <: Hook[X]]
+  def insert(@unused hook: Y): Future[Int]
+  def update(@unused hook: Y): Future[Int]
 }
 
 @ImplementedBy(classOf[SlickWebhookDao])
