@@ -29,9 +29,9 @@ trait TxRetryOrDie[T] {
   val maxRetryCount: Int
   implicit val ec: ExecutionContext
 
-  val backoffPolicyBaseMilliseconds = 500
-  val backoffPolicyCapMilliseconds = 10000
-  val backoffPolicyMinMilliseconds = 0
+  val backoffPolicyBase: FiniteDuration = 500 milliseconds
+  val backoffPolicyCap: FiniteDuration = 10000 milliseconds
+  val backoffPolicyMin: FiniteDuration = 0 milliseconds
 
   def process(tx: TxUpdate): Future[T]
   def success(): Unit
@@ -41,8 +41,8 @@ trait TxRetryOrDie[T] {
     logger.info(s"${this.getClass.getName} terminating because $reason")
 
   def calculateWaitTime(retryCount: Int): FiniteDuration = {
-    random.between(backoffPolicyMinMilliseconds,
-      min(backoffPolicyCapMilliseconds, backoffPolicyBaseMilliseconds * pow(2, retryCount))) milliseconds
+    random.between(backoffPolicyMin.toMillis,
+      min(backoffPolicyCap.toMillis, backoffPolicyBase.toMillis * pow(2, retryCount))) milliseconds
   }
 
   def receive: Receive = {

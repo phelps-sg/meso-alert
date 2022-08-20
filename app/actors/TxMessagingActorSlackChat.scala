@@ -13,14 +13,16 @@ import slack.FutureConverters.BoltFuture
 import slack.SlackClient
 import slick.SlackChatExecutionContext
 
+import scala.annotation.unused
 import scala.concurrent.Future
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.language.postfixOps
 import scala.util.Random
 
 object TxMessagingActorSlackChat {
 
   trait Factory extends TxMessagingActorFactory[SlackChatHook] {
-    def apply(hook: SlackChatHook): Actor
+    def apply(@unused hook: SlackChatHook): Actor
   }
 
 }
@@ -40,10 +42,11 @@ class TxMessagingActorSlackChat @Inject() (
   protected val slackMethods: AsyncMethodsClient =
     slack.methodsAsync(hook.token)
   implicit val ec: SlackChatExecutionContext = sce
-  override val maxRetryCount = 3
-  override val backoffPolicyBaseMilliseconds = 2000
-  override val backoffPolicyCapMilliseconds = 20000
-  override val backoffPolicyMinMilliseconds = 1500
+
+  override val maxRetryCount: Int = 3
+  override val backoffPolicyBase: FiniteDuration = 2000 milliseconds
+  override val backoffPolicyCap: FiniteDuration = 20000 milliseconds
+  override val backoffPolicyMin: FiniteDuration = 1500 milliseconds
 
   override def success(): Unit = logger.info("Successfully posted message")
 
