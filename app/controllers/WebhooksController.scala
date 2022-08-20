@@ -3,7 +3,7 @@ package controllers
 import akka.actor.ActorSystem
 import dao.Webhook
 import play.api.libs.json._
-import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
+import play.api.mvc.{Action, ActionBuilder, BaseController, ControllerComponents, Result}
 import services.HooksManagerWebService
 
 import java.net.URI
@@ -28,15 +28,19 @@ class WebhooksController @Inject() (
     }
 
   def start: Action[UriDto] = Action.async(parse.json[UriDto]) { request =>
-    checkEx(slackWebHooksManager.start(new URI(request.body.uri)))
+    checkEx {
+      slackWebHooksManager.start(new URI(request.body.uri))
+    }
   }
 
   def stop: Action[UriDto] = Action.async(parse.json[UriDto]) { request =>
-    checkEx(slackWebHooksManager.stop(new URI(request.body.uri)))
+    checkEx {
+      slackWebHooksManager.stop(new URI(request.body.uri))
+    }
   }
 
   def register: Action[HookDto] = Action.async(parse.json[HookDto]) { request =>
-    checkEx(
+    checkEx {
       slackWebHooksManager.register(
         Webhook(
           new URI(request.body.uri),
@@ -44,7 +48,7 @@ class WebhooksController @Inject() (
           isRunning = true
         )
       )
-    )
+    }
   }
 
 }
