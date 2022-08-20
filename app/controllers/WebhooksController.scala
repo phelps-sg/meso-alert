@@ -3,13 +3,7 @@ package controllers
 import akka.actor.ActorSystem
 import dao.Webhook
 import play.api.libs.json._
-import play.api.mvc.{
-  Action,
-  ActionBuilder,
-  BaseController,
-  ControllerComponents,
-  Result
-}
+import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.HooksManagerWebService
 
 import java.net.URI

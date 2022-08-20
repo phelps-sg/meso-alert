@@ -1,28 +1,9 @@
-import actors.{
-  AuthenticationActor,
-  EncryptionActor,
-  HooksManagerActorSlackChat,
-  HooksManagerActorWeb,
-  MemPoolWatcherActor,
-  TxFilterActor,
-  TxMessagingActorSlackChat,
-  TxMessagingActorWeb,
-  TxPersistenceActor
-}
+import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor}
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import dao._
 import play.libs.akka.AkkaGuiceSupport
-import services.{
-  EncryptionManagerService,
-  HooksManagerSlackChat,
-  HooksManagerSlackChatService,
-  HooksManagerWeb,
-  HooksManagerWebService,
-  MemPoolWatcher,
-  MemPoolWatcherService,
-  SodiumEncryptionManager
-}
+import services.{EncryptionManagerService, HooksManagerSlackChat, HooksManagerSlackChatService, HooksManagerWeb, HooksManagerWebService, MemPoolWatcher, MemPoolWatcherService, SodiumEncryptionManager}
 import slick.jdbc.JdbcBackend.Database
 
 import javax.inject.{Inject, Provider, Singleton}

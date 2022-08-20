@@ -6,16 +6,12 @@ import akka.actor.{ActorSystem, Props}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import play.api.libs.concurrent.InjectedActorSupport
-import play.api.{Logger, Logging}
 import play.api.libs.json.Json
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
-import play.api.mvc.{
-  BaseController,
-  ControllerComponents,
-  RequestHeader,
-  WebSocket
-}
+import play.api.mvc.{BaseController, ControllerComponents, RequestHeader, WebSocket}
+import play.api.{Logger, Logging}
+
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Left, Right}
