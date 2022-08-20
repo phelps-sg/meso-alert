@@ -179,6 +179,7 @@ class ControllerTests
         Helpers.stubControllerComponents(),
         hooksManager = new HooksManagerSlackChat(hookDao, hooksActor)
       )
+
       val commandController = new SlackSlashCommandController(
         Helpers.stubControllerComponents(),
         slashCommandHistoryDao = slickSlashCommandHistoryDao,
