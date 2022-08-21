@@ -410,9 +410,7 @@ object Fixtures {
 
   trait WebhookActorFixtures { env: ProvidesInjector with HasActorSystem =>
     val actorSystem: ActorSystem
-    val key: URI
     val hook: Webhook
-    val newHook: Webhook
     val hooksActor = {
       actorSystem.actorOf(
         HooksManagerActorWeb.props(
