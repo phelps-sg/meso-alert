@@ -124,7 +124,7 @@ object Fixtures {
       case Update(hook: Y) =>
         mock.update(hook)
         sender() ! Success(Updated(hook))
-      case x =>
+      case _ =>
         Failure(new IllegalArgumentException("unrecognized message: $x"))
     }
   }
@@ -628,8 +628,8 @@ object Fixtures {
     def registerStartStart() = {
       afterDbInit {
         for {
-          registered <- hooksActor ? Register(hook)
-          started <- hooksActor ? Start(key)
+          _ <- hooksActor ? Register(hook)
+          _ <- hooksActor ? Start(key)
           error <- hooksActor ? Start(key)
         } yield error
       }
