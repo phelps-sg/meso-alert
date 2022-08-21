@@ -37,6 +37,10 @@ class SlackAuthController @Inject() (
           logger.info("User cancelled OAuth during 'Add to Slack'")
           Future { Ok(views.html.index(config.get[String]("slack.deployURL"))) }
 
+        case Some(error) =>
+          logger.error(s"Error during OAuth: $error")
+          Future { ServiceUnavailable(error) }
+
         case None =>
           val slackRequest = OAuthV2AccessRequest.builder
             .clientId(slackClientId)
