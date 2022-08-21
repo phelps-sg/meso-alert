@@ -32,9 +32,11 @@ class SlackAuthController @Inject() (
       logger.debug("Received slash auth redirect")
 
       error match {
+
         case Some("access_denied") =>
           logger.info("User cancelled OAuth during 'Add to Slack'")
           Future { Ok(views.html.index(config.get[String]("slack.deployURL"))) }
+
         case None =>
           val slackRequest = OAuthV2AccessRequest.builder
             .clientId(slackClientId)
