@@ -11,8 +11,6 @@ import slack.{BoltException, SlackClient}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-case class InvalidUserException(str: String) extends Exception(str)
-
 class SlackAuthController @Inject() (
     protected val config: Configuration,
     val slackTeamDao: SlackTeamDao,
