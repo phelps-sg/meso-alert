@@ -86,13 +86,16 @@ sbt-scalafix:
 sbt-scalafmt-check-all:
 	$(SDK_INIT); sbt "scalafmtCheckAll"
 
-docker-push: docker-build docker-play-server-push docker-ci-push
+docker-push: docker-build docker-play-server-push docker-ci-push docker-postgres-backup-push
 
 docker-play-server-push:
 	sudo docker push registry.gitlab.com/mesonomics/meso-alert/play-server
 
 docker-ci-push:
 	sudo docker push registry.gitlab.com/mesonomics/meso-alert/ci
+
+docker-postgres-backup-push:
+	sudo docker push registry.gitlab.com/mesonomics/meso-alert/postgres-backup
 
 docker-server-start: docker-build
 	$(EXPORT_ENV); cd docker; sudo -E docker-compose up
