@@ -36,6 +36,13 @@ services:
         SLACK_TEST_PASSWORD: ${SLACK_TEST_PASSWORD}
         SLACK_TEST_WORKSPACE: ${SLACK_TEST_WORKSPACE}
 
+  meso-alert-backup:
+    image: registry.gitlab.com/mesonomics/meso-alert/postgres-backup
+    container_name: postgres-backup
+    build:
+      context: ./
+      dockerfile: postgres-backup.docker
+
   postgres-db:
     container_name: postgres-db
     image: postgres:14.2
@@ -48,3 +55,4 @@ services:
       - /data/1/meso-alert-db:/var/lib/postgresql/data
     ports:
       - "${POSTGRES_PORT}:5432"
+

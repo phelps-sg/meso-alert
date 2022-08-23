@@ -19,6 +19,9 @@ curl-install: apt-update
 docker-install: apt-update
 	sudo apt-get install -y docker
 
+psql-install: apt-update
+	sudo apt-get install -y postgresql-client
+
 doctl-install:
 	sudo snap install doctl; sudo snap connect doctl:kube-config
 
@@ -54,7 +57,7 @@ nvm-install:
 ngrok-install:
 	curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list; sudo apt update; sudo apt install ngrok
 
-install-dev: curl-install sdkman-install jdk-install sbt-install docker-install nvm-install libsodium-install geckodriver-install ngrok-install k8-install
+install-dev: curl-install sdkman-install jdk-install sbt-install docker-install nvm-install libsodium-install geckodriver-install ngrok-install k8-install psql-install
 
 staging-config:
 	bin/staging-config.sh

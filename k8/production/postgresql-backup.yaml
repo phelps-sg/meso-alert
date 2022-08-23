@@ -1,0 +1,56 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgresql-backup-cron-job
+spec:
+#Cron Time is set according to server time, ensure server time zone and set accordingly.
+  schedule: "0 7,23 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: postgresql-backup-job-pod
+            image: registry.gitlab.com/mesonomics/meso-alert/postgres-backup
+            env:
+              - name: BACKUP_APP
+                value: "block-insights"
+              - name: PG_HOST
+                value: "meso-alert-postgres"
+              - name: PG_USER
+                value: "meso-alert"
+              - name: PG_PORT
+                value: "5432"
+              - name: PG_DATABASE
+                value: "meso-alert"
+              - name: S3_BUCKET
+                value: "s3://meso-alert-backups/"
+              - name: PG_PASS
+                valueFrom:
+                  secretKeyRef:
+                    name: meso-alert-postgres-password
+                    key: password
+                    optional: false
+              - name: AWS_ACCESS_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: meso-alert-aws-secret
+                    key: access-key-id
+                    optional: false
+              - name: AWS_SECRET_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: meso-alert-aws-secret
+                    key: access-key
+                    optional: false
+              - name: AWS_DEFAULT_REGION
+                value: "eu-west-2"
+              - name: APP_SLACK_WEBHOOK
+                value: "https://hooks.slack.com/services/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"
+            imagePullPolicy: Always
+            args:
+            - /bin/bash
+            - -c
+            - cd /root; ls; bash postgres-backup.sh;
+          restartPolicy: OnFailure
+      backoffLimit: 3
