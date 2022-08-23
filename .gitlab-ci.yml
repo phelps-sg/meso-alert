@@ -74,6 +74,7 @@ k8-production:
     - kubectl apply -f k8/production/sealed-secrets.yaml
     - kubectl apply -f k8/production/meso-alert-service.yaml
     - kubectl apply -f k8/production/postgres-pv.yaml
+    - kubectl apply -f k8/production/postgresql-backup.yaml
     - kubectl apply -f k8/postgres.yaml
     - kubectl apply -f k8/web-application.yaml
     - kubectl rollout restart deployment/meso-alert-deployment
