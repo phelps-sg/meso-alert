@@ -51,11 +51,8 @@ class FunctionalTests
     explicitWait()
     pressKeys(s"@$botName")
     clickOn(By.xpath("/html/body/div[9]/div/div/div/div/div/ul/li/div"))
-    clickOn(
-      By.xpath(
-        "/html/body/div[2]/div/div[2]/div[4]/div/div/div[3]/div/div[2]/div/div/div/div[2]/div/div/div/div[3]/div[3]/span/button[1]"
-      )
-    )
+    explicitWait()
+    pressKeys(Keys.ENTER.toString)
     pressKeys(Keys.ENTER.toString)
   }
 
