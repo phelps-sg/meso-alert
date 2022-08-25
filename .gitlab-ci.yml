@@ -41,7 +41,6 @@ docker:
 functional-tests:
   stage: functional-tests
   script:
-    - source /root/meso-alert-ci-config.sh
     - make -e sbt-functional-tests
   only:
     - master
