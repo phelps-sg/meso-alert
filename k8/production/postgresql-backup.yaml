@@ -54,3 +54,4 @@ spec:
             - cd /root; ls; bash postgres-backup.sh;
           restartPolicy: OnFailure
       backoffLimit: 3
+      ttlSecondsAfterFinished: 10800
