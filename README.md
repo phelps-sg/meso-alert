@@ -55,9 +55,6 @@ EMAIL_HOST='<source address>'
 EMAIL_HOST_PASSWORD='<changeMe>'
 EMAIL_DESTINATION='feedback@symbiotica.ai'
 SLACK_DEPLOY_URL='<copy from Slack / Manage Distribution / Sharable URL>'
-SLACK_TEST_WORKSPACE=<changeMe>
-SLACK_TEST_EMAIL=<changeMe>
-SLACK_TEST_PASSWORD=<changMe>
 EOF
 ~~~
 
