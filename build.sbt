@@ -17,6 +17,10 @@ inThisBuild(
   )
 )
 
+libraryDependencies ++= Seq(
+  "be.objectify" %% "deadbolt-scala" % "2.8.2"
+)
+
 libraryDependencies += guice
 libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
 libraryDependencies += "org.abstractj.kalium" % "kalium" % "0.8.0"

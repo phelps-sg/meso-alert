@@ -1,28 +1,10 @@
-import actors.{
-  AuthenticationActor,
-  EncryptionActor,
-  HooksManagerActorSlackChat,
-  HooksManagerActorWeb,
-  MemPoolWatcherActor,
-  TxFilterActor,
-  TxMessagingActorSlackChat,
-  TxMessagingActorWeb,
-  TxPersistenceActor
-}
+import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor}
+import be.objectify.deadbolt.scala.filters.AuthorizedRoutes
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import dao._
 import play.libs.akka.AkkaGuiceSupport
-import services.{
-  EncryptionManagerService,
-  HooksManagerSlackChat,
-  HooksManagerSlackChatService,
-  HooksManagerWeb,
-  HooksManagerWebService,
-  MemPoolWatcher,
-  MemPoolWatcherService,
-  SodiumEncryptionManager
-}
+import services.{EncryptionManagerService, HooksManagerSlackChat, HooksManagerSlackChatService, HooksManagerWeb, HooksManagerWebService, MemPoolWatcher, MemPoolWatcherService, SodiumEncryptionManager}
 import slick.jdbc.JdbcBackend.Database
 
 import javax.inject.{Inject, Provider, Singleton}
@@ -64,6 +46,10 @@ class Module extends AbstractModule with AkkaGuiceSupport {
     bind(classOf[scala.util.Random]).toProvider(classOf[RandomProvider])
   }
 
+  protected def bindAuthorizedRoutes(): Unit = {
+    bind(classOf[AuthorizedRoutes]).to(classOf[MyAuthorizedRoutes])
+  }
+
   protected def bindFutureInitialisingComponents(): Unit = {
     // Ensure all components that implement FutureInitialisingComponent are immediately initialised at startup
     bind(classOf[MemPoolWatcherService])
@@ -94,6 +80,7 @@ class Module extends AbstractModule with AkkaGuiceSupport {
     bindPRNG()
     bindActors()
     bindFutureInitialisingComponents()
+    bindAuthorizedRoutes()
   }
 }
 

@@ -4,6 +4,12 @@
 
 cat <<EOF > ./conf/application.conf
 
+play {
+  modules {
+    enabled += be.objectify.deadbolt.scala.DeadboltModule
+  }
+}
+
 play.filters.hosts {
   allowed = [".ngrok.io", "localhost"]
 }
