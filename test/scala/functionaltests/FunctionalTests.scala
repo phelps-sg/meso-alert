@@ -69,6 +69,7 @@ class FunctionalTests
     explicitWait()
     pressKeys(Keys.ENTER.toString)
     pressKeys(Keys.ENTER.toString)
+    explicitWait()
     click on className("c-button--danger")
   }
 
