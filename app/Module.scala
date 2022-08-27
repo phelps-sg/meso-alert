@@ -9,7 +9,6 @@ import actors.{
   TxMessagingActorWeb,
   TxPersistenceActor
 }
-import be.objectify.deadbolt.scala.filters.AuthorizedRoutes
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import dao._
@@ -65,10 +64,6 @@ class Module extends AbstractModule with AkkaGuiceSupport {
     bind(classOf[scala.util.Random]).toProvider(classOf[RandomProvider])
   }
 
-  protected def bindAuthorizedRoutes(): Unit = {
-    bind(classOf[AuthorizedRoutes]).to(classOf[MyAuthorizedRoutes])
-  }
-
   protected def bindFutureInitialisingComponents(): Unit = {
     // Ensure all components that implement FutureInitialisingComponent are immediately initialised at startup
     bind(classOf[MemPoolWatcherService])
@@ -99,7 +94,6 @@ class Module extends AbstractModule with AkkaGuiceSupport {
     bindPRNG()
     bindActors()
     bindFutureInitialisingComponents()
-    bindAuthorizedRoutes()
   }
 }
 

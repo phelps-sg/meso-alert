@@ -40,12 +40,6 @@ fi
 #
 cat <<EOF > application-production.conf
 
-play {
-  modules {
-    enabled += be.objectify.deadbolt.scala.DeadboltModule
-  }
-}
-
 email.smtpHost = "${EMAIL_SMTP_HOST}"
 email.smtpPort = "${EMAIL_SMTP_PORT}"
 email.host = "${EMAIL_HOST}"
