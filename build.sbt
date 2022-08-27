@@ -23,15 +23,15 @@ libraryDependencies += "org.abstractj.kalium" % "kalium" % "0.8.0"
 libraryDependencies += "com.github.daddykotex" %% "courier" % "3.2.0"
 
 libraryDependencies ++= List(
-  "com.softwaremill.sttp.client3" %% "async-http-client-backend-monix" % "3.7.2",
-  "com.softwaremill.sttp.client3" %% "circe" % "3.7.2",
+  "com.softwaremill.sttp.client3" %% "async-http-client-backend-monix" % "3.7.4",
+  "com.softwaremill.sttp.client3" %% "circe" % "3.7.4",
   "io.circe" %% "circe-generic" % "0.14.2"
 )
 
 libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.3.3",
   "com.typesafe.slick" %% "slick-hikaricp" % "3.3.3",
-  "org.postgresql" % "postgresql" % "42.3.6",
+  "org.postgresql" % "postgresql" % "42.4.2",
   "com.github.tminglei" %% "slick-pg_play-json" % "0.20.3",
   "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
   "com.dimafeng" %% "testcontainers-scala-postgresql" % "0.40.10" % "test"
