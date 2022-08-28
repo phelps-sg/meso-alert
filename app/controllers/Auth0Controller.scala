@@ -13,11 +13,13 @@ class Auth0Controller @Inject() (
     protected val config: Configuration
 ) extends BaseController {
 
-  implicit val auth0ConfigurationWrites: Writes[Auth0Configuration] = (config: Auth0Configuration) => Json.obj(
-    "clientId" -> config.clientId,
-    "domain" -> config.domain.toString(),
-    "audience" -> config.audience.toString()
-  )
+  implicit val auth0ConfigurationWrites: Writes[Auth0Configuration] =
+    (config: Auth0Configuration) =>
+      Json.obj(
+        "clientId" -> config.clientId,
+        "domain" -> config.domain.toString(),
+        "audience" -> config.audience.toString()
+      )
 
   case class Auth0Configuration(clientId: String, domain: Uri, audience: Uri)
 
