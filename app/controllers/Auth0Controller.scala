@@ -35,6 +35,6 @@ class Auth0Controller @Inject() (
 
   def secret(): Action[AnyContent] = Action { _ =>
     Ok("test1234")
-    // TODO: Implement this
+  // TODO: Implement this
   }
 }
