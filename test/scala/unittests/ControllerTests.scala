@@ -4,7 +4,13 @@ import actors.EncryptionActor.Encrypted
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import akka.util.Timeout
-import controllers.{Auth0Controller, HomeController, SlackAuthController, SlackEventsController, SlackSlashCommandController}
+import controllers.{
+  Auth0Controller,
+  HomeController,
+  SlackAuthController,
+  SlackEventsController,
+  SlackSlashCommandController
+}
 import dao._
 import org.scalamock.handlers.CallHandler1
 import org.scalatest.BeforeAndAfterAll
@@ -17,13 +23,40 @@ import play.api.http.Status.OK
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{Result, Results}
 import play.api.test.CSRFTokenHelper._
-import play.api.test.Helpers.{GET, POST, call, contentAsJson, contentAsString, status, writeableOf_AnyContentAsEmpty, writeableOf_AnyContentAsFormUrlEncoded}
+import play.api.test.Helpers.{
+  GET,
+  POST,
+  call,
+  contentAsJson,
+  contentAsString,
+  status,
+  writeableOf_AnyContentAsEmpty,
+  writeableOf_AnyContentAsFormUrlEncoded
+}
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackEventsControllerFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
+import unittests.Fixtures.{
+  ActorGuiceFixtures,
+  ConfigurationFixtures,
+  DatabaseInitializer,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  MemPoolWatcherFixtures,
+  MockMailManagerFixtures,
+  ProvidesTestBindings,
+  SlackChatActorFixtures,
+  SlackChatHookDaoFixtures,
+  SlackEventsControllerFixtures,
+  SlickSlackTeamDaoFixtures,
+  SlickSlashCommandFixtures,
+  SlickSlashCommandHistoryDaoFixtures,
+  TxWatchActorFixtures,
+  UserFixtures,
+  WebSocketFixtures
+}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -440,7 +473,8 @@ class ControllerTests
   "Auth0Controller" should {
 
     trait TestFixtures extends FixtureBindings with ConfigurationFixtures {
-      val controller = new Auth0Controller(Helpers.stubControllerComponents(), config)
+      val controller =
+        new Auth0Controller(Helpers.stubControllerComponents(), config)
     }
 
     "return the correct configuration" in new TestFixtures {
