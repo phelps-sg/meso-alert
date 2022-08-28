@@ -63,17 +63,17 @@ const updateUI = async () => {
     if (isAuthenticated) {
       const user = await auth0.getUser();
 
-      document.getElementById("profile-data").innerText = JSON.stringify(
-        user,
-        null,
-        2
-      );
+      // document.getElementById("profile-data").innerText = JSON.stringify(
+      //   user,
+      //   null,
+      //   2
+      // );
 
-      document.querySelectorAll("pre code").forEach(hljs.highlightBlock);
+      // document.querySelectorAll("pre code").forEach(hljs.highlightBlock);
 
-      eachElement(".profile-image", (e) => (e.src = user.picture));
-      eachElement(".user-name", (e) => (e.innerText = user.name));
-      eachElement(".user-email", (e) => (e.innerText = user.email));
+      // eachElement(".profile-image", (e) => (e.src = user.picture));
+      // eachElement(".user-name", (e) => (e.innerText = user.name));
+      // eachElement(".user-email", (e) => (e.innerText = user.email));
       eachElement(".auth-invisible", (e) => e.classList.add("hidden"));
       eachElement(".auth-visible", (e) => e.classList.remove("hidden"));
     } else {
