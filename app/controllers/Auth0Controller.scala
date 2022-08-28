@@ -32,4 +32,9 @@ class Auth0Controller @Inject() (
   def configuration(): Action[AnyContent] = Action { _ =>
     Ok(Json.toJson(auth0Configuration))
   }
+
+  def secret(): Action[AnyContent] = Action { _ =>
+    Ok("test1234")
+    // TODO: Implement this
+  }
 }
