@@ -11,6 +11,10 @@ play.i18n.langs = ["en"]
 
 sodium.secret = "${SODIUM_KEY}"
 
+auth0.domain = "${AUTH0_DOMAIN}"
+auth0.clientId = "${AUTH0_CLIENT_ID}"
+auth0.audience = "${AUTH0_AUDIENCE}"
+
 slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"
 slack.deployURL = "${SLACK_DEPLOY_URL}"
