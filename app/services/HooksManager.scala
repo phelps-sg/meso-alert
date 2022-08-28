@@ -1,15 +1,6 @@
 package services
 
-import actors.{
-  Register,
-  Registered,
-  Start,
-  Started,
-  Stop,
-  Stopped,
-  Update,
-  Updated
-}
+import actors.{Register, Registered, Start, Started, Stop, Stopped, Update, Updated}
 import akka.actor.{ActorRef, ActorSystem}
 import dao.{Hook, HookDao}
 import play.api.Logging

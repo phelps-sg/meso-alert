@@ -9,12 +9,7 @@ import play.api.libs.concurrent.InjectedActorSupport
 import play.api.libs.json.Json
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.WebSocket.MessageFlowTransformer
-import play.api.mvc.{
-  BaseController,
-  ControllerComponents,
-  RequestHeader,
-  WebSocket
-}
+import play.api.mvc.{BaseController, ControllerComponents, RequestHeader, WebSocket}
 import play.api.{Logger, Logging}
 
 import javax.inject.Inject
