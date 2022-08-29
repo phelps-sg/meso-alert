@@ -50,7 +50,8 @@ const configureClient = async () => {
 
   auth0 = await createAuth0Client({
     domain: config.domain,
-    client_id: config.clientId
+    client_id: config.clientId,
+    audience: config.audience
   });
 };
 
@@ -69,29 +70,40 @@ const requireAuth = async (fn, targetUrl) => {
   return login(targetUrl);
 };
 
+const getUserId = async () => {
+  const user = await auth0.getUser();
+  return user["sub"]
+}
+
+const callSecretApi = async () => {
+  let secretResponse;
+  try {
+    const token = auth0.getTokenSilently()
+    const userID = await getUserId();
+
+    const endpoint = `/api/auth0/secret?userId=${userID}`
+    const response = await fetch(endpoint, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    // Fetch the JSON result
+    secretResponse = await response.text()
+    console.log("Secret: " + secretResponse)
+
+    window.location.href = "https://slack.com/oauth/v2/authorize?client_id=3426218327431.3997500716133&scope=commands,chat:write,links:write,channels:read&user_scope=channels:read" + `&state=${secretResponse}`
+
+
+  } catch (e) {
+    // Display errors in the console
+    console.error(e);
+  }
+};
+
 // Will run when page finishes loading
 window.onload = async () => {
   await configureClient();
-
-  // If unable to parse the history hash, default to the root URL
-  // if (!showContentFromUrl(window.location.pathname)) {
-  //   showContentFromUrl("/");
-  //   window.history.replaceState({ url: "/" }, {}, "/");
-  // }
-
-  // const bodyElement = document.getElementsByTagName("body")[0];
-  //
-  // // Listen out for clicks on any hyperlink that navigates to a #/ URL
-  // bodyElement.addEventListener("click", (e) => {
-  //   if (isRouteLink(e.target)) {
-  //     const url = e.target.getAttribute("href");
-  //
-  //     if (showContentFromUrl(url)) {
-  //       e.preventDefault();
-  //       window.history.pushState({ url }, {}, url);
-  //     }
-  //   }
-  // });
 
   const isAuthenticated = await auth0.isAuthenticated();
 
