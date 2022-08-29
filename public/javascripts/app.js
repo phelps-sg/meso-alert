@@ -71,29 +71,33 @@ const requireAuth = async (fn, targetUrl) => {
 };
 
 const getUserId = async () => {
-  const user = await auth0.getUser();
-  return user["sub"]
+    const user = await auth0.getUser();
+    if (user) {
+      return user["sub"]
+    } else {
+    return null
+  }
 }
 
 const callSecretApi = async () => {
-  let secretResponse;
   try {
-    const token = auth0.getTokenSilently()
     const userID = await getUserId();
+    if (userID) {
+      const token = auth0.getTokenSilently()
+      const endpoint = `/api/auth0/secret?userId=${userID}`
+      const jsonResponse = await fetch(endpoint, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }).then(async response => await response.json());
 
-    const endpoint = `/api/auth0/secret?userId=${userID}`
-    const response = await fetch(endpoint, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+      const secret = jsonResponse.secret
+      const slackUrl = jsonResponse.slackUrl
 
-    // Fetch the JSON result
-    secretResponse = await response.text()
-    console.log("Secret: " + secretResponse)
-
-    window.location.href = "https://slack.com/oauth/v2/authorize?client_id=3426218327431.3997500716133&scope=commands,chat:write,links:write,channels:read&user_scope=channels:read" + `&state=(${userID},${secretResponse})`
-
+      window.location.href = slackUrl + `&state=(${userID},${secret})`
+    } else {
+      login()
+    }
 
   } catch (e) {
     // Display errors in the console
