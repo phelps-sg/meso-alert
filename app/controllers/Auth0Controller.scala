@@ -9,6 +9,7 @@ import sttp.model.Uri
 import util.ConfigLoaders.UriConfigLoader
 import util.Encodings.base64Encode
 
+import java.util.Base64
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -19,8 +20,8 @@ class Auth0Controller @Inject() (
 )(implicit ec: ExecutionContext)
     extends BaseController {
 
-  val encoder = java.util.Base64.getEncoder
-  val slackUrl = config.get[String]("slack.deployURL")
+  protected val encoder: Base64.Encoder = java.util.Base64.getEncoder
+  protected val slackUrl: String = config.get[String]("slack.deployURL")
 
   val auth0Configuration: Auth0Configuration = Auth0Configuration(
     config.get[String]("auth0.clientId"),
