@@ -81,7 +81,7 @@ class SlackSecretsActor @Inject() (
           encryptionManagerService.generateSecret(slackSecretSize) map {
             secret =>
               handleEvent(BindEvent(userId, secret))
-              Success(GenerateSecret(userId))
+              Success(secret)
           } pipeTo sender()
       }
 
