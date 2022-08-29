@@ -16,7 +16,8 @@ class Auth0Controller @Inject() (
     val slackSecretsManagerService: SlackSecretsManagerService,
     val controllerComponents: ControllerComponents,
     protected val config: Configuration
-)(implicit ec: ExecutionContext) extends BaseController {
+)(implicit ec: ExecutionContext)
+    extends BaseController {
 
   val encoder = java.util.Base64.getEncoder
 
@@ -58,7 +59,7 @@ class Auth0Controller @Inject() (
           Ok(Json.toJson(Result(userId, secret, "TODO")))
         }
 
-      case None       => Future { ServiceUnavailable("user is not logged in") }
+      case None => Future { ServiceUnavailable("user is not logged in") }
     }
   }
 }
