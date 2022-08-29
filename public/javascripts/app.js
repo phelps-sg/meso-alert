@@ -92,7 +92,7 @@ const callSecretApi = async () => {
     secretResponse = await response.text()
     console.log("Secret: " + secretResponse)
 
-    window.location.href = "https://slack.com/oauth/v2/authorize?client_id=3426218327431.3997500716133&scope=commands,chat:write,links:write,channels:read&user_scope=channels:read" + `&state=${secretResponse}`
+    window.location.href = "https://slack.com/oauth/v2/authorize?client_id=3426218327431.3997500716133&scope=commands,chat:write,links:write,channels:read&user_scope=channels:read" + `&state=(${userID},${secretResponse})`
 
 
   } catch (e) {
