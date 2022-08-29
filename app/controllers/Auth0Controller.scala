@@ -20,6 +20,7 @@ class Auth0Controller @Inject() (
     extends BaseController {
 
   val encoder = java.util.Base64.getEncoder
+  val slackUrl = config.get[String]("slack.deployURL")
 
   val auth0Configuration: Auth0Configuration = Auth0Configuration(
     config.get[String]("auth0.clientId"),
@@ -40,11 +41,11 @@ class Auth0Controller @Inject() (
       Json.obj(
         "userId" -> result.userId.id,
         "secret" -> base64Encode(result.secret.data),
-        "slackClientId" -> result.slackClientId
+        "slackUrl" -> result.slackUrl
       )
 
   case class Auth0Configuration(clientId: String, domain: Uri, audience: Uri)
-  case class Result(userId: UserId, secret: Secret, slackClientId: String)
+  case class Result(userId: UserId, secret: Secret, slackUrl: String)
 
   def configuration(): Action[AnyContent] = Action { _ =>
     Ok(Json.toJson(auth0Configuration))
@@ -56,7 +57,7 @@ class Auth0Controller @Inject() (
       case Some(identifier) =>
         val userId = UserId(identifier)
         slackSecretsManagerService.generateSecret(userId) map { secret =>
-          Ok(Json.toJson(Result(userId, secret, "TODO")))
+          Ok(Json.toJson(Result(userId, secret, slackUrl)))
         }
 
       case None => Future { ServiceUnavailable("user is not logged in") }
