@@ -36,7 +36,7 @@ class Auth0Controller @Inject() (
   def secret(userId: Option[String]): Action[AnyContent] = Action { _ =>
     userId match {
       case Some(user) => Ok(s"secret for ${user}")
-      case None => Ok("user is not logged in")
+      case None       => Ok("user is not logged in")
     }
   // TODO: Implement this
   }
