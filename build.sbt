@@ -43,6 +43,11 @@ libraryDependencies ++= List(
   "com.slack.api" % "bolt-jetty" %  "1.24.0",
 )
 
+libraryDependencies ++= Seq(
+  "com.typesafe.akka" %% "akka-persistence" % AkkaVersion,
+  "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion % Test
+)
+
 Test / testForkedParallel := true
 Test / parallelExecution := true
 Test / javaOptions += "-Dwebdriver.gecko.driver=/usr/local/bin/geckodriver"
