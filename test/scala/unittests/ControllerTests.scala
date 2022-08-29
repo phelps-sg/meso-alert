@@ -46,6 +46,7 @@ import unittests.Fixtures.{
   EncryptionManagerFixtures,
   MemPoolWatcherFixtures,
   MockMailManagerFixtures,
+  SecretsManagerFixtures,
   ProvidesTestBindings,
   SlackChatActorFixtures,
   SlackChatHookDaoFixtures,
@@ -472,9 +473,19 @@ class ControllerTests
 
   "Auth0Controller" should {
 
-    trait TestFixtures extends FixtureBindings with ConfigurationFixtures {
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with SecretsManagerFixtures {
+      (mockSlackSecretsManagerService.generateSecret _)
+        .expects(*)
+        .returning(Future { secret }).anyNumberOfTimes()
       val controller =
-        new Auth0Controller(Helpers.stubControllerComponents(), config)
+        new Auth0Controller(
+          mockSlackSecretsManagerService,
+          Helpers.stubControllerComponents(),
+          config
+        )
     }
 
     "return the correct configuration" in new TestFixtures {

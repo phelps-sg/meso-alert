@@ -1,26 +1,7 @@
 package unittests
 
 import actors.EncryptionActor.Encrypted
-import actors.{
-  AuthenticationActor,
-  EncryptionActor,
-  HooksManagerActorSlackChat,
-  HooksManagerActorWeb,
-  MemPoolWatcherActor,
-  Register,
-  Registered,
-  Start,
-  Started,
-  Stop,
-  Stopped,
-  TxFilterActor,
-  TxMessagingActorSlackChat,
-  TxMessagingActorWeb,
-  TxPersistenceActor,
-  TxUpdate,
-  Update,
-  Updated
-}
+import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -41,28 +22,13 @@ import play.api.libs.json.{JsArray, JsValue, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
 import play.api.{Configuration, Logging, inject}
-import services.{
-  HooksManagerSlackChat,
-  HooksManagerWeb,
-  MailManager,
-  MemPoolWatcher,
-  MemPoolWatcherService,
-  PeerGroupSelection,
-  SodiumEncryptionManager,
-  User,
-  UserManagerService
-}
+import services.{HooksManagerSlackChat, HooksManagerWeb, MailManager, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, SlackSecretsManagerService, SodiumEncryptionManager, User, UserManagerService}
 import slick.BtcPostgresProfile.api._
 import slick.dbio.{DBIO, Effect}
 import slick.jdbc.JdbcBackend.Database
 import slick.lifted.TableQuery
 import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
-import slick.{
-  DatabaseExecutionContext,
-  EncryptionExecutionContext,
-  Tables,
-  jdbc
-}
+import slick.{DatabaseExecutionContext, EncryptionExecutionContext, Tables, jdbc}
 
 import java.net.URI
 import javax.inject.Provider
@@ -638,6 +604,11 @@ object Fixtures {
       }
     }
 
+  }
+
+  trait SecretsManagerFixtures extends MockFactory {
+    val mockSlackSecretsManagerService = mock[SlackSecretsManagerService]
+    val secret = Secret(Array(0x00, 0xff).map(_.toByte))
   }
 
   trait UserFixtures extends MockFactory {
