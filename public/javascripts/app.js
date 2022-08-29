@@ -83,7 +83,7 @@ const callSecretApi = async () => {
   try {
     const userID = await getUserId();
     if (userID) {
-      const token = auth0.getTokenSilently()
+      const token = await auth0.getTokenSilently()
       const endpoint = `/api/auth0/secret?userId=${userID}`
       const jsonResponse = await fetch(endpoint, {
         headers: {
