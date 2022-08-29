@@ -479,7 +479,8 @@ class ControllerTests
         with SecretsManagerFixtures {
       (mockSlackSecretsManagerService.generateSecret _)
         .expects(*)
-        .returning(Future { secret }).anyNumberOfTimes()
+        .returning(Future { secret })
+        .anyNumberOfTimes()
       val controller =
         new Auth0Controller(
           mockSlackSecretsManagerService,
