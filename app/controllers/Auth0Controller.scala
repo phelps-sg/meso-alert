@@ -33,8 +33,11 @@ class Auth0Controller @Inject() (
     Ok(Json.toJson(auth0Configuration))
   }
 
-  def secret(): Action[AnyContent] = Action { _ =>
-    Ok("test1234")
+  def secret(userId: Option[String]): Action[AnyContent] = Action { _ =>
+    userId match {
+      case Some(user) => Ok(s"secret for ${user}")
+      case None => Ok("user is not logged in")
+    }
   // TODO: Implement this
   }
 }

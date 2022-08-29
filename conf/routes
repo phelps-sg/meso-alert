@@ -16,6 +16,6 @@ POST    /api/slack/slash            controllers.SlackSlashCommandController.slas
 GET     /api/slack/auth             controllers.SlackAuthController.authRedirect(code: Option[String], error: Option[String])
 POST    /api/slack/events           controllers.SlackEventsController.eventsAPI()
 GET     /api/auth0/config           controllers.Auth0Controller.configuration()
-GET     /api/auth0/secret           controllers.Auth0Controller.secret()
+GET     /api/auth0/secret           controllers.Auth0Controller.secret(userId: Option[String])
 GET     /feedback                   controllers.HomeController.feedbackPage()
 POST    /feedback                   controllers.HomeController.create()
