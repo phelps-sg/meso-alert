@@ -165,10 +165,10 @@ class ControllerTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
-        with EncryptionActorFixtures
-        with EncryptionManagerFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
         with SlackChatHookDaoFixtures
         with SlackChatActorFixtures
         with SlickSlashCommandHistoryDaoFixtures
@@ -247,10 +247,10 @@ class ControllerTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
-        with EncryptionActorFixtures
-        with EncryptionManagerFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
         with SlackChatHookDaoFixtures
         with SlickSlashCommandHistoryDaoFixtures
         with SlickSlackTeamDaoFixtures
@@ -443,9 +443,9 @@ class ControllerTests
         extends FixtureBindings
         with ConfigurationFixtures
         with EncryptionActorFixtures
-        with EncryptionManagerFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
+        with EncryptionManagerFixtures
         with SlackChatHookDaoFixtures
         with SlickSlackTeamDaoFixtures
         with SlickSlashCommandFixtures {

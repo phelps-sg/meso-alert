@@ -57,6 +57,14 @@ email.dispatcher {
   }
 }
 
+encryption.dispatcher {
+  executor = "thread-pool-executor"
+  throughput = 1
+  thread-pool-executor {
+    fixed-pool-size = 2
+  }
+}
+
 email.smtpHost = "${EMAIL_SMTP_HOST}"
 email.smtpPort = ${EMAIL_SMTP_PORT}
 email.host = "${EMAIL_HOST}"

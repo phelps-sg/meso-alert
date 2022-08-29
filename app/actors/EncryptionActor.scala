@@ -2,6 +2,7 @@ package actors
 
 import actors.MessageHandlers.UnRecognizedMessageHandlerWithBounce
 import akka.actor.{Actor, Props}
+import dao.Secret
 import org.abstractj.kalium.NaCl
 import org.abstractj.kalium.crypto.{Random, SecretBox}
 import play.api.Logging
@@ -10,8 +11,10 @@ import scala.util.{Failure, Success}
 
 object EncryptionActor {
 
-  sealed trait EncryptionCommand
   case class Init(secretKey: Array[Byte])
+
+  sealed trait EncryptionCommand
+  case class GenerateSecret(numBytes: Int) extends EncryptionCommand
   case class Encrypt(plainText: Array[Byte]) extends EncryptionCommand
   case class Encrypted(nonce: Array[Byte], cipherText: Array[Byte])
       extends EncryptionCommand
@@ -56,7 +59,6 @@ class EncryptionActor
   }
 
   def initialised(box: SecretBox, rng: Random): Receive = {
-
     case cmd: EncryptionCommand =>
       cmd match {
 
@@ -69,6 +71,9 @@ class EncryptionActor
 
         case Encrypted(nonce, cipherText) =>
           sender() ! Success(Decrypted(box.decrypt(nonce, cipherText)))
+
+        case GenerateSecret(n) =>
+          sender() ! Success(Secret(rng.randomBytes(n)))
 
       }
 

@@ -4,6 +4,10 @@ import actors.EncryptionActor.Encrypted
 
 import java.net.URI
 
+case class UserId(id: String) extends AnyVal
+
+case class Secret(data: Array[Byte])
+
 case class SlashCommand(
     id: Option[Int],
     channelId: String,

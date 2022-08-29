@@ -57,7 +57,12 @@ import slick.dbio.{DBIO, Effect}
 import slick.jdbc.JdbcBackend.Database
 import slick.lifted.TableQuery
 import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
-import slick.{DatabaseExecutionContext, Tables, jdbc}
+import slick.{
+  DatabaseExecutionContext,
+  EncryptionExecutionContext,
+  Tables,
+  jdbc
+}
 
 import java.net.URI
 import javax.inject.Provider
@@ -738,13 +743,18 @@ object Fixtures {
   }
 
   trait EncryptionManagerFixtures {
-    env: HasExecutionContext
+    env: ProvidesInjector
       with ConfigurationFixtures
       with EncryptionActorFixtures =>
 
-    val executionContext: ExecutionContext
+    val encryptionExecutionContext =
+      injector.instanceOf[EncryptionExecutionContext]
     val encryptionManager =
-      new SodiumEncryptionManager(encryptionActor, config)(executionContext)
+      new SodiumEncryptionManager(
+        encryptionActor,
+        config,
+        encryptionExecutionContext
+      )
   }
 
   trait EncryptionActorFixtures { env: HasActorSystem =>
