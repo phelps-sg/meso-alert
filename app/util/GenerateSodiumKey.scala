@@ -2,6 +2,7 @@ package util
 
 import org.abstractj.kalium.NaCl
 import org.abstractj.kalium.crypto.Random
+import util.Encodings.base64Encode
 
 object GenerateSodiumKey {
 
@@ -14,7 +15,7 @@ object GenerateSodiumKey {
     }
     val rng = new Random()
     val encoder = java.util.Base64.getEncoder
-    val key = encoder.encode(rng.randomBytes(32)).map(_.toChar).mkString
+    val key = base64Encode(rng.randomBytes(32))
     println(s"private-key: $key")
   }
 
