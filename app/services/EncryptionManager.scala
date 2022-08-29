@@ -33,12 +33,16 @@ class SodiumEncryptionManager @Inject() (
   private def decode(base64: String): Array[Byte] =
     java.util.Base64.getDecoder.decode(base64)
 
-  override def initialiseFuture(): Future[Unit] = sendAndReceive(Init(secret))
-  def encrypt(plainText: Array[Byte]): Future[Encrypted] = sendAndReceive(
+  override def initialiseFuture(): Future[Unit] = sendAndReceive {
+    Init(secret)
+  }
+
+  def encrypt(plainText: Array[Byte]): Future[Encrypted] = sendAndReceive {
     Encrypt(plainText)
-  )
-  def decrypt(encrypted: Encrypted): Future[Decrypted] = sendAndReceive(
+  }
+
+  def decrypt(encrypted: Encrypted): Future[Decrypted] = sendAndReceive {
     encrypted
-  )
+  }
 
 }
