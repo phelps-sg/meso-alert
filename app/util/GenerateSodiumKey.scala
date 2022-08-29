@@ -14,7 +14,6 @@ object GenerateSodiumKey {
       )
     }
     val rng = new Random()
-    val encoder = java.util.Base64.getEncoder
     val key = base64Encode(rng.randomBytes(32))
     println(s"private-key: $key")
   }
