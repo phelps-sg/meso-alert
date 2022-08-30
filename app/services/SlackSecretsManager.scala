@@ -25,7 +25,10 @@ class SlackSecretsManager @Inject() (
     GenerateSecret(userId)
   }
 
-  override def verifySecret(userId: UserId, secret: Secret): Future[ValidSecret] = sendAndReceive {
+  override def verifySecret(
+      userId: UserId,
+      secret: Secret
+  ): Future[ValidSecret] = sendAndReceive {
     VerifySecret(userId, secret)
   }
 

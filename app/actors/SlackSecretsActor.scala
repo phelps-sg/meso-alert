@@ -110,13 +110,15 @@ class SlackSecretsActor @Inject() (
         case VerifySecret(userId, secret) =>
           logger.debug(s"Verifying secret $secret for user $userId... ")
           if (
-            (state.mapping contains userId) && (state.mapping(userId).data sameElements secret.data)
+            (state.mapping contains userId) && (state
+              .mapping(userId)
+              .data sameElements secret.data)
           ) {
             logger.debug(s"Verifying secret $secret for user $userId: success.")
             sender() ! Success(ValidSecret(userId))
           } else {
             logger.info(s"Invalid secret $secret for user $userId.")
-            sender()  ! Failure(InvalidSecretException(userId, secret))
+            sender() ! Failure(InvalidSecretException(userId, secret))
           }
       }
 
