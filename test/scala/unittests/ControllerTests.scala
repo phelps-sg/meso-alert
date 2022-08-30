@@ -451,6 +451,9 @@ class ControllerTests
         with SlickSlackTeamDaoFixtures
         with SlickSlashCommandFixtures {
 
+      val dummySlackAuthState: String =
+        "auth0|630b26c75e81f50a0f401c2a,cOG eZb TOmPgYBBJMKZqI6bb429elqsRVVsT3qY/lObgjYH5FCYQX7hflRJbFs soYpa4kB9v5 00ZiSZhTLw==)"
+
       val controller = new SlackAuthController(
         config,
         slickSlackTeamDao,
@@ -460,7 +463,8 @@ class ControllerTests
 
     "redirect to home page when a users cancels installation" in new TestFixtures {
       val result = call(
-        controller.authRedirect(None, Some("access_denied")),
+        controller
+          .authRedirect(None, Some("access_denied"), dummySlackAuthState),
         FakeRequest(GET, "?error=access_denied&state=")
       )
       val body = contentAsString(result)
