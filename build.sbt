@@ -48,12 +48,6 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion % Test
 )
 
-libraryDependencies ++= Seq(
-  "com.pauldijou" %% "jwt-play" % "5.0.0",
-  "com.pauldijou" %% "jwt-core" % "5.0.0",
-  "com.auth0" % "jwks-rsa" % "0.21.1"
-)
-
 Test / testForkedParallel := true
 Test / parallelExecution := true
 Test / javaOptions += "-Dwebdriver.gecko.driver=/usr/local/bin/geckodriver"
