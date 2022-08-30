@@ -24,10 +24,11 @@ class SlackAuthController @Inject() (
 
   def authRedirect(
       temporaryCode: Option[String],
-      error: Option[String]
+      error: Option[String],
+      state: String
   ): mvc.Action[AnyContent] =
     Action.async { implicit request: Request[AnyContent] =>
-      logger.debug("Received slash auth redirect")
+      logger.debug(s"Received slash auth redirect with state $state")
 
       error match {
 
