@@ -8,11 +8,18 @@ import play.api.Logging
 import services.EncryptionManagerService
 import slick.EncryptionExecutionContext
 
-import scala.util.Success
+import scala.util.{Failure, Success}
+
+case class ValidSecret(id: UserId)
+
+case class InvalidSecretException(id: UserId, secret: Secret)
+    extends Exception(s"Invalid secret: ${secret.data} for $id")
 
 sealed trait SlackSecretsCommand
 case class GenerateSecret(userId: UserId) extends SlackSecretsCommand
 case class Unbind(userId: UserId) extends SlackSecretsCommand
+case class VerifySecret(userId: UserId, secret: Secret)
+    extends SlackSecretsCommand
 
 sealed trait SlackSecretsEvent
 case class BindEvent(userId: UserId, secret: Secret) extends SlackSecretsEvent
@@ -83,6 +90,12 @@ class SlackSecretsActor @Inject() (
               handleEvent(BindEvent(userId, secret))
               Success(secret)
           } pipeTo sender()
+
+        case VerifySecret(userId, secret) if state.mapping(userId) == secret =>
+          sender() ! Success(ValidSecret(userId))
+
+        case VerifySecret(userId, secret) if state.mapping(userId) != secret =>
+          sender() ! Failure(InvalidSecretException(userId, secret))
       }
 
     case message => unrecognizedMessage(message)
