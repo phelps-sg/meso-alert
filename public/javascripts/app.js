@@ -94,7 +94,7 @@ const callSecretApi = async () => {
       const secret = jsonResponse.secret
       const slackUrl = jsonResponse.slackUrl
 
-      window.location.href = slackUrl + `&state=(${userID},${secret})`
+      window.location.href = slackUrl + `&state=(${encodeURIComponent(userID)},${encodeURIComponent(secret)})`
     } else {
       login()
     }
