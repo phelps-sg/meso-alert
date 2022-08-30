@@ -23,16 +23,16 @@ libraryDependencies += "org.abstractj.kalium" % "kalium" % "0.8.0"
 libraryDependencies += "com.github.daddykotex" %% "courier" % "3.2.0"
 
 libraryDependencies ++= List(
-  "com.softwaremill.sttp.client3" %% "async-http-client-backend-monix" % "3.7.4",
-  "com.softwaremill.sttp.client3" %% "circe" % "3.7.4",
+  "com.softwaremill.sttp.client3" %% "async-http-client-backend-monix" % "3.7.6",
+  "com.softwaremill.sttp.client3" %% "circe" % "3.7.6",
   "io.circe" %% "circe-generic" % "0.14.2"
 )
 
 libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.3.3",
   "com.typesafe.slick" %% "slick-hikaricp" % "3.3.3",
-  "org.postgresql" % "postgresql" % "42.4.2",
-  "com.github.tminglei" %% "slick-pg_play-json" % "0.20.3",
+  "org.postgresql" % "postgresql" % "42.5.0",
+  "com.github.tminglei" %% "slick-pg_play-json" % "0.20.4",
   "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
   "com.dimafeng" %% "testcontainers-scala-postgresql" % "0.40.10" % "test"
 )
@@ -49,10 +49,16 @@ libraryDependencies ++= Seq(
 )
 
 libraryDependencies ++= Seq(
-  "com.pauldijou" %% "jwt-play" % "5.0.0",
-  "com.pauldijou" %% "jwt-core" % "5.0.0",
+  "com.github.jwt-scala" %% "jwt-play" % "9.1.0",
+  "com.github.jwt-scala" %% "jwt-core" % "9.1.0",
   "com.auth0" % "jwks-rsa" % "0.21.1"
 )
+
+dependencyOverrides += "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.11.4"
+dependencyOverrides += "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.1"
+libraryDependencies += "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.1"
+//dependencyOverrides += "com.fasterxml.jackson.core" %% "jackson-core" % "2.11.4"
+//dependencyOverrides += "com.fasterxml.jackson.core" %% "jackson-annotations" % "2.11.4"
 
 Test / testForkedParallel := true
 Test / parallelExecution := true
