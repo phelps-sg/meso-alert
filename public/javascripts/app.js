@@ -4,19 +4,22 @@ let auth0 = null;
 /**
  * Starts the authentication flow
  */
-const login = async (targetUrl) => {
+const login = async (withRedirect= false, targetUrl) => {
   try {
     console.log("Logging in", targetUrl);
-
     const options = {
       redirect_uri: window.location.origin
     };
+    if (withRedirect) {
+      options.redirect_uri = window.location.origin + "?slack_redirect=1"
+    }
 
     if (targetUrl) {
       options.appState = { targetUrl };
     }
 
     await auth0.loginWithRedirect(options);
+
   } catch (err) {
     console.log("Log in failed", err);
   }
@@ -96,7 +99,7 @@ const callSecretApi = async () => {
 
       window.location.href = slackUrl + `&state=(${encodeURIComponent(userID)},${encodeURIComponent(secret)})`
     } else {
-      login()
+      login(true)
     }
 
   } catch (e) {
@@ -122,7 +125,7 @@ window.onload = async () => {
 
   const query = window.location.search;
   const shouldParseResult = query.includes("code=") && query.includes("state=");
-
+  const shouldRedirect = query.includes("slack_redirect=")
   if (shouldParseResult) {
     console.log("> Parsing redirect");
     try {
@@ -138,6 +141,9 @@ window.onload = async () => {
     }
 
     window.history.replaceState({}, document.title, "/");
+  }
+  if (shouldRedirect) {
+    await callSecretApi()
   }
 
   updateUI();
