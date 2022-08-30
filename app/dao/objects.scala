@@ -7,8 +7,8 @@ import java.net.URI
 
 case class UserId(id: String) extends AnyVal
 
-case class Secret(val data: Array[Byte]) {
-  override def toString = base64Encode(data)
+case class Secret(data: Array[Byte]) {
+  override def toString: String = base64Encode(data)
 }
 
 case class SlashCommand(
