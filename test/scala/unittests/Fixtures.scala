@@ -643,7 +643,7 @@ object Fixtures {
 
   trait SecretsManagerFixtures extends MockFactory {
     val mockSlackSecretsManagerService = mock[SlackSecretsManagerService]
-    val secret = Secret(Array(0x00, 0xff).map(_.toByte))
+    val slackAuthSecret = Secret(Array(0x00, 0xff).map(_.toByte))
   }
 
   trait UserFixtures extends MockFactory {

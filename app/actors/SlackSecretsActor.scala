@@ -1,22 +1,25 @@
 package actors
 import actors.MessageHandlers.UnRecognizedMessageHandlerWithBounce
-import akka.pattern.pipe
+import akka.actor.ActorRef
 import akka.persistence._
 import com.google.inject.Inject
 import dao.{Secret, UserId}
 import play.api.Logging
 import services.EncryptionManagerService
 import slick.EncryptionExecutionContext
+import util.Encodings.base64Encode
 
 import scala.util.{Failure, Success}
 
 case class ValidSecret(id: UserId)
 
 case class InvalidSecretException(id: UserId, secret: Secret)
-    extends Exception(s"Invalid secret: ${secret.data} for $id")
+    extends Exception(s"Invalid secret: ${base64Encode(secret.data)} for $id")
 
 sealed trait SlackSecretsCommand
 case class GenerateSecret(userId: UserId) extends SlackSecretsCommand
+case class RecordSecret(userId: UserId, secret: Secret, replyTo: ActorRef)
+    extends SlackSecretsCommand
 case class Unbind(userId: UserId) extends SlackSecretsCommand
 case class VerifySecret(userId: UserId, secret: Secret)
     extends SlackSecretsCommand
@@ -67,6 +70,7 @@ class SlackSecretsActor @Inject() (
 
   def handleEvent(event: SlackSecretsEvent): Unit = {
     persist(event) { event =>
+      logger.debug(s"Updating state with $event")
       updateState(event)
       context.system.eventStream.publish(event)
       if (lastSequenceNr % snapShotInterval == 0 && lastSequenceNr != 0)
@@ -84,18 +88,36 @@ class SlackSecretsActor @Inject() (
           sender() ! Success(Unbind(userId))
 
         case GenerateSecret(userId) =>
+          logger.debug(s"Generating secret for $userId...")
           implicit val ec = encryptionManagerExecutionContext
+          val replyTo = sender()
+          logger.debug("replyTo = replyTo")
           encryptionManagerService.generateSecret(slackSecretSize) map {
             secret =>
-              handleEvent(BindEvent(userId, secret))
-              Success(secret)
-          } pipeTo sender()
+              self ! RecordSecret(userId, secret, replyTo)
+          } recover { case e: Exception =>
+            replyTo ! Failure(e)
+          }
 
-        case VerifySecret(userId, secret) if state.mapping(userId) == secret =>
-          sender() ! Success(ValidSecret(userId))
+        case RecordSecret(userId, secret, replyTo) =>
+          logger.debug(s"Recording secret $secret for $userId for $replyTo... ")
+          handleEvent(BindEvent(userId, secret))
+          logger.debug(
+            s"Generating secret for $userId: success with result $secret."
+          )
+          replyTo ! Success(secret)
 
-        case VerifySecret(userId, secret) if state.mapping(userId) != secret =>
-          sender() ! Failure(InvalidSecretException(userId, secret))
+        case VerifySecret(userId, secret) =>
+          logger.debug(s"Verifying secret $secret for user $userId... ")
+          if (
+            (state.mapping contains userId) && (state.mapping(userId).data sameElements secret.data)
+          ) {
+            logger.debug(s"Verifying secret $secret for user $userId: success.")
+            sender() ! Success(ValidSecret(userId))
+          } else {
+            logger.info(s"Invalid secret $secret for user $userId.")
+            sender()  ! Failure(InvalidSecretException(userId, secret))
+          }
       }
 
     case message => unrecognizedMessage(message)

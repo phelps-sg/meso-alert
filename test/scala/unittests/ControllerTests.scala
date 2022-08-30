@@ -447,6 +447,7 @@ class ControllerTests
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
         with EncryptionManagerFixtures
+        with SecretsManagerFixtures
         with SlackChatHookDaoFixtures
         with SlickSlackTeamDaoFixtures
         with SlickSlashCommandFixtures {
@@ -457,6 +458,7 @@ class ControllerTests
       val controller = new SlackAuthController(
         config,
         slickSlackTeamDao,
+        mockSlackSecretsManagerService,
         Helpers.stubControllerComponents()
       )
     }
@@ -464,7 +466,7 @@ class ControllerTests
     "redirect to home page when a users cancels installation" in new TestFixtures {
       val result = call(
         controller
-          .authRedirect(None, Some("access_denied"), dummySlackAuthState),
+          .authRedirect(None, Some("access_denied"), Some(dummySlackAuthState)),
         FakeRequest(GET, "?error=access_denied&state=")
       )
       val body = contentAsString(result)
@@ -483,7 +485,7 @@ class ControllerTests
         with SecretsManagerFixtures {
       (mockSlackSecretsManagerService.generateSecret _)
         .expects(*)
-        .returning(Future { secret })
+        .returning(Future { slackAuthSecret })
         .anyNumberOfTimes()
       val controller =
         new Auth0Controller(

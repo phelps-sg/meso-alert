@@ -1,12 +1,15 @@
 package dao
 
 import actors.EncryptionActor.Encrypted
+import util.Encodings.base64Encode
 
 import java.net.URI
 
 case class UserId(id: String) extends AnyVal
 
-case class Secret(data: Array[Byte])
+case class Secret(val data: Array[Byte]) {
+  override def toString = base64Encode(data)
+}
 
 case class SlashCommand(
     id: Option[Int],

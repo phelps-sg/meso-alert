@@ -2,11 +2,13 @@ package controllers
 
 import com.slack.api.methods.AsyncMethodsClient
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
-import dao.{SlackTeam, SlackTeamDao}
+import dao.{Secret, SlackTeam, SlackTeamDao, UserId}
 import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
 import play.api.{Configuration, Logging, mvc}
+import services.SlackSecretsManagerService
 import slack.FutureConverters.BoltFuture
 import slack.{BoltException, SlackClient}
+import util.Encodings.base64Decode
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -14,18 +16,22 @@ import scala.concurrent.{ExecutionContext, Future}
 class SlackAuthController @Inject() (
     protected val config: Configuration,
     val slackTeamDao: SlackTeamDao,
+    val slackSecretsManagerService: SlackSecretsManagerService,
     val controllerComponents: ControllerComponents
 )(implicit val ec: ExecutionContext)
     extends BaseController
     with SlackClient
     with Logging {
 
+  case class InvalidAuthState(state: Option[String])
+      extends Exception(s"Invalid state parameter: $state")
+
   protected val slackMethods: AsyncMethodsClient = slack.methodsAsync()
 
   def authRedirect(
       temporaryCode: Option[String],
       error: Option[String],
-      state: String
+      state: Option[String]
   ): mvc.Action[AnyContent] =
     Action.async { implicit request: Request[AnyContent] =>
       logger.debug(s"Received slash auth redirect with state $state")
@@ -41,6 +47,8 @@ class SlackAuthController @Inject() (
           Future { ServiceUnavailable(error) }
 
         case None =>
+          val Auth = """\((.*),(.*)\)""".r
+
           val slackRequest = OAuthV2AccessRequest.builder
             .clientId(slackClientId)
             .clientSecret(slackClientSecret)
@@ -48,6 +56,16 @@ class SlackAuthController @Inject() (
             .build()
 
           val f = for {
+
+            _ <- state match {
+              case Some(Auth(uid, secretBase64)) =>
+                slackSecretsManagerService.verifySecret(
+                  UserId(uid),
+                  Secret(base64Decode(secretBase64))
+                )
+              case _ =>
+                Future.failed(InvalidAuthState(state))
+            }
 
             response <- slackMethods.oauthV2Access(slackRequest).asScalaFuture
 
