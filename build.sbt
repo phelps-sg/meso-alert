@@ -28,14 +28,14 @@ libraryDependencies ++= List(
   "io.circe" %% "circe-generic" % "0.14.2"
 )
 
+val slickVersion = "3.3.3"
 libraryDependencies ++= Seq(
-  "com.typesafe.slick" %% "slick" % "3.3.3",
-  "com.typesafe.slick" %% "slick-hikaricp" % "3.3.3",
-  "org.postgresql" % "postgresql" % "42.5.0",
-  "com.github.tminglei" %% "slick-pg_play-json" % "0.20.4",
-  "com.dimafeng" %% "testcontainers-scala-scalatest" % "0.40.10" % "test",
-  "com.dimafeng" %% "testcontainers-scala-postgresql" % "0.40.10" % "test"
+  "com.typesafe.slick" %% "slick" % slickVersion,
+  "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
+  "org.postgresql" % "postgresql" % "42.5.0"
 )
+
+libraryDependencies += "com.github.tminglei" %% "slick-pg_play-json" % "0.20.4"
 
 val boltVersion = "1.24.0"
 libraryDependencies ++= List(
@@ -50,9 +50,10 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion % Test
 )
 
+val jwtScalaVersion = "9.1.0"
 libraryDependencies ++= Seq(
-  "com.github.jwt-scala" %% "jwt-play" % "9.1.0",
-  "com.github.jwt-scala" %% "jwt-core" % "9.1.0",
+  "com.github.jwt-scala" %% "jwt-play" % jwtScalaVersion,
+  "com.github.jwt-scala" %% "jwt-core" % jwtScalaVersion,
   "com.auth0" % "jwks-rsa" % "0.21.1"
 )
 
@@ -73,3 +74,9 @@ libraryDependencies += "org.awaitility" % "awaitility-scala" % "4.2.0" % Test
 libraryDependencies += "org.scalamock" %% "scalamock" % "5.2.0" % Test
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.12" % Test
 libraryDependencies += "com.google.guava" % "guava" % "31.1-jre" % Test
+
+val testContainersVersion = "0.40.10"
+libraryDependencies ++= Seq(
+  "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % Test,
+  "com.dimafeng" %% "testcontainers-scala-postgresql" % testContainersVersion % Test
+)
