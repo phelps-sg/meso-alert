@@ -2,28 +2,9 @@ package unittests
 
 import actors.AuthenticationActor.{Auth, TxInputOutput}
 import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
-import actors.MemPoolWatcherActor.{
-  PeerGroupAlreadyStartedException,
-  StartPeerGroup
-}
-import actors.SlackSecretsActor.{
-  GenerateSecret,
-  Unbind,
-  ValidSecret,
-  VerifySecret
-}
-import actors.{
-  AuthenticationActor,
-  HookAlreadyRegisteredException,
-  HookAlreadyStartedException,
-  HookNotRegisteredException,
-  HookNotStartedException,
-  Registered,
-  Started,
-  Stopped,
-  TxUpdate,
-  Updated
-}
+import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
+import actors.SlackSecretsActor.{GenerateSecret, Unbind, ValidSecret, VerifySecret}
+import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxUpdate, Updated}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -44,28 +25,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
-import unittests.Fixtures.{
-  ActorGuiceFixtures,
-  ConfigurationFixtures,
-  DatabaseGuiceFixtures,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  HookActorTestLogic,
-  MemPoolWatcherActorFixtures,
-  MemPoolWatcherFixtures,
-  ProvidesTestBindings,
-  SlackChatActorFixtures,
-  SlackChatHookDaoFixtures,
-  SlackSecretsActorFixtures,
-  TransactionFixtures,
-  TxPersistenceActorFixtures,
-  TxUpdateFixtures,
-  TxWatchActorFixtures,
-  UserFixtures,
-  WebSocketFixtures,
-  WebhookActorFixtures,
-  WebhookFixtures
-}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackSecretsActorFixtures, TransactionFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
