@@ -53,17 +53,16 @@ class Auth0Controller @Inject() (
     Ok(Json.toJson(auth0Configuration))
   }
 
-  def secret(uid: Option[String]): Action[AnyContent] = authAction.async {
-    _ =>
-      uid match {
+  def secret(uid: Option[String]): Action[AnyContent] = authAction.async { _ =>
+    uid match {
 
-        case Some(identifier) =>
-          val userId = UserId(identifier)
-          slackSecretsManagerService.generateSecret(userId) map { secret =>
-            Ok(Json.toJson(Result(userId, secret, slackUrl)))
-          }
+      case Some(identifier) =>
+        val userId = UserId(identifier)
+        slackSecretsManagerService.generateSecret(userId) map { secret =>
+          Ok(Json.toJson(Result(userId, secret, slackUrl)))
+        }
 
-        case None => Future { ServiceUnavailable("user is not logged in") }
-      }
+      case None => Future { ServiceUnavailable("user is not logged in") }
+    }
   }
 }
