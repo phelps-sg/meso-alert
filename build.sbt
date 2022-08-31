@@ -37,10 +37,11 @@ libraryDependencies ++= Seq(
   "com.dimafeng" %% "testcontainers-scala-postgresql" % "0.40.10" % "test"
 )
 
+val boltVersion = "1.24.0"
 libraryDependencies ++= List(
-  "com.slack.api" % "bolt" % "1.24.0",
-  "com.slack.api" % "bolt-servlet" %  "1.24.0",
-  "com.slack.api" % "bolt-jetty" %  "1.24.0",
+  "com.slack.api" % "bolt" % boltVersion,
+  "com.slack.api" % "bolt-servlet" %  boltVersion,
+  "com.slack.api" % "bolt-jetty" %  boltVersion
 )
 
 val AkkaVersion = "2.6.19"
