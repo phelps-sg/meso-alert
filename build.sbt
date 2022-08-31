@@ -56,9 +56,6 @@ libraryDependencies ++= Seq(
 
 dependencyOverrides += "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.11.4"
 dependencyOverrides += "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.1"
-libraryDependencies += "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.1"
-//dependencyOverrides += "com.fasterxml.jackson.core" %% "jackson-core" % "2.11.4"
-//dependencyOverrides += "com.fasterxml.jackson.core" %% "jackson-annotations" % "2.11.4"
 
 Test / testForkedParallel := true
 Test / parallelExecution := true
