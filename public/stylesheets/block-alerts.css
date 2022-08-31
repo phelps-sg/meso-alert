@@ -2075,6 +2075,16 @@ textarea.w-input, textarea.w-select {
     .w-nav[data-collapse="medium"] .w-nav-button {
         display:block
     }
+
+    #qsLoginBtn {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #dropdownMenuButton {
+        margin-left: auto;
+        margin-right: auto;
+    }
 }
 
 @media screen and (max-width: 767px) {
@@ -2089,6 +2099,16 @@ textarea.w-input, textarea.w-select {
     .w-nav-brand {
         padding-left:10px
     }
+
+    #qsLoginBtn {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #dropdownMenuButton {
+        margin-left: auto;
+        margin-right: auto;
+    }
 }
 
 @media screen and (max-width: 479px) {
@@ -2098,6 +2118,16 @@ textarea.w-input, textarea.w-select {
 
     .w-nav[data-collapse="tiny"] .w-nav-button {
         display:block
+    }
+
+    #qsLoginBtn {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    #dropdownMenuButton {
+        margin-left: auto;
+        margin-right: auto;
     }
 }
 
