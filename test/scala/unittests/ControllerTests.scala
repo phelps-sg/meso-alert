@@ -6,6 +6,7 @@ import akka.testkit.TestKit
 import akka.util.Timeout
 import controllers.{
   Auth0Controller,
+  Auth0ValidateJWTAction,
   HomeController,
   SlackAuthController,
   SlackEventsController,
@@ -41,13 +42,14 @@ import slick.Tables
 import unittests.Fixtures.{
   ActorGuiceFixtures,
   ConfigurationFixtures,
+  DatabaseGuiceFixtures,
   DatabaseInitializer,
   EncryptionActorFixtures,
   EncryptionManagerFixtures,
   MemPoolWatcherFixtures,
   MockMailManagerFixtures,
-  SecretsManagerFixtures,
   ProvidesTestBindings,
+  SecretsManagerFixtures,
   SlackChatActorFixtures,
   SlackChatHookDaoFixtures,
   SlackEventsControllerFixtures,
@@ -483,12 +485,17 @@ class ControllerTests
         extends FixtureBindings
         with ConfigurationFixtures
         with SecretsManagerFixtures {
+
       (mockSlackSecretsManagerService.generateSecret _)
         .expects(*)
         .returning(Future { slackAuthSecret })
         .anyNumberOfTimes()
+
+      val action = mock[Auth0ValidateJWTAction]
+
       val controller =
         new Auth0Controller(
+          action,
           mockSlackSecretsManagerService,
           Helpers.stubControllerComponents(),
           config

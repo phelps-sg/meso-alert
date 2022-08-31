@@ -16,11 +16,12 @@ import scala.util.{Failure, Success, Try}
 case class UserRequest[A](jwt: JwtClaim, token: String, request: Request[A])
     extends WrappedRequest[A](request)
 
-class Auth0ValidateJWTAction @Inject()(
+class Auth0ValidateJWTAction @Inject() (
     bodyParser: BodyParsers.Default,
     config: Configuration
 )(implicit ec: ExecutionContext)
-    extends ActionBuilder[UserRequest, AnyContent] with Logging {
+    extends ActionBuilder[UserRequest, AnyContent]
+    with Logging {
 
   override def parser: BodyParser[AnyContent] = bodyParser
   override protected def executionContext: ExecutionContext = ec

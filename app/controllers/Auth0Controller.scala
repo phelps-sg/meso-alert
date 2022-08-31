@@ -14,10 +14,10 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class Auth0Controller @Inject() (
-                                  val authAction: Auth0ValidateJWTAction,
-                                  val slackSecretsManagerService: SlackSecretsManagerService,
-                                  val controllerComponents: ControllerComponents,
-                                  protected val config: Configuration
+    val authAction: Auth0ValidateJWTAction,
+    val slackSecretsManagerService: SlackSecretsManagerService,
+    val controllerComponents: ControllerComponents,
+    protected val config: Configuration
 )(implicit ec: ExecutionContext)
     extends BaseController {
 
@@ -53,16 +53,17 @@ class Auth0Controller @Inject() (
     Ok(Json.toJson(auth0Configuration))
   }
 
-  def secret(uid: Option[String]): Action[AnyContent] = authAction.async { implicit request =>
-    uid match {
+  def secret(uid: Option[String]): Action[AnyContent] = authAction.async {
+    implicit request =>
+      uid match {
 
-      case Some(identifier) =>
-        val userId = UserId(identifier)
-        slackSecretsManagerService.generateSecret(userId) map { secret =>
-          Ok(Json.toJson(Result(userId, secret, slackUrl)))
-        }
+        case Some(identifier) =>
+          val userId = UserId(identifier)
+          slackSecretsManagerService.generateSecret(userId) map { secret =>
+            Ok(Json.toJson(Result(userId, secret, slackUrl)))
+          }
 
-      case None => Future { ServiceUnavailable("user is not logged in") }
-    }
+        case None => Future { ServiceUnavailable("user is not logged in") }
+      }
   }
 }
