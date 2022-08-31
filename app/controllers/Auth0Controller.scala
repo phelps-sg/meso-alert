@@ -54,7 +54,7 @@ class Auth0Controller @Inject() (
   }
 
   def secret(uid: Option[String]): Action[AnyContent] = authAction.async {
-    implicit request =>
+    _ =>
       uid match {
 
         case Some(identifier) =>
