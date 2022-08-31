@@ -62,5 +62,5 @@ object JWT {
       Failure(new Exception("JWT did not pass validation"))
     }
 
-  def issuer(domain: => Uri) = s"https://$domain/"
+  def issuer(domain: => Uri): String = s"https://$domain/"
 }
