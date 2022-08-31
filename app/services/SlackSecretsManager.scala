@@ -1,6 +1,11 @@
 package services
 
-import actors.SlackSecretsActor.{GenerateSecret, Unbind, ValidSecret, VerifySecret}
+import actors.SlackSecretsActor.{
+  GenerateSecret,
+  Unbind,
+  ValidSecret,
+  VerifySecret
+}
 import akka.actor.ActorRef
 import com.google.inject.name.Named
 import com.google.inject.{ImplementedBy, Inject}
