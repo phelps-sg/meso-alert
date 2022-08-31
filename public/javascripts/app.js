@@ -76,7 +76,7 @@ const requireAuth = async (fn, targetUrl) => {
 const getUserId = async () => {
     const user = await auth0.getUser();
     if (user) {
-      return user["sub"]
+      return user["email"]
     } else {
     return null
   }
