@@ -57,17 +57,21 @@ class SlackAuthController @Inject() (
 
           val f = for {
 
-            _ <- state match {
+            userId <- state match {
               case Some(Auth(uid, secretBase64)) =>
                 slackSecretsManagerService.verifySecret(
                   UserId(uid),
                   Secret(base64Decode(secretBase64))
-                )
+                ) map {
+                  _.id
+                }
               case _ =>
                 Future.failed(InvalidAuthState(state))
             }
 
             response <- slackMethods.oauthV2Access(slackRequest).asScalaFuture
+
+            _ <- slackSecretsManagerService.unbind(userId)
 
             n <- {
               val slackTeam =

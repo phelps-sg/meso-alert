@@ -1,6 +1,6 @@
 package services
 
-import actors.{GenerateSecret, ValidSecret, VerifySecret}
+import actors.SlackSecretsActor.{GenerateSecret, Unbind, ValidSecret, VerifySecret}
 import akka.actor.ActorRef
 import com.google.inject.name.Named
 import com.google.inject.{ImplementedBy, Inject}
@@ -11,6 +11,7 @@ import scala.concurrent.Future
 
 @ImplementedBy(classOf[SlackSecretsManager])
 trait SlackSecretsManagerService {
+  def unbind(uid: UserId): Future[Unbind]
   def generateSecret(userId: UserId): Future[Secret]
   def verifySecret(userId: UserId, secret: Secret): Future[ValidSecret]
 }
@@ -30,6 +31,10 @@ class SlackSecretsManager @Inject() (
       secret: Secret
   ): Future[ValidSecret] = sendAndReceive {
     VerifySecret(userId, secret)
+  }
+
+  override def unbind(userId: UserId): Future[Unbind] = sendAndReceive {
+    Unbind(userId)
   }
 
 }

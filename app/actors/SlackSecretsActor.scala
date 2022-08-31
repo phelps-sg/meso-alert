@@ -1,6 +1,6 @@
 package actors
 import actors.MessageHandlers.UnRecognizedMessageHandlerWithBounce
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, Props}
 import akka.persistence._
 import com.google.inject.Inject
 import dao.{Secret, UserId}
@@ -9,41 +9,51 @@ import services.EncryptionManagerService
 import slick.EncryptionExecutionContext
 import util.Encodings.base64Encode
 
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-case class ValidSecret(id: UserId)
+object SlackSecretsActor {
 
-case class InvalidSecretException(id: UserId, secret: Secret)
-    extends Exception(s"Invalid secret: ${base64Encode(secret.data)} for $id")
+  case class ValidSecret(id: UserId)
 
-sealed trait SlackSecretsCommand
-case class GenerateSecret(userId: UserId) extends SlackSecretsCommand
-case class RecordSecret(userId: UserId, secret: Secret, replyTo: ActorRef)
-    extends SlackSecretsCommand
-case class Unbind(userId: UserId) extends SlackSecretsCommand
-case class VerifySecret(userId: UserId, secret: Secret)
-    extends SlackSecretsCommand
+  case class InvalidSecretException(id: UserId, secret: Secret)
+      extends Exception(s"Invalid secret: ${base64Encode(secret.data)} for $id")
 
-sealed trait SlackSecretsEvent
-case class BindEvent(userId: UserId, secret: Secret) extends SlackSecretsEvent
-case class UnbindEvent(userId: UserId) extends SlackSecretsEvent
+  sealed trait SlackSecretsCommand
+  case class GenerateSecret(userId: UserId) extends SlackSecretsCommand
+  case class RecordSecret(userId: UserId, secret: Secret, replyTo: ActorRef)
+      extends SlackSecretsCommand
+  case class Unbind(userId: UserId) extends SlackSecretsCommand
+  case class VerifySecret(userId: UserId, secret: Secret)
+      extends SlackSecretsCommand
 
-case class SecretsState(mapping: Map[UserId, Secret]) {
+  sealed trait SlackSecretsEvent
+  case class BindEvent(userId: UserId, secret: Secret) extends SlackSecretsEvent
+  case class UnbindEvent(userId: UserId) extends SlackSecretsEvent
 
-  def updated(evt: SlackSecretsEvent): SecretsState = {
-    evt match {
-      case BindEvent(userId, secret) =>
-        SecretsState(
-          mapping + (userId -> secret)
-        )
-      case UnbindEvent(userId) =>
-        SecretsState(
-          mapping - userId
-        )
+  case class SecretsState(mapping: Map[UserId, Secret]) {
+
+    def updated(evt: SlackSecretsEvent): SecretsState = {
+      evt match {
+        case BindEvent(userId, secret) =>
+          SecretsState(
+            mapping + (userId -> secret)
+          )
+        case UnbindEvent(userId) =>
+          SecretsState(
+            mapping - userId
+          )
+      }
     }
-  }
 
-  def size: Int = mapping.size
+    def size: Int = mapping.size
+  }
+  def props(
+      encryptionManagerService: EncryptionManagerService,
+      encryptionExecutionContext: EncryptionExecutionContext
+  ): Props = Props(
+    new SlackSecretsActor(encryptionManagerService, encryptionExecutionContext)
+  )
 }
 
 class SlackSecretsActor @Inject() (
@@ -52,6 +62,8 @@ class SlackSecretsActor @Inject() (
 ) extends PersistentActor
     with Logging
     with UnRecognizedMessageHandlerWithBounce {
+
+  import SlackSecretsActor._
 
   override def persistenceId = "slack-secrets-actor-singleton"
 
@@ -89,7 +101,7 @@ class SlackSecretsActor @Inject() (
 
         case GenerateSecret(userId) =>
           logger.debug(s"Generating secret for $userId...")
-          implicit val ec = encryptionManagerExecutionContext
+          implicit val ec: ExecutionContext = encryptionManagerExecutionContext
           val replyTo = sender()
           logger.debug("replyTo = replyTo")
           encryptionManagerService.generateSecret(slackSecretSize) map {
