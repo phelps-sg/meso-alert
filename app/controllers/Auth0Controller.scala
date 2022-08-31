@@ -14,6 +14,7 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class Auth0Controller @Inject() (
+    val authAction: AuthAction,
     val slackSecretsManagerService: SlackSecretsManagerService,
     val controllerComponents: ControllerComponents,
     protected val config: Configuration
@@ -52,7 +53,7 @@ class Auth0Controller @Inject() (
     Ok(Json.toJson(auth0Configuration))
   }
 
-  def secret(uid: Option[String]): Action[AnyContent] = Action.async { _ =>
+  def secret(uid: Option[String]): Action[AnyContent] = authAction.async { implicit request =>
     uid match {
 
       case Some(identifier) =>
