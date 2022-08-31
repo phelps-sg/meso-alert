@@ -722,11 +722,12 @@ class ActorTests
     }
 
     "create unique secrets for different users" in new TestFixtures {
-       (for {
+      (for {
         secret1 <- slackSecretsActor ? GenerateSecret(userId)
         secret2 <- slackSecretsActor ? GenerateSecret(anotherUserId)
       } yield (secret1, secret2)).futureValue should matchPattern {
-         case (Success(Secret(s1)), Success(Secret(s2))) if !(s1 sameElements s2) =>
+        case (Success(Secret(s1)), Success(Secret(s2)))
+            if !(s1 sameElements s2) =>
       }
     }
 
