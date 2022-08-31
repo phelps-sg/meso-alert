@@ -11,7 +11,7 @@ import util.ConfigLoaders.UriConfigLoader
 
 import java.time.Clock
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 // A custom request type to hold our JWT claims, we can pass these on to the
 // handling action
@@ -31,7 +31,7 @@ class AuthAction @Inject() (
   // A regex for parsing the Authorization header value
   private val headerTokenRegex = """Bearer (.+?)""".r
 
-  val validateJwt =
+  val validateJwt: String => Try[JwtClaim] =
     JWT.validateJwt(config.get[Uri]("auth0.domain"))(
       config.get[Uri]("auth0.audience")
     )(Clock.systemDefaultZone())(_)
