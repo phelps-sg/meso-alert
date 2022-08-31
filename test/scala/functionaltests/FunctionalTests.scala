@@ -163,7 +163,9 @@ class FunctionalTests
     click on id("qsLoginBtn")
     textField("username").value = "wrong@email.com"
     pwdField("password").value = "wrongPassword"
-    click on xpath("/html/body/div/main/section/div/div[2]/div/form/div[2]/button")
+    click on xpath(
+      "/html/body/div/main/section/div/div[2]/div/form/div[2]/button"
+    )
     explicitWait()
     assert(find(className("ulp-input-error-message")).isDefined)
   }
@@ -172,9 +174,11 @@ class FunctionalTests
     go to stagingURL
     explicitWait()
     click on id("qsLoginBtn")
-    textField("username").value=slackEmail
-    pwdField("password").value=slackPassword
-    click on xpath("/html/body/div/main/section/div/div[2]/div/form/div[2]/button")
+    textField("username").value = slackEmail
+    pwdField("password").value = slackPassword
+    click on xpath(
+      "/html/body/div/main/section/div/div[2]/div/form/div[2]/button"
+    )
     explicitWait()
     assert(find("dropdownMenuButton").isDefined)
   }
