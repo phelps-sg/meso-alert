@@ -43,6 +43,7 @@ libraryDependencies ++= List(
   "com.slack.api" % "bolt-jetty" %  "1.24.0",
 )
 
+val AkkaVersion = "2.6.19"
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence" % AkkaVersion,
   "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion % Test
@@ -65,11 +66,9 @@ Test / javaOptions += "-Dconfig.resource=application.test.conf"
 Test / scalaSource := baseDirectory.value / "test/scala"
 Test / resourceDirectory := baseDirectory.value / "test/resources"
 
-val AkkaVersion = "2.6.19"
 libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0" % Test
 libraryDependencies += "org.scalatestplus" %% "selenium-4-1" % "3.2.12.1" % "test"
 libraryDependencies += "org.awaitility" % "awaitility-scala" % "4.2.0" % Test
 libraryDependencies += "org.scalamock" %% "scalamock" % "5.2.0" % Test
-libraryDependencies += "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % Test
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.12" % Test
 libraryDependencies += "com.google.guava" % "guava" % "31.1-jre" % Test
