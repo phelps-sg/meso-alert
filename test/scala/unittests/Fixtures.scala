@@ -9,6 +9,7 @@ import actors.{
   MemPoolWatcherActor,
   Register,
   Registered,
+  SlackSecretsActor,
   Start,
   Started,
   Stop,
@@ -761,6 +762,15 @@ object Fixtures {
         config,
         encryptionExecutionContext
       )
+  }
+
+  trait SlackSecretsActorFixtures {
+    env: HasActorSystem with EncryptionManagerFixtures =>
+    val actorSystem: ActorSystem
+    val slackSecretsActor = actorSystem.actorOf(
+      SlackSecretsActor.props(encryptionManager, encryptionExecutionContext)
+    )
+    val userId = UserId("test-user")
   }
 
   trait EncryptionActorFixtures { env: HasActorSystem =>

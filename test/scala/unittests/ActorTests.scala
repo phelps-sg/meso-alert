@@ -2,22 +2,9 @@ package unittests
 
 import actors.AuthenticationActor.{Auth, TxInputOutput}
 import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
-import actors.MemPoolWatcherActor.{
-  PeerGroupAlreadyStartedException,
-  StartPeerGroup
-}
-import actors.{
-  AuthenticationActor,
-  HookAlreadyRegisteredException,
-  HookAlreadyStartedException,
-  HookNotRegisteredException,
-  HookNotStartedException,
-  Registered,
-  Started,
-  Stopped,
-  TxUpdate,
-  Updated
-}
+import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
+import actors.SlackSecretsActor.{GenerateSecret, Unbind, ValidSecret, VerifySecret}
+import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxUpdate, Updated}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -38,26 +25,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
-import unittests.Fixtures.{
-  ActorGuiceFixtures,
-  ConfigurationFixtures,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  HookActorTestLogic,
-  MemPoolWatcherActorFixtures,
-  MemPoolWatcherFixtures,
-  ProvidesTestBindings,
-  SlackChatActorFixtures,
-  SlackChatHookDaoFixtures,
-  TransactionFixtures,
-  TxPersistenceActorFixtures,
-  TxUpdateFixtures,
-  TxWatchActorFixtures,
-  UserFixtures,
-  WebSocketFixtures,
-  WebhookActorFixtures,
-  WebhookFixtures
-}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseGuiceFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackSecretsActorFixtures, TransactionFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
@@ -693,6 +661,55 @@ class ActorTests
       }
     }
 
+  }
+
+  "SlackSecretsActor" should {
+
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with MemPoolWatcherFixtures
+        with ActorGuiceFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
+        with SlackSecretsActorFixtures
+
+    "create a new secret" in new TestFixtures {
+      (for {
+        secret <- slackSecretsActor ? GenerateSecret(userId)
+      } yield secret).futureValue should matchPattern {
+        case Success(Secret(_)) =>
+      }
+    }
+
+    "verify an existing secret" in new TestFixtures {
+       (for {
+        secret <- (slackSecretsActor ? GenerateSecret(userId))
+        verified <- {
+          secret match {
+            case Success(secret: Secret) =>
+              slackSecretsActor ? VerifySecret(userId, secret)
+          }
+        }
+      } yield verified).futureValue should matchPattern {
+        case Success(ValidSecret(`userId`)) =>
+      }
+    }
+
+    "reject a secret that has been unbound" in new TestFixtures {
+        (for {
+        secret <- (slackSecretsActor ? GenerateSecret(userId))
+        _ <- slackSecretsActor ? Unbind(userId)
+        verified <- {
+          secret match {
+            case Success(secret: Secret) =>
+              slackSecretsActor ? VerifySecret(userId, secret)
+          }
+        }
+      } yield verified).futureValue should matchPattern {
+        case Failure(_) =>
+      }
+    }
   }
 
   override def afterAll(): Unit = {
