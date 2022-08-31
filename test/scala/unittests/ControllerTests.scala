@@ -4,14 +4,7 @@ import actors.EncryptionActor.Encrypted
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import akka.util.Timeout
-import controllers.{
-  Auth0Controller,
-  Auth0ValidateJWTAction,
-  HomeController,
-  SlackAuthController,
-  SlackEventsController,
-  SlackSlashCommandController
-}
+import controllers._
 import dao._
 import org.scalamock.handlers.CallHandler1
 import org.scalatest.BeforeAndAfterAll
@@ -24,42 +17,13 @@ import play.api.http.Status.OK
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{Result, Results}
 import play.api.test.CSRFTokenHelper._
-import play.api.test.Helpers.{
-  GET,
-  POST,
-  call,
-  contentAsJson,
-  contentAsString,
-  status,
-  writeableOf_AnyContentAsEmpty,
-  writeableOf_AnyContentAsFormUrlEncoded
-}
+import play.api.test.Helpers.{GET, POST, call, contentAsJson, contentAsString, status, writeableOf_AnyContentAsEmpty, writeableOf_AnyContentAsFormUrlEncoded}
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{
-  ActorGuiceFixtures,
-  ConfigurationFixtures,
-  DatabaseGuiceFixtures,
-  DatabaseInitializer,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  MemPoolWatcherFixtures,
-  MockMailManagerFixtures,
-  ProvidesTestBindings,
-  SecretsManagerFixtures,
-  SlackChatActorFixtures,
-  SlackChatHookDaoFixtures,
-  SlackEventsControllerFixtures,
-  SlickSlackTeamDaoFixtures,
-  SlickSlashCommandFixtures,
-  SlickSlashCommandHistoryDaoFixtures,
-  TxWatchActorFixtures,
-  UserFixtures,
-  WebSocketFixtures
-}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SecretsManagerFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackEventsControllerFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
