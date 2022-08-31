@@ -14,10 +14,10 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class Auth0Controller @Inject() (
-    val authAction: AuthAction,
-    val slackSecretsManagerService: SlackSecretsManagerService,
-    val controllerComponents: ControllerComponents,
-    protected val config: Configuration
+                                  val authAction: Auth0ValidateJWTAction,
+                                  val slackSecretsManagerService: SlackSecretsManagerService,
+                                  val controllerComponents: ControllerComponents,
+                                  protected val config: Configuration
 )(implicit ec: ExecutionContext)
     extends BaseController {
 

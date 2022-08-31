@@ -9,17 +9,14 @@ import sttp.model.Uri
 import util.JWT
 import util.ConfigLoaders.UriConfigLoader
 
-import java.time.Clock
+import java.time.{Clock, ZoneId}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-// A custom request type to hold our JWT claims, we can pass these on to the
-// handling action
 case class UserRequest[A](jwt: JwtClaim, token: String, request: Request[A])
     extends WrappedRequest[A](request)
 
-// Our custom action implementation
-class AuthAction @Inject() (
+class Auth0ValidateJWTAction @Inject()(
     bodyParser: BodyParsers.Default,
     config: Configuration
 )(implicit ec: ExecutionContext)
@@ -31,10 +28,10 @@ class AuthAction @Inject() (
   // A regex for parsing the Authorization header value
   private val headerTokenRegex = """Bearer (.+?)""".r
 
-  val validateJwt: String => Try[JwtClaim] =
+  protected val validateJwt: String => Try[JwtClaim] =
     JWT.validateJwt(config.get[Uri]("auth0.domain"))(
       config.get[Uri]("auth0.audience")
-    )(Clock.systemDefaultZone())(_)
+    )(Clock.system(ZoneId.of("Etc/UTC")))(_)
 
   // Called when a request is invoked. We should validate the bearer token here
   // and allow the request to proceed if it is valid.
