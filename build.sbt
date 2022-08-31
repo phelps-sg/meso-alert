@@ -54,6 +54,7 @@ libraryDependencies ++= Seq(
   "com.auth0" % "jwks-rsa" % "0.21.1"
 )
 
+// Workaround for https://github.com/jwt-scala/jwt-scala/issues/403
 dependencyOverrides += "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.11.4"
 dependencyOverrides += "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.1"
 
