@@ -138,14 +138,34 @@ If the new configuration involves secret values such as passwords, then the foll
 - [k8/staging/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml)
 - [k8/production/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml)
 
-For the latter, use a command similar to the following from within the production k8 cluster:
+To add new values to sealed secrets, the following must be done:
+1. Edit [k8/web-application.yaml](k8/web-application.yaml) to include: 1. the name and path of the new values under volumeMounts 2. the name 
+and secret names under volumes.
+2. Login to the k8 cluster in either staging or production. Create a new file called `secret.yaml`, and inside enter the values you want to add
+to sealed secrets using the following format:
+~~~yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: name-of-secret
+data:
+  secret-value-1: bXlzdXBlcnNlY3JldAo=
+  secret-value-2: kdmkeAEamAkmdAmoidqmAoqmdlkam==
+~~~
+where the values you will use for each of your secrets will be base64 encoded version of the actual secret values. The command
+~~~bash
+echo -n rawSecret123 | base64
+~~~
+can be used to base64 encode a secret value.
 
+3. After adding the secrets, use the command
 ~~~bash
 cat secret.yaml | kubeseal --controller-namespace default --controller-name sealed-secrets --format yaml > sealed-secret.yaml
 ~~~
+This will output a file named `sealed-secret.yaml` that will contain the encrypted secret values that you used in `secret.yaml`. Copy the contents
+of `sealed-secret.yaml` and append them to [k8/staging/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml) and [k8/production/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml) as needed.
 
-and then edit [k8/staging/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml) with the contents of `sealed-secret.yaml`, taking 
-care to delete the temporary file once the application is successfully deployed.
+4. When the application is deployed with the new secrets, delete the temporary file `sealed-secret.yaml`.
 
 ### Websocket client
 
