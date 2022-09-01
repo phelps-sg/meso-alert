@@ -16,6 +16,10 @@ if [ -d "/etc/secrets" ]; then
   SLACK_CLIENT_ID=$(cat /etc/secrets/slack/client_id)
   SLACK_DEPLOY_URL=$(cat /etc/secrets/slack/deploy_url)
 
+  AUTH0_DOMAIN=$(cat /etc/secrets/auth0/domain)
+  AUTH0_CLIENT_ID=$(cat /etc/secrets/auth0/client_id)
+  AUTH0_AUDIENCE=$(cat /etc/secrets/auth0/audience)
+
   SODIUM_KEY=$(cat /etc/secrets/sodium/key)
 
   POSTGRES_PORT=5432
@@ -54,6 +58,10 @@ slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"
 slack.botToken = "${SLACK_BOT_TOKEN}"
 slack.deployURL = "${SLACK_DEPLOY_URL}"
+
+auth0.domain = "${AUTH0_DOMAIN}"
+auth0.clientId = "${AUTH0_CLIENT_ID}"
+auth0.audience = "${AUTH0_AUDIENCE}"
 
 sodium.secret="${SODIUM_KEY}"
 
