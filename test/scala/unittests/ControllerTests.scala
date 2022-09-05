@@ -18,13 +18,41 @@ import play.api.http.Status.{OK, SERVICE_UNAVAILABLE}
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{Result, Results}
 import play.api.test.CSRFTokenHelper._
-import play.api.test.Helpers.{GET, POST, call, contentAsJson, contentAsString, status, writeableOf_AnyContentAsEmpty, writeableOf_AnyContentAsFormUrlEncoded}
+import play.api.test.Helpers.{
+  GET,
+  POST,
+  call,
+  contentAsJson,
+  contentAsString,
+  status,
+  writeableOf_AnyContentAsEmpty,
+  writeableOf_AnyContentAsFormUrlEncoded
+}
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SecretsManagerFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackEventsControllerFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
+import unittests.Fixtures.{
+  ActorGuiceFixtures,
+  ConfigurationFixtures,
+  DatabaseInitializer,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  MemPoolWatcherFixtures,
+  MockMailManagerFixtures,
+  ProvidesTestBindings,
+  SecretsManagerFixtures,
+  SlackChatActorFixtures,
+  SlackChatHookDaoFixtures,
+  SlackEventsControllerFixtures,
+  SlickSlackTeamDaoFixtures,
+  SlickSlashCommandFixtures,
+  SlickSlashCommandHistoryDaoFixtures,
+  TxWatchActorFixtures,
+  UserFixtures,
+  WebSocketFixtures
+}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -420,7 +448,7 @@ class ControllerTests
         with SlickSlashCommandFixtures {
 
       val dummyUser = "test-user@test-domain.com"
-      val dummySecret = Secret(Array[Byte] (-1, 1))
+      val dummySecret = Secret(Array[Byte](-1, 1))
 
       val dummySlackAuthState: String = s"($dummyUser,$dummySecret)"
 
@@ -436,13 +464,19 @@ class ControllerTests
 
     "reject an invalid auth state" in new TestFixtures {
 
-       (mockSlackSecretsManagerService.verifySecret _)
-         .expects(*, *)
-         .returning(Future.failed(InvalidSecretException(UserId(dummyUser), dummySecret)))
+      (mockSlackSecretsManagerService.verifySecret _)
+        .expects(*, *)
+        .returning(
+          Future.failed(InvalidSecretException(UserId(dummyUser), dummySecret))
+        )
 
-       val result = call(
+      val result = call(
         controller
-          .authRedirect(Some(dummyTemporaryCode), None, Some(dummySlackAuthState)),
+          .authRedirect(
+            Some(dummyTemporaryCode),
+            None,
+            Some(dummySlackAuthState)
+          ),
         FakeRequest(GET, "/")
       )
       val body = contentAsString(result)
