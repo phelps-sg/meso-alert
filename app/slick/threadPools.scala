@@ -15,3 +15,7 @@ class SlackChatExecutionContext @Inject() (system: ActorSystem)
 @Singleton
 class EncryptionExecutionContext @Inject() (system: ActorSystem)
     extends CustomExecutionContext(system, "encryption.dispatcher")
+
+@Singleton
+class SlackClientExecutionContext @Inject() (system: ActorSystem)
+  extends CustomExecutionContext(system, "slackClient.dispatcher")

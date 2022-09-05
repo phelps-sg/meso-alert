@@ -4,13 +4,11 @@ import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import akka.actor.{Actor, Timers}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
-import com.slack.api.methods.AsyncMethodsClient
 import com.slack.api.methods.request.chat.ChatPostMessageRequest
 import com.slack.api.methods.response.chat.ChatPostMessageResponse
 import dao.SlackChatHook
 import play.api.{Configuration, Logging}
-import slack.FutureConverters.BoltFuture
-import slack.SlackClient
+import services.SlackManagerService
 import slick.SlackChatExecutionContext
 
 import scala.annotation.unused
@@ -28,19 +26,17 @@ object TxMessagingActorSlackChat {
 }
 
 class TxMessagingActorSlackChat @Inject() (
+    protected val slackManagerService: SlackManagerService,
     protected val config: Configuration,
     sce: SlackChatExecutionContext,
     val random: Random,
     @Assisted hook: SlackChatHook
 ) extends Actor
     with TxRetryOrDie[ChatPostMessageResponse]
-    with SlackClient
     with Timers
     with UnrecognizedMessageHandlerFatal
     with Logging {
 
-  protected val slackMethods: AsyncMethodsClient =
-    slack.methodsAsync(hook.token)
   implicit val ec: SlackChatExecutionContext = sce
 
   override val maxRetryCount: Int = 3
@@ -59,6 +55,6 @@ class TxMessagingActorSlackChat @Inject() (
       .text(msg)
       .build
     logger.debug(s"Submitting request: $request")
-    slackMethods.chatPostMessage(request).asScalaFuture
+    slackManagerService.chatPostMessage(request)
   }
 }

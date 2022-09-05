@@ -2,10 +2,11 @@ package controllers
 
 import com.slack.api.methods.AsyncMethodsClient
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
+import com.slack.api.methods.response.oauth.OAuthV2AccessResponse
 import dao.{Secret, SlackTeam, SlackTeamDao, UserId}
 import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
 import play.api.{Configuration, Logging, mvc}
-import services.SlackSecretsManagerService
+import services.{SlackManagerService, SlackSecretsManagerService}
 import slack.FutureConverters.BoltFuture
 import slack.{BoltException, SlackClient}
 import util.Encodings.base64Decode
@@ -15,18 +16,57 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class SlackAuthController @Inject() (
     protected val config: Configuration,
-    val slackTeamDao: SlackTeamDao,
-    val slackSecretsManagerService: SlackSecretsManagerService,
+    protected val slackTeamDao: SlackTeamDao,
+    protected val slackSecretsManagerService: SlackSecretsManagerService,
+    protected val slackManagerService: SlackManagerService,
     val controllerComponents: ControllerComponents
 )(implicit val ec: ExecutionContext)
     extends BaseController
     with SlackClient
     with Logging {
 
+  val AuthRegEx = """\((.*),(.*)\)""".r
+
   case class InvalidAuthState(state: Option[String])
       extends Exception(s"Invalid state parameter: $state")
 
-  protected val slackMethods: AsyncMethodsClient = slack.methodsAsync()
+  protected def oauthV2Access(
+      temporaryCode: String
+  ): Future[OAuthV2AccessResponse] = {
+    val slackRequest = OAuthV2AccessRequest.builder
+      .clientId(slackClientId)
+      .clientSecret(slackClientSecret)
+      .code(temporaryCode)
+      .build()
+    slackManagerService.oauthV2Access(slackRequest)
+  }
+
+  protected def verifyState(state: Option[String]) = {
+    state match {
+              case Some(AuthRegEx(uid, secretBase64)) =>
+                slackSecretsManagerService.verifySecret(
+                  UserId(uid),
+                  Secret(base64Decode(secretBase64))
+                ) map {
+                  _.id
+                }
+              case _ =>
+                Future.failed(InvalidAuthState(state))
+            }
+  }
+
+  protected def insertTeam(response: OAuthV2AccessResponse) = {
+      val slackTeam =
+                SlackTeam(
+                  teamId = response.getTeam.getId,
+                  userId = response.getAuthedUser.getId,
+                  botId = response.getBotUserId,
+                  accessToken = response.getAccessToken,
+                  teamName = response.getTeam.getName
+                )
+              logger.debug(s"user = $slackTeam")
+              slackTeamDao.insertOrUpdate(slackTeam)
+  }
 
   def authRedirect(
       temporaryCode: Option[String],
@@ -47,45 +87,12 @@ class SlackAuthController @Inject() (
           Future { ServiceUnavailable(error) }
 
         case None =>
-          val AuthRegEx = """\((.*),(.*)\)""".r
-
-          val slackRequest = OAuthV2AccessRequest.builder
-            .clientId(slackClientId)
-            .clientSecret(slackClientSecret)
-            .code(temporaryCode.get)
-            .build()
 
           val f = for {
-
-            userId <- state match {
-              case Some(AuthRegEx(uid, secretBase64)) =>
-                slackSecretsManagerService.verifySecret(
-                  UserId(uid),
-                  Secret(base64Decode(secretBase64))
-                ) map {
-                  _.id
-                }
-              case _ =>
-                Future.failed(InvalidAuthState(state))
-            }
-
-            response <- slackMethods.oauthV2Access(slackRequest).asScalaFuture
-
+            userId <-  verifyState(state)
+            oAuthResponse <- oauthV2Access(temporaryCode.get)
             _ <- slackSecretsManagerService.unbind(userId)
-
-            n <- {
-              val slackTeam =
-                SlackTeam(
-                  teamId = response.getTeam.getId,
-                  userId = response.getAuthedUser.getId,
-                  botId = response.getBotUserId,
-                  accessToken = response.getAccessToken,
-                  teamName = response.getTeam.getName
-                )
-              logger.debug(s"user = $slackTeam")
-              slackTeamDao.insertOrUpdate(slackTeam)
-            }
-
+            n <- insertTeam(oAuthResponse)
           } yield n
 
           f map { case 1 =>

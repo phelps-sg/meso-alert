@@ -49,6 +49,14 @@ slackChat.dispatcher {
   }
 }
 
+slackClient.dispatcher {
+  executor = "thread-pool-executor"
+  throughput = 1
+  thread-pool-executor {
+    fixed-pool-size = 2
+  }
+}
+
 email.dispatcher {
   executor = "thread-pool-executor"
   throughput = 1

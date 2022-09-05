@@ -18,41 +18,13 @@ import play.api.http.Status.{OK, SERVICE_UNAVAILABLE}
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{Result, Results}
 import play.api.test.CSRFTokenHelper._
-import play.api.test.Helpers.{
-  GET,
-  POST,
-  call,
-  contentAsJson,
-  contentAsString,
-  status,
-  writeableOf_AnyContentAsEmpty,
-  writeableOf_AnyContentAsFormUrlEncoded
-}
+import play.api.test.Helpers.{GET, POST, call, contentAsJson, contentAsString, status, writeableOf_AnyContentAsEmpty, writeableOf_AnyContentAsFormUrlEncoded}
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{
-  ActorGuiceFixtures,
-  ConfigurationFixtures,
-  DatabaseInitializer,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  MemPoolWatcherFixtures,
-  MockMailManagerFixtures,
-  ProvidesTestBindings,
-  SecretsManagerFixtures,
-  SlackChatActorFixtures,
-  SlackChatHookDaoFixtures,
-  SlackEventsControllerFixtures,
-  SlickSlackTeamDaoFixtures,
-  SlickSlashCommandFixtures,
-  SlickSlashCommandHistoryDaoFixtures,
-  TxWatchActorFixtures,
-  UserFixtures,
-  WebSocketFixtures
-}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SecretsManagerFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackEventsControllerFixtures, SlackManagerFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -443,26 +415,29 @@ class ControllerTests
         with ActorGuiceFixtures
         with EncryptionManagerFixtures
         with SecretsManagerFixtures
+        with SlackManagerFixtures
         with SlackChatHookDaoFixtures
         with SlickSlackTeamDaoFixtures
         with SlickSlashCommandFixtures {
 
       val dummyUser = "test-user@test-domain.com"
       val dummySecret = Secret(Array[Byte](-1, 1))
-
       val dummySlackAuthState: String = s"($dummyUser,$dummySecret)"
-
       val dummyTemporaryCode: String = "1"
 
       val controller = new SlackAuthController(
         config,
         slickSlackTeamDao,
         mockSlackSecretsManagerService,
+        mockSlackManagerService,
         Helpers.stubControllerComponents()
       )
     }
 
     "reject an invalid auth state" in new TestFixtures {
+
+      (mockSlackManagerService.oauthV2Access _)
+        .expects(*).anyNumberOfTimes()
 
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)
