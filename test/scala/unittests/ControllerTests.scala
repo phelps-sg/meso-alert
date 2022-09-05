@@ -479,7 +479,6 @@ class ControllerTests
           ),
         FakeRequest(GET, "/")
       )
-      val body = contentAsString(result)
       status(result) mustEqual SERVICE_UNAVAILABLE
     }
 
