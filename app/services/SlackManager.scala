@@ -12,7 +12,7 @@ import slack.FutureConverters.BoltFuture
 import slack.SlackClient
 import slick.SlackClientExecutionContext
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[SlackManager])
 trait SlackManagerService {
@@ -35,7 +35,7 @@ class SlackManager @Inject() (
 
   protected val slackMethods: AsyncMethodsClient = slack.methodsAsync()
 
-  implicit val ec = slackClientExecutionContext
+  implicit val ec: ExecutionContext = slackClientExecutionContext
 
   override def oauthV2Access(
       request: OAuthV2AccessRequest
