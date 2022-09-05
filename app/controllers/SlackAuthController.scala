@@ -90,8 +90,13 @@ class SlackAuthController @Inject() (
 
           f map { case 1 =>
             Ok(views.html.installed())
-          } recover { case BoltException(message) =>
-            ServiceUnavailable(s"Invalid user: $message")
+          } recover {
+            case BoltException(message) =>
+              ServiceUnavailable(s"Invalid user: $message")
+            case ex: Exception =>
+              logger.error(ex.getMessage)
+              ex.printStackTrace()
+              ServiceUnavailable(ex.getMessage)
           }
       }
     }
