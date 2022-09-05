@@ -14,6 +14,15 @@ import slick.EncryptionExecutionContext
 
 import scala.concurrent.Future
 
+/** Generates per-user secrets for use during Slack V2 OAuth2 authorisation when
+  * installing the app to a Slack Workspace in order to prevent forgery attacks
+  * by unauthorised users. The secret can be passed as part of the state
+  * parameter when
+  * [[https://api.slack.com/authentication/oauth-v2#asking asking for scopes]],
+  * which is then passed back to [[controllers.SlackAuthController]] when Slack
+  * redirects the user to the
+  * [[https://api.slack.com/authentication/oauth-v2#exchanging Redirect URL]].
+  */
 @ImplementedBy(classOf[SlackSecretsManager])
 trait SlackSecretsManagerService {
   def unbind(uid: UserId): Future[Unbind]
