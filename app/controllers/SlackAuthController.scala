@@ -47,7 +47,7 @@ class SlackAuthController @Inject() (
           Future { ServiceUnavailable(error) }
 
         case None =>
-          val Auth = """\((.*),(.*)\)""".r
+          val AuthRegEx = """\((.*),(.*)\)""".r
 
           val slackRequest = OAuthV2AccessRequest.builder
             .clientId(slackClientId)
@@ -58,7 +58,7 @@ class SlackAuthController @Inject() (
           val f = for {
 
             userId <- state match {
-              case Some(Auth(uid, secretBase64)) =>
+              case Some(AuthRegEx(uid, secretBase64)) =>
                 slackSecretsManagerService.verifySecret(
                   UserId(uid),
                   Secret(base64Decode(secretBase64))
