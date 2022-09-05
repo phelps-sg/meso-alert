@@ -1,7 +1,7 @@
 package unittests
 
 import actors.EncryptionActor.Encrypted
-import actors.SlackSecretsActor.InvalidSecretException
+import actors.SlackSecretsActor.{InvalidSecretException, Unbind, ValidSecret}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import akka.util.Timeout
@@ -437,7 +437,8 @@ class ControllerTests
     "reject an invalid auth state" in new TestFixtures {
 
       (mockSlackManagerService.oauthV2Access _)
-        .expects(*).anyNumberOfTimes()
+        .expects(*)
+        .anyNumberOfTimes()
 
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)
@@ -452,9 +453,51 @@ class ControllerTests
             None,
             Some(dummySlackAuthState)
           ),
-        FakeRequest(GET, "/")
+        FakeRequest(GET, "")
       )
       status(result) mustEqual SERVICE_UNAVAILABLE
+    }
+
+    "display successful installation page if authorisation succeeds" in new TestFixtures {
+
+      (mockSlackManagerService.oauthV2Access _)
+        .expects(*)
+        .once()
+        .returning(Future {
+          SlackTeam(
+            "test-team-id",
+            "test-user",
+            "test-bot",
+            "test-access-token",
+            "test-team"
+          )
+        })
+
+      (mockSlackSecretsManagerService.verifySecret _)
+        .expects(*, *)
+        .once()
+        .returning(Future { ValidSecret(UserId(dummyUser)) })
+
+      (mockSlackSecretsManagerService.unbind _)
+        .expects(UserId(dummyUser))
+        .once()
+        .returning(Future { Unbind(UserId(dummyUser)) })
+
+      val result = call(
+        controller
+          .authRedirect(
+            Some(dummyTemporaryCode),
+            None,
+            Some(dummySlackAuthState)
+          ),
+        FakeRequest(GET, "")
+      )
+
+      status(result) mustEqual OK
+      val body = contentAsString(result)
+      body should include(
+        "<h1>Success! Welcome to Block Insights.</h1>"
+      )
     }
 
     "redirect to home page when a users cancels installation" in new TestFixtures {
