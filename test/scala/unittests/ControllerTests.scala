@@ -599,7 +599,7 @@ class ControllerTests
     }
 
     "return the correct configuration" in new TestFixtures {
-      val result = call(controller.configuration, FakeRequest(GET, ""))
+      val result = call(controller.configuration(), FakeRequest(GET, ""))
       status(result) mustEqual OK
       val body = contentAsJson(result)
       body("clientId").as[String] mustEqual "test-client-id"
