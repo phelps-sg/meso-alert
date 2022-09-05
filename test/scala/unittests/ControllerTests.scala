@@ -18,43 +18,14 @@ import play.api.http.Status.{OK, SERVICE_UNAVAILABLE}
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{Result, Results}
 import play.api.test.CSRFTokenHelper._
-import play.api.test.Helpers.{
-  GET,
-  POST,
-  call,
-  contentAsJson,
-  contentAsString,
-  status,
-  writeableOf_AnyContentAsEmpty,
-  writeableOf_AnyContentAsFormUrlEncoded
-}
+import play.api.test.Helpers.{GET, POST, call, contentAsJson, contentAsString, status, writeableOf_AnyContentAsEmpty, writeableOf_AnyContentAsFormUrlEncoded}
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slack.BoltException
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{
-  ActorGuiceFixtures,
-  ConfigurationFixtures,
-  DatabaseInitializer,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  MemPoolWatcherFixtures,
-  MockMailManagerFixtures,
-  ProvidesTestBindings,
-  SecretsManagerFixtures,
-  SlackChatActorFixtures,
-  SlackChatHookDaoFixtures,
-  SlackEventsControllerFixtures,
-  SlackManagerFixtures,
-  SlickSlackTeamDaoFixtures,
-  SlickSlashCommandFixtures,
-  SlickSlashCommandHistoryDaoFixtures,
-  TxWatchActorFixtures,
-  UserFixtures,
-  WebSocketFixtures
-}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SecretsManagerFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackEventsControllerFixtures, SlackManagerFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
 import util.Encodings.base64Encode
 
 import scala.concurrent.Future
@@ -197,7 +168,7 @@ class ControllerTests
       afterDbInit {
         for {
           slackTeamEncrypted <- slickSlackTeamDao.toDB(
-            SlackTeam(teamId, "test-user", "test-bot", testToken, "test-team")
+            SlackTeam(slashCommandTeamId, "test-user", "test-bot", testToken, "test-team")
           )
           _ <- db.run(
             Tables.slackTeams += slackTeamEncrypted
@@ -281,7 +252,7 @@ class ControllerTests
             encrypted <- encryptionManager.encrypt(testToken.getBytes)
             _ <- db.run(
               Tables.slackTeams += SlackTeamEncrypted(
-                teamId,
+                slashCommandTeamId,
                 "test-user",
                 "test-bot",
                 encrypted,
@@ -327,7 +298,7 @@ class ControllerTests
           "/crypto-alert",
           "5",
           teamDomain,
-          teamId,
+          slashCommandTeamId,
           channelName,
           userId,
           userName,
@@ -365,7 +336,7 @@ class ControllerTests
           "/crypto-alert",
           "5 ETH",
           teamDomain,
-          teamId,
+          slashCommandTeamId,
           channelName,
           userId,
           userName,
@@ -449,6 +420,7 @@ class ControllerTests
         with SlackManagerFixtures
         with SlackChatHookDaoFixtures
         with SlickSlackTeamDaoFixtures
+        with SlickSlackTeamFixtures
         with SlickSlashCommandFixtures {
 
       val user: String = "test-user@test-domain.com"
@@ -524,15 +496,7 @@ class ControllerTests
       (mockSlackManagerService.oauthV2Access _)
         .expects(*)
         .once()
-        .returning(Future {
-          SlackTeam(
-            "test-team-id",
-            "test-user",
-            "test-bot",
-            "test-access-token",
-            "test-team"
-          )
-        })
+        .returning(Future { slackTeam })
 
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)

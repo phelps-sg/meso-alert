@@ -170,7 +170,7 @@ class DaoTests
               Seq(
                 SlackTeamEncrypted(
                   `teamId`,
-                  `userId`,
+                  `teamUserId`,
                   `botId`,
                   _: Encrypted,
                   `teamName`
@@ -249,7 +249,7 @@ class DaoTests
                   `command`,
                   `text`,
                   `teamDomain`,
-                  `teamId`,
+                  `slashCommandTeamId`,
                   `channelName`,
                   `userId`,
                   `userName`,

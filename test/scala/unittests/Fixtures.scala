@@ -465,12 +465,12 @@ object Fixtures {
   }
 
   trait SlickSlackTeamFixtures {
-    val userId = "testUser"
+    val teamUserId = "testUser"
     val botId = "testBotId"
     val accessToken = "testToken"
     val teamId = "testTeamId"
     val teamName = "testTeam"
-    val slackTeam = SlackTeam(teamId, userId, botId, accessToken, teamName)
+    val slackTeam = SlackTeam(teamId, teamUserId, botId, accessToken, teamName)
     val updatedSlackTeam = slackTeam.copy(teamName = "updated")
   }
 
@@ -479,7 +479,7 @@ object Fixtures {
     val command = "/test"
     val text = ""
     val teamDomain = None
-    val teamId = "5678"
+    val slashCommandTeamId = "5678"
     val channelName = Some("test-channel")
     val userId = Some("91011")
     val userName = Some("test-user")
@@ -492,7 +492,7 @@ object Fixtures {
       command,
       text,
       teamDomain,
-      teamId,
+      slashCommandTeamId,
       channelName,
       userId,
       userName,
@@ -513,7 +513,7 @@ object Fixtures {
         "/crypto-alert",
         "5 BTC",
         teamDomain,
-        teamId,
+        slashCommandTeamId,
         channelName,
         userId,
         userName,
@@ -524,7 +524,7 @@ object Fixtures {
     def fakeRequestValid(command: String, amount: String) =
       FakeRequest(POST, "/").withFormUrlEncodedBody(
         "token" -> testToken,
-        "team_id" -> teamId,
+        "team_id" -> slashCommandTeamId,
         "team_domain" -> "",
         "channel_id" -> channelId,
         "channel_name" -> "testChannel",

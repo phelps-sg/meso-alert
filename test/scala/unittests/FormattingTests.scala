@@ -33,7 +33,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
       val paramMap =
         Map[String, Vector[String]](
           "channel_id" -> Vector(channelId),
-          "team_id" -> Vector(teamId),
+          "team_id" -> Vector(slashCommandTeamId),
           "command" -> Vector(command),
           "text" -> Vector(text)
         )
@@ -45,7 +45,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
                 `command`,
                 `text`,
                 None,
-                `teamId`,
+                `slashCommandTeamId`,
                 None,
                 None,
                 None,
