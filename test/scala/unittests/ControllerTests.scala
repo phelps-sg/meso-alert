@@ -25,6 +25,7 @@ import services.HooksManagerSlackChat
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SecretsManagerFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackEventsControllerFixtures, SlackManagerFixtures, SlickSlackTeamDaoFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
+import util.Encodings.base64Encode
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -420,10 +421,10 @@ class ControllerTests
         with SlickSlackTeamDaoFixtures
         with SlickSlashCommandFixtures {
 
-      val dummyUser = "test-user@test-domain.com"
-      val dummySecret = Secret(Array[Byte](-1, 1))
-      val dummySlackAuthState: String = s"($dummyUser,$dummySecret)"
-      val dummyTemporaryCode: String = "1"
+      val user: String = "test-user@test-domain.com"
+      val slackAuthState: String =
+        s"($user,${base64Encode(slackAuthSecret.data)})"
+      val temporaryCode: String = "1"
 
       val controller = new SlackAuthController(
         config,
@@ -443,15 +444,15 @@ class ControllerTests
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)
         .returning(
-          Future.failed(InvalidSecretException(UserId(dummyUser), dummySecret))
+          Future.failed(InvalidSecretException(UserId(user), slackAuthSecret))
         )
 
       val result = call(
         controller
           .authRedirect(
-            Some(dummyTemporaryCode),
+            Some(temporaryCode),
             None,
-            Some(dummySlackAuthState)
+            Some(slackAuthState)
           ),
         FakeRequest(GET, "")
       )
@@ -476,19 +477,19 @@ class ControllerTests
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)
         .once()
-        .returning(Future { ValidSecret(UserId(dummyUser)) })
+        .returning(Future { ValidSecret(UserId(user)) })
 
       (mockSlackSecretsManagerService.unbind _)
-        .expects(UserId(dummyUser))
+        .expects(UserId(user))
         .once()
-        .returning(Future { Unbind(UserId(dummyUser)) })
+        .returning(Future { Unbind(UserId(user)) })
 
       val result = call(
         controller
           .authRedirect(
-            Some(dummyTemporaryCode),
+            Some(temporaryCode),
             None,
-            Some(dummySlackAuthState)
+            Some(slackAuthState)
           ),
         FakeRequest(GET, "")
       )
@@ -503,7 +504,7 @@ class ControllerTests
     "redirect to home page when a users cancels installation" in new TestFixtures {
       val result = call(
         controller
-          .authRedirect(None, Some("access_denied"), Some(dummySlackAuthState)),
+          .authRedirect(None, Some("access_denied"), Some(slackAuthState)),
         FakeRequest(GET, "?error=access_denied&state=")
       )
       val body = contentAsString(result)
