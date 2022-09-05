@@ -18,14 +18,44 @@ import play.api.http.Status.{OK, SERVICE_UNAVAILABLE}
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{Result, Results}
 import play.api.test.CSRFTokenHelper._
-import play.api.test.Helpers.{GET, POST, call, contentAsJson, contentAsString, status, writeableOf_AnyContentAsEmpty, writeableOf_AnyContentAsFormUrlEncoded}
+import play.api.test.Helpers.{
+  GET,
+  POST,
+  call,
+  contentAsJson,
+  contentAsString,
+  status,
+  writeableOf_AnyContentAsEmpty,
+  writeableOf_AnyContentAsFormUrlEncoded
+}
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slack.BoltException
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SecretsManagerFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackEventsControllerFixtures, SlackManagerFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
+import unittests.Fixtures.{
+  ActorGuiceFixtures,
+  ConfigurationFixtures,
+  DatabaseInitializer,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  MemPoolWatcherFixtures,
+  MockMailManagerFixtures,
+  ProvidesTestBindings,
+  SecretsManagerFixtures,
+  SlackChatActorFixtures,
+  SlackChatHookDaoFixtures,
+  SlackEventsControllerFixtures,
+  SlackManagerFixtures,
+  SlickSlackTeamDaoFixtures,
+  SlickSlackTeamFixtures,
+  SlickSlashCommandFixtures,
+  SlickSlashCommandHistoryDaoFixtures,
+  TxWatchActorFixtures,
+  UserFixtures,
+  WebSocketFixtures
+}
 import util.Encodings.base64Encode
 
 import scala.concurrent.Future
@@ -168,7 +198,13 @@ class ControllerTests
       afterDbInit {
         for {
           slackTeamEncrypted <- slickSlackTeamDao.toDB(
-            SlackTeam(slashCommandTeamId, "test-user", "test-bot", testToken, "test-team")
+            SlackTeam(
+              slashCommandTeamId,
+              "test-user",
+              "test-bot",
+              testToken,
+              "test-team"
+            )
           )
           _ <- db.run(
             Tables.slackTeams += slackTeamEncrypted
@@ -421,7 +457,8 @@ class ControllerTests
         with SlackChatHookDaoFixtures
         with SlickSlackTeamDaoFixtures
         with SlickSlackTeamFixtures
-        with SlickSlashCommandFixtures {
+        with SlickSlashCommandFixtures
+        with DatabaseInitializer {
 
       val user: String = "test-user@test-domain.com"
       val slackAuthState: String =
@@ -478,20 +515,27 @@ class ControllerTests
         .once()
         .returning(Future { Unbind(UserId(user)) })
 
-      val result = call(
-        controller
-          .authRedirect(
-            Some(temporaryCode),
-            None,
-            Some(slackAuthState)
-          ),
-        FakeRequest(GET, "")
-      )
+      afterDbInit {
+        val result = call(
+          controller
+            .authRedirect(
+              Some(temporaryCode),
+              None,
+              Some(slackAuthState)
+            ),
+          FakeRequest(GET, "")
+        )
 
-      status(result) mustEqual SERVICE_UNAVAILABLE
+        status(result) mustEqual SERVICE_UNAVAILABLE
+
+        db.run(
+          Tables.slackTeams.result
+        )
+      }.futureValue should matchPattern { case Seq() =>
+      }
     }
 
-    "display successful installation page if authorisation succeeds" in new TestFixtures {
+    "display successful installation page and record team to database if authorisation succeeds" in new TestFixtures {
 
       (mockSlackManagerService.oauthV2Access _)
         .expects(*)
@@ -508,34 +552,57 @@ class ControllerTests
         .once()
         .returning(Future { Unbind(UserId(user)) })
 
-      val result = call(
-        controller
-          .authRedirect(
-            Some(temporaryCode),
-            None,
-            Some(slackAuthState)
-          ),
-        FakeRequest(GET, "")
-      )
+      afterDbInit {
 
-      status(result) mustEqual OK
-      val body = contentAsString(result)
-      body should include(
-        "<h1>Success! Welcome to Block Insights.</h1>"
-      )
+        val result = call(
+          controller
+            .authRedirect(
+              Some(temporaryCode),
+              None,
+              Some(slackAuthState)
+            ),
+          FakeRequest(GET, "")
+        )
+
+        status(result) mustEqual OK
+        val body = contentAsString(result)
+        body should include(
+          "<h1>Success! Welcome to Block Insights.</h1>"
+        )
+
+        db.run(
+          Tables.slackTeams.result
+        )
+      }.futureValue should matchPattern {
+        case Seq(
+              SlackTeamEncrypted(
+                `teamId`,
+                `teamUserId`,
+                `botId`,
+                Encrypted(_, _),
+                `teamName`
+              )
+            ) =>
+      }
     }
 
     "redirect to home page when a users cancels installation" in new TestFixtures {
-      val result = call(
-        controller
-          .authRedirect(None, Some("access_denied"), Some(slackAuthState)),
-        FakeRequest(GET, "?error=access_denied&state=")
-      )
-      val body = contentAsString(result)
-      status(result) mustEqual OK
-      body should include(
-        "<title>Block Insights - Access free real-time mempool data</title>"
-      )
+      afterDbInit {
+        val result = call(
+          controller
+            .authRedirect(None, Some("access_denied"), Some(slackAuthState)),
+          FakeRequest(GET, "?error=access_denied&state=")
+        )
+        val body = contentAsString(result)
+        status(result) mustEqual OK
+        body should include(
+          "<title>Block Insights - Access free real-time mempool data</title>"
+        )
+        db.run(
+          Tables.slackTeams.result
+        )
+      }.futureValue should matchPattern { case Seq() =>
+      }
     }
   }
 
