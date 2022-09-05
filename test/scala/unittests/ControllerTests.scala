@@ -31,6 +31,7 @@ import play.api.test.Helpers.{
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
+import slack.BoltException
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import unittests.Fixtures.{
@@ -485,6 +486,36 @@ class ControllerTests
           ),
         FakeRequest(GET, "")
       )
+      status(result) mustEqual SERVICE_UNAVAILABLE
+    }
+
+    "display an error if authorisation fails" in new TestFixtures {
+
+      (mockSlackManagerService.oauthV2Access _)
+        .expects(*)
+        .once()
+        .returning(Future.failed(BoltException("access denied")))
+
+      (mockSlackSecretsManagerService.verifySecret _)
+        .expects(*, *)
+        .once()
+        .returning(Future { ValidSecret(UserId(user)) })
+
+      (mockSlackSecretsManagerService.unbind _)
+        .expects(UserId(user))
+        .once()
+        .returning(Future { Unbind(UserId(user)) })
+
+      val result = call(
+        controller
+          .authRedirect(
+            Some(temporaryCode),
+            None,
+            Some(slackAuthState)
+          ),
+        FakeRequest(GET, "")
+      )
+
       status(result) mustEqual SERVICE_UNAVAILABLE
     }
 
