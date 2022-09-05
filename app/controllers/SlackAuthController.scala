@@ -10,6 +10,7 @@ import util.Encodings.base64Decode
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.matching.Regex
 
 class SlackAuthController @Inject() (
     protected val config: Configuration,
@@ -22,7 +23,7 @@ class SlackAuthController @Inject() (
     with SlackClient
     with Logging {
 
-  val AuthRegEx = """\((.*),(.*)\)""".r
+  val AuthRegEx: Regex = """\((.*),(.*)\)""".r
 
   case class InvalidAuthState(state: Option[String])
       extends Exception(s"Invalid state parameter: $state")
