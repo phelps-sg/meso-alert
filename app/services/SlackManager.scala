@@ -6,7 +6,7 @@ import com.slack.api.methods.request.chat.ChatPostMessageRequest
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
 import com.slack.api.methods.response.chat.ChatPostMessageResponse
 import com.slack.api.methods.response.oauth.OAuthV2AccessResponse
-import dao.SlackTeam
+import dao.{SlackTeam, RegisteredUserId}
 import play.api.Configuration
 import slack.FutureConverters.BoltFuture
 import slack.SlackClient
@@ -18,7 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
 trait SlackManagerService {
 
   def oauthV2Access(
-      request: OAuthV2AccessRequest
+      request: OAuthV2AccessRequest, userId: RegisteredUserId
   ): Future[SlackTeam]
 
   def chatPostMessage(
@@ -38,7 +38,7 @@ class SlackManager @Inject() (
   implicit val ec: ExecutionContext = slackClientExecutionContext
 
   override def oauthV2Access(
-      request: OAuthV2AccessRequest
+      request: OAuthV2AccessRequest, userId: RegisteredUserId
   ): Future[SlackTeam] = {
     slackMethods.oauthV2Access(request).asScalaFuture.map {
       response: OAuthV2AccessResponse =>

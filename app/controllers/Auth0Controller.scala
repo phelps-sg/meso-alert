@@ -1,6 +1,6 @@
 package controllers
 
-import dao.{Secret, UserId}
+import dao.{Secret, RegisteredUserId}
 import play.api.Configuration
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}
@@ -47,7 +47,7 @@ class Auth0Controller @Inject() (
       )
 
   case class Auth0Configuration(clientId: String, domain: Uri, audience: Uri)
-  case class Result(userId: UserId, secret: Secret, slackUrl: String)
+  case class Result(userId: RegisteredUserId, secret: Secret, slackUrl: String)
 
   def configuration(): Action[AnyContent] = Action { _ =>
     Ok(Json.toJson(auth0Configuration))
@@ -57,7 +57,7 @@ class Auth0Controller @Inject() (
     uid match {
 
       case Some(identifier) =>
-        val userId = UserId(identifier)
+        val userId = RegisteredUserId(identifier)
         slackSecretsManagerService.generateSecret(userId) map { secret =>
           Ok(Json.toJson(Result(userId, secret, slackUrl)))
         }

@@ -1,7 +1,7 @@
 package controllers
 
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
-import dao.{Secret, SlackTeam, SlackTeamDao, UserId}
+import dao.{Secret, SlackTeam, SlackTeamDao, RegisteredUserId}
 import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
 import play.api.{Configuration, Logging, mvc}
 import services.{SlackManagerService, SlackSecretsManagerService}
@@ -29,21 +29,21 @@ class SlackAuthController @Inject() (
       extends Exception(s"Invalid state parameter: $state")
 
   protected def oauthV2Access(
-      temporaryCode: String
+      temporaryCode: String, userId: RegisteredUserId
   ): Future[SlackTeam] = {
     val slackRequest = OAuthV2AccessRequest.builder
       .clientId(slackClientId)
       .clientSecret(slackClientSecret)
       .code(temporaryCode)
       .build()
-    slackManagerService.oauthV2Access(slackRequest)
+    slackManagerService.oauthV2Access(slackRequest, userId)
   }
 
-  protected def verifyState(state: Option[String]): Future[UserId] = {
+  protected def verifyState(state: Option[String]): Future[RegisteredUserId] = {
     state match {
       case Some(AuthRegEx(uid, secretBase64)) =>
         slackSecretsManagerService.verifySecret(
-          UserId(uid),
+          RegisteredUserId(uid),
           Secret(base64Decode(secretBase64))
         ) map {
           _.id
@@ -76,7 +76,7 @@ class SlackAuthController @Inject() (
         case None =>
           val f = for {
             userId <- verifyState(state)
-            team <- oauthV2Access(temporaryCode.get)
+            team <- oauthV2Access(temporaryCode.get, userId)
             _ <- slackSecretsManagerService.unbind(userId)
             n <- slackTeamDao.insertOrUpdate(team)
           } yield n

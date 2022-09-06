@@ -477,13 +477,13 @@ class ControllerTests
     "reject an invalid auth state" in new TestFixtures {
 
       (mockSlackManagerService.oauthV2Access _)
-        .expects(*)
+        .expects(*, *)
         .anyNumberOfTimes()
 
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)
         .returning(
-          Future.failed(InvalidSecretException(UserId(user), slackAuthSecret))
+          Future.failed(InvalidSecretException(RegisteredUserId(user), slackAuthSecret))
         )
 
       val result = call(
@@ -501,19 +501,19 @@ class ControllerTests
     "display an error if authorisation fails" in new TestFixtures {
 
       (mockSlackManagerService.oauthV2Access _)
-        .expects(*)
+        .expects(*, *)
         .once()
         .returning(Future.failed(BoltException("access denied")))
 
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)
         .once()
-        .returning(Future { ValidSecret(UserId(user)) })
+        .returning(Future { ValidSecret(RegisteredUserId(user)) })
 
       (mockSlackSecretsManagerService.unbind _)
-        .expects(UserId(user))
+        .expects(RegisteredUserId(user))
         .once()
-        .returning(Future { Unbind(UserId(user)) })
+        .returning(Future { Unbind(RegisteredUserId(user)) })
 
       afterDbInit {
         val result = call(
@@ -538,19 +538,19 @@ class ControllerTests
     "display successful installation page and record team to database if authorisation succeeds" in new TestFixtures {
 
       (mockSlackManagerService.oauthV2Access _)
-        .expects(*)
+        .expects(*, *)
         .once()
         .returning(Future { slackTeam })
 
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)
         .once()
-        .returning(Future { ValidSecret(UserId(user)) })
+        .returning(Future { ValidSecret(RegisteredUserId(user)) })
 
       (mockSlackSecretsManagerService.unbind _)
-        .expects(UserId(user))
+        .expects(RegisteredUserId(user))
         .once()
-        .returning(Future { Unbind(UserId(user)) })
+        .returning(Future { Unbind(RegisteredUserId(user)) })
 
       afterDbInit {
 

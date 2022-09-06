@@ -3,7 +3,7 @@ import actors.MessageHandlers.UnRecognizedMessageHandlerWithBounce
 import akka.actor.{ActorRef, Props}
 import akka.persistence._
 import com.google.inject.Inject
-import dao.{Secret, UserId}
+import dao.{Secret, RegisteredUserId}
 import play.api.Logging
 import services.EncryptionManagerService
 import slick.EncryptionExecutionContext
@@ -14,24 +14,24 @@ import scala.util.{Failure, Success}
 
 object SlackSecretsActor {
 
-  case class ValidSecret(id: UserId)
+  case class ValidSecret(id: RegisteredUserId)
 
-  case class InvalidSecretException(id: UserId, secret: Secret)
+  case class InvalidSecretException(id: RegisteredUserId, secret: Secret)
       extends Exception(s"Invalid secret: ${base64Encode(secret.data)} for $id")
 
   sealed trait SlackSecretsCommand
-  case class GenerateSecret(userId: UserId) extends SlackSecretsCommand
-  case class RecordSecret(userId: UserId, secret: Secret, replyTo: ActorRef)
+  case class GenerateSecret(userId: RegisteredUserId) extends SlackSecretsCommand
+  case class RecordSecret(userId: RegisteredUserId, secret: Secret, replyTo: ActorRef)
       extends SlackSecretsCommand
-  case class Unbind(userId: UserId) extends SlackSecretsCommand
-  case class VerifySecret(userId: UserId, secret: Secret)
+  case class Unbind(userId: RegisteredUserId) extends SlackSecretsCommand
+  case class VerifySecret(userId: RegisteredUserId, secret: Secret)
       extends SlackSecretsCommand
 
   sealed trait SlackSecretsEvent
-  case class BindEvent(userId: UserId, secret: Secret) extends SlackSecretsEvent
-  case class UnbindEvent(userId: UserId) extends SlackSecretsEvent
+  case class BindEvent(userId: RegisteredUserId, secret: Secret) extends SlackSecretsEvent
+  case class UnbindEvent(userId: RegisteredUserId) extends SlackSecretsEvent
 
-  case class SecretsState(mapping: Map[UserId, Secret]) {
+  case class SecretsState(mapping: Map[RegisteredUserId, Secret]) {
 
     def updated(evt: SlackSecretsEvent): SecretsState = {
       evt match {

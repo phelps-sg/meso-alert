@@ -9,7 +9,7 @@ import actors.SlackSecretsActor.{
 import akka.actor.ActorRef
 import com.google.inject.name.Named
 import com.google.inject.{ImplementedBy, Inject}
-import dao.{Secret, UserId}
+import dao.{Secret, RegisteredUserId}
 import slick.EncryptionExecutionContext
 
 import scala.concurrent.Future
@@ -25,9 +25,9 @@ import scala.concurrent.Future
   */
 @ImplementedBy(classOf[SlackSecretsManager])
 trait SlackSecretsManagerService {
-  def unbind(uid: UserId): Future[Unbind]
-  def generateSecret(userId: UserId): Future[Secret]
-  def verifySecret(userId: UserId, secret: Secret): Future[ValidSecret]
+  def unbind(uid: RegisteredUserId): Future[Unbind]
+  def generateSecret(userId: RegisteredUserId): Future[Secret]
+  def verifySecret(userId: RegisteredUserId, secret: Secret): Future[ValidSecret]
 }
 
 class SlackSecretsManager @Inject() (
@@ -36,18 +36,18 @@ class SlackSecretsManager @Inject() (
 ) extends SlackSecretsManagerService
     with ActorBackend {
 
-  override def generateSecret(userId: UserId): Future[Secret] = sendAndReceive {
+  override def generateSecret(userId: RegisteredUserId): Future[Secret] = sendAndReceive {
     GenerateSecret(userId)
   }
 
   override def verifySecret(
-      userId: UserId,
-      secret: Secret
+                             userId: RegisteredUserId,
+                             secret: Secret
   ): Future[ValidSecret] = sendAndReceive {
     VerifySecret(userId, secret)
   }
 
-  override def unbind(userId: UserId): Future[Unbind] = sendAndReceive {
+  override def unbind(userId: RegisteredUserId): Future[Unbind] = sendAndReceive {
     Unbind(userId)
   }
 

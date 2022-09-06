@@ -781,8 +781,8 @@ object Fixtures {
     val slackSecretsActor = actorSystem.actorOf(
       SlackSecretsActor.props(encryptionManager, encryptionExecutionContext)
     )
-    val userId = UserId("test-user")
-    val anotherUserId = UserId("test-user-2")
+    val userId = RegisteredUserId("test-user")
+    val anotherUserId = RegisteredUserId("test-user-2")
   }
 
   trait EncryptionActorFixtures { env: HasActorSystem =>

@@ -1,11 +1,14 @@
 package dao
 
 import actors.EncryptionActor.Encrypted
+import slick.lifted.MappedTo
 import util.Encodings.base64Encode
 
 import java.net.URI
 
-case class UserId(id: String) extends AnyVal
+case class RegisteredUserId(id: String) extends AnyVal with MappedTo[String] {
+  override def value: String = id
+}
 
 case class Secret(data: Array[Byte]) {
   override def toString: String = base64Encode(data)
