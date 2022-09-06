@@ -83,7 +83,15 @@ object Tables {
     def registered_user_id = column[RegisteredUserId]("registered_user_id")
 
     override def * =
-      (team_id, user_id, bot_id, nonce, access_token, team_name, registered_user_id) <> (
+      (
+        team_id,
+        user_id,
+        bot_id,
+        nonce,
+        access_token,
+        team_name,
+        registered_user_id
+      ) <> (
         team =>
           SlackTeamEncrypted(
             team._1,

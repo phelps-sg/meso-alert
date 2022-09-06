@@ -471,7 +471,14 @@ object Fixtures {
     val teamId = SlackTeamId("testTeamId")
     val teamName = "testTeam"
     val registeredUserId = RegisteredUserId("testUser@test.domain")
-    val slackTeam = SlackTeam(teamId, teamUserId, botId, accessToken, teamName, registeredUserId)
+    val slackTeam = SlackTeam(
+      teamId,
+      teamUserId,
+      botId,
+      accessToken,
+      teamName,
+      registeredUserId
+    )
     val updatedSlackTeam = slackTeam.copy(teamName = "updated")
   }
 
