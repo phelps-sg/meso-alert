@@ -54,7 +54,8 @@ class SlickSlackTeamDao @Inject() (
         team.userId,
         team.botId,
         decrypted.asString,
-        team.teamName
+        team.teamName,
+        team.registeredUserId
       )
     }
   }
@@ -66,7 +67,8 @@ class SlickSlackTeamDao @Inject() (
         team.userId,
         team.botId,
         accessToken = encrypted,
-        team.teamName
+        team.teamName,
+        team.registeredUserId
       )
     }
   }

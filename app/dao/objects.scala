@@ -72,14 +72,16 @@ case class SlackTeam(
     userId: SlackUserId,
     botId: SlackBotId,
     accessToken: String,
-    teamName: String
+    teamName: String,
+    registeredUserId: RegisteredUserId
 )
 case class SlackTeamEncrypted(
     teamId: SlackTeamId,
     userId: SlackUserId,
     botId: SlackBotId,
     accessToken: Encrypted,
-    teamName: String
+    teamName: String,
+    registeredUserId: RegisteredUserId
 )
 
 case class TransactionUpdate(

@@ -80,16 +80,18 @@ object Tables {
     def nonce = column[String]("nonce")
     def access_token = column[String]("access_token")
     def team_name = column[String]("team_name")
+    def registered_user_id = column[RegisteredUserId]("registered_user_id")
 
     override def * =
-      (team_id, user_id, bot_id, nonce, access_token, team_name) <> (
+      (team_id, user_id, bot_id, nonce, access_token, team_name, registered_user_id) <> (
         team =>
           SlackTeamEncrypted(
             team._1,
             team._2,
             team._3,
             Encrypted(decodeBase64(team._4), decodeBase64(team._5)),
-            team._6
+            team._6,
+            team._7
           ),
         (team: SlackTeamEncrypted) =>
           Some(
@@ -98,7 +100,8 @@ object Tables {
             team.botId,
             encodeBase64(team.accessToken.nonce),
             encodeBase64(team.accessToken.cipherText),
-            team.teamName
+            team.teamName,
+            team.registeredUserId
           )
       )
   }

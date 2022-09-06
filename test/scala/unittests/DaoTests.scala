@@ -173,7 +173,8 @@ class DaoTests
                   `teamUserId`,
                   `botId`,
                   _: Encrypted,
-                  `teamName`
+                  `teamName`,
+                  `registeredUserId`
                 )
               )
             ) =>

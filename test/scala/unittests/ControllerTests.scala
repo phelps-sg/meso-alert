@@ -203,7 +203,8 @@ class ControllerTests
               SlackUserId("test-user"),
               SlackBotId("test-bot"),
               testToken,
-              "test-team"
+              "test-team",
+              RegisteredUserId("test-user@test.domain")
             )
           )
           _ <- db.run(
@@ -292,7 +293,8 @@ class ControllerTests
                 SlackUserId("test-user"),
                 SlackBotId("test-bot"),
                 encrypted,
-                "test-team"
+                "test-team",
+                RegisteredUserId("test-user@test.domain")
               )
             )
             response <- controller.process(command)
@@ -582,7 +584,8 @@ class ControllerTests
                 `teamUserId`,
                 `botId`,
                 Encrypted(_, _),
-                `teamName`
+                `teamName`,
+                `registeredUserId`
               )
             ) =>
       }

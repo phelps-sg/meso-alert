@@ -19,7 +19,7 @@ trait SlackManagerService {
 
   def oauthV2Access(
       request: OAuthV2AccessRequest,
-      userId: RegisteredUserId
+      registeredUserId: RegisteredUserId
   ): Future[SlackTeam]
 
   def chatPostMessage(
@@ -40,7 +40,7 @@ class SlackManager @Inject() (
 
   override def oauthV2Access(
       request: OAuthV2AccessRequest,
-      userId: RegisteredUserId
+      registeredUserId: RegisteredUserId
   ): Future[SlackTeam] = {
     slackMethods.oauthV2Access(request).asScalaFuture.map {
       response: OAuthV2AccessResponse =>
@@ -49,7 +49,8 @@ class SlackManager @Inject() (
           userId = SlackUserId(response.getAuthedUser.getId),
           botId = SlackBotId(response.getBotUserId),
           accessToken = response.getAccessToken,
-          teamName = response.getTeam.getName
+          teamName = response.getTeam.getName,
+          registeredUserId
         )
     }
   }
