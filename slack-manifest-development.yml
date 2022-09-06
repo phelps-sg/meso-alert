@@ -1,0 +1,42 @@
+display_information:
+  name: Block Insights (Development)
+features:
+  bot_user:
+    display_name: block-insights-development
+    always_online: false
+  slash_commands:
+    - command: /crypto-alert
+      url: https://meso-alert-development.eu.ngrok.io/api/slack/slash
+      description: Configures alert for cryptocurrency
+      usage_hint: "[threshold in BTC]"
+      should_escape: false
+    - command: /pause-alerts
+      url: https://meso-alert-development.eu.ngrok.io/api/slack/slash
+      description: Pause active alerts for this channel
+      should_escape: false
+    - command: /resume-alerts
+      url: https://meso-alert-development.eu.ngrok.io/api/slack/slash
+      description: Resume alerts for this channel
+      should_escape: false
+oauth_config:
+  redirect_urls:
+    - https://meso-alert-development.eu.ngrok.io/api/slack/auth
+  scopes:
+    user:
+      - channels:read
+    bot:
+      - commands
+      - chat:write
+      - links:write
+      - channels:read
+settings:
+  event_subscriptions:
+    request_url: https://meso-alert-development.eu.ngrok.io/api/slack/events
+    user_events:
+      - channel_deleted
+    bot_events:
+      - channel_deleted
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false
+
