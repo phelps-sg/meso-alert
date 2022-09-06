@@ -51,7 +51,7 @@ class TxMessagingActorSlackChat @Inject() (
     val request = ChatPostMessageRequest.builder
       .token(hook.token)
       .username("block-insights")
-      .channel(hook.channel.id)
+      .channel(hook.channel.value)
       .text(msg)
       .build
     logger.debug(s"Submitting request: $request")

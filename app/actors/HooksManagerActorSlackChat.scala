@@ -35,5 +35,5 @@ class HooksManagerActorSlackChat @Inject() (
 
   override val hookTypePrefix: String = "slack-chat-hook"
   override def encodeKey(channel: SlackChannelId): String =
-    URLEncoder.encode(channel.id, "UTF-8")
+    URLEncoder.encode(channel.value, "UTF-8")
 }

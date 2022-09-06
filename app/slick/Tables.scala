@@ -121,7 +121,7 @@ object Tables {
         ),
       (h: SlackChatHookEncrypted) => {
         Some(
-          h.channel.id,
+          h.channel.value,
           encodeBase64(h.token.nonce),
           encodeBase64(h.token.cipherText),
           h.threshold,

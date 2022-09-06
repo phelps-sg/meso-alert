@@ -29,14 +29,14 @@ class SlickSlackChatDao @Inject() (
     Seq
   ] =
     (hook: SlackChatHook) =>
-      Tables.slackChatHooks.filter(_.channel_id === hook.channel.id)
+      Tables.slackChatHooks.filter(_.channel_id === hook.channel.value)
   override val lookupKeyQuery: SlackChannelId => Query[
     Tables.SlackChatHooks,
     SlackChatHookEncrypted,
     Seq
   ] =
     (channel: SlackChannelId) =>
-      Tables.slackChatHooks.filter(_.channel_id === channel.id)
+      Tables.slackChatHooks.filter(_.channel_id === channel.value)
 
   override def toKeys(
       results: Future[Seq[String]]

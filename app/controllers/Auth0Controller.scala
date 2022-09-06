@@ -41,7 +41,7 @@ class Auth0Controller @Inject() (
   implicit val resultWrites: Writes[Result] =
     (result: Result) =>
       Json.obj(
-        "userId" -> result.userId.id,
+        "userId" -> result.userId.value,
         "secret" -> base64Encode(result.secret.data),
         "slackUrl" -> result.slackUrl
       )

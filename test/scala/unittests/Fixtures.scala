@@ -524,9 +524,9 @@ object Fixtures {
     def fakeRequestValid(command: String, amount: String) =
       FakeRequest(POST, "/").withFormUrlEncodedBody(
         "token" -> testToken,
-        "team_id" -> slashCommandTeamId.id,
+        "team_id" -> slashCommandTeamId.value,
         "team_domain" -> "",
-        "channel_id" -> channelId.id,
+        "channel_id" -> channelId.value,
         "channel_name" -> "testChannel",
         "user_id" -> "91011",
         "user_name" -> "test-user",

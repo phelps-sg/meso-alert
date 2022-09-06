@@ -6,25 +6,15 @@ import util.Encodings.base64Encode
 
 import java.net.URI
 
-case class RegisteredUserId(id: String) extends AnyVal with MappedTo[String] {
-  override def value: String = id
-}
+case class RegisteredUserId(value: String) extends AnyVal with MappedTo[String]
 
-case class SlackTeamId(id: String) extends AnyVal with MappedTo[String] {
-  override def value: String = id
-}
+case class SlackTeamId(value: String) extends AnyVal with MappedTo[String]
 
-case class SlackChannelId(id: String) extends AnyVal with MappedTo[String] {
-  override def value: String = id
-}
+case class SlackChannelId(value: String) extends AnyVal with MappedTo[String]
 
-case class SlackUserId(id: String) extends AnyVal with MappedTo[String] {
-  override def value: String = id
-}
+case class SlackUserId(value: String) extends AnyVal with MappedTo[String]
 
-case class SlackBotId(id: String) extends AnyVal with MappedTo[String] {
-  override def value: String = id
-}
+case class SlackBotId(value: String) extends AnyVal with MappedTo[String]
 
 case class Secret(data: Array[Byte]) {
   override def toString: String = base64Encode(data)

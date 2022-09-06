@@ -32,8 +32,8 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
     "convert an incoming parameter map to a case class" in new TestFixtures {
       val paramMap =
         Map[String, Vector[String]](
-          "channel_id" -> Vector(channelId.id),
-          "team_id" -> Vector(slashCommandTeamId.id),
+          "channel_id" -> Vector(channelId.value),
+          "team_id" -> Vector(slashCommandTeamId.value),
           "command" -> Vector(command),
           "text" -> Vector(text)
         )
@@ -59,7 +59,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
     "return an error when insufficient parameters are supplied" in new TestFixtures {
       val paramMap = {
         Map[String, Vector[String]](
-          "channel_id" -> Vector(channelId.id)
+          "channel_id" -> Vector(channelId.value)
         )
       }
       SlackSlashCommandController.toCommand(paramMap) should matchPattern {
