@@ -200,8 +200,8 @@ class ControllerTests
           slackTeamEncrypted <- slickSlackTeamDao.toDB(
             SlackTeam(
               slashCommandTeamId,
-              "test-user",
-              "test-bot",
+              SlackUserId("test-user"),
+              SlackBotId("test-bot"),
               testToken,
               "test-team"
             )
@@ -217,7 +217,7 @@ class ControllerTests
               _: Result,
               Seq(
                 SlackChatHookEncrypted(
-                  SlackChannel(`channelId`),
+                  `channelId`,
                   _: Encrypted,
                   500000000,
                   true
@@ -237,7 +237,7 @@ class ControllerTests
         dbContents should matchPattern {
           case Vector(
                 SlackChatHookEncrypted(
-                  SlackChannel(`channelId`),
+                  `channelId`,
                   _: Encrypted,
                   500000000,
                   false
@@ -289,8 +289,8 @@ class ControllerTests
             _ <- db.run(
               Tables.slackTeams += SlackTeamEncrypted(
                 slashCommandTeamId,
-                "test-user",
-                "test-bot",
+                SlackUserId("test-user"),
+                SlackBotId("test-bot"),
                 encrypted,
                 "test-team"
               )
@@ -311,7 +311,7 @@ class ControllerTests
               _: Result,
               Seq(
                 SlackChatHookEncrypted(
-                  SlackChannel(`channelId`),
+                  `channelId`,
                   _: Encrypted,
                   500000000,
                   true
@@ -349,7 +349,7 @@ class ControllerTests
               _: Result,
               Seq(
                 SlackChatHookEncrypted(
-                  SlackChannel(`channelId`),
+                  `channelId`,
                   _: Encrypted,
                   500000000,
                   true
@@ -483,7 +483,9 @@ class ControllerTests
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)
         .returning(
-          Future.failed(InvalidSecretException(RegisteredUserId(user), slackAuthSecret))
+          Future.failed(
+            InvalidSecretException(RegisteredUserId(user), slackAuthSecret)
+          )
         )
 
       val result = call(

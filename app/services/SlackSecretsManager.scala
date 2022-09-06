@@ -27,7 +27,10 @@ import scala.concurrent.Future
 trait SlackSecretsManagerService {
   def unbind(uid: RegisteredUserId): Future[Unbind]
   def generateSecret(userId: RegisteredUserId): Future[Secret]
-  def verifySecret(userId: RegisteredUserId, secret: Secret): Future[ValidSecret]
+  def verifySecret(
+      userId: RegisteredUserId,
+      secret: Secret
+  ): Future[ValidSecret]
 }
 
 class SlackSecretsManager @Inject() (
@@ -36,19 +39,21 @@ class SlackSecretsManager @Inject() (
 ) extends SlackSecretsManagerService
     with ActorBackend {
 
-  override def generateSecret(userId: RegisteredUserId): Future[Secret] = sendAndReceive {
-    GenerateSecret(userId)
-  }
+  override def generateSecret(userId: RegisteredUserId): Future[Secret] =
+    sendAndReceive {
+      GenerateSecret(userId)
+    }
 
   override def verifySecret(
-                             userId: RegisteredUserId,
-                             secret: Secret
+      userId: RegisteredUserId,
+      secret: Secret
   ): Future[ValidSecret] = sendAndReceive {
     VerifySecret(userId, secret)
   }
 
-  override def unbind(userId: RegisteredUserId): Future[Unbind] = sendAndReceive {
-    Unbind(userId)
-  }
+  override def unbind(userId: RegisteredUserId): Future[Unbind] =
+    sendAndReceive {
+      Unbind(userId)
+    }
 
 }

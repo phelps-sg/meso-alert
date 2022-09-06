@@ -44,13 +44,13 @@ object Tables {
   class SlashCommandHistory(tag: Tag)
       extends Table[SlashCommand](tag, "slack_slash_command_history") {
     def id = column[Int]("id", O.PrimaryKey, O.AutoInc)
-    def channel_id = column[String]("channel_id")
+    def channel_id = column[SlackChannelId]("channel_id")
     def command = column[String]("command")
     def text = column[String]("text")
     def team_domain = column[Option[String]]("team_domain")
-    def team_id = column[String]("team_id")
+    def team_id = column[SlackTeamId]("team_id")
     def channel_name = column[Option[String]]("channel_name")
-    def user_id = column[Option[String]]("user_id")
+    def user_id = column[Option[SlackUserId]]("user_id")
     def user_name = column[Option[String]]("user_name")
     def is_enterprise_install = column[Option[Boolean]]("is_enterprise_install")
     def time_stamp = column[Option[java.time.LocalDateTime]]("time_stamp")
@@ -74,9 +74,9 @@ object Tables {
 
   class SlackTeams(tag: Tag)
       extends Table[SlackTeamEncrypted](tag, "slack_teams") {
-    def team_id = column[String]("team_id", O.PrimaryKey)
-    def user_id = column[String]("user_id")
-    def bot_id = column[String]("bot_id")
+    def team_id = column[SlackTeamId]("team_id", O.PrimaryKey)
+    def user_id = column[SlackUserId]("user_id")
+    def bot_id = column[SlackBotId]("bot_id")
     def nonce = column[String]("nonce")
     def access_token = column[String]("access_token")
     def team_name = column[String]("team_name")
@@ -114,7 +114,7 @@ object Tables {
     def * = (channel_id, nonce, token, threshold, is_running) <> (
       h =>
         SlackChatHookEncrypted(
-          SlackChannel(h._1),
+          SlackChannelId(h._1),
           Encrypted(decodeBase64(h._2), decodeBase64(h._3)),
           h._4,
           h._5

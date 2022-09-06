@@ -29,7 +29,8 @@ class SlackAuthController @Inject() (
       extends Exception(s"Invalid state parameter: $state")
 
   protected def oauthV2Access(
-      temporaryCode: String, userId: RegisteredUserId
+      temporaryCode: String,
+      userId: RegisteredUserId
   ): Future[SlackTeam] = {
     val slackRequest = OAuthV2AccessRequest.builder
       .clientId(slackClientId)

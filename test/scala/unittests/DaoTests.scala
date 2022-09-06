@@ -194,7 +194,7 @@ class DaoTests
       afterDbInit {
         for {
           _ <- slickSlackTeamDao.insert(slackTeam)
-          user <- slickSlackTeamDao.find("nonexistent")
+          user <- slickSlackTeamDao.find(SlackTeamId("nonexistent"))
         } yield user
       }.failed.futureValue should matchPattern {
         case _: NoSuchElementException =>

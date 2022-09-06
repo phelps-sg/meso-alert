@@ -1,7 +1,7 @@
 package controllers
 
 import actors.HookNotStartedException
-import dao.SlackChannel
+import dao.SlackChannelId
 import play.api.Logging
 import play.api.libs.json.JsValue
 import play.api.mvc.{Action, BaseController, ControllerComponents}
@@ -29,7 +29,7 @@ class SlackEventsController @Inject() (
           case "channel_deleted" =>
             val channel = (requestBody \ "event" \ "channel").as[String]
             val f = for {
-              stopped <- hooksManager.stop(SlackChannel(channel))
+              stopped <- hooksManager.stop(SlackChannelId(channel))
             } yield stopped
             f.map { result =>
               logger.info(

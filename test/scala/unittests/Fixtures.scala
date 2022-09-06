@@ -112,7 +112,7 @@ object Fixtures {
 
   trait WebhookManagerMock extends HookManagerMock[URI, Webhook]
   trait SlackChatManagerMock
-      extends HookManagerMock[SlackChannel, SlackChatHook]
+      extends HookManagerMock[SlackChannelId, SlackChatHook]
 
   trait MockHookManagerActor[X, Y <: Hook[X]] extends Actor with Logging {
     val mock: HookManagerMock[X, Y]
@@ -153,7 +153,7 @@ object Fixtures {
   }
 
   class MockSlackChatManagerActor(val mock: SlackChatManagerMock)
-      extends MockHookManagerActor[SlackChannel, SlackChatHook]
+      extends MockHookManagerActor[SlackChannelId, SlackChatHook]
 
   trait ProvidesInjector {
     val injector: Injector
@@ -304,7 +304,7 @@ object Fixtures {
       Encrypted(cipherText = Array[Byte] { 2 }, nonce = Array[Byte] { 2 })
     val originalThreshold = 100L
     val newThreshold = 200L
-    val key = SlackChannel("#test")
+    val key = SlackChannelId("#test")
     val hook = SlackChatHook(
       key,
       threshold = originalThreshold,
@@ -390,7 +390,7 @@ object Fixtures {
   }
 
   trait SlackChatDaoTestLogic
-      extends HookDaoTestLogic[SlackChannel, SlackChatHook] {
+      extends HookDaoTestLogic[SlackChannelId, SlackChatHook] {
     env: HasDatabase with HasExecutionContext =>
 
     override val tableQuery = Tables.slackChatHooks
@@ -465,23 +465,23 @@ object Fixtures {
   }
 
   trait SlickSlackTeamFixtures {
-    val teamUserId = "testUser"
-    val botId = "testBotId"
+    val teamUserId = SlackUserId("testUser")
+    val botId = SlackBotId("testBotId")
     val accessToken = "testToken"
-    val teamId = "testTeamId"
+    val teamId = SlackTeamId("testTeamId")
     val teamName = "testTeam"
     val slackTeam = SlackTeam(teamId, teamUserId, botId, accessToken, teamName)
     val updatedSlackTeam = slackTeam.copy(teamName = "updated")
   }
 
   trait SlickSlashCommandFixtures {
-    val channelId = "1234"
+    val channelId = SlackChannelId("1234")
     val command = "/test"
     val text = ""
     val teamDomain = None
-    val slashCommandTeamId = "5678"
+    val slashCommandTeamId = SlackTeamId("5678")
     val channelName = Some("test-channel")
-    val userId = Some("91011")
+    val userId = Some(SlackUserId("91011"))
     val userName = Some("test-user")
     val testToken = "test-token"
     val isEnterpriseInstall = Some(false)
@@ -524,9 +524,9 @@ object Fixtures {
     def fakeRequestValid(command: String, amount: String) =
       FakeRequest(POST, "/").withFormUrlEncodedBody(
         "token" -> testToken,
-        "team_id" -> slashCommandTeamId,
+        "team_id" -> slashCommandTeamId.id,
         "team_domain" -> "",
-        "channel_id" -> channelId,
+        "channel_id" -> channelId.id,
         "channel_name" -> "testChannel",
         "user_id" -> "91011",
         "user_name" -> "test-user",

@@ -2,7 +2,7 @@ package actors
 
 import akka.actor.Props
 import com.google.inject.Inject
-import dao.{SlackChannel, SlackChatHook, SlackChatHookDao}
+import dao.{SlackChannelId, SlackChatHook, SlackChatHookDao}
 import slick.DatabaseExecutionContext
 
 import java.net.URLEncoder
@@ -31,9 +31,9 @@ class HooksManagerActorSlackChat @Inject() (
     val filteringActorFactory: TxFilterActor.Factory,
     val dao: SlackChatHookDao,
     val databaseExecutionContext: DatabaseExecutionContext
-) extends HooksManagerActor[SlackChannel, SlackChatHook] {
+) extends HooksManagerActor[SlackChannelId, SlackChatHook] {
 
   override val hookTypePrefix: String = "slack-chat-hook"
-  override def encodeKey(channel: SlackChannel): String =
+  override def encodeKey(channel: SlackChannelId): String =
     URLEncoder.encode(channel.id, "UTF-8")
 }

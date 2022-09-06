@@ -20,15 +20,20 @@ object SlackSecretsActor {
       extends Exception(s"Invalid secret: ${base64Encode(secret.data)} for $id")
 
   sealed trait SlackSecretsCommand
-  case class GenerateSecret(userId: RegisteredUserId) extends SlackSecretsCommand
-  case class RecordSecret(userId: RegisteredUserId, secret: Secret, replyTo: ActorRef)
+  case class GenerateSecret(userId: RegisteredUserId)
       extends SlackSecretsCommand
+  case class RecordSecret(
+      userId: RegisteredUserId,
+      secret: Secret,
+      replyTo: ActorRef
+  ) extends SlackSecretsCommand
   case class Unbind(userId: RegisteredUserId) extends SlackSecretsCommand
   case class VerifySecret(userId: RegisteredUserId, secret: Secret)
       extends SlackSecretsCommand
 
   sealed trait SlackSecretsEvent
-  case class BindEvent(userId: RegisteredUserId, secret: Secret) extends SlackSecretsEvent
+  case class BindEvent(userId: RegisteredUserId, secret: Secret)
+      extends SlackSecretsEvent
   case class UnbindEvent(userId: RegisteredUserId) extends SlackSecretsEvent
 
   case class SecretsState(mapping: Map[RegisteredUserId, Secret]) {

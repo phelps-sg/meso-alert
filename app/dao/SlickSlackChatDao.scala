@@ -17,7 +17,7 @@ class SlickSlackChatDao @Inject() (
     val encryptionManager: EncryptionManagerService
 )(implicit val ec: ExecutionContext)
     extends SlackChatHookDao
-    with SlickHookDao[SlackChannel, SlackChatHook, SlackChatHookEncrypted]
+    with SlickHookDao[SlackChannelId, SlackChatHook, SlackChatHookEncrypted]
     with FutureInitialisingComponent {
 
   initialise()
@@ -30,27 +30,27 @@ class SlickSlackChatDao @Inject() (
   ] =
     (hook: SlackChatHook) =>
       Tables.slackChatHooks.filter(_.channel_id === hook.channel.id)
-  override val lookupKeyQuery: SlackChannel => Query[
+  override val lookupKeyQuery: SlackChannelId => Query[
     Tables.SlackChatHooks,
     SlackChatHookEncrypted,
     Seq
   ] =
-    (channel: SlackChannel) =>
+    (channel: SlackChannelId) =>
       Tables.slackChatHooks.filter(_.channel_id === channel.id)
 
   override def toKeys(
       results: Future[Seq[String]]
-  ): Future[Seq[SlackChannel]] = {
+  ): Future[Seq[SlackChannelId]] = {
     results map {
-      _.map(SlackChannel)
+      _.map(SlackChannelId)
     }
   }
 
-  def allKeys(): Future[Seq[SlackChannel]] = {
+  def allKeys(): Future[Seq[SlackChannelId]] = {
     runKeyQuery(for (hook <- Tables.slackChatHooks) yield hook.channel_id)
   }
 
-  override def allRunningKeys(): Future[Seq[_ <: SlackChannel]] = {
+  override def allRunningKeys(): Future[Seq[_ <: SlackChannelId]] = {
     runKeyQuery(
       for (hook <- Tables.slackChatHooks if hook.is_running)
         yield hook.channel_id

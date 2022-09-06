@@ -479,7 +479,7 @@ class ActorTests
         with SlackChatHookDaoFixtures
         with SlackChatActorFixtures
         with HookActorTestLogic[
-          SlackChannel,
+          SlackChannelId,
           SlackChatHook,
           SlackChatHookEncrypted
         ] {
