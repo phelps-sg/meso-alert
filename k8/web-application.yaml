@@ -60,6 +60,6 @@ spec:
             secretName: meso-alert-email-secret
         - name: auth0-secret
           secret:
-          secretName: meso-alert-auth0
+            secretName: meso-alert-auth0
       imagePullSecrets:
         - name: regcred
