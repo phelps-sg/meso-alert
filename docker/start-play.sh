@@ -65,6 +65,8 @@ auth0.audience = "${AUTH0_AUDIENCE}"
 
 sodium.secret="${SODIUM_KEY}"
 
+akka.actor.allow-java-serialization = off
+
 meso-alert.db = {
   connectionPool = "HikariCP" //use HikariCP for our connection pool
   dataSourceClass = "org.postgresql.ds.PGSimpleDataSource"
