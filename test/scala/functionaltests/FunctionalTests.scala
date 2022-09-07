@@ -136,10 +136,19 @@ class FunctionalTests
     webDriver.findElement(locator).click()
   }
 
+  def acceptBlockInsightsCookies(): Unit = {
+    val cookies = find("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")
+    cookies match {
+      case Some(_) => clickOn(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"))
+      case None    =>
+    }
+  }
+
   def explicitWait(): Option[Element] = find(xpath("//wait"))
 
   "The home page" should "render" in {
     go to stagingURL
+    acceptBlockInsightsCookies()
     pageTitle should be("Block Insights - Access free real-time mempool data")
   }
 
@@ -164,7 +173,7 @@ class FunctionalTests
     textField("username").value = "wrong@email.com"
     pwdField("password").value = "wrongPassword"
     click on xpath(
-      "/html/body/div/main/section/div/div[2]/div/form/div[2]/button"
+      "/html/body/div/main/section/div/div/div/form/div[2]/button"
     )
     explicitWait()
     assert(find(className("ulp-input-error-message")).isDefined)
@@ -177,7 +186,7 @@ class FunctionalTests
     textField("username").value = slackEmail
     pwdField("password").value = slackPassword
     click on xpath(
-      "/html/body/div/main/section/div/div[2]/div/form/div[2]/button"
+      "/html/body/div/main/section/div/div/div/form/div[2]/button"
     )
     explicitWait()
     assert(find("dropdownMenuButton").isDefined)
