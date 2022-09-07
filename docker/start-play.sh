@@ -67,6 +67,8 @@ sodium.secret="${SODIUM_KEY}"
 
 akka.actor.allow-java-serialization = off
 
+akka.actor.allow-java-serialization = off
+
 akka {
   actor {
 
@@ -77,7 +79,7 @@ akka {
 
     # which interfaces / traits / classes should be handled by which serializer
     serialization-bindings {
-      "scalapb.GeneratedMessage" = proto
+      "actors.SlackSecretsActor$SlackSecretsEvent" = proto
     }
   }
 }
