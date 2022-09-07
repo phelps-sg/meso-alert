@@ -19,6 +19,23 @@ slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"
 slack.deployURL = "${SLACK_DEPLOY_URL}"
 
+akka.actor.allow-java-serialization = off
+
+akka {
+  actor {
+
+    # which serializers are available under which key
+    serializers {
+      proto = "akka.remote.serialization.ProtobufSerializer"
+    }
+
+    # which interfaces / traits / classes should be handled by which serializer
+    serialization-bindings {
+      "scalapb.GeneratedMessage" = proto
+    }
+  }
+}
+
 meso-alert.db = {
   connectionPool = "HikariCP" //use HikariCP for our connection pool
   dataSourceClass = "org.postgresql.ds.PGSimpleDataSource"
