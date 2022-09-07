@@ -73,7 +73,7 @@ class SlackSecretsActor @Inject() (
   override def persistenceId = "slack-secrets-actor-singleton"
 
   val slackSecretSize: Int = 64
-  val snapShotInterval: Int = 1000
+  val snapShotInterval: Int = 1
 
   var state: SecretsState = SecretsState(Map())
 
