@@ -67,6 +67,21 @@ sodium.secret="${SODIUM_KEY}"
 
 akka.actor.allow-java-serialization = off
 
+akka {
+  actor {
+
+    # which serializers are available under which key
+    serializers {
+      proto = "akka.remote.serialization.ProtobufSerializer"
+    }
+
+    # which interfaces / traits / classes should be handled by which serializer
+    serialization-bindings {
+      "scalapb.GeneratedMessage" = proto
+    }
+  }
+}
+
 meso-alert.db = {
   connectionPool = "HikariCP" //use HikariCP for our connection pool
   dataSourceClass = "org.postgresql.ds.PGSimpleDataSource"
