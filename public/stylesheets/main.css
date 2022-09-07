@@ -1,0 +1,12 @@
+.hidden {
+    display: none;
+}
+
+#qsLoginBtn {
+    text-decoration: none;
+    color: rgb(53,64,90);
+}
+
+#qsLoginBtn:hover {
+    text-decoration: none;
+}

@@ -14,5 +14,7 @@ export EMAIL_HOST='${10}'
 export EMAIL_HOST_PASSWORD='${11}'
 export EMAIL_DESTINATION='${12}'
 export SLACK_DEPLOY_URL='${13}'
-
+export AUTH0_CLIENT_ID='${14}'
+export AUTH0_DOMAIN='${15}'
+export AUTH0_AUDIENCE='${16}'
 EOF

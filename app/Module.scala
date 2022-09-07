@@ -4,6 +4,7 @@ import actors.{
   HooksManagerActorSlackChat,
   HooksManagerActorWeb,
   MemPoolWatcherActor,
+  SlackSecretsActor,
   TxFilterActor,
   TxMessagingActorSlackChat,
   TxMessagingActorWeb,
@@ -36,6 +37,7 @@ class Module extends AbstractModule with AkkaGuiceSupport {
     bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")
     bindActor(classOf[EncryptionActor], "encryption-actor")
     bindActor(classOf[TxPersistenceActor], "tx-persistence-actor")
+    bindActor(classOf[SlackSecretsActor], "slack-secrets-actor")
 
     bindActorFactory(
       classOf[TxMessagingActorWeb],

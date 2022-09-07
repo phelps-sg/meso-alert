@@ -2,6 +2,7 @@ package actors
 
 import actors.MessageHandlers.UnRecognizedMessageHandlerWithBounce
 import akka.actor.{Actor, Props}
+import dao.Secret
 import org.abstractj.kalium.NaCl
 import org.abstractj.kalium.crypto.{Random, SecretBox}
 import play.api.Logging
@@ -11,8 +12,13 @@ import scala.util.{Failure, Success}
 object EncryptionActor {
 
   case class Init(secretKey: Array[Byte])
-  case class Encrypt(plainText: Array[Byte])
+
+  sealed trait EncryptionCommand
+  case class GenerateSecret(numBytes: Int) extends EncryptionCommand
+  case class Encrypt(plainText: Array[Byte]) extends EncryptionCommand
   case class Encrypted(nonce: Array[Byte], cipherText: Array[Byte])
+      extends EncryptionCommand
+
   case class Decrypted(plainText: Array[Byte]) {
     def asString: String = plainText.map(_.toChar).mkString
   }
@@ -53,16 +59,23 @@ class EncryptionActor
   }
 
   def initialised(box: SecretBox, rng: Random): Receive = {
+    case cmd: EncryptionCommand =>
+      cmd match {
 
-    case Encrypt(plainText: Array[Byte]) =>
-      val nonce = rng.randomBytes(
-        NaCl.Sodium.CRYPTO_SECRETBOX_XSALSA20POLY1305_NONCEBYTES
-      )
-      val cipherText = box.encrypt(nonce, plainText)
-      sender() ! Success(Encrypted(nonce, cipherText))
+        case Encrypt(plainText: Array[Byte]) =>
+          val nonce = rng.randomBytes(
+            NaCl.Sodium.CRYPTO_SECRETBOX_XSALSA20POLY1305_NONCEBYTES
+          )
+          val cipherText = box.encrypt(nonce, plainText)
+          sender() ! Success(Encrypted(nonce, cipherText))
 
-    case Encrypted(nonce, cipherText) =>
-      sender() ! Success(Decrypted(box.decrypt(nonce, cipherText)))
+        case Encrypted(nonce, cipherText) =>
+          sender() ! Success(Decrypted(box.decrypt(nonce, cipherText)))
+
+        case GenerateSecret(n) =>
+          sender() ! Success(Secret(rng.randomBytes(n)))
+
+      }
 
     case message =>
       unrecognizedMessage(message)

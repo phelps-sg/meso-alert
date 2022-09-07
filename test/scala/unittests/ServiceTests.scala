@@ -19,6 +19,7 @@ import slick.dbio.DBIO
 import unittests.Fixtures.{
   ActorGuiceFixtures,
   ConfigurationFixtures,
+  DatabaseGuiceFixtures,
   EncryptionActorFixtures,
   EncryptionManagerFixtures,
   MemPoolWatcherFixtures,
@@ -63,6 +64,7 @@ class ServiceTests
         extends FixtureBindings
         with ConfigurationFixtures
         with EncryptionActorFixtures
+        with DatabaseGuiceFixtures
         with EncryptionManagerFixtures
 
     "decrypt ciphertext to the correct plain text" in new TestFixtures {

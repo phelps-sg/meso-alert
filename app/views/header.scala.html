@@ -3,11 +3,24 @@
         <a href="/" class="nav-brand w-nav-brand">
             <img src="@routes.Assets.versioned("images/5d49cc30faeb2d9d4b2e9f83_Logo.svg")" alt="Block Logo"/>
         </a>
+
         <nav role="navigation" class="nav-links w-nav-menu">
-            <div class="info-links">
-                <a href="/#about" class="nav-link w-nav-link">About</a>
-                <a href="/#features" class="nav-link w-nav-link">Features</a>
-                <a href="/feedback" class="nav-link w-nav-link">Feedback</a>
+            <div class="info-links w-100">
+                <a href="/#about" class="nav-link w-nav-link mx-0">About</a>
+                <a href="/#features" class="nav-link w-nav-link mx-0">Features</a>
+                <a href="/feedback" class="nav-link w-nav-link mx-0">Feedback</a>
+                <button id="qsLoginBtn" class="ml-auto bg-dark text-light rounded auth-invisible px-3 py-2" onclick="login()">
+                  Log in
+                </button>
+
+                <button class= "bg-white dropdown-toggle auth-visible hidden ml-auto" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-user"></i>
+                </button>
+
+                <div class="dropdown-menu text-center" aria-labelledby="dropdownMenuButton">
+                    <h2 class="dropdown-header" id="profile-email"></h2>
+                    <button class="btn btn-dark btn-sm ml-auto mr-auto mt-2" id="qsLogoutBtn" onclick="logout()"> Log out </button>
+                </div>
             </div>
         </nav>
         <div class="menu-button w-nav-button">

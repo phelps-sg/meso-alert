@@ -55,6 +55,9 @@ EMAIL_HOST='<source address>'
 EMAIL_HOST_PASSWORD='<changeMe>'
 EMAIL_DESTINATION='feedback@symbiotica.ai'
 SLACK_DEPLOY_URL='<copy from Slack / Manage Distribution / Sharable URL>'
+AUTH0_DOMAIN='<copy from auth0 domain>'
+AUTH0_CLIENT_ID='<copy from auth0 client id>'
+AUTH0_AUDIENCE='<copy from auth0 API>'
 EOF
 ~~~
 

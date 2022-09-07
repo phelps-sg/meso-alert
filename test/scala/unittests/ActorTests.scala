@@ -6,6 +6,12 @@ import actors.MemPoolWatcherActor.{
   PeerGroupAlreadyStartedException,
   StartPeerGroup
 }
+import actors.SlackSecretsActor.{
+  GenerateSecret,
+  Unbind,
+  ValidSecret,
+  VerifySecret
+}
 import actors.{
   AuthenticationActor,
   HookAlreadyRegisteredException,
@@ -49,6 +55,7 @@ import unittests.Fixtures.{
   ProvidesTestBindings,
   SlackChatActorFixtures,
   SlackChatHookDaoFixtures,
+  SlackSecretsActorFixtures,
   TransactionFixtures,
   TxPersistenceActorFixtures,
   TxUpdateFixtures,
@@ -472,7 +479,7 @@ class ActorTests
         with SlackChatHookDaoFixtures
         with SlackChatActorFixtures
         with HookActorTestLogic[
-          SlackChannel,
+          SlackChannelId,
           SlackChatHook,
           SlackChatHookEncrypted
         ] {
@@ -693,6 +700,64 @@ class ActorTests
       }
     }
 
+  }
+
+  "SlackSecretsActor" should {
+
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with MemPoolWatcherFixtures
+        with ActorGuiceFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
+        with SlackSecretsActorFixtures
+
+    "create a new secret" in new TestFixtures {
+      (for {
+        secret <- slackSecretsActor ? GenerateSecret(userId)
+      } yield secret).futureValue should matchPattern {
+        case Success(Secret(_)) =>
+      }
+    }
+
+    "create unique secrets for different users" in new TestFixtures {
+      (for {
+        secret1 <- slackSecretsActor ? GenerateSecret(userId)
+        secret2 <- slackSecretsActor ? GenerateSecret(anotherUserId)
+      } yield (secret1, secret2)).futureValue should matchPattern {
+        case (Success(Secret(s1)), Success(Secret(s2)))
+            if !(s1 sameElements s2) =>
+      }
+    }
+
+    "verify an existing secret" in new TestFixtures {
+      (for {
+        secret <- (slackSecretsActor ? GenerateSecret(userId))
+        verified <- {
+          secret match {
+            case Success(secret: Secret) =>
+              slackSecretsActor ? VerifySecret(userId, secret)
+          }
+        }
+      } yield verified).futureValue should matchPattern {
+        case Success(ValidSecret(`userId`)) =>
+      }
+    }
+
+    "reject a secret that has been unbound" in new TestFixtures {
+      (for {
+        secret <- (slackSecretsActor ? GenerateSecret(userId))
+        _ <- slackSecretsActor ? Unbind(userId)
+        verified <- {
+          secret match {
+            case Success(secret: Secret) =>
+              slackSecretsActor ? VerifySecret(userId, secret)
+          }
+        }
+      } yield verified).futureValue should matchPattern { case Failure(_) =>
+      }
+    }
   }
 
   override def afterAll(): Unit = {

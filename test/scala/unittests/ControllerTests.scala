@@ -1,15 +1,11 @@
 package unittests
 
 import actors.EncryptionActor.Encrypted
+import actors.SlackSecretsActor.{InvalidSecretException, Unbind, ValidSecret}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestKit
 import akka.util.Timeout
-import controllers.{
-  HomeController,
-  SlackAuthController,
-  SlackEventsController,
-  SlackSlashCommandController
-}
+import controllers._
 import dao._
 import org.scalamock.handlers.CallHandler1
 import org.scalatest.BeforeAndAfterAll
@@ -18,7 +14,7 @@ import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
-import play.api.http.Status.OK
+import play.api.http.Status.{OK, SERVICE_UNAVAILABLE}
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{Result, Results}
 import play.api.test.CSRFTokenHelper._
@@ -26,6 +22,7 @@ import play.api.test.Helpers.{
   GET,
   POST,
   call,
+  contentAsJson,
   contentAsString,
   status,
   writeableOf_AnyContentAsEmpty,
@@ -34,6 +31,7 @@ import play.api.test.Helpers.{
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
+import slack.BoltException
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import unittests.Fixtures.{
@@ -45,16 +43,20 @@ import unittests.Fixtures.{
   MemPoolWatcherFixtures,
   MockMailManagerFixtures,
   ProvidesTestBindings,
+  SecretsManagerFixtures,
   SlackChatActorFixtures,
   SlackChatHookDaoFixtures,
   SlackEventsControllerFixtures,
+  SlackManagerFixtures,
   SlickSlackTeamDaoFixtures,
+  SlickSlackTeamFixtures,
   SlickSlashCommandFixtures,
   SlickSlashCommandHistoryDaoFixtures,
   TxWatchActorFixtures,
   UserFixtures,
   WebSocketFixtures
 }
+import util.Encodings.base64Encode
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -163,10 +165,10 @@ class ControllerTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
-        with EncryptionActorFixtures
-        with EncryptionManagerFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
         with SlackChatHookDaoFixtures
         with SlackChatActorFixtures
         with SlickSlashCommandHistoryDaoFixtures
@@ -196,7 +198,14 @@ class ControllerTests
       afterDbInit {
         for {
           slackTeamEncrypted <- slickSlackTeamDao.toDB(
-            SlackTeam(teamId, "test-user", "test-bot", testToken, "test-team")
+            SlackTeam(
+              slashCommandTeamId,
+              SlackUserId("test-user"),
+              SlackBotId("test-bot"),
+              testToken,
+              "test-team",
+              RegisteredUserId("test-user@test.domain")
+            )
           )
           _ <- db.run(
             Tables.slackTeams += slackTeamEncrypted
@@ -209,7 +218,7 @@ class ControllerTests
               _: Result,
               Seq(
                 SlackChatHookEncrypted(
-                  SlackChannel(`channelId`),
+                  `channelId`,
                   _: Encrypted,
                   500000000,
                   true
@@ -229,7 +238,7 @@ class ControllerTests
         dbContents should matchPattern {
           case Vector(
                 SlackChatHookEncrypted(
-                  SlackChannel(`channelId`),
+                  `channelId`,
                   _: Encrypted,
                   500000000,
                   false
@@ -245,10 +254,10 @@ class ControllerTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
-        with EncryptionActorFixtures
-        with EncryptionManagerFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
+        with EncryptionActorFixtures
+        with EncryptionManagerFixtures
         with SlackChatHookDaoFixtures
         with SlickSlashCommandHistoryDaoFixtures
         with SlickSlackTeamDaoFixtures
@@ -280,11 +289,12 @@ class ControllerTests
             encrypted <- encryptionManager.encrypt(testToken.getBytes)
             _ <- db.run(
               Tables.slackTeams += SlackTeamEncrypted(
-                teamId,
-                "test-user",
-                "test-bot",
+                slashCommandTeamId,
+                SlackUserId("test-user"),
+                SlackBotId("test-bot"),
                 encrypted,
-                "test-team"
+                "test-team",
+                RegisteredUserId("test-user@test.domain")
               )
             )
             response <- controller.process(command)
@@ -303,7 +313,7 @@ class ControllerTests
               _: Result,
               Seq(
                 SlackChatHookEncrypted(
-                  SlackChannel(`channelId`),
+                  `channelId`,
                   _: Encrypted,
                   500000000,
                   true
@@ -326,7 +336,7 @@ class ControllerTests
           "/crypto-alert",
           "5",
           teamDomain,
-          teamId,
+          slashCommandTeamId,
           channelName,
           userId,
           userName,
@@ -341,7 +351,7 @@ class ControllerTests
               _: Result,
               Seq(
                 SlackChatHookEncrypted(
-                  SlackChannel(`channelId`),
+                  `channelId`,
                   _: Encrypted,
                   500000000,
                   true
@@ -364,7 +374,7 @@ class ControllerTests
           "/crypto-alert",
           "5 ETH",
           teamDomain,
-          teamId,
+          slashCommandTeamId,
           channelName,
           userId,
           userName,
@@ -441,30 +451,196 @@ class ControllerTests
         extends FixtureBindings
         with ConfigurationFixtures
         with EncryptionActorFixtures
-        with EncryptionManagerFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
+        with EncryptionManagerFixtures
+        with SecretsManagerFixtures
+        with SlackManagerFixtures
         with SlackChatHookDaoFixtures
         with SlickSlackTeamDaoFixtures
-        with SlickSlashCommandFixtures {
+        with SlickSlackTeamFixtures
+        with SlickSlashCommandFixtures
+        with DatabaseInitializer {
+
+      val user: String = "test-user@test-domain.com"
+      val slackAuthState: String =
+        s"($user,${base64Encode(slackAuthSecret.data)})"
+      val temporaryCode: String = "1"
 
       val controller = new SlackAuthController(
         config,
         slickSlackTeamDao,
+        mockSlackSecretsManagerService,
+        mockSlackManagerService,
         Helpers.stubControllerComponents()
       )
     }
 
-    "redirect to home page when a users cancels installation" in new TestFixtures {
+    "reject an invalid auth state" in new TestFixtures {
+
+      (mockSlackManagerService.oauthV2Access _)
+        .expects(*, *)
+        .anyNumberOfTimes()
+
+      (mockSlackSecretsManagerService.verifySecret _)
+        .expects(*, *)
+        .returning(
+          Future.failed(
+            InvalidSecretException(RegisteredUserId(user), slackAuthSecret)
+          )
+        )
+
       val result = call(
-        controller.authRedirect(None, Some("access_denied")),
-        FakeRequest(GET, "?error=access_denied&state=")
+        controller
+          .authRedirect(
+            Some(temporaryCode),
+            None,
+            Some(slackAuthState)
+          ),
+        FakeRequest(GET, "")
       )
-      val body = contentAsString(result)
+      status(result) mustEqual SERVICE_UNAVAILABLE
+    }
+
+    "display an error if authorisation fails" in new TestFixtures {
+
+      (mockSlackManagerService.oauthV2Access _)
+        .expects(*, *)
+        .once()
+        .returning(Future.failed(BoltException("access denied")))
+
+      (mockSlackSecretsManagerService.verifySecret _)
+        .expects(*, *)
+        .once()
+        .returning(Future { ValidSecret(RegisteredUserId(user)) })
+
+      (mockSlackSecretsManagerService.unbind _)
+        .expects(RegisteredUserId(user))
+        .once()
+        .returning(Future { Unbind(RegisteredUserId(user)) })
+
+      afterDbInit {
+        val result = call(
+          controller
+            .authRedirect(
+              Some(temporaryCode),
+              None,
+              Some(slackAuthState)
+            ),
+          FakeRequest(GET, "")
+        )
+
+        status(result) mustEqual SERVICE_UNAVAILABLE
+
+        db.run(
+          Tables.slackTeams.result
+        )
+      }.futureValue should matchPattern { case Seq() =>
+      }
+    }
+
+    "display successful installation page and record team to database if authorisation succeeds" in new TestFixtures {
+
+      (mockSlackManagerService.oauthV2Access _)
+        .expects(*, *)
+        .once()
+        .returning(Future { slackTeam })
+
+      (mockSlackSecretsManagerService.verifySecret _)
+        .expects(*, *)
+        .once()
+        .returning(Future { ValidSecret(RegisteredUserId(user)) })
+
+      (mockSlackSecretsManagerService.unbind _)
+        .expects(RegisteredUserId(user))
+        .once()
+        .returning(Future { Unbind(RegisteredUserId(user)) })
+
+      afterDbInit {
+
+        val result = call(
+          controller
+            .authRedirect(
+              Some(temporaryCode),
+              None,
+              Some(slackAuthState)
+            ),
+          FakeRequest(GET, "")
+        )
+
+        status(result) mustEqual OK
+        val body = contentAsString(result)
+        body should include(
+          "<h1>Success! Welcome to Block Insights.</h1>"
+        )
+
+        db.run(
+          Tables.slackTeams.result
+        )
+      }.futureValue should matchPattern {
+        case Seq(
+              SlackTeamEncrypted(
+                `teamId`,
+                `teamUserId`,
+                `botId`,
+                Encrypted(_, _),
+                `teamName`,
+                `registeredUserId`
+              )
+            ) =>
+      }
+    }
+
+    "redirect to home page when a users cancels installation" in new TestFixtures {
+      afterDbInit {
+        val result = call(
+          controller
+            .authRedirect(None, Some("access_denied"), Some(slackAuthState)),
+          FakeRequest(GET, "?error=access_denied&state=")
+        )
+        val body = contentAsString(result)
+        status(result) mustEqual OK
+        body should include(
+          "<title>Block Insights - Access free real-time mempool data</title>"
+        )
+        db.run(
+          Tables.slackTeams.result
+        )
+      }.futureValue should matchPattern { case Seq() =>
+      }
+    }
+  }
+
+  "Auth0Controller" should {
+
+    trait TestFixtures
+        extends FixtureBindings
+        with ConfigurationFixtures
+        with SecretsManagerFixtures {
+
+      (mockSlackSecretsManagerService.generateSecret _)
+        .expects(*)
+        .returning(Future { slackAuthSecret })
+        .anyNumberOfTimes()
+
+      val action = mock[Auth0ValidateJWTAction]
+
+      val controller =
+        new Auth0Controller(
+          action,
+          mockSlackSecretsManagerService,
+          Helpers.stubControllerComponents(),
+          config
+        )
+    }
+
+    "return the correct configuration" in new TestFixtures {
+      val result = call(controller.configuration(), FakeRequest(GET, ""))
       status(result) mustEqual OK
-      body should include(
-        "<title>Block Insights - Access free real-time mempool data</title>"
-      )
+      val body = contentAsJson(result)
+      body("clientId").as[String] mustEqual "test-client-id"
+      body("domain").as[String] mustEqual "test-domain"
+      body("audience").as[String] mustEqual "test-audience"
     }
   }
 }

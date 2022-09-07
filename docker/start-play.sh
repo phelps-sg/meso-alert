@@ -16,6 +16,10 @@ if [ -d "/etc/secrets" ]; then
   SLACK_CLIENT_ID=$(cat /etc/secrets/slack/client_id)
   SLACK_DEPLOY_URL=$(cat /etc/secrets/slack/deploy_url)
 
+  AUTH0_DOMAIN=$(cat /etc/secrets/auth0/domain)
+  AUTH0_CLIENT_ID=$(cat /etc/secrets/auth0/client_id)
+  AUTH0_AUDIENCE=$(cat /etc/secrets/auth0/audience)
+
   SODIUM_KEY=$(cat /etc/secrets/sodium/key)
 
   POSTGRES_PORT=5432
@@ -55,7 +59,29 @@ slack.clientSecret = "${SLACK_CLIENT_SECRET}"
 slack.botToken = "${SLACK_BOT_TOKEN}"
 slack.deployURL = "${SLACK_DEPLOY_URL}"
 
+auth0.domain = "${AUTH0_DOMAIN}"
+auth0.clientId = "${AUTH0_CLIENT_ID}"
+auth0.audience = "${AUTH0_AUDIENCE}"
+
 sodium.secret="${SODIUM_KEY}"
+
+akka.actor.allow-java-serialization = off
+
+akka {
+  actor {
+
+    # which serializers are available under which key
+    serializers {
+      proto = "akka.remote.serialization.ProtobufSerializer"
+    }
+
+    # which interfaces / traits / classes should be handled by which serializer
+    serialization-bindings {
+      "actors.SlackSecretsActor\$SlackSecretsEvent" = proto
+      "actors.SlackSecretsActor\$SecretsState" = proto
+    }
+  }
+}
 
 meso-alert.db = {
   connectionPool = "HikariCP" //use HikariCP for our connection pool
@@ -88,6 +114,14 @@ database.dispatcher {
 }
 
 email.dispatcher {
+  executor = "thread-pool-executor"
+  throughput = 1
+  thread-pool-executor {
+    fixed-pool-size = 2
+  }
+}
+
+encryption.dispatcher {
   executor = "thread-pool-executor"
   throughput = 1
   thread-pool-executor {

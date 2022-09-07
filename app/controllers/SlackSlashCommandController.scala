@@ -47,13 +47,13 @@ object SlackSlashCommandController {
             Success(
               SlashCommand(
                 None,
-                channelId,
+                SlackChannelId(channelId),
                 command,
                 args,
                 teamDomain,
-                teamId,
+                SlackTeamId(teamId),
                 channelName,
-                userId,
+                userId.map(SlackUserId),
                 userName,
                 isEnterpriseInstall.map(x =>
                   Try(x.toBoolean).orElse(Success(false)).get
@@ -116,9 +116,8 @@ class SlackSlashCommandController @Inject() (
       }
     }
 
-  def channel(implicit slashCommand: SlashCommand): SlackChannel = SlackChannel(
+  def channel(implicit slashCommand: SlashCommand): SlackChannelId =
     slashCommand.channelId
-  )
 
   def cryptoAlert(implicit slashCommand: SlashCommand): Future[Result] = {
 

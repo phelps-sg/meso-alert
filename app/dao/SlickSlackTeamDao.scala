@@ -14,7 +14,7 @@ import scala.concurrent.Future
 @ImplementedBy(classOf[SlickSlackTeamDao])
 trait SlackTeamDao {
   def insertOrUpdate(@unused slackUser: SlackTeam): Future[Int]
-  def find(@unused userId: String): Future[SlackTeam]
+  def find(@unused teamId: SlackTeamId): Future[SlackTeam]
 }
 
 class SlickSlackTeamDao @Inject() (
@@ -23,7 +23,7 @@ class SlickSlackTeamDao @Inject() (
     val encryptionManager: EncryptionManagerService
 ) extends FutureInitialisingComponent
     with SlickDao[SlackTeamEncrypted]
-    with SlickPrimaryKeyDao[String, SlackTeam, SlackTeamEncrypted]
+    with SlickPrimaryKeyDao[SlackTeamId, SlackTeam, SlackTeamEncrypted]
     with Logging
     with SlackTeamDao {
 
@@ -37,9 +37,12 @@ class SlickSlackTeamDao @Inject() (
     table.filter(_.team_id === team.teamId)
   }
 
-  override val lookupKeyQuery
-      : String => BtcPostgresProfile.api.Query[_, SlackTeamEncrypted, Seq] = {
-    teamId: String => table.filter(_.team_id === teamId)
+  override val lookupKeyQuery: SlackTeamId => BtcPostgresProfile.api.Query[
+    _,
+    SlackTeamEncrypted,
+    Seq
+  ] = { teamId: SlackTeamId =>
+    table.filter(_.team_id === teamId)
   }
 
   override def table: TableQuery[Tables.SlackTeams] = Tables.slackTeams
@@ -51,7 +54,8 @@ class SlickSlackTeamDao @Inject() (
         team.userId,
         team.botId,
         decrypted.asString,
-        team.teamName
+        team.teamName,
+        team.registeredUserId
       )
     }
   }
@@ -63,7 +67,8 @@ class SlickSlackTeamDao @Inject() (
         team.userId,
         team.botId,
         accessToken = encrypted,
-        team.teamName
+        team.teamName,
+        team.registeredUserId
       )
     }
   }

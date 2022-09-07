@@ -9,6 +9,7 @@ import actors.{
   MemPoolWatcherActor,
   Register,
   Registered,
+  SlackSecretsActor,
   Start,
   Started,
   Stop,
@@ -48,6 +49,8 @@ import services.{
   MemPoolWatcher,
   MemPoolWatcherService,
   PeerGroupSelection,
+  SlackManager,
+  SlackSecretsManagerService,
   SodiumEncryptionManager,
   User,
   UserManagerService
@@ -57,7 +60,13 @@ import slick.dbio.{DBIO, Effect}
 import slick.jdbc.JdbcBackend.Database
 import slick.lifted.TableQuery
 import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
-import slick.{DatabaseExecutionContext, Tables, jdbc}
+import slick.{
+  DatabaseExecutionContext,
+  EncryptionExecutionContext,
+  SlackClientExecutionContext,
+  Tables,
+  jdbc
+}
 
 import java.net.URI
 import javax.inject.Provider
@@ -103,7 +112,7 @@ object Fixtures {
 
   trait WebhookManagerMock extends HookManagerMock[URI, Webhook]
   trait SlackChatManagerMock
-      extends HookManagerMock[SlackChannel, SlackChatHook]
+      extends HookManagerMock[SlackChannelId, SlackChatHook]
 
   trait MockHookManagerActor[X, Y <: Hook[X]] extends Actor with Logging {
     val mock: HookManagerMock[X, Y]
@@ -144,7 +153,7 @@ object Fixtures {
   }
 
   class MockSlackChatManagerActor(val mock: SlackChatManagerMock)
-      extends MockHookManagerActor[SlackChannel, SlackChatHook]
+      extends MockHookManagerActor[SlackChannelId, SlackChatHook]
 
   trait ProvidesInjector {
     val injector: Injector
@@ -295,7 +304,7 @@ object Fixtures {
       Encrypted(cipherText = Array[Byte] { 2 }, nonce = Array[Byte] { 2 })
     val originalThreshold = 100L
     val newThreshold = 200L
-    val key = SlackChannel("#test")
+    val key = SlackChannelId("#test")
     val hook = SlackChatHook(
       key,
       threshold = originalThreshold,
@@ -381,7 +390,7 @@ object Fixtures {
   }
 
   trait SlackChatDaoTestLogic
-      extends HookDaoTestLogic[SlackChannel, SlackChatHook] {
+      extends HookDaoTestLogic[SlackChannelId, SlackChatHook] {
     env: HasDatabase with HasExecutionContext =>
 
     override val tableQuery = Tables.slackChatHooks
@@ -456,23 +465,31 @@ object Fixtures {
   }
 
   trait SlickSlackTeamFixtures {
-    val userId = "testUser"
-    val botId = "testBotId"
+    val teamUserId = SlackUserId("testUser")
+    val botId = SlackBotId("testBotId")
     val accessToken = "testToken"
-    val teamId = "testTeamId"
+    val teamId = SlackTeamId("testTeamId")
     val teamName = "testTeam"
-    val slackTeam = SlackTeam(teamId, userId, botId, accessToken, teamName)
+    val registeredUserId = RegisteredUserId("testUser@test.domain")
+    val slackTeam = SlackTeam(
+      teamId,
+      teamUserId,
+      botId,
+      accessToken,
+      teamName,
+      registeredUserId
+    )
     val updatedSlackTeam = slackTeam.copy(teamName = "updated")
   }
 
   trait SlickSlashCommandFixtures {
-    val channelId = "1234"
+    val channelId = SlackChannelId("1234")
     val command = "/test"
     val text = ""
     val teamDomain = None
-    val teamId = "5678"
+    val slashCommandTeamId = SlackTeamId("5678")
     val channelName = Some("test-channel")
-    val userId = Some("91011")
+    val userId = Some(SlackUserId("91011"))
     val userName = Some("test-user")
     val testToken = "test-token"
     val isEnterpriseInstall = Some(false)
@@ -483,7 +500,7 @@ object Fixtures {
       command,
       text,
       teamDomain,
-      teamId,
+      slashCommandTeamId,
       channelName,
       userId,
       userName,
@@ -504,7 +521,7 @@ object Fixtures {
         "/crypto-alert",
         "5 BTC",
         teamDomain,
-        teamId,
+        slashCommandTeamId,
         channelName,
         userId,
         userName,
@@ -515,9 +532,9 @@ object Fixtures {
     def fakeRequestValid(command: String, amount: String) =
       FakeRequest(POST, "/").withFormUrlEncodedBody(
         "token" -> testToken,
-        "team_id" -> teamId,
+        "team_id" -> slashCommandTeamId.value,
         "team_domain" -> "",
-        "channel_id" -> channelId,
+        "channel_id" -> channelId.value,
         "channel_name" -> "testChannel",
         "user_id" -> "91011",
         "user_name" -> "test-user",
@@ -635,6 +652,20 @@ object Fixtures {
 
   }
 
+  trait SecretsManagerFixtures extends MockFactory {
+    val mockSlackSecretsManagerService = mock[SlackSecretsManagerService]
+    val slackAuthSecret = Secret(Array(0x00, 0xff).map(_.toByte))
+  }
+
+  trait SlackManagerFixtures extends MockFactory {
+    env: ConfigurationFixtures with ProvidesInjector =>
+    val slackClientExecutionContext =
+      injector.instanceOf[SlackClientExecutionContext]
+    class MockSlackManager
+        extends SlackManager(config, slackClientExecutionContext)
+    val mockSlackManagerService = mock[MockSlackManager]
+  }
+
   trait UserFixtures extends MockFactory {
     val mockUser = mock[User]
     val mockUserManager = mock[UserManagerService]
@@ -738,13 +769,28 @@ object Fixtures {
   }
 
   trait EncryptionManagerFixtures {
-    env: HasExecutionContext
+    env: ProvidesInjector
       with ConfigurationFixtures
       with EncryptionActorFixtures =>
 
-    val executionContext: ExecutionContext
+    val encryptionExecutionContext =
+      injector.instanceOf[EncryptionExecutionContext]
     val encryptionManager =
-      new SodiumEncryptionManager(encryptionActor, config)(executionContext)
+      new SodiumEncryptionManager(
+        encryptionActor,
+        config,
+        encryptionExecutionContext
+      )
+  }
+
+  trait SlackSecretsActorFixtures {
+    env: HasActorSystem with EncryptionManagerFixtures =>
+    val actorSystem: ActorSystem
+    val slackSecretsActor = actorSystem.actorOf(
+      SlackSecretsActor.props(encryptionManager, encryptionExecutionContext)
+    )
+    val userId = RegisteredUserId("test-user")
+    val anotherUserId = RegisteredUserId("test-user-2")
   }
 
   trait EncryptionActorFixtures { env: HasActorSystem =>

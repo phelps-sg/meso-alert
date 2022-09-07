@@ -20,4 +20,4 @@ trait HookDao[X, Y <: Hook[X]] {
 trait WebhookDao extends HookDao[URI, Webhook]
 
 @ImplementedBy(classOf[SlickSlackChatDao])
-trait SlackChatHookDao extends HookDao[SlackChannel, SlackChatHook]
+trait SlackChatHookDao extends HookDao[SlackChannelId, SlackChatHook]

@@ -170,10 +170,11 @@ class DaoTests
               Seq(
                 SlackTeamEncrypted(
                   `teamId`,
-                  `userId`,
+                  `teamUserId`,
                   `botId`,
                   _: Encrypted,
-                  `teamName`
+                  `teamName`,
+                  `registeredUserId`
                 )
               )
             ) =>
@@ -194,7 +195,7 @@ class DaoTests
       afterDbInit {
         for {
           _ <- slickSlackTeamDao.insert(slackTeam)
-          user <- slickSlackTeamDao.find("nonexistent")
+          user <- slickSlackTeamDao.find(SlackTeamId("nonexistent"))
         } yield user
       }.failed.futureValue should matchPattern {
         case _: NoSuchElementException =>
@@ -249,7 +250,7 @@ class DaoTests
                   `command`,
                   `text`,
                   `teamDomain`,
-                  `teamId`,
+                  `slashCommandTeamId`,
                   `channelName`,
                   `userId`,
                   `userName`,

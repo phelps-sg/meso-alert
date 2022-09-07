@@ -30,11 +30,11 @@
           -moz-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
           -ms-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
           transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)" class="page-load fade-three">
-          <a href="@addToSlackUrl" class="button slack w-inline-block" id="addToSlackBtn">
+          <button onclick="callSecretApi()" class="button slack w-inline-block" id="addToSlackBtn">
             <img src="@routes.Assets.versioned("images/slack_logo.svg")" alt="The Slack logo." width="61.5"
             class="slack-logo"/>
             <div>Add to Slack</div>
-          </a>
+          </button>
         </div>
       </div>
     </div>

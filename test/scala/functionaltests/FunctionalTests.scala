@@ -157,6 +157,32 @@ class FunctionalTests
     assert(find("alert-success").isDefined)
   }
 
+  "Login with invalid credentials" should "result in a login error" in {
+    go to stagingURL
+    explicitWait()
+    click on id("qsLoginBtn")
+    textField("username").value = "wrong@email.com"
+    pwdField("password").value = "wrongPassword"
+    click on xpath(
+      "/html/body/div/main/section/div/div[2]/div/form/div[2]/button"
+    )
+    explicitWait()
+    assert(find(className("ulp-input-error-message")).isDefined)
+  }
+
+  "Login with valid credentials" should "result in the user being authenticated" in {
+    go to stagingURL
+    explicitWait()
+    click on id("qsLoginBtn")
+    textField("username").value = slackEmail
+    pwdField("password").value = slackPassword
+    click on xpath(
+      "/html/body/div/main/section/div/div[2]/div/form/div[2]/button"
+    )
+    explicitWait()
+    assert(find("dropdownMenuButton").isDefined)
+  }
+
   "canceling bot installation during 'add to slack'" should "redirect to home page " in {
     go to stagingURL
     click on id("addToSlackBtn")
@@ -189,6 +215,15 @@ class FunctionalTests
         .click()
       pageTitle should be("Installation successful")
     }
+
+  "Logging out" should "be successful" in {
+    go to stagingURL
+    explicitWait()
+    clickOn(By.id("dropdownMenuButton"))
+    click on id("qsLogoutBtn")
+    assert(find("qsLoginBtn").isDefined)
+    pageTitle should be("Block Insights - Access free real-time mempool data")
+  }
 
   "inviting bot to a channel using the '@' command" should "be successful" in {
     slackSignIn(workspace, slackEmail, slackPassword)

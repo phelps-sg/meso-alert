@@ -1,33 +1,68 @@
 package controllers
 
-import com.slack.api.methods.AsyncMethodsClient
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
-import dao.{SlackTeam, SlackTeamDao}
+import dao.{Secret, SlackTeam, SlackTeamDao, RegisteredUserId}
 import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
 import play.api.{Configuration, Logging, mvc}
-import slack.FutureConverters.BoltFuture
+import services.{SlackManagerService, SlackSecretsManagerService}
 import slack.{BoltException, SlackClient}
+import util.Encodings.base64Decode
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.matching.Regex
 
 class SlackAuthController @Inject() (
     protected val config: Configuration,
-    val slackTeamDao: SlackTeamDao,
+    protected val slackTeamDao: SlackTeamDao,
+    protected val slackSecretsManagerService: SlackSecretsManagerService,
+    protected val slackManagerService: SlackManagerService,
     val controllerComponents: ControllerComponents
 )(implicit val ec: ExecutionContext)
     extends BaseController
     with SlackClient
     with Logging {
 
-  protected val slackMethods: AsyncMethodsClient = slack.methodsAsync()
+  val AuthRegEx: Regex = """\((.*),(.*)\)""".r
+
+  case class InvalidAuthState(state: Option[String])
+      extends Exception(s"Invalid state parameter: $state")
+
+  protected def oauthV2Access(
+      temporaryCode: String,
+      userId: RegisteredUserId
+  ): Future[SlackTeam] = {
+    val slackRequest = OAuthV2AccessRequest.builder
+      .clientId(slackClientId)
+      .clientSecret(slackClientSecret)
+      .code(temporaryCode)
+      .build()
+    slackManagerService.oauthV2Access(slackRequest, userId)
+  }
+
+  protected def verifyState(state: Option[String]): Future[RegisteredUserId] = {
+    state match {
+      case Some(AuthRegEx(uid, secretBase64)) =>
+        slackSecretsManagerService.verifySecret(
+          RegisteredUserId(uid),
+          Secret(base64Decode(secretBase64))
+        ) map {
+          _.id
+        }
+      case _ =>
+        Future.failed(InvalidAuthState(state))
+    }
+  }
 
   def authRedirect(
       temporaryCode: Option[String],
-      error: Option[String]
+      error: Option[String],
+      state: Option[String]
   ): mvc.Action[AnyContent] =
     Action.async { implicit request: Request[AnyContent] =>
-      logger.debug("Received slash auth redirect")
+      logger.debug(
+        s"Received slash auth redirect with state $state and code $temporaryCode"
+      )
 
       error match {
 
@@ -40,35 +75,22 @@ class SlackAuthController @Inject() (
           Future { ServiceUnavailable(error) }
 
         case None =>
-          val slackRequest = OAuthV2AccessRequest.builder
-            .clientId(slackClientId)
-            .clientSecret(slackClientSecret)
-            .code(temporaryCode.get)
-            .build()
-
           val f = for {
-
-            response <- slackMethods.oauthV2Access(slackRequest).asScalaFuture
-
-            n <- {
-              val slackTeam =
-                SlackTeam(
-                  teamId = response.getTeam.getId,
-                  userId = response.getAuthedUser.getId,
-                  botId = response.getBotUserId,
-                  accessToken = response.getAccessToken,
-                  teamName = response.getTeam.getName
-                )
-              logger.debug(s"user = $slackTeam")
-              slackTeamDao.insertOrUpdate(slackTeam)
-            }
-
+            userId <- verifyState(state)
+            team <- oauthV2Access(temporaryCode.get, userId)
+            _ <- slackSecretsManagerService.unbind(userId)
+            n <- slackTeamDao.insertOrUpdate(team)
           } yield n
 
           f map { case 1 =>
             Ok(views.html.installed())
-          } recover { case BoltException(message) =>
-            ServiceUnavailable(s"Invalid user: $message")
+          } recover {
+            case BoltException(message) =>
+              ServiceUnavailable(s"Invalid user: $message")
+            case ex: Exception =>
+              logger.error(ex.getMessage)
+              ex.printStackTrace()
+              ServiceUnavailable(ex.getMessage)
           }
       }
     }
