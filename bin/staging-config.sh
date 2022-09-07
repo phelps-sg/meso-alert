@@ -31,7 +31,7 @@ akka {
 
     # which interfaces / traits / classes should be handled by which serializer
     serialization-bindings {
-      "scalapb.GeneratedMessage" = proto
+      "actors.SlackSecretsActor$SlackSecretsEvent" = proto
     }
   }
 }
