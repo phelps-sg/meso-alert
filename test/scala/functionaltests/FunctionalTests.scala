@@ -139,8 +139,9 @@ class FunctionalTests
   def acceptBlockInsightsCookies(): Unit = {
     val cookies = find("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")
     cookies match {
-      case Some(_) => clickOn(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"))
-      case None    =>
+      case Some(_) =>
+        clickOn(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"))
+      case None =>
     }
   }
 
