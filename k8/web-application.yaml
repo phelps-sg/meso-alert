@@ -40,8 +40,8 @@ spec:
               mountPath: "/etc/secrets/email"
               readOnly: true
             - name: auth0-secret
-                mountPath: "/etc/secrets/auth0"
-                readOnly: true
+              mountPath: "/etc/secrets/auth0"
+              readOnly: true
       volumes:
         - name: postgres-cred
           secret:
@@ -59,7 +59,7 @@ spec:
           secret:
             secretName: meso-alert-email-secret
         - name: auth0-secret
-            secret:
-              secretName: meso-alert-auth0
+          secret:
+          secretName: meso-alert-auth0
       imagePullSecrets:
         - name: regcred
