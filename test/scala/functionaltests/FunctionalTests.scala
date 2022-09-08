@@ -1,15 +1,8 @@
 package functionaltests
 
-import org.openqa.selenium.{
-  By,
-  ElementClickInterceptedException,
-  JavascriptExecutor,
-  Keys,
-  StaleElementReferenceException
-}
-import org.openqa.selenium.support.ui.ExpectedConditions
-import org.openqa.selenium.support.ui.WebDriverWait
 import org.openqa.selenium.firefox.{FirefoxDriver, FirefoxOptions}
+import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
+import org.openqa.selenium._
 import org.scalatest.flatspec
 import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
