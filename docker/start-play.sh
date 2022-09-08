@@ -108,6 +108,7 @@ slackChat.dispatcher {
     max-pool-size-min = 8
     max-pool-size-factor = 3.0
     max-pool-size-max = 24
+    task-queue-size = 5
   }
 }
 
@@ -122,6 +123,7 @@ slackClient.dispatcher {
     max-pool-size-min = 8
     max-pool-size-factor = 3.0
     max-pool-size-max = 24
+    task-queue-size = 5
   }
 }
 
@@ -136,6 +138,7 @@ database.dispatcher {
     max-pool-size-min = 8
     max-pool-size-factor = 3.0
     max-pool-size-max = 24
+    task-queue-size = 5
   }
 }
 
@@ -150,6 +153,7 @@ email.dispatcher {
     max-pool-size-min = 8
     max-pool-size-factor = 3.0
     max-pool-size-max = 24
+    task-queue-size = 5
   }
 }
 
@@ -164,6 +168,7 @@ executor = "thread-pool-executor"
     max-pool-size-min = 8
     max-pool-size-factor = 3.0
     max-pool-size-max = 24
+    task-queue-size = 5
   }
 }
 
