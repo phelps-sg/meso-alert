@@ -93,7 +93,7 @@ meso-alert.db = {
     user = "meso-alert"
     password = "${POSTGRES_PASSWORD}"
   }
-  numThreads = 4
+  numThreads = 12
   queueSize = 50000
 }
 
@@ -101,7 +101,7 @@ slackChat.dispatcher {
   executor = "thread-pool-executor"
   throughput = 1
   thread-pool-executor {
-    fixed-pool-size = 2
+    fixed-pool-size = 12
   }
 }
 
@@ -117,7 +117,7 @@ database.dispatcher {
   executor = "thread-pool-executor"
   throughput = 1
   thread-pool-executor {
-    fixed-pool-size = 2
+    fixed-pool-size = 12
   }
 }
 
