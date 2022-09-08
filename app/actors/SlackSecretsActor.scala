@@ -90,8 +90,8 @@ class SlackSecretsActor @Inject() (
       logger.debug(s"Updating state with $event")
       updateState(event)
       context.system.eventStream.publish(event)
-      if (lastSequenceNr % snapShotInterval == 0 && lastSequenceNr != 0)
-        saveSnapshot(state)
+//      if (lastSequenceNr % snapShotInterval == 0 && lastSequenceNr != 0)
+//        saveSnapshot(state)
     }
   }
 
