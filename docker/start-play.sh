@@ -373,7 +373,7 @@ akka.persistence.snapshot-store.local {
     # Dispatcher for streaming snapshot IO.
     stream-dispatcher = "akka.persistence.dispatchers.default-stream-dispatcher"
     # Storage location of snapshot files.
-    dir = "snapshots"
+    dir = "/root/snapshots"
     # Number load attempts when recovering from the latest snapshot fails
     # yet older snapshot files are available. Each recovery attempt will try
     # to recover using an older than previously failed-on snapshot file
@@ -466,6 +466,6 @@ akka.persistence.snapshot-store.proxy {
 
 EOF
 
+mkdir /root/snapshots
 unzip ./target/universal/meso-alert-1.0-SNAPSHOT.zip
-
 ./meso-alert-1.0-SNAPSHOT/bin/meso-alert -Dconfig.file=application-production.conf
