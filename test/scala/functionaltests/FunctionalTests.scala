@@ -35,8 +35,7 @@ class FunctionalTests
 
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
 
-//  implicitlyWait(Span(20, Seconds))
-  implicitlyWait(Span(8, Seconds))
+  implicitlyWait(Span(20, Seconds))
 
   def slackSignIn(workspace: String, email: String, pwd: String): Unit = {
     go to "https://slack.com/workspace-signin"
