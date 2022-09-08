@@ -21,7 +21,7 @@ class FunctionalTests
   val headless: Boolean = System.getenv("SELENIUM_SHOW_WINDOW") == null
   val stagingURL: String = System.getenv("STAGING_URL") match {
     case url: String => url
-    case null => "https://meso-alert-staging.eu.ngrok.io"
+    case null        => "https://meso-alert-staging.eu.ngrok.io"
   }
 
   private val options = new FirefoxOptions().setHeadless(headless)
