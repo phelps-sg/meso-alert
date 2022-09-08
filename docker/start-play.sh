@@ -115,7 +115,13 @@ slackClient.dispatcher {
   executor = "thread-pool-executor"
   throughput = 1
   thread-pool-executor {
-    fixed-pool-size = 24
+    fixed-pool-size = off
+    core-pool-size-min = 2
+    core-pool-size-factor = 3.0
+    core-pool-size-max = 8
+    max-pool-size-min = 8
+    max-pool-size-factor = 3.0
+    max-pool-size-max = 24
   }
 }
 
