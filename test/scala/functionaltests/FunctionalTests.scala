@@ -35,7 +35,8 @@ class FunctionalTests
 
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
 
-  implicitlyWait(Span(20, Seconds))
+//  implicitlyWait(Span(20, Seconds))
+  implicitlyWait(Span(8, Seconds))
 
   def slackSignIn(workspace: String, email: String, pwd: String): Unit = {
     go to "https://slack.com/workspace-signin"
@@ -198,6 +199,7 @@ class FunctionalTests
 
   "canceling bot installation during 'add to slack'" should "redirect to home page " in {
     go to stagingURL
+    explicitWait()
     click on id("addToSlackBtn")
     checkForCookieMessage()
     textField("domain").value = workspace
@@ -214,6 +216,7 @@ class FunctionalTests
   "clicking on 'add to slack' and installing the app to a workspace" should
     "result in the successful installation page" in {
       go to stagingURL
+      explicitWait()
       click on id("addToSlackBtn")
       checkForCookieMessage()
       new WebDriverWait(webDriver, Duration.ofSeconds(10))
