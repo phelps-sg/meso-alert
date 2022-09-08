@@ -27,14 +27,20 @@ alter table slack_chat_hooks
 
 create table slack_teams
 (
-    team_id      varchar not null
+    team_id            varchar not null
         primary key,
-    user_id      varchar not null,
-    bot_id       varchar not null,
-    nonce        varchar not null,
-    access_token varchar not null,
-    team_name    varchar not null
+    user_id            varchar not null,
+    bot_id             varchar not null,
+    nonce              varchar not null,
+    access_token       varchar not null,
+    team_name          varchar not null,
+    registered_user_id varchar
 );
+
+alter table slack_teams
+    owner to "meso-alert";
+
+
 
 alter table slack_teams
     owner to "meso-alert";
