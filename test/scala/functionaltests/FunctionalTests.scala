@@ -25,12 +25,15 @@ class FunctionalTests
   val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
   val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
+  val headless: Boolean = System.getenv("SELENIUM_SHOW_WINDOW") == null
+  val stagingURL: String = System.getenv("STAGING_URL") match {
+    case url: String => url
+    case null => "https://meso-alert-staging.eu.ngrok.io"
+  }
 
-  private val options = new FirefoxOptions().setHeadless(true)
+  private val options = new FirefoxOptions().setHeadless(headless)
 
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
-
-  val stagingURL: String = "https://meso-alert-staging.eu.ngrok.io"
 
   implicitlyWait(Span(20, Seconds))
 
