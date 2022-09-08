@@ -7,7 +7,7 @@ import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
 import com.slack.api.methods.response.chat.ChatPostMessageResponse
 import com.slack.api.methods.response.oauth.OAuthV2AccessResponse
 import dao.{RegisteredUserId, SlackBotId, SlackTeam, SlackTeamId, SlackUserId}
-import play.api.Configuration
+import play.api.{Configuration, Logging}
 import slack.FutureConverters.BoltFuture
 import slack.SlackClient
 import slick.SlackClientExecutionContext
@@ -32,7 +32,8 @@ class SlackManager @Inject() (
     protected val config: Configuration,
     protected val slackClientExecutionContext: SlackClientExecutionContext
 ) extends SlackManagerService
-    with SlackClient {
+    with SlackClient
+    with Logging {
 
   protected val slackMethods: AsyncMethodsClient = slack.methodsAsync()
 
@@ -42,8 +43,10 @@ class SlackManager @Inject() (
       request: OAuthV2AccessRequest,
       registeredUserId: RegisteredUserId
   ): Future[SlackTeam] = {
+    logger.debug(s"Making oauthV2access API call for $registeredUserId... ")
     slackMethods.oauthV2Access(request).asScalaFuture.map {
-      response: OAuthV2AccessResponse =>
+      response: OAuthV2AccessResponse => {
+        logger.debug(s"Received oauthV2access response for $registeredUserId")
         SlackTeam(
           teamId = SlackTeamId(response.getTeam.getId),
           userId = SlackUserId(response.getAuthedUser.getId),
@@ -52,6 +55,7 @@ class SlackManager @Inject() (
           teamName = response.getTeam.getName,
           registeredUserId
         )
+      }
     }
   }
 
