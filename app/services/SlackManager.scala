@@ -45,17 +45,18 @@ class SlackManager @Inject() (
   ): Future[SlackTeam] = {
     logger.debug(s"Making oauthV2access API call for $registeredUserId... ")
     slackMethods.oauthV2Access(request).asScalaFuture.map {
-      response: OAuthV2AccessResponse => {
-        logger.debug(s"Received oauthV2access response for $registeredUserId")
-        SlackTeam(
-          teamId = SlackTeamId(response.getTeam.getId),
-          userId = SlackUserId(response.getAuthedUser.getId),
-          botId = SlackBotId(response.getBotUserId),
-          accessToken = response.getAccessToken,
-          teamName = response.getTeam.getName,
-          registeredUserId
-        )
-      }
+      response: OAuthV2AccessResponse =>
+        {
+          logger.debug(s"Received oauthV2access response for $registeredUserId")
+          SlackTeam(
+            teamId = SlackTeamId(response.getTeam.getId),
+            userId = SlackUserId(response.getAuthedUser.getId),
+            botId = SlackBotId(response.getBotUserId),
+            accessToken = response.getAccessToken,
+            teamName = response.getTeam.getName,
+            registeredUserId
+          )
+        }
     }
   }
 
