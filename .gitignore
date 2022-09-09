@@ -10,3 +10,4 @@ target
 /nodejs/node_modules/
 /conf/application.conf
 /docker/.env
+*.DS_Store
