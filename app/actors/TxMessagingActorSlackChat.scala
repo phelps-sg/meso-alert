@@ -44,7 +44,7 @@ class TxMessagingActorSlackChat @Inject() (
   override val backoffPolicyCap: FiniteDuration = 20000 milliseconds
   override val backoffPolicyMin: FiniteDuration = 1500 milliseconds
 
-  override def success(): Unit = logger.info("Successfully posted message")
+  override def success(): Unit = logger.debug("Successfully posted message")
 
   override def process(tx: TxUpdate): Future[ChatPostMessageResponse] = {
     val msg = message(tx)
