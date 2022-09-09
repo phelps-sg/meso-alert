@@ -2933,6 +2933,14 @@ blockquote {
     align-items: flex-start;
 }
 
+
+.social-links {
+    width: 100%;
+    max-width: 190px;
+    height: 190px;
+}
+
+
 .footer-link {
     display: inline-block;
     padding-top: 7px;
