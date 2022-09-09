@@ -26,6 +26,11 @@ trait SlackManagerService {
   ): Future[ChatPostMessageResponse]
 }
 
+/** A wrapper around the BOLT API. Unlike Bolt: i) the methods in this class
+  * return mockable objects, and ii) rather than use methodsAsync() provided by
+  * BOLT we wrap API invocations in Futures, supplying our own custom execution
+  * context so that we can more easily configure the underlying thread-pool.
+  */
 @Singleton
 class SlackManager @Inject() (
     protected val config: Configuration,
