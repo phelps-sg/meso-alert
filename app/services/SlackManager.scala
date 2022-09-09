@@ -1,14 +1,13 @@
 package services
 
 import com.google.inject.{ImplementedBy, Inject, Singleton}
-import com.slack.api.methods.AsyncMethodsClient
+import com.slack.api.methods.MethodsClient
 import com.slack.api.methods.request.chat.ChatPostMessageRequest
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
 import com.slack.api.methods.response.chat.ChatPostMessageResponse
 import com.slack.api.methods.response.oauth.OAuthV2AccessResponse
-import dao.{RegisteredUserId, SlackBotId, SlackTeam, SlackTeamId, SlackUserId}
+import dao._
 import play.api.{Configuration, Logging}
-import slack.FutureConverters.BoltFuture
 import slack.SlackClient
 import slick.SlackClientExecutionContext
 
@@ -35,7 +34,7 @@ class SlackManager @Inject() (
     with SlackClient
     with Logging {
 
-  protected val slackMethods: AsyncMethodsClient = slack.methodsAsync()
+  protected val slackMethods: MethodsClient = slack.methods()
 
   implicit val ec: ExecutionContext = slackClientExecutionContext
 
@@ -44,7 +43,7 @@ class SlackManager @Inject() (
       registeredUserId: RegisteredUserId
   ): Future[SlackTeam] = {
     logger.debug(s"Making oauthV2access API call for $registeredUserId... ")
-    slackMethods.oauthV2Access(request).asScalaFuture.map {
+    Future { slackMethods.oauthV2Access(request) } map {
       response: OAuthV2AccessResponse =>
         {
           logger.debug(s"Received oauthV2access response for $registeredUserId")
@@ -63,6 +62,6 @@ class SlackManager @Inject() (
   override def chatPostMessage(
       request: ChatPostMessageRequest
   ): Future[ChatPostMessageResponse] = {
-    slackMethods.chatPostMessage(request).asScalaFuture
+    Future { slackMethods.chatPostMessage(request) }
   }
 }
