@@ -18,4 +18,5 @@ POST    /api/slack/events           controllers.SlackEventsController.eventsAPI(
 GET     /api/auth0/config           controllers.Auth0Controller.configuration()
 GET     /api/auth0/secret           controllers.Auth0Controller.secret(userId: Option[String])
 GET     /feedback                   controllers.HomeController.feedbackPage()
+GET     /privacy_policy             controllers.HomeController.privacyPolicy()
 POST    /feedback                   controllers.HomeController.create()
