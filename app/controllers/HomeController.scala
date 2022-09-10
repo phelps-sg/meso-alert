@@ -53,6 +53,10 @@ class HomeController @Inject() (
     Ok(views.html.feedback("", feedbackForm))
   }
 
+  def privacyPolicy(): Action[AnyContent] = Action { _ =>
+    Ok(views.html.privacy_policy())
+  }
+
   def create(): Action[AnyContent] = Action.async { implicit request =>
     feedbackForm
       .bindFromRequest()
