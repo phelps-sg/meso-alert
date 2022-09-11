@@ -28,6 +28,7 @@ import akka.util.Timeout
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
 import com.typesafe.config.ConfigFactory
+import controllers.Auth0ValidateJWTAction
 import dao._
 import org.bitcoinj.core.PeerGroup
 import org.bitcoinj.core.Utils.HEX
@@ -35,13 +36,19 @@ import org.bitcoinj.params.MainNetParams
 import org.scalamock.handlers.CallHandler1
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
+import pdi.jwt.JwtClaim
 import play.api.i18n.DefaultMessagesApi
 import play.api.inject.Injector
-import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
+import play.api.inject.guice.{
+  GuiceApplicationBuilder,
+  GuiceInjectorBuilder,
+  GuiceableModule
+}
 import play.api.libs.json.{JsArray, JsValue, Json}
+import play.api.mvc.BodyParsers
 import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
-import play.api.{Configuration, Logging, inject}
+import play.api.{Application, Configuration, Logging, inject}
 import services.{
   HooksManagerSlackChat,
   HooksManagerWeb,
@@ -56,17 +63,11 @@ import services.{
   UserManagerService
 }
 import slick.BtcPostgresProfile.api._
+import slick._
 import slick.dbio.{DBIO, Effect}
 import slick.jdbc.JdbcBackend.Database
 import slick.lifted.TableQuery
 import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
-import slick.{
-  DatabaseExecutionContext,
-  EncryptionExecutionContext,
-  SlackClientExecutionContext,
-  Tables,
-  jdbc
-}
 
 import java.net.URI
 import javax.inject.Provider
@@ -74,7 +75,7 @@ import scala.collection.mutable
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 //noinspection TypeAnnotation
 // scalafix:off
@@ -175,6 +176,33 @@ object Fixtures {
     val bindModule: GuiceableModule
   }
 
+  trait FakeApplication {
+    env: HasDatabase
+      with HasExecutionContext
+      with HasExecutionContext
+      with MemPoolWatcherActorFixtures =>
+    lazy val fakeApplication: Application =
+      new GuiceApplicationBuilder()
+        .overrides(
+          new MemPoolWatcherModule(db)
+        )
+        .build()
+  }
+
+  trait Auth0ActionFixtures { env: FakeApplication with HasExecutionContext =>
+    class MockAuth0Action(
+        override protected val validateJwt: String => Try[JwtClaim]
+    ) extends Auth0ValidateJWTAction(
+          fakeApplication.injector.instanceOf[BodyParsers.Default],
+          fakeApplication.configuration
+        )(executionContext) {}
+    val claim = JwtClaim()
+    val mockAuth0ActionAlwaysSuccess = new MockAuth0Action(_ => Success(claim))
+    val mockAuth0ActionAlwaysFail = new MockAuth0Action(_ =>
+      Failure(new Exception("invalid JWT from test"))
+    )
+  }
+
   trait ProvidesTestBindings
       extends HasBindModule
       with HasExecutionContext
@@ -205,6 +233,14 @@ object Fixtures {
           Future { () }
         }
       }
+
+    class MemPoolWatcherModule(db: jdbc.JdbcBackend.Database)
+        extends UnitTestModule(db, executionContext) {
+      override def configure(): Unit = {
+        super.configure()
+        bind(classOf[MemPoolWatcher]).toInstance(memPoolWatcher)
+      }
+    }
   }
 
   trait TransactionFixtures { env: MemPoolWatcherFixtures =>
@@ -243,7 +279,10 @@ object Fixtures {
       ch.never()
     }
 
+    def peerGroupExpectations(): Unit
+
     memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
+    peerGroupExpectations()
   }
 
   trait ConfigurationFixtures {

@@ -7,6 +7,7 @@ import akka.testkit.TestKit
 import akka.util.Timeout
 import controllers._
 import dao._
+import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
 import org.scalamock.handlers.CallHandler1
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
@@ -14,11 +15,9 @@ import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import pdi.jwt.JwtClaim
 import play.api.http.Status.{OK, SERVICE_UNAVAILABLE, UNAUTHORIZED}
 import play.api.inject.guice.GuiceableModule
-import play.api.mvc.{BodyParsers, Result, Results}
+import play.api.mvc.{Result, Results}
 import play.api.test.CSRFTokenHelper._
 import play.api.test.Helpers.{
   GET,
@@ -38,10 +37,13 @@ import slick.BtcPostgresProfile.api._
 import slick.Tables
 import unittests.Fixtures.{
   ActorGuiceFixtures,
+  Auth0ActionFixtures,
   ConfigurationFixtures,
   DatabaseInitializer,
   EncryptionActorFixtures,
   EncryptionManagerFixtures,
+  FakeApplication,
+  MemPoolWatcherActorFixtures,
   MemPoolWatcherFixtures,
   MockMailManagerFixtures,
   ProvidesTestBindings,
@@ -62,7 +64,6 @@ import util.Encodings.base64Encode
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.util.{Success, Try}
 
 //noinspection TypeAnnotation
 class ControllerTests
@@ -73,8 +74,7 @@ class ControllerTests
     with ScalaFutures
     with Results
     with Eventually
-    with BeforeAndAfterAll
-    with GuiceOneAppPerSuite {
+    with BeforeAndAfterAll {
 
   // noinspection TypeAnnotation
   trait FixtureBindings extends ProvidesTestBindings {
@@ -106,6 +106,13 @@ class ControllerTests
         config,
         mockMailManager
       )
+
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .never()
+      }
     }
 
     "render feedback form without email delivery outcome message when using http method GET at /feedback" in new TestFixtures {
@@ -196,6 +203,13 @@ class ControllerTests
 
       memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
         .anyNumberOfTimes()
+
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .never()
+      }
     }
 
     "stop a running hook when channel is deleted" in new TestFixtures {
@@ -282,8 +296,14 @@ class ControllerTests
       override def memPoolWatcherExpectations(
           ch: CallHandler1[ActorRef, Unit]
       ): CallHandler1[ActorRef, Unit] = {
-        ch.once()
+        ch.atLeastOnce()
       }
+
+      override def peerGroupExpectations(): Unit = {}
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .never()
 
       def submitCommand(
           command: SlashCommand
@@ -478,6 +498,13 @@ class ControllerTests
         mockSlackManagerService,
         Helpers.stubControllerComponents()
       )
+
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .never()
+      }
     }
 
     "reject an invalid auth state" in new TestFixtures {
@@ -617,35 +644,43 @@ class ControllerTests
 
   "Auth0Controller" should {
 
-    class MockAuth0Action
-        extends Auth0ValidateJWTAction(
-          app.injector.instanceOf[BodyParsers.Default],
-          app.configuration
-        ) {
-      val claim = JwtClaim()
-      override protected val validateJwt: String => Try[JwtClaim] =
-        _ => Success(claim)
-    }
-
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
-        with SecretsManagerFixtures {
+        with SecretsManagerFixtures
+        with MemPoolWatcherFixtures
+        with ActorGuiceFixtures
+        with MemPoolWatcherActorFixtures
+        with FakeApplication
+        with Auth0ActionFixtures {
+
+      def mockAuth0Action: Auth0ValidateJWTAction = mockAuth0ActionAlwaysSuccess
+
+      memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
+        .never()
 
       (mockSlackSecretsManagerService.generateSecret _)
         .expects(*)
         .returning(Future { slackAuthSecret })
         .anyNumberOfTimes()
 
-      val action = new MockAuth0Action()
-
       val controller =
         new Auth0Controller(
-          action,
+          mockAuth0Action,
           mockSlackSecretsManagerService,
           Helpers.stubControllerComponents(),
           config
         )
+
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup.start _).expects().once()
+        (mockPeerGroup.setMaxConnections _).expects(*).once()
+        (mockPeerGroup.addPeerDiscovery _).expects(*).once()
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .anyNumberOfTimes()
+      }
     }
 
     "return the correct configuration" in new TestFixtures {
@@ -657,10 +692,14 @@ class ControllerTests
       body("audience").as[String] mustEqual "test-audience"
     }
 
-    "return an error when supplying an invalid JWT token" in new TestFixtures {
-      val result =
-        call(controller.secret(Some("test-user")), FakeRequest(GET, ""))
+    "return unauthorized when supplying an invalid JWT token" in new TestFixtures {
+      override def mockAuth0Action: Auth0ValidateJWTAction =
+        mockAuth0ActionAlwaysFail
+      val request =
+        FakeRequest(GET, "").withHeaders("Authorization" -> "Bearer fred")
+      val result = call(controller.secret(Some("test-user")), request)
       status(result) mustEqual UNAUTHORIZED
     }
+
   }
 }

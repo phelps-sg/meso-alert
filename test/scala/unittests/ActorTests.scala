@@ -115,13 +115,15 @@ class ActorTests
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures {
 
-      (mockPeerGroup.start _).expects().once()
-      (mockPeerGroup.setMaxConnections _).expects(*).once()
-      (mockPeerGroup.addPeerDiscovery _).expects(*).once()
-      (mockPeerGroup
-        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-        .expects(*)
-        .once()
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup.start _).expects().once()
+        (mockPeerGroup.setMaxConnections _).expects(*).once()
+        (mockPeerGroup.addPeerDiscovery _).expects(*).once()
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .once()
+      }
     }
 
     "return a successful acknowledgement when initialising the peer group" in new TestFixtures {
@@ -163,7 +165,19 @@ class ActorTests
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures
         with UserFixtures
-        with TransactionFixtures {}
+        with TransactionFixtures {
+
+      // Capture the listeners.  The second listener will be the txWatchActor
+      lazy val listenerCapture = CaptureAll[OnTransactionBroadcastListener]()
+
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(capture(listenerCapture))
+          .atLeastOnce()
+      }
+
+    }
 
     "send the correct TxUpdate message when a transaction update is received from " +
       "the bitcoinj peer group" in new TextFixtures {
@@ -183,13 +197,6 @@ class ActorTests
         implicit val d = new Defaultable[ListenableFuture[_]] {
           override val default = null
         }
-
-        // Capture the listeners.  The second listener will be the txWatchActor
-        val listenerCapture = CaptureAll[OnTransactionBroadcastListener]()
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(capture(listenerCapture))
-          .atLeastOnce()
 
         val txWatchActor =
           actorSystem.actorOf(
@@ -317,7 +324,15 @@ class ActorTests
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
         with TxUpdateFixtures
-        with TxPersistenceActorFixtures
+        with TxPersistenceActorFixtures {
+
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .once()
+      }
+    }
 
     "register itself as a listener to the mem-pool" in new TestFixtures {
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
@@ -369,13 +384,28 @@ class ActorTests
         with WebSocketFixtures
         with ActorGuiceFixtures
         with UserFixtures
-        with TxWatchActorFixtures
+        with TxWatchActorFixtures {
+
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .never()
+      }
+    }
 
     trait TestFixturesOneSubscriber extends TestFixtures {
       override def memPoolWatcherExpectations(
           ch: CallHandler1[ActorRef, Unit]
       ) = {
         ch.once()
+      }
+
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .never()
       }
     }
 
@@ -486,6 +516,13 @@ class ActorTests
 
       encryptionManager.initialiseFuture()
 
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .never()
+      }
+
       override def wait(duration: FiniteDuration): Unit =
         expectNoMessage(duration)
     }
@@ -565,7 +602,16 @@ class ActorTests
         with ActorGuiceFixtures
         with WebhookFixtures
         with WebhookActorFixtures
-        with HookActorTestLogic[URI, Webhook, Webhook] {}
+        with HookActorTestLogic[URI, Webhook, Webhook] {
+
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .never()
+      }
+
+    }
 
     trait TestFixturesTwoSubscribers
         extends TestFixtures
@@ -711,7 +757,16 @@ class ActorTests
         with ActorGuiceFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
-        with SlackSecretsActorFixtures
+        with SlackSecretsActorFixtures {
+
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .never()
+      }
+
+    }
 
     "create a new secret" in new TestFixtures {
       (for {

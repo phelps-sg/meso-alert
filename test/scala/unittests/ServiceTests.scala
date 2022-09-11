@@ -6,6 +6,7 @@ import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import akka.util.Timeout
 import dao.Webhook
+import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should
@@ -89,7 +90,16 @@ class ServiceTests
         with WebhookDaoFixtures
         with WebhookFixtures
         with WebhookActorFixtures
-        with WebhookManagerFixtures
+        with WebhookManagerFixtures {
+
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .never()
+      }
+
+    }
 
     "register and start all running hooks stored in the database on initialisation" in new TestFixtures {
 
