@@ -14,9 +14,11 @@ import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
-import play.api.http.Status.{OK, SERVICE_UNAVAILABLE}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import pdi.jwt.JwtClaim
+import play.api.http.Status.{OK, SERVICE_UNAVAILABLE, UNAUTHORIZED}
 import play.api.inject.guice.GuiceableModule
-import play.api.mvc.{Result, Results}
+import play.api.mvc.{BodyParsers, Result, Results}
 import play.api.test.CSRFTokenHelper._
 import play.api.test.Helpers.{
   GET,
@@ -60,17 +62,19 @@ import util.Encodings.base64Encode
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+import scala.util.{Success, Try}
 
 //noinspection TypeAnnotation
 class ControllerTests
-    extends TestKit(ActorSystem("meso-alert-dao-tests"))
+    extends TestKit(ActorSystem("meso-alert-tests"))
     with AnyWordSpecLike
     with PostgresContainer
     with should.Matchers
     with ScalaFutures
     with Results
     with Eventually
-    with BeforeAndAfterAll {
+    with BeforeAndAfterAll
+    with GuiceOneAppPerSuite {
 
   // noinspection TypeAnnotation
   trait FixtureBindings extends ProvidesTestBindings {
@@ -613,6 +617,16 @@ class ControllerTests
 
   "Auth0Controller" should {
 
+    class MockAuth0Action
+        extends Auth0ValidateJWTAction(
+          app.injector.instanceOf[BodyParsers.Default],
+          app.configuration
+        ) {
+      val claim = JwtClaim()
+      override protected val validateJwt: String => Try[JwtClaim] =
+        _ => Success(claim)
+    }
+
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
@@ -623,7 +637,7 @@ class ControllerTests
         .returning(Future { slackAuthSecret })
         .anyNumberOfTimes()
 
-      val action = mock[Auth0ValidateJWTAction]
+      val action = new MockAuth0Action()
 
       val controller =
         new Auth0Controller(
@@ -641,6 +655,12 @@ class ControllerTests
       body("clientId").as[String] mustEqual "test-client-id"
       body("domain").as[String] mustEqual "test-domain"
       body("audience").as[String] mustEqual "test-audience"
+    }
+
+    "return an error when supplying an invalid JWT token" in new TestFixtures {
+      val result =
+        call(controller.secret(Some("test-user")), FakeRequest(GET, ""))
+      status(result) mustEqual UNAUTHORIZED
     }
   }
 }
