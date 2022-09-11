@@ -181,6 +181,7 @@ object Fixtures {
       with HasExecutionContext
       with HasExecutionContext
       with MemPoolWatcherActorFixtures =>
+
     lazy val fakeApplication: Application =
       new GuiceApplicationBuilder()
         .overrides(
@@ -693,7 +694,7 @@ object Fixtures {
 
   trait SecretsManagerFixtures extends MockFactory {
     val mockSlackSecretsManagerService = mock[SlackSecretsManagerService]
-    val slackAuthSecret = Secret(Array(0x00, 0xff).map(_.toByte))
+    val slackAuthSecret: Secret = Secret(Array(0x00, 0xff).map(_.toByte))
   }
 
   trait SlackManagerFixtures extends MockFactory {
