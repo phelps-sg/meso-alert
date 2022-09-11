@@ -694,7 +694,7 @@ class ControllerTests
       body("audience").as[String] mustEqual "test-audience"
     }
 
-   "return unauthorized when not supplying a JWT token to the secret endpoint" in new TestFixtures {
+    "return unauthorized when not supplying a JWT token to the secret endpoint" in new TestFixtures {
       override def mockAuth0Action: Auth0ValidateJWTAction =
         mockAuth0ActionAlwaysFail
       val request = FakeRequest(GET, "")
@@ -706,7 +706,9 @@ class ControllerTests
       override def mockAuth0Action: Auth0ValidateJWTAction =
         mockAuth0ActionAlwaysFail
       val request =
-        FakeRequest(GET, "").withHeaders("Authorization" -> "Bearer fake-invalid")
+        FakeRequest(GET, "").withHeaders(
+          "Authorization" -> "Bearer fake-invalid"
+        )
       val result = call(controller.secret(uid = testUser), request)
       status(result) mustEqual UNAUTHORIZED
     }
