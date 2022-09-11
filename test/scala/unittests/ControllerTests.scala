@@ -672,6 +672,8 @@ class ControllerTests
           config
         )
 
+      val testUser = Some("test-user")
+
       override def peerGroupExpectations(): Unit = {
         (mockPeerGroup.start _).expects().once()
         (mockPeerGroup.setMaxConnections _).expects(*).once()
@@ -692,13 +694,32 @@ class ControllerTests
       body("audience").as[String] mustEqual "test-audience"
     }
 
-    "return unauthorized when supplying an invalid JWT token" in new TestFixtures {
+   "return unauthorized when not supplying a JWT token to the secret endpoint" in new TestFixtures {
+      override def mockAuth0Action: Auth0ValidateJWTAction =
+        mockAuth0ActionAlwaysFail
+      val request = FakeRequest(GET, "")
+      val result = call(controller.secret(uid = testUser), request)
+      status(result) mustEqual UNAUTHORIZED
+    }
+
+    "return unauthorized when supplying an invalid JWT token to the secret end point" in new TestFixtures {
       override def mockAuth0Action: Auth0ValidateJWTAction =
         mockAuth0ActionAlwaysFail
       val request =
-        FakeRequest(GET, "").withHeaders("Authorization" -> "Bearer fred")
-      val result = call(controller.secret(Some("test-user")), request)
+        FakeRequest(GET, "").withHeaders("Authorization" -> "Bearer fake-invalid")
+      val result = call(controller.secret(uid = testUser), request)
       status(result) mustEqual UNAUTHORIZED
+    }
+
+    "return a valid secret when supplying a valid user and JWT token to the secret end point" in new TestFixtures {
+      override def mockAuth0Action: Auth0ValidateJWTAction =
+        mockAuth0ActionAlwaysSuccess
+      val request =
+        FakeRequest(GET, "").withHeaders("Authorization" -> "Bearer fake-valid")
+      val result = call(controller.secret(uid = testUser), request)
+      status(result) mustEqual OK
+      val body = contentAsJson(result)
+      body("secret").as[String] mustEqual base64Encode(slackAuthSecret.data)
     }
 
   }
