@@ -117,19 +117,18 @@ class ControllerTests
 
     "render privacy policy" in new TestFixtures {
       val result = controller.privacyPolicy().apply(FakeRequest().withCSRFToken)
-      val body = contentAsString(result)
       status(result) mustEqual OK
     }
 
     "render terms and conditions" in new TestFixtures {
-      val result = controller.termsAndConditions().apply(FakeRequest().withCSRFToken)
-      val body = contentAsString(result)
+      val result =
+        controller.termsAndConditions().apply(FakeRequest().withCSRFToken)
       status(result) mustEqual OK
     }
 
     "render website disclaimer" in new TestFixtures {
-      val result = controller.websiteDisclaimer().apply(FakeRequest().withCSRFToken)
-      val body = contentAsString(result)
+      val result =
+        controller.websiteDisclaimer().apply(FakeRequest().withCSRFToken)
       status(result) mustEqual OK
     }
 
