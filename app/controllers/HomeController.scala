@@ -57,6 +57,14 @@ class HomeController @Inject() (
     Ok(views.html.privacy_policy())
   }
 
+  def websiteDisclaimer(): Action[AnyContent] = Action { _ =>
+    Ok(views.html.website_disclaimer())
+  }
+
+  def termsAndConditions(): Action[AnyContent] = Action { _ =>
+    Ok(views.html.terms_and_conditions())
+  }
+
   def create(): Action[AnyContent] = Action.async { implicit request =>
     feedbackForm
       .bindFromRequest()
