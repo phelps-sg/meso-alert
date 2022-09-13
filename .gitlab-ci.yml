@@ -3,8 +3,9 @@ stages:
   - pre-deploy-tests
   - push
   - deploy-staging
-  - functional-tests
+  - staging-functional-tests
   - deploy-production
+  - production-functional-tests
 
 image:
   name: registry.gitlab.com/mesonomics/meso-alert/ci
@@ -38,12 +39,21 @@ docker:
   only:
     - master
 
-functional-tests:
-  stage: functional-tests
+staging-functional-tests:
+  stage: staging-functional-tests
   script:
     - make -e sbt-functional-tests
   only:
     - master
+
+production-functional-tests:
+  stage: production-functional-tests
+  script:
+    - export STAGING_URL='https://blockinsights.co.uk'
+    - make -e sbt-functional-tests
+  only:
+    - master
+  when: manual
 
 k8-staging:
   stage: deploy-staging
