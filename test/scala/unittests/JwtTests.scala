@@ -45,7 +45,12 @@ class JwtTests extends AnyWordSpecLike with should.Matchers {
   }
 
   "validateJwt should succeed for valid token" in {
-    validate(validJwt) should matchPattern { case Success(_) => }
+    validate(validJwt) match {
+      case Success(_) => succeed
+      case Failure(ex) =>
+        ex.printStackTrace()
+        fail(ex.getMessage)
+    }
   }
 
   "validateJwt should fail for an expired token" in {
