@@ -8,8 +8,8 @@ import actors.SlackSecretsActor.{
 }
 import akka.actor.ActorRef
 import com.google.inject.name.Named
-import com.google.inject.{ImplementedBy, Inject}
-import dao.{Secret, RegisteredUserId}
+import com.google.inject.{ImplementedBy, Inject, Singleton}
+import dao.{RegisteredUserId, Secret}
 import slick.EncryptionExecutionContext
 
 import scala.concurrent.Future
@@ -33,6 +33,7 @@ trait SlackSecretsManagerService {
   ): Future[ValidSecret]
 }
 
+@Singleton
 class SlackSecretsManager @Inject() (
     @Named("slack-secrets-actor") val actor: ActorRef,
     val executionContext: EncryptionExecutionContext
