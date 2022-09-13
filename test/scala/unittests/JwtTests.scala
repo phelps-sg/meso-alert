@@ -7,7 +7,7 @@ import sttp.model.Uri
 import util.JWT
 
 import java.time.{Clock, Instant, ZoneId}
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 class JwtTests extends AnyWordSpecLike with should.Matchers {
 
@@ -44,14 +44,14 @@ class JwtTests extends AnyWordSpecLike with should.Matchers {
     validate(invalidJwtNoKid) should matchPattern { case Failure(_) => }
   }
 
-//  "validateJwt should succeed for valid token" in {
-//    validate(validJwt) match {
-//      case Success(_) => succeed
-//      case Failure(ex) =>
-//        ex.printStackTrace()
-//        fail(ex.getMessage)
-//    }
-//  }
+  "validateJwt should succeed for valid token" in {
+    validate(validJwt) match {
+      case Success(_) => succeed
+      case Failure(ex) =>
+        ex.printStackTrace()
+        fail(ex.getMessage)
+    }
+  }
 
   "validateJwt should fail for an expired token" in {
     validateWithClock(clock20220930)(validJwt) should matchPattern {

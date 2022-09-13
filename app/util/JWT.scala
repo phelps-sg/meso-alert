@@ -15,17 +15,19 @@ object JWT {
 
   def validateJwt(
       domain: => Uri
-  )(audience: => Uri)(clock: Clock)(token: String): Try[JwtClaim] = for {
-    jwk <- getJwk(domain, token) // Get the secret key for this token
-    claims <- JwtJson.decode(
-      token,
-      jwk.getPublicKey,
-      Seq(JwtAlgorithm.RS256)
-    ) // Decode the token using the secret key
-    _ <- validateClaims(domain)(audience)(clock)(
-      claims
-    ) // validate the data stored inside the token
-  } yield claims
+  )(audience: => Uri)(clock: Clock)(token: String): Try[JwtClaim] = {
+    for {
+      jwk <- getJwk(domain, token) // Get the secret key for this token
+      claims <- JwtJson(clock).decode(
+        token,
+        jwk.getPublicKey,
+        Seq(JwtAlgorithm.RS256)
+      ) // Decode the token using the secret key
+      _ <- validateClaims(domain)(audience)(clock)(
+        claims
+      ) // validate the data stored inside the token
+    } yield claims
+  }
 
   private def splitToken(jwt: String): Try[(String, String, String)] =
     jwt match {
