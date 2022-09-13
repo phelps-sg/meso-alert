@@ -7,7 +7,7 @@ import sttp.model.Uri
 import util.JWT
 
 import java.time.{Clock, Instant, ZoneId}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Try}
 
 class JwtTests extends AnyWordSpecLike with should.Matchers {
 
