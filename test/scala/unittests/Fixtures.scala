@@ -1,5 +1,6 @@
 package unittests
 
+import actions.Auth0ValidateJWTAction
 import actors.EncryptionActor.Encrypted
 import actors.{
   AuthenticationActor,
@@ -28,7 +29,6 @@ import akka.util.Timeout
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
 import com.typesafe.config.ConfigFactory
-import controllers.Auth0ValidateJWTAction
 import dao._
 import org.bitcoinj.core.PeerGroup
 import org.bitcoinj.core.Utils.HEX

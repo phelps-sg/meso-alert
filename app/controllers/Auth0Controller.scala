@@ -1,6 +1,7 @@
 package controllers
 
-import dao.{Secret, RegisteredUserId}
+import actions.Auth0ValidateJWTAction
+import dao.{RegisteredUserId, Secret}
 import play.api.Configuration
 import play.api.libs.json.{Json, Writes}
 import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}

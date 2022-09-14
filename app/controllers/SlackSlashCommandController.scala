@@ -1,8 +1,9 @@
 package controllers
 
+import actions.SlackSignatureVerifyAction
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.util.ByteString
-import controllers.SlackSignatureVerifyAction._
+import actions.SlackSignatureVerifyAction._
 import dao._
 import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}

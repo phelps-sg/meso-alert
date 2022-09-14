@@ -1,15 +1,15 @@
-package controllers
+package actions
 
-import javax.inject.Inject
 import pdi.jwt._
-import play.api.{Configuration, Logging}
 import play.api.http.HeaderNames
 import play.api.mvc._
+import play.api.{Configuration, Logging}
 import sttp.model.Uri
-import util.JWT
 import util.ConfigLoaders.UriConfigLoader
+import util.JWT
 
 import java.time.{Clock, ZoneId}
+import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 

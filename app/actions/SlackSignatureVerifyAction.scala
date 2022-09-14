@@ -1,4 +1,4 @@
-package controllers
+package actions
 
 import akka.util.ByteString
 import com.google.inject.Inject
