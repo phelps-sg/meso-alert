@@ -17,7 +17,7 @@ class SlackRequest[A](
 
 object SlackSignatureVerifyAction {
 
-  implicit class SlackRequestAnyContent(
+  implicit class SlackRequestByteStringValidator(
       slackRequest: SlackRequest[ByteString]
   ) {
     def validateSignatureAgainstBody(): Try[Map[String, Seq[String]]] = {
