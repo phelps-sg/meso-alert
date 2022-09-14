@@ -7,7 +7,6 @@ import play.api.mvc._
 import play.core.parsers.FormUrlEncodedParser
 import services.SlackSignatureVerifierService
 
-import java.nio.charset.Charset
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
@@ -22,7 +21,7 @@ object SlackSignatureVerifyAction {
       slackRequest: SlackRequest[ByteString]
   ) {
     def validateSignatureAgainstBody(): Try[Map[String, Seq[String]]] = {
-      val raw = slackRequest.body.decodeString(Charset.forName("US-ASCII"))
+      val raw = slackRequest.body.utf8String
       slackRequest.validateSignature(raw) map { _ =>
         FormUrlEncodedParser.parse(new String(slackRequest.body.toArray))
       }
