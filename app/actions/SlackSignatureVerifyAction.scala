@@ -3,6 +3,7 @@ package actions
 import akka.util.ByteString
 import com.google.inject.Inject
 import play.api.Logging
+import play.api.mvc.Results.ServiceUnavailable
 import play.api.mvc._
 import play.core.parsers.FormUrlEncodedParser
 import services.SlackSignatureVerifierService
@@ -37,14 +38,14 @@ class SlackSignatureVerifyAction @Inject() (
     slackSignatureVerifierService: SlackSignatureVerifierService
 )(implicit ec: ExecutionContext)
     extends ActionBuilder[SlackRequest, AnyContent]
-    with ActionTransformer[Request, SlackRequest]
+    with ActionRefiner[Request, SlackRequest]
     with Logging {
 
   override protected def executionContext: ExecutionContext = ec
 
-  override protected def transform[A](
+  override protected def refine[A](
       request: Request[A]
-  ): Future[SlackRequest[A]] = {
+  ): Future[Either[Result, SlackRequest[A]]] = {
     val timestamp =
       request.headers.get(SlackSignatureVerifyAction.HEADERS_TIMESTAMP)
 
@@ -56,11 +57,13 @@ class SlackSignatureVerifyAction @Inject() (
         Future.successful {
           val validate = (body: String) =>
             slackSignatureVerifierService.validate(timestamp, body, signature)
-          new SlackRequest[A](validate, request)
+          Right(new SlackRequest[A](validate, request))
         }
       case _ =>
-        Future.failed(new Exception("invalid headers"))
+        Future { Left(ServiceUnavailable("Invalid signature headers")) }
+
     }
 
   }
+
 }
