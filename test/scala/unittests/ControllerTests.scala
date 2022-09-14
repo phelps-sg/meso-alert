@@ -18,7 +18,7 @@ import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.http.Status.{OK, SERVICE_UNAVAILABLE, UNAUTHORIZED}
 import play.api.inject.guice.GuiceableModule
-import play.api.mvc.{Result, Results}
+import play.api.mvc.{AnyContentAsFormUrlEncoded, Result, Results}
 import play.api.test.CSRFTokenHelper._
 import play.api.test.Helpers.{GET, POST, call, contentAsJson, contentAsString, status, writeableOf_AnyContentAsEmpty, writeableOf_AnyContentAsFormUrlEncoded}
 import play.api.test.{FakeRequest, Helpers}
@@ -280,6 +280,7 @@ class ControllerTests
 
 //      encryptionManager.init()
 
+
       val action =
         fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
       val controller = new SlackSlashCommandController(
@@ -290,6 +291,9 @@ class ControllerTests
         hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
         messagesApi
       )
+
+      def slashCommand(makeFakeRequest: => FakeRequest[AnyContentAsFormUrlEncoded]) =
+        call(controller.slashCommand, makeFakeRequest)
 
       override def memPoolWatcherExpectations(
           ch: CallHandler1[ActorRef, Unit]
@@ -427,55 +431,46 @@ class ControllerTests
     }
 
     "return correct message when issuing a valid /crypto-alert command" in new TestFixtures {
-      val result =
-        call(
-          controller.slashCommand,
-          fakeRequestValid("/crypto-alert", "5")
-            .withHeaders(fakeSlackSignatureHeaders: _*)
-        )
+      val result = slashCommand {
+        fakeRequestValid("/crypto-alert", "5")
+      }
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.cryptoAlertNew"
     }
 
     "return reconfigure message when reconfiguring alerts" in new TestFixtures {
-      val result =
-        call(
-          controller.slashCommand,
-          fakeRequestValid("/crypto-alert", "10")
-            .withHeaders(fakeSlackSignatureHeaders: _*)
-        )
+      val result = slashCommand {
+        fakeRequestValid("/crypto-alert", "10")
+      }
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.cryptoAlertReconfig"
     }
 
     "return error message when not supplying amount to /crypto-alert" in new TestFixtures {
-      val result =
-        call(
-          controller.slashCommand,
+      val result = slashCommand {
           fakeRequestValid("/crypto-alert", "")
-            .withHeaders(fakeSlackSignatureHeaders: _*)
-        )
+      }
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.generalError"
     }
 
     "return correct message when pausing alerts" in new TestFixtures {
-      val result =
-        call(
-          controller.slashCommand,
+      val result = slashCommand {
           fakeRequestValid("/pause-alerts", "")
-            .withHeaders(fakeSlackSignatureHeaders: _*)
-        )
+      }
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.pauseAlerts"
     }
+
+//    "return an error message when the Slack signature is invalid" in new TestFixtures {
+      //TODO
+//    }
 
     "return error message when pausing alerts when there are no alerts active" in new TestFixtures {
       val result =
         call(
           controller.slashCommand,
           fakeRequestValid("/pause-alerts", "")
-            .withHeaders(fakeSlackSignatureHeaders: _*)
         )
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.pauseAlertsError"
@@ -486,7 +481,6 @@ class ControllerTests
         call(
           controller.slashCommand,
           fakeRequestValid("/resume-alerts", "")
-            .withHeaders(fakeSlackSignatureHeaders: _*)
         )
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.resumeAlerts"
@@ -497,7 +491,6 @@ class ControllerTests
         call(
           controller.slashCommand,
           fakeRequestValid("/resume-alerts", "")
-            .withHeaders(fakeSlackSignatureHeaders: _*)
         )
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.resumeAlertsError"

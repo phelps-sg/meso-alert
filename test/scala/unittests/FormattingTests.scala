@@ -5,7 +5,10 @@ import controllers.SlackSlashCommandController
 import dao.SlashCommand
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
-import unittests.Fixtures.SlickSlashCommandFixtures
+import unittests.Fixtures.{
+  SlackSignatureVerifierFixtures,
+  SlickSlashCommandFixtures
+}
 
 import scala.util.{Failure, Success}
 
@@ -27,7 +30,9 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
 
   "SlashCommandHistoryController" should {
 
-    trait TestFixtures extends SlickSlashCommandFixtures
+    trait TestFixtures
+        extends SlackSignatureVerifierFixtures
+        with SlickSlashCommandFixtures
 
     "convert an incoming parameter map to a case class" in new TestFixtures {
       val paramMap =

@@ -546,7 +546,7 @@ object Fixtures {
     val updatedSlackTeam = slackTeam.copy(teamName = "updated")
   }
 
-  trait SlickSlashCommandFixtures {
+  trait SlickSlashCommandFixtures { env: SlackSignatureVerifierFixtures =>
     val channelId = SlackChannelId("1234")
     val command = "/test"
     val text = ""
@@ -593,18 +593,24 @@ object Fixtures {
         None
       )
 
+    def fakeRequestValidNoSignature(command: String, amount: String) =
+      FakeRequest(POST, "/")
+        .withFormUrlEncodedBody(
+          "token" -> testToken,
+          "team_id" -> slashCommandTeamId.value,
+          "team_domain" -> "",
+          "channel_id" -> channelId.value,
+          "channel_name" -> "testChannel",
+          "user_id" -> "91011",
+          "user_name" -> "test-user",
+          "command" -> command,
+          "text" -> amount,
+          "is_enterprise_install" -> "false"
+        )
+
     def fakeRequestValid(command: String, amount: String) =
-      FakeRequest(POST, "/").withFormUrlEncodedBody(
-        "token" -> testToken,
-        "team_id" -> slashCommandTeamId.value,
-        "team_domain" -> "",
-        "channel_id" -> channelId.value,
-        "channel_name" -> "testChannel",
-        "user_id" -> "91011",
-        "user_name" -> "test-user",
-        "command" -> command,
-        "text" -> amount,
-        "is_enterprise_install" -> "false"
+      fakeRequestValidNoSignature(command, amount).withHeaders(
+        fakeSlackSignatureHeaders: _*
       )
   }
 
