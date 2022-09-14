@@ -1,27 +1,7 @@
 package unittests
 
 import actors.EncryptionActor.Encrypted
-import actors.{
-  AuthenticationActor,
-  EncryptionActor,
-  HooksManagerActorSlackChat,
-  HooksManagerActorWeb,
-  MemPoolWatcherActor,
-  Register,
-  Registered,
-  SlackSecretsActor,
-  Start,
-  Started,
-  Stop,
-  Stopped,
-  TxFilterActor,
-  TxMessagingActorSlackChat,
-  TxMessagingActorWeb,
-  TxPersistenceActor,
-  TxUpdate,
-  Update,
-  Updated
-}
+import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, SlackSecretsActor, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -39,29 +19,13 @@ import org.scalamock.util.Defaultable
 import pdi.jwt.JwtClaim
 import play.api.i18n.DefaultMessagesApi
 import play.api.inject.Injector
-import play.api.inject.guice.{
-  GuiceApplicationBuilder,
-  GuiceInjectorBuilder,
-  GuiceableModule
-}
+import play.api.inject.guice.{GuiceApplicationBuilder, GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, JsValue, Json}
 import play.api.mvc.BodyParsers
 import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
 import play.api.{Application, Configuration, Logging, inject}
-import services.{
-  HooksManagerSlackChat,
-  HooksManagerWeb,
-  MailManager,
-  MemPoolWatcher,
-  MemPoolWatcherService,
-  PeerGroupSelection,
-  SlackManager,
-  SlackSecretsManagerService,
-  SodiumEncryptionManager,
-  User,
-  UserManagerService
-}
+import services.{HooksManagerSlackChat, HooksManagerWeb, MailManager, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, SlackManager, SlackSecretsManagerService, SlackSignatureVerifierService, SodiumEncryptionManager, User, UserManagerService}
 import slick.BtcPostgresProfile.api._
 import slick._
 import slick.dbio.{DBIO, Effect}
@@ -179,15 +143,31 @@ object Fixtures {
   trait FakeApplication {
     env: HasDatabase
       with HasExecutionContext
-      with HasExecutionContext
+    with SlackSignatureVerifierFixtures
       with MemPoolWatcherActorFixtures =>
 
     lazy val fakeApplication: Application =
       new GuiceApplicationBuilder()
         .overrides(
-          new MemPoolWatcherModule(db)
+          new UnitTestModule(db, executionContext)
+        )
+        .overrides(
+          new SignatureVerifierServiceModule()
+        )
+        .overrides(
+          new MemPoolWatcherModule()
         )
         .build()
+  }
+
+  trait SlackSignatureVerifierFixtures extends MockFactory {
+    val mockSlackSignatureVerifierService = mock[SlackSignatureVerifierService]
+    val fakeSlackSignatureHeaders = Array(("X-Slack-Request-Timestamp", "1663156082"), ("X-Slack-Signature", "v0=d1c387a20da72e5e07de4e2fb7e93cd9b44c2caa118868aad99c3b20c93de73a"))
+    class SignatureVerifierServiceModule extends AbstractModule {
+      override def configure(): Unit = {
+        bind(classOf[SlackSignatureVerifierService]).toInstance(mockSlackSignatureVerifierService)
+      }
+    }
   }
 
   trait Auth0ActionFixtures { env: FakeApplication with HasExecutionContext =>
@@ -235,8 +215,8 @@ object Fixtures {
         }
       }
 
-    class MemPoolWatcherModule(db: jdbc.JdbcBackend.Database)
-        extends UnitTestModule(db, executionContext) {
+    class MemPoolWatcherModule()
+        extends AbstractModule {
       override def configure(): Unit = {
         super.configure()
         bind(classOf[MemPoolWatcher]).toInstance(memPoolWatcher)

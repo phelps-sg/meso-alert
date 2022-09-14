@@ -18,6 +18,7 @@ auth0.audience = "${AUTH0_AUDIENCE}"
 slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"
 slack.deployURL = "${SLACK_DEPLOY_URL}"
+slack.signingSecret = "${SLACK_SIGNING_SECRET}"
 
 akka.actor.allow-java-serialization = off
 

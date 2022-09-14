@@ -1,10 +1,12 @@
 package controllers
 
 import actors.{HookAlreadyStartedException, HookNotStartedException}
+import akka.util.ByteString
+import controllers.SlackSignatureVerifyAction._
 import dao._
 import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}
-import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
+import play.api.mvc._
 import services.HooksManagerSlackChat
 
 import javax.inject.Inject
@@ -76,6 +78,7 @@ object SlackSlashCommandController {
 }
 
 class SlackSlashCommandController @Inject() (
+    protected val slackSignatureVerifyAction: SlackSignatureVerifyAction,
     val controllerComponents: ControllerComponents,
     val slashCommandHistoryDao: SlashCommandHistoryDao,
     val slackTeamDao: SlackTeamDao,
@@ -87,34 +90,44 @@ class SlackSlashCommandController @Inject() (
 
   implicit val lang: Lang = Lang("en")
 
-  def slashCommand: Action[Map[String, Seq[String]]] =
-    Action.async(parse.formUrlEncoded) { request =>
+  def slashCommand: Action[ByteString] = {
+    slackSignatureVerifyAction.async(parse.byteString) { request =>
       logger.debug("received slash command")
-      request.body.foreach { x => logger.debug(s"${x._1} = ${x._2}") }
-
-      SlackSlashCommandController.param("ssl_check")(request.body) match {
-
-        case Some("1") =>
-          Future { Ok }
-
-        case _ =>
-          SlackSlashCommandController.toCommand(request.body) match {
-
-            case Success(slashCommand) =>
-              val recordCommand = slashCommandHistoryDao.record(slashCommand)
-              for {
-                _ <- recordCommand
-                result <- process(slashCommand)
-              } yield result
-
-            case Failure(ex) =>
-              logger.error(ex.getMessage)
-              Future {
-                ServiceUnavailable(ex.getMessage)
-              }
-          }
+      val result: Try[Future[Result]] = request.validateSignatureAgainstBody()
+        .map(processForm)
+      result match {
+        case Success(f) => f
+        case Failure(ex) =>
+          ex.printStackTrace()
+          Future { ServiceUnavailable(ex.getMessage) }
       }
     }
+  }
+
+  def processForm(formBody: Map[String, Seq[String]]) = {
+    SlackSlashCommandController.param("ssl_check")(formBody) match {
+
+      case Some("1") =>
+        Future { Ok }
+
+      case _ =>
+        SlackSlashCommandController.toCommand(formBody) match {
+
+          case Success(slashCommand) =>
+            val recordCommand = slashCommandHistoryDao.record(slashCommand)
+            for {
+              _ <- recordCommand
+              result <- process(slashCommand)
+            } yield result
+
+          case Failure(ex) =>
+            logger.error(ex.getMessage)
+            Future {
+              ServiceUnavailable(ex.getMessage)
+            }
+        }
+    }
+  }
 
   def channel(implicit slashCommand: SlashCommand): SlackChannelId =
     slashCommand.channelId

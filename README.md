@@ -45,6 +45,7 @@ cat << EOF > docker/.env
 POSTGRES_PASSWORD='<password>'
 SLACK_CLIENT_ID='<copy from Slack / Basic Information / App Credentials / Client ID>'
 SLACK_CLIENT_SECRET='<copy from Slack / Basic Information / App Credentials / Client Secret>'
+SLACK_SIGNING_SECRET='<copy from Slack / Basic Information / App Credentials / Signing Secret>'
 POSTGRES_PORT=5432
 POSTGRES_HOST='172.17.0.1'
 SODIUM_KEY=`sbt "runMain util.GenerateSodiumKey" | awk '/private-key:/ {print $2}'`

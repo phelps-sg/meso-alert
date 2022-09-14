@@ -1,16 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="ScalaTests in 'unittests'" type="ScalaTestRunConfiguration" factoryName="ScalaTest" singleton="false" nameIsGenerated="true" show_console_on_std_err="false" show_console_on_std_out="false">
     <module name="meso-alert" />
-    <extension name="net.ashald.envfile">
-      <option name="IS_ENABLED" value="false" />
-      <option name="IS_SUBST" value="false" />
-      <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
-      <option name="IS_IGNORE_MISSING_FILES" value="false" />
-      <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
-      <ENTRIES>
-        <ENTRY IS_ENABLED="true" PARSER="runconfig" />
-      </ENTRIES>
-    </extension>
     <option name="allowRunningInParallel" value="true" />
     <option name="projectPathOnTarget" />
     <option name="selectedOptions">
@@ -20,6 +10,7 @@
     <option name="classBuf">
       <list>
         <option value="unittests.DaoTests" />
+        <option value="unittests.JwtTests" />
         <option value="unittests.ActorTests" />
         <option value="unittests.ServiceTests" />
         <option value="unittests.ControllerTests" />

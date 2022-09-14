@@ -13,6 +13,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.matching.Regex
 
 class SlackAuthController @Inject() (
+//    protected val slackSignatureVerifyAction: SlackSignatureVerifyAction,
     protected val config: Configuration,
     protected val slackTeamDao: SlackTeamDao,
     protected val slackSecretsManagerService: SlackSecretsManagerService,
@@ -59,7 +60,8 @@ class SlackAuthController @Inject() (
       error: Option[String],
       state: Option[String]
   ): mvc.Action[AnyContent] =
-    Action.async { implicit request: Request[AnyContent] =>
+//        slackSignatureVerifyAction.async { implicit request: Request[AnyContent] =>
+      Action.async { implicit request: Request[AnyContent] =>
       logger.debug(
         s"Received slash auth redirect with state $state and code $temporaryCode"
       )
