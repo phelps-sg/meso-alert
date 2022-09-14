@@ -40,11 +40,6 @@ create table slack_teams
 alter table slack_teams
     owner to "meso-alert";
 
-
-
-alter table slack_teams
-    owner to "meso-alert";
-
 create table transaction_updates
 (
     id          bigserial
