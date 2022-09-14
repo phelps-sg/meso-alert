@@ -43,31 +43,6 @@ class SlackSignatureVerifyAction @Inject() (
 
   override protected def executionContext: ExecutionContext = ec
 
-//  override def invokeBlock[A](
-//      request: Request[A],
-//      block: Request[A] => Future[Result]
-//  ): Future[Result] = {
-//
-//    val timestamp =
-//      request.headers.get(SlackSignatureVerifyAction.HEADERS_TIMESTAMP)
-//
-//    val signature =
-//      request.headers.get(SlackSignatureVerifyAction.HEADERS_SIGNATURE)
-//
-//    slackSignatureVerifierService.validate(
-//      timestamp,
-//      Some(""),
-//      signature
-//    ) match {
-//      case Success(()) =>
-//        logger.debug("Successfully validated Slack signature")
-//        block(request)
-//      case Failure(ex) =>
-//        logger.warn(ex.getMessage)
-//        Future.successful(Results.Unauthorized)
-//    }
-//  }
-
   override protected def transform[A](
       request: Request[A]
   ): Future[SlackRequest[A]] = {
