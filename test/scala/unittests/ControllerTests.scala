@@ -498,9 +498,12 @@ class ControllerTests
       contentAsString(result) mustEqual "slackResponse.pauseAlerts"
     }
 
-//    "return an error message when the Slack signature is invalid" in new TestFixtures {
-    // TODO
-//    }
+    "return an error message when no Slack signature is supplied" in new TestFixtures {
+      val result = slashCommand {
+        fakeRequestValidNoSignature("/pause-alerts", "")
+      }
+      status(result) mustEqual SERVICE_UNAVAILABLE
+    }
 
     "return error message when pausing alerts when there are no alerts active" in new TestFixtures {
       val result =
