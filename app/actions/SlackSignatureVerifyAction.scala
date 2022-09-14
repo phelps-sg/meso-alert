@@ -61,7 +61,6 @@ class SlackSignatureVerifyAction @Inject() (
         }
       case _ =>
         Future { Left(ServiceUnavailable("Invalid signature headers")) }
-
     }
 
   }
