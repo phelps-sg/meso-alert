@@ -46,6 +46,7 @@ class SlackSignatureVerifyAction @Inject() (
   override protected def refine[A](
       request: Request[A]
   ): Future[Either[Result, SlackRequest[A]]] = {
+
     val timestamp =
       request.headers.get(SlackSignatureVerifyAction.HEADERS_TIMESTAMP)
 
