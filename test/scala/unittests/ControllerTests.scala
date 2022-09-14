@@ -344,6 +344,15 @@ class ControllerTests
           .anyNumberOfTimes()
       }
 
+      val signatureVerifierExpectations =
+        (mockSlackSignatureVerifierService.validate _)
+          .expects(*, *, *)
+          .anyNumberOfTimes()
+
+      def setSignatureVerifierExpectations() =
+        signatureVerifierExpectations.returning(Success("valid"))
+      setSignatureVerifierExpectations()
+
       (mockSlackSignatureVerifierService.validate _)
         .expects(*, *, *)
         .returning(Success("valid"))
@@ -498,13 +507,6 @@ class ControllerTests
       contentAsString(result) mustEqual "slackResponse.pauseAlerts"
     }
 
-    "return an error message when no Slack signature is supplied" in new TestFixtures {
-      val result = slashCommand {
-        fakeRequestValidNoSignature("/pause-alerts", "")
-      }
-      status(result) mustEqual SERVICE_UNAVAILABLE
-    }
-
     "return error message when pausing alerts when there are no alerts active" in new TestFixtures {
       val result =
         call(
@@ -533,6 +535,22 @@ class ControllerTests
         )
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.resumeAlertsError"
+    }
+
+    "return an error message when no Slack signature is supplied" in new TestFixtures {
+      val result = slashCommand {
+        fakeRequestValidNoSignature("/pause-alerts", "")
+      }
+      status(result) mustEqual SERVICE_UNAVAILABLE
+    }
+
+    "return an error message when an invalid Slack signature is supplied" in new TestFixtures {
+      override def setSignatureVerifierExpectations() =
+        signatureVerifierExpectations.returning(Success("valid"))
+      val result = slashCommand {
+        fakeRequestValidNoSignature("/pause-alerts", "")
+      }
+      status(result) mustEqual SERVICE_UNAVAILABLE
     }
   }
 
