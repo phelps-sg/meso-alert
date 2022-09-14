@@ -72,6 +72,7 @@ import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 
 import java.net.URI
 import javax.inject.Provider
+import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
@@ -610,7 +611,7 @@ object Fixtures {
 
     def fakeRequestValid(command: String, amount: String) =
       fakeRequestValidNoSignature(command, amount).withHeaders(
-        fakeSlackSignatureHeaders: _*
+        ArraySeq.unsafeWrapArray(fakeSlackSignatureHeaders): _*
       )
   }
 

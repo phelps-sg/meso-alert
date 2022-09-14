@@ -20,16 +20,51 @@ import play.api.http.Status.{OK, SERVICE_UNAVAILABLE, UNAUTHORIZED}
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{AnyContentAsFormUrlEncoded, Result, Results}
 import play.api.test.CSRFTokenHelper._
-import play.api.test.Helpers.{GET, POST, call, contentAsJson, contentAsString, status, writeableOf_AnyContentAsEmpty, writeableOf_AnyContentAsFormUrlEncoded}
+import play.api.test.Helpers.{
+  GET,
+  POST,
+  call,
+  contentAsJson,
+  contentAsString,
+  status,
+  writeableOf_AnyContentAsEmpty,
+  writeableOf_AnyContentAsFormUrlEncoded
+}
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slack.BoltException
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{ActorGuiceFixtures, Auth0ActionFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, FakeApplication, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SecretsManagerFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackEventsControllerFixtures, SlackManagerFixtures, SlackSignatureVerifierFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
+import unittests.Fixtures.{
+  ActorGuiceFixtures,
+  Auth0ActionFixtures,
+  ConfigurationFixtures,
+  DatabaseInitializer,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  FakeApplication,
+  MemPoolWatcherActorFixtures,
+  MemPoolWatcherFixtures,
+  MockMailManagerFixtures,
+  ProvidesTestBindings,
+  SecretsManagerFixtures,
+  SlackChatActorFixtures,
+  SlackChatHookDaoFixtures,
+  SlackEventsControllerFixtures,
+  SlackManagerFixtures,
+  SlackSignatureVerifierFixtures,
+  SlickSlackTeamDaoFixtures,
+  SlickSlackTeamFixtures,
+  SlickSlashCommandFixtures,
+  SlickSlashCommandHistoryDaoFixtures,
+  TxWatchActorFixtures,
+  UserFixtures,
+  WebSocketFixtures
+}
 import util.Encodings.base64Encode
 
+import scala.collection.compat.immutable.ArraySeq
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Success
@@ -280,7 +315,6 @@ class ControllerTests
 
 //      encryptionManager.init()
 
-
       val action =
         fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
       val controller = new SlackSlashCommandController(
@@ -292,7 +326,9 @@ class ControllerTests
         messagesApi
       )
 
-      def slashCommand(makeFakeRequest: => FakeRequest[AnyContentAsFormUrlEncoded]) =
+      def slashCommand(
+          makeFakeRequest: => FakeRequest[AnyContentAsFormUrlEncoded]
+      ) =
         call(controller.slashCommand, makeFakeRequest)
 
       override def memPoolWatcherExpectations(
@@ -425,7 +461,7 @@ class ControllerTests
       val fakeRequest =
         FakeRequest(POST, "/")
           .withFormUrlEncodedBody(("ssl_check", "1"))
-          .withHeaders(fakeSlackSignatureHeaders: _*)
+          .withHeaders(ArraySeq.unsafeWrapArray(fakeSlackSignatureHeaders): _*)
       val result = call(controller.slashCommand, fakeRequest)
       status(result) mustEqual OK
     }
@@ -448,7 +484,7 @@ class ControllerTests
 
     "return error message when not supplying amount to /crypto-alert" in new TestFixtures {
       val result = slashCommand {
-          fakeRequestValid("/crypto-alert", "")
+        fakeRequestValid("/crypto-alert", "")
       }
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.generalError"
@@ -456,14 +492,14 @@ class ControllerTests
 
     "return correct message when pausing alerts" in new TestFixtures {
       val result = slashCommand {
-          fakeRequestValid("/pause-alerts", "")
+        fakeRequestValid("/pause-alerts", "")
       }
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.pauseAlerts"
     }
 
 //    "return an error message when the Slack signature is invalid" in new TestFixtures {
-      //TODO
+    // TODO
 //    }
 
     "return error message when pausing alerts when there are no alerts active" in new TestFixtures {
