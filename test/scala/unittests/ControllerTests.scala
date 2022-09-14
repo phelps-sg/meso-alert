@@ -543,7 +543,6 @@ class ControllerTests
           .anyNumberOfTimes()
       }
 
-//      (mockSlackSignatureVerifierService.validate _).expects(*).returning(Success())
     }
 
     "reject an invalid auth state" in new TestFixtures {
