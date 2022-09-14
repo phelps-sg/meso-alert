@@ -61,7 +61,7 @@ class SlackAuthController @Inject() (
       state: Option[String]
   ): mvc.Action[AnyContent] =
 //        slackSignatureVerifyAction.async { implicit request: Request[AnyContent] =>
-      Action.async { implicit request: Request[AnyContent] =>
+    Action.async { implicit request: Request[AnyContent] =>
       logger.debug(
         s"Received slash auth redirect with state $state and code $temporaryCode"
       )
