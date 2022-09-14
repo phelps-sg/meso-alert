@@ -94,11 +94,10 @@ class SlackSlashCommandController @Inject() (
   def slashCommand: Action[ByteString] = {
     slackSignatureVerifyAction.async(parse.byteString) { request =>
       logger.debug("received slash command")
-      val result: Try[Future[Result]] = request
+      request
         .validateSignatureAgainstBody()
-        .map(processForm)
-      result match {
-        case Success(f) => f
+        .map(processForm) match {
+        case Success(result) => result
         case Failure(ex) =>
           ex.printStackTrace()
           Future { ServiceUnavailable(ex.getMessage) }
