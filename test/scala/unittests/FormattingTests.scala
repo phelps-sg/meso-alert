@@ -1,6 +1,6 @@
 package unittests
 
-import actors.formatSatoshi
+import actors.{blockMessageBuilder, formatSatoshi, linkToAddress, linkToTxHash}
 import controllers.SlackSlashCommandController
 import dao.SlashCommand
 import org.scalatest.matchers.should
@@ -25,6 +25,32 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
     "return a decimal value between 0 and 0.99999999 when 0 <= value < 100000000" in {
       formatSatoshi(0) shouldEqual "0.0"
       formatSatoshi(99999999) shouldEqual "0.99999999"
+    }
+  }
+
+  "blockMessageBuilder" should {
+    "print all outputs if they take up less than 47 sections" in {
+      blockMessageBuilder("testHash", 10, List("1", "2")) shouldEqual
+        """[{"type":"header","text":{"type":"plain_text",""" +
+        s""""text":"New Transaction With Value ${formatSatoshi(10)}""" +
+        """ BTC","emoji":false}},{"type":"section","text":{"type":"mrkdwn",""" +
+        """"text":"Transaction Hash: """ + linkToTxHash(
+          "testHash"
+        ) + """ to addresses:"}},""" +
+        """{"type":"section","text":{"type": "mrkdwn", "text": """" +
+        s"${linkToAddress("1")}, ${linkToAddress("2")}, " +
+        """"}}, {"type":"divider"}]"""
+    }
+
+    "make the last section of the block a link to view all the outputs if there are more than 47 sections" in {
+      blockMessageBuilder(
+        "testHash",
+        10,
+        List.fill(1000)("testOutput")
+      ) should include
+      """{"type":"section","text":{"type":"mrkdwn",""" +
+        """"text":"Transaction contains too many outputs to list here. Visit the Transaction URL to view all""" +
+        """the outputs. "}}," + "{"type":"divider"}]"""
     }
   }
 

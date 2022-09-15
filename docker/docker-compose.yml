@@ -42,6 +42,13 @@ services:
       context: ./
       dockerfile: postgres-backup.docker
 
+  meso-alert-backup:
+    image: registry.gitlab.com/mesonomics/meso-alert/postgres-backup
+    container_name: postgres-backup
+    build:
+      context: ./
+      dockerfile: postgres-backup.docker
+
   postgres-db:
     container_name: postgres-db
     image: postgres:14.2
