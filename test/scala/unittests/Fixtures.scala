@@ -2,27 +2,7 @@ package unittests
 
 import actions.Auth0ValidateJWTAction
 import actors.EncryptionActor.Encrypted
-import actors.{
-  AuthenticationActor,
-  EncryptionActor,
-  HooksManagerActorSlackChat,
-  HooksManagerActorWeb,
-  MemPoolWatcherActor,
-  Register,
-  Registered,
-  SlackSecretsActor,
-  Start,
-  Started,
-  Stop,
-  Stopped,
-  TxFilterActor,
-  TxMessagingActorSlackChat,
-  TxMessagingActorWeb,
-  TxPersistenceActor,
-  TxUpdate,
-  Update,
-  Updated
-}
+import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, SlackSecretsActor, Start, Started, Stop, Stopped, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -37,32 +17,15 @@ import org.scalamock.handlers.CallHandler1
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
 import pdi.jwt.JwtClaim
-import play.api.i18n.DefaultMessagesApi
+import play.api.i18n.{DefaultMessagesApi, MessagesApi}
 import play.api.inject.Injector
-import play.api.inject.guice.{
-  GuiceApplicationBuilder,
-  GuiceInjectorBuilder,
-  GuiceableModule
-}
+import play.api.inject.guice.{GuiceApplicationBuilder, GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, JsValue, Json}
 import play.api.mvc.BodyParsers
 import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
 import play.api.{Application, Configuration, Logging, inject}
-import services.{
-  HooksManagerSlackChat,
-  HooksManagerWeb,
-  MailManager,
-  MemPoolWatcher,
-  MemPoolWatcherService,
-  PeerGroupSelection,
-  SlackManager,
-  SlackSecretsManagerService,
-  SlackSignatureVerifierService,
-  SodiumEncryptionManager,
-  User,
-  UserManagerService
-}
+import services.{HooksManagerSlackChat, HooksManagerWeb, MailManager, MemPoolWatcher, MemPoolWatcherService, PeerGroupSelection, SlackManager, SlackSecretsManagerService, SlackSignatureVerifierService, SodiumEncryptionManager, User, UserManagerService}
 import slick.BtcPostgresProfile.api._
 import slick._
 import slick.dbio.{DBIO, Effect}
@@ -182,12 +145,13 @@ object Fixtures {
     env: HasDatabase
       with HasExecutionContext
       with SlackSignatureVerifierFixtures
-      with MemPoolWatcherActorFixtures =>
+      with MemPoolWatcherActorFixtures
+      with HasMessagesApi  =>
 
     lazy val fakeApplication: Application =
       new GuiceApplicationBuilder()
         .overrides(
-          new UnitTestModule(db, executionContext)
+          new UnitTestModule(db, executionContext, messagesApi)
         )
         .overrides(
           new SignatureVerifierServiceModule()
@@ -572,14 +536,7 @@ object Fixtures {
       isEnterpriseInstall,
       timeStamp
     )
-    val messagesApi = new DefaultMessagesApi(
-      Map(
-        "en" -> Map(
-          "slackResponse.currencyError" -> "I currently only provide alerts for BTC, but other currencies are coming soon."
-        )
-      )
-    )
-    val cryptoAlertCommand =
+   val cryptoAlertCommand =
       SlashCommand(
         None,
         channelId,
@@ -890,6 +847,20 @@ object Fixtures {
         )
       )
     }
+  }
+
+  trait HasMessagesApi {
+    val messagesApi: MessagesApi
+  }
+
+  trait MessagesFixtures extends HasMessagesApi {
+     val messagesApi = new DefaultMessagesApi(
+      Map(
+        "en" -> Map(
+          "slackResponse.currencyError" -> "I currently only provide alerts for BTC, but other currencies are coming soon."
+        )
+      )
+    )
   }
 
 }

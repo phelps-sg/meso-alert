@@ -17,19 +17,7 @@ import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import slick.dbio.DBIO
-import unittests.Fixtures.{
-  ActorGuiceFixtures,
-  ConfigurationFixtures,
-  DatabaseGuiceFixtures,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  MemPoolWatcherFixtures,
-  ProvidesTestBindings,
-  WebhookActorFixtures,
-  WebhookDaoFixtures,
-  WebhookFixtures,
-  WebhookManagerFixtures
-}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseGuiceFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MessagesFixtures, ProvidesTestBindings, WebhookActorFixtures, WebhookDaoFixtures, WebhookFixtures, WebhookManagerFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
@@ -46,9 +34,9 @@ class ServiceTests
     with BeforeAndAfterAll {
 
   // noinspection TypeAnnotation
-  trait FixtureBindings extends ProvidesTestBindings {
+  trait FixtureBindings extends ProvidesTestBindings with MessagesFixtures {
     val bindModule: GuiceableModule =
-      new UnitTestModule(database, testExecutionContext)
+      new UnitTestModule(database, testExecutionContext, messagesApi)
     val executionContext = testExecutionContext
     val actorSystem = system
     val db = database

@@ -13,27 +13,7 @@ import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{
-  ConfigurationFixtures,
-  DatabaseGuiceFixtures,
-  DatabaseInitializer,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  ProvidesTestBindings,
-  SlackChatDaoTestLogic,
-  SlackChatHookDaoFixtures,
-  SlackChatHookFixtures,
-  SlackSignatureVerifierFixtures,
-  SlickSlackTeamDaoFixtures,
-  SlickSlackTeamFixtures,
-  SlickSlashCommandFixtures,
-  SlickSlashCommandHistoryDaoFixtures,
-  SlickTransactionUpdateDaoFixtures,
-  TxUpdateFixtures,
-  WebhookDaoFixtures,
-  WebhookDaoTestLogic,
-  WebhookFixtures
-}
+import unittests.Fixtures.{ConfigurationFixtures, DatabaseGuiceFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MessagesFixtures, ProvidesTestBindings, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlackSignatureVerifierFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, SlickTransactionUpdateDaoFixtures, TxUpdateFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
 
 // scalafix:off
 
@@ -46,9 +26,9 @@ class DaoTests
     with BeforeAndAfterAll {
 
   // noinspection TypeAnnotation
-  trait FixtureBindings extends ProvidesTestBindings {
+  trait FixtureBindings extends ProvidesTestBindings with MessagesFixtures {
     val bindModule: GuiceableModule =
-      new UnitTestModule(database, testExecutionContext)
+      new UnitTestModule(database, testExecutionContext, messagesApi)
     val executionContext = testExecutionContext
     val actorSystem = system
     val db = database

@@ -2,28 +2,9 @@ package unittests
 
 import actors.AuthenticationActor.{Auth, TxInputOutput}
 import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
-import actors.MemPoolWatcherActor.{
-  PeerGroupAlreadyStartedException,
-  StartPeerGroup
-}
-import actors.SlackSecretsActor.{
-  GenerateSecret,
-  Unbind,
-  ValidSecret,
-  VerifySecret
-}
-import actors.{
-  AuthenticationActor,
-  HookAlreadyRegisteredException,
-  HookAlreadyStartedException,
-  HookNotRegisteredException,
-  HookNotStartedException,
-  Registered,
-  Started,
-  Stopped,
-  TxUpdate,
-  Updated
-}
+import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
+import actors.SlackSecretsActor.{GenerateSecret, Unbind, ValidSecret, VerifySecret}
+import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxUpdate, Updated}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -44,27 +25,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
-import unittests.Fixtures.{
-  ActorGuiceFixtures,
-  ConfigurationFixtures,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  HookActorTestLogic,
-  MemPoolWatcherActorFixtures,
-  MemPoolWatcherFixtures,
-  ProvidesTestBindings,
-  SlackChatActorFixtures,
-  SlackChatHookDaoFixtures,
-  SlackSecretsActorFixtures,
-  TransactionFixtures,
-  TxPersistenceActorFixtures,
-  TxUpdateFixtures,
-  TxWatchActorFixtures,
-  UserFixtures,
-  WebSocketFixtures,
-  WebhookActorFixtures,
-  WebhookFixtures
-}
+import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, MessagesFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackSecretsActorFixtures, TransactionFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
@@ -95,9 +56,9 @@ class ActorTests
   implicit override val patienceConfig =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
-  trait FixtureBindings extends ProvidesTestBindings {
+  trait FixtureBindings extends ProvidesTestBindings with MessagesFixtures {
     val bindModule: GuiceableModule =
-      new UnitTestModule(database, testExecutionContext)
+      new UnitTestModule(database, testExecutionContext, messagesApi)
     val executionContext = testExecutionContext
     val actorSystem = system
     val timeout: Timeout = 20.seconds
@@ -110,6 +71,7 @@ class ActorTests
 
     trait TestFixtures
         extends FixtureBindings
+        with MessagesFixtures
         with MemPoolWatcherFixtures
         with ConfigurationFixtures
         with ActorGuiceFixtures
@@ -160,6 +122,7 @@ class ActorTests
     trait TextFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with MessagesFixtures
         with MemPoolWatcherFixtures
         with WebSocketFixtures
         with ActorGuiceFixtures
@@ -321,6 +284,7 @@ class ActorTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with MessagesFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
         with TxUpdateFixtures
@@ -380,6 +344,7 @@ class ActorTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with MessagesFixtures
         with MemPoolWatcherFixtures
         with WebSocketFixtures
         with ActorGuiceFixtures
@@ -502,6 +467,7 @@ class ActorTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with MessagesFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
         with EncryptionActorFixtures
@@ -598,6 +564,7 @@ class ActorTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with MessagesFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
         with WebhookFixtures
@@ -753,6 +720,7 @@ class ActorTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with MessagesFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
         with EncryptionActorFixtures
