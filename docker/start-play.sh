@@ -14,6 +14,7 @@ if [ -d "/etc/secrets" ]; then
   SLACK_BOT_TOKEN=""
   SLACK_CLIENT_SECRET=$(cat /etc/secrets/slack/client_secret)
   SLACK_CLIENT_ID=$(cat /etc/secrets/slack/client_id)
+  SLACK_SIGNING_SECRET=$(cat /etc/secrets/slack/signing_secret)
   SLACK_DEPLOY_URL=$(cat /etc/secrets/slack/deploy_url)
 
   AUTH0_DOMAIN=$(cat /etc/secrets/auth0/domain)
@@ -56,6 +57,7 @@ play.i18n.langs = ["en"]
 
 slack.clientId = "${SLACK_CLIENT_ID}"
 slack.clientSecret = "${SLACK_CLIENT_SECRET}"
+slack.signingSecret = "${SLACK_SIGNING_SECRET}"
 slack.botToken = "${SLACK_BOT_TOKEN}"
 slack.deployURL = "${SLACK_DEPLOY_URL}"
 
