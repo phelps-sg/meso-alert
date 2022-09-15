@@ -16,8 +16,9 @@ package object actors {
       Json.obj(ArraySeq.unsafeWrapArray(addressField ++ valueField): _*)
     }
   }
-  // scalafix:on
 
+  // scalafix:on
+  val txsPerSection = 20
   val blockChairBaseURL = "https://www.blockchair.com/bitcoin"
   def linkToTxHash(hash: String): String =
     s"<$blockChairBaseURL/transaction/$hash|$hash>"
@@ -31,17 +32,57 @@ package object actors {
     }
   }
 
-  def formatOutputAddresses(outputs: Seq[TxInputOutput]): String =
-    outputs
+  def message(tx: TxUpdate): String = {
+    val outputs = tx.outputs
       .filterNot(_.address.isEmpty)
       .map(output => output.address.get)
       .distinct
-      .map(output => linkToAddress(output))
-      .mkString(", ")
-
-  def message(tx: TxUpdate): String = {
-    s"New transaction ${linkToTxHash(tx.hash)} with value ${formatSatoshi(tx.value)} BTC to " +
-      s"addresses ${formatOutputAddresses(tx.outputs)}"
+    blockMessageBuilder(tx.hash, tx.value, outputs)
   }
 
+  def buildOutputsSections(
+      txOutputs: Seq[String],
+      currentSectionOutputs: Int,
+      totalSections: Int
+  ): String = {
+    if (totalSections > 47) {
+      """"}}," + "{"type":"section","text":{"type":"mrkdwn",""" +
+        """"text":"Transaction contains too many outputs to list here. Visit the Transaction URL to view all""" +
+        """the outputs. "}},{"type":"divider"}]"""
+    } else {
+      if (currentSectionOutputs < txsPerSection && txOutputs.nonEmpty) {
+        val newSectionString = s"${linkToAddress(txOutputs.head)}, "
+        newSectionString + buildOutputsSections(
+          txOutputs.tail,
+          currentSectionOutputs + 1,
+          totalSections
+        )
+      } else if (currentSectionOutputs >= txsPerSection && txOutputs.nonEmpty) {
+        val newSectionString = """"}}, """ +
+          """{"type":"section","text":{"type": "mrkdwn", "text": \""" +
+          s"${linkToAddress(txOutputs.head)}, "
+        newSectionString + buildOutputsSections(
+          txOutputs.tail,
+          1,
+          totalSections + 1
+        )
+      } else {
+        """"}}, {"type":"divider"}]"""
+      }
+    }
+  }
+
+  def blockMessageBuilder(
+      txHash: String,
+      txValue: Long,
+      txOutputs: Seq[String]
+  ): String =
+    """[{"type":"header","text":{"type":"plain_text",""" +
+      s""""text":"New Transaction With Value ${formatSatoshi(txValue)}""" +
+      """ BTC","emoji":false}},{"type":"section","text":{"type":"mrkdwn",""" +
+      s"""\"text\":\"Transaction Hash: ${linkToTxHash(
+          txHash
+        )} to addresses:\"}},""" +
+      """{"type":"section","text":{"type": "mrkdwn", "text": """" +
+      buildOutputsSections(txOutputs, 0, 3)
 }

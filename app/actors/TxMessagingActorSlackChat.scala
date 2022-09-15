@@ -52,7 +52,8 @@ class TxMessagingActorSlackChat @Inject() (
       .token(hook.token)
       .username("block-insights")
       .channel(hook.channel.value)
-      .text(msg)
+      .text("New Transaction")
+      .blocksAsString(msg)
       .build
     logger.debug(s"Submitting request: $request")
     slackManagerService.chatPostMessage(request)
