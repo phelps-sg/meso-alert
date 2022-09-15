@@ -5,6 +5,7 @@ import dao.Hook
 import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
 import play.api.libs.json.{JsObject, Json, Writes}
+import slick.lifted.MappedTo
 
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
@@ -18,8 +19,10 @@ case class Updated[X](hook: Hook[X])
 case class Start[X](key: X)
 case class Stop[X](key: X)
 
+case class TxHash(value: String) extends AnyVal with MappedTo[String]
+
 case class TxUpdate(
-    hash: String,
+    hash: TxHash,
     value: Long,
     time: java.time.LocalDateTime,
     isPending: Boolean,
@@ -31,7 +34,7 @@ object TxUpdate {
 
   def apply(tx: Transaction)(implicit params: NetworkParameters): TxUpdate =
     TxUpdate(
-      hash = tx.getTxId.toString,
+      hash = TxHash(tx.getTxId.toString),
       value = tx.getOutputSum.value,
       time = java.time.LocalDateTime.now(),
       isPending = tx.isPending,
@@ -84,7 +87,7 @@ object TxUpdate {
   // noinspection ConvertExpressionToSAM
   implicit val txUpdateWrites: Writes[TxUpdate] = new Writes[TxUpdate] {
     def writes(tx: TxUpdate): JsObject = Json.obj(
-      fields = "hash" -> tx.hash,
+      fields = "hash" -> tx.hash.value,
       "value" -> tx.value,
       "time" -> tx.time.toString(),
       "isPending" -> tx.isPending,

@@ -1,6 +1,7 @@
 package dao
 
 import actors.EncryptionActor.Encrypted
+import actors.TxHash
 import slick.lifted.MappedTo
 import util.Encodings.base64Encode
 
@@ -86,7 +87,7 @@ case class SlackTeamEncrypted(
 
 case class TransactionUpdate(
     id: Option[Long],
-    hash: String,
+    hash: TxHash,
     value: Long,
     timeStamp: java.time.LocalDateTime,
     isPending: Boolean

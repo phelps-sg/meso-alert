@@ -1,6 +1,6 @@
 package slack
 
-import actors.TxUpdate
+import actors.{TxHash, TxUpdate}
 import play.api.i18n.{Lang, MessagesApi}
 import util.BitcoinFormatting.{formatSatoshi, linkToAddress, linkToTxHash}
 
@@ -57,7 +57,7 @@ object BlockMessages {
   }
 
   def blockMessageBuilder(messages: MessagesApi)(
-      txHash: String,
+      txHash: TxHash,
       txValue: Long,
       txOutputs: Seq[String]
   ): String =

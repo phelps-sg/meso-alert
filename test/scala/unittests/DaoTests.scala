@@ -287,7 +287,7 @@ class DaoTests
               Seq(
                 TransactionUpdate(
                   Some(_: Long),
-                  "testHash",
+                  `testHash`,
                   10,
                   `timeStamp`,
                   true

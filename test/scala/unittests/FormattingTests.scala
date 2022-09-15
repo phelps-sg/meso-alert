@@ -1,5 +1,6 @@
 package unittests
 
+import actors.TxHash
 import controllers.SlackSlashCommandController
 import dao.SlashCommand
 import org.scalatest.matchers.should
@@ -39,13 +40,14 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
   "blockMessageBuilder" should {
 
     trait TestFixtures extends MessagesFixtures {
-      val chatMessage: (String, Long, Seq[String]) => String =
+      val chatMessage: (TxHash, Long, Seq[String]) => String =
         blockMessageBuilder(messagesApi)
+      val testHash = TxHash("testHash")
     }
 
     "print all outputs if they take up less than 47 sections" in new TestFixtures {
       chatMessage(
-        "testHash",
+        testHash,
         10,
         List("1", "2")
       ) shouldEqual
@@ -56,9 +58,8 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
         """ BTC","emoji":false}},{"type":"section","text":{"type":"mrkdwn",""" +
         s""""text":"${messagesApi(
             MESSAGE_TRANSACTION_HASH
-          )}: """ + linkToTxHash(
-          "testHash"
-        ) + s""" ${messagesApi(MESSAGE_TO_ADDRESSES)}:"}},""" +
+          )}: """ + linkToTxHash(testHash) +
+        s""" ${messagesApi(MESSAGE_TO_ADDRESSES)}:"}},""" +
         """{"type":"section","text":{"type": "mrkdwn", "text": """" +
         s"${linkToAddress("1")}, ${linkToAddress("2")}, " +
         """"}}, {"type":"divider"}]"""
@@ -67,7 +68,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
     "make the last section of the block a link to view all the outputs if there are more than 47 sections" in
       new TestFixtures {
         val result: String = chatMessage(
-          "testHash",
+          testHash,
           10,
           List.fill(1000)("testOutput")
         )

@@ -21,6 +21,7 @@ import actors.{
   Registered,
   Started,
   Stopped,
+  TxHash,
   TxUpdate,
   Updated
 }
@@ -280,7 +281,9 @@ class ActorTests
         updateCapture.value should matchPattern {
           // noinspection SpellCheckingInspection
           case TxUpdate(
-                "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4",
+                TxHash(
+                  "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4"
+                ),
                 300000000,
                 _,
                 _,
@@ -299,7 +302,9 @@ class ActorTests
         updateCapture.value should matchPattern {
           // noinspection SpellCheckingInspection
           case TxUpdate(
-                "73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259",
+                TxHash(
+                  "73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259"
+                ),
                 923985,
                 _,
                 _,
@@ -389,6 +394,7 @@ class ActorTests
         with WebSocketFixtures
         with ActorGuiceFixtures
         with UserFixtures
+        with TxUpdateFixtures
         with TxWatchActorFixtures {
 
       override def peerGroupExpectations(): Unit = {
@@ -416,14 +422,14 @@ class ActorTests
 
     "provide updates when user is authenticated" in new TestFixturesOneSubscriber {
 
-      val tx = TxUpdate(
-        "testHash",
-        10,
-        java.time.LocalDateTime.now(),
-        isPending = true,
-        List(),
-        List()
-      )
+//      val tx = TxUpdate(
+//        testHash,
+//        10,
+//        java.time.LocalDateTime.now(),
+//        isPending = true,
+//        List(),
+//        List()
+//      )
 
       (mockUser.filter _).expects(tx).returning(true)
       (mockUserManager.authenticate _)
@@ -440,14 +446,14 @@ class ActorTests
 
     "not provide updates when credentials are invalid" in new TestFixtures {
 
-      val tx = TxUpdate(
-        "testHash",
-        10,
-        java.time.LocalDateTime.now(),
-        isPending = true,
-        List(),
-        List()
-      )
+//      val tx = TxUpdate(
+//        "testHash",
+//        10,
+//        java.time.LocalDateTime.now(),
+//        isPending = true,
+//        List(),
+//        List()
+//      )
 
       (mockUserManager.authenticate _)
         .expects("test")
@@ -468,7 +474,7 @@ class ActorTests
     "only provide updates according to the user's filter" in new TestFixturesOneSubscriber {
 
       val tx1 = TxUpdate(
-        "testHash1",
+        TxHash("testHash1"),
         10,
         java.time.LocalDateTime.now(),
         isPending = true,
@@ -476,7 +482,7 @@ class ActorTests
         List()
       )
       val tx2 = TxUpdate(
-        "testHash2",
+        TxHash("testHash2"),
         1,
         java.time.LocalDateTime.now(),
         isPending = true,

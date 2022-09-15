@@ -1,14 +1,14 @@
 package util
 
 import actors.AuthenticationActor.TxInputOutput
-import actors.TxUpdate
+import actors.{TxHash, TxUpdate}
 
 object BitcoinFormatting {
 
   val blockChairBaseURL = "https://www.blockchair.com/bitcoin"
 
-  def linkToTxHash(hash: String): String =
-    s"<$blockChairBaseURL/transaction/$hash|$hash>"
+  def linkToTxHash(hash: TxHash): String =
+    s"<$blockChairBaseURL/transaction/${hash.value}|${hash.value}>"
 
   def linkToAddress(address: String): String =
     s"<$blockChairBaseURL/address/$address|$address>"

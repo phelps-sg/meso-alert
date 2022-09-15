@@ -3,6 +3,7 @@ package slick
 // scalafix:off
 
 import actors.EncryptionActor.Encrypted
+import actors.TxHash
 import dao._
 
 import java.net.URI
@@ -146,7 +147,7 @@ object Tables {
   class TransactionUpdates(tag: Tag)
       extends Table[TransactionUpdate](tag, "transaction_updates") {
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
-    def hash = column[String]("hash")
+    def hash = column[TxHash]("hash")
     def value = column[Long]("value")
     def time_stamp = column[java.time.LocalDateTime]("time_stamp")
     def isPending = column[Boolean]("isPending")
