@@ -1,6 +1,7 @@
 package actors
 
 import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
+import util.BitcoinFormatting.message
 import akka.actor.Actor
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{ImplementedBy, Inject}
@@ -8,7 +9,6 @@ import dao.Webhook
 import monix.eval.Task
 import play.api.Logging
 import play.api.libs.json.Json
-import slack.BlockMessages.message
 import sttp.capabilities.WebSockets
 import sttp.capabilities.monix.MonixStreams
 import sttp.client3._

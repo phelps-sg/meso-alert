@@ -7,9 +7,10 @@ import com.google.inject.assistedinject.Assisted
 import com.slack.api.methods.request.chat.ChatPostMessageRequest
 import com.slack.api.methods.response.chat.ChatPostMessageResponse
 import dao.SlackChatHook
+import play.api.i18n.MessagesApi
 import play.api.{Configuration, Logging}
 import services.SlackManagerService
-import slack.BlockMessages.message
+import slack.BlockMessages
 import slick.SlackChatExecutionContext
 
 import scala.annotation.unused
@@ -31,6 +32,7 @@ class TxMessagingActorSlackChat @Inject() (
     protected val config: Configuration,
     sce: SlackChatExecutionContext,
     val random: Random,
+    protected val messagesApi: MessagesApi,
     @Assisted hook: SlackChatHook
 ) extends Actor
     with TxRetryOrDie[ChatPostMessageResponse]
@@ -46,6 +48,8 @@ class TxMessagingActorSlackChat @Inject() (
   override val backoffPolicyMin: FiniteDuration = 1500 milliseconds
 
   override def success(): Unit = logger.debug("Successfully posted message")
+
+  val message: TxUpdate => String = BlockMessages.message(messagesApi)
 
   override def process(tx: TxUpdate): Future[ChatPostMessageResponse] = {
     val msg = message(tx)

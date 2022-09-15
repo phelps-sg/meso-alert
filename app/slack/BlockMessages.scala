@@ -1,32 +1,35 @@
 package slack
 
 import actors.TxUpdate
+import play.api.i18n.MessagesApi
+import util.BitcoinFormatting.{formatSatoshi, linkToAddress, linkToTxHash}
 
 object BlockMessages {
 
   val txsPerSection = 20
-  val blockChairBaseURL = "https://www.blockchair.com/bitcoin"
-  def linkToTxHash(hash: String): String =
-    s"<$blockChairBaseURL/transaction/$hash|$hash>"
-  def linkToAddress(address: String): String =
-    s"<$blockChairBaseURL/address/$address|$address>"
 
-  def formatSatoshi(value: Long): String = {
-    value match {
-      case value if value >= 100000000 => (value / 100000000L).toString
-      case _                           => (value.toDouble / 100000000L).toString
-    }
-  }
+//  val blockChairBaseURL = "https://www.blockchair.com/bitcoin"
+//  def linkToTxHash(hash: String): String =
+//    s"<$blockChairBaseURL/transaction/$hash|$hash>"
+//  def linkToAddress(address: String): String =
+//    s"<$blockChairBaseURL/address/$address|$address>"
+//
+//  def formatSatoshi(value: Long): String = {
+//    value match {
+//      case value if value >= 100000000 => (value / 100000000L).toString
+//      case _                           => (value.toDouble / 100000000L).toString
+//    }
+//  }
 
-  def message(tx: TxUpdate): String = {
+  def message(messages: MessagesApi)(tx: TxUpdate): String = {
     val outputs = tx.outputs
       .filterNot(_.address.isEmpty)
       .map(output => output.address.get)
       .distinct
-    blockMessageBuilder(tx.hash, tx.value, outputs)
+    blockMessageBuilder(messages)(tx.hash, tx.value, outputs)
   }
 
-  def buildOutputsSections(
+  def buildOutputsSections(messages: MessagesApi)(
       txOutputs: Seq[String],
       currentSectionOutputs: Int,
       totalSections: Int
@@ -38,7 +41,7 @@ object BlockMessages {
     } else {
       if (currentSectionOutputs < txsPerSection && txOutputs.nonEmpty) {
         val newSectionString = s"${linkToAddress(txOutputs.head)}, "
-        newSectionString + buildOutputsSections(
+        newSectionString + buildOutputsSections(messages)(
           txOutputs.tail,
           currentSectionOutputs + 1,
           totalSections
@@ -47,7 +50,7 @@ object BlockMessages {
         val newSectionString = """"}}, """ +
           """{"type":"section","text":{"type": "mrkdwn", "text": \""" +
           s"${linkToAddress(txOutputs.head)}, "
-        newSectionString + buildOutputsSections(
+        newSectionString + buildOutputsSections(messages)(
           txOutputs.tail,
           1,
           totalSections + 1
@@ -58,7 +61,7 @@ object BlockMessages {
     }
   }
 
-  def blockMessageBuilder(
+  def blockMessageBuilder(messages: MessagesApi)(
       txHash: String,
       txValue: Long,
       txOutputs: Seq[String]
@@ -70,5 +73,5 @@ object BlockMessages {
           txHash
         )} to addresses:\"}},""" +
       """{"type":"section","text":{"type": "mrkdwn", "text": """" +
-      buildOutputsSections(txOutputs, 0, 3)
+      buildOutputsSections(messages)(txOutputs, 0, 3)
 }

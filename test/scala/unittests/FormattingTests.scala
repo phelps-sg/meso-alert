@@ -1,19 +1,16 @@
 package unittests
 
-import slack.BlockMessages.{
-  blockMessageBuilder,
-  formatSatoshi,
-  linkToAddress,
-  linkToTxHash
-}
+import slack.BlockMessages.blockMessageBuilder
 import controllers.SlackSlashCommandController
 import dao.SlashCommand
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
+import play.api.i18n.DefaultMessagesApi
 import unittests.Fixtures.{
   SlackSignatureVerifierFixtures,
   SlickSlashCommandFixtures
 }
+import util.BitcoinFormatting.{formatSatoshi, linkToAddress, linkToTxHash}
 
 import scala.util.{Failure, Success}
 
@@ -34,8 +31,11 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
   }
 
   "blockMessageBuilder" should {
+
+    val messages = new DefaultMessagesApi()
+
     "print all outputs if they take up less than 47 sections" in {
-      blockMessageBuilder("testHash", 10, List("1", "2")) shouldEqual
+      blockMessageBuilder(messages)("testHash", 10, List("1", "2")) shouldEqual
         """[{"type":"header","text":{"type":"plain_text",""" +
         s""""text":"New Transaction With Value ${formatSatoshi(10)}""" +
         """ BTC","emoji":false}},{"type":"section","text":{"type":"mrkdwn",""" +
@@ -48,7 +48,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
     }
 
     "make the last section of the block a link to view all the outputs if there are more than 47 sections" in {
-      blockMessageBuilder(
+      blockMessageBuilder(messages)(
         "testHash",
         10,
         List.fill(1000)("testOutput")
