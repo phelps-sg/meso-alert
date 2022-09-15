@@ -32,7 +32,7 @@ object BlockMessages {
       """"}},{"type":"section","text":{"type":"mrkdwn",""" +
         s""""text":"${messages(
             MESSAGE_TOO_MANY_OUTPUTS
-          )}."}},{"type":"divider"}]"""
+          )}"}},{"type":"divider"}]"""
     } else {
       if (currentSectionOutputs < txsPerSection && txOutputs.nonEmpty) {
         val newSectionString = s"${linkToAddress(txOutputs.head)}, "
