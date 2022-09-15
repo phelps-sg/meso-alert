@@ -1,6 +1,11 @@
 package unittests
 
-import actors.{AuthenticationActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb}
+import actors.{
+  AuthenticationActor,
+  TxFilterActor,
+  TxMessagingActorSlackChat,
+  TxMessagingActorWeb
+}
 import com.google.inject.AbstractModule
 import play.api.i18n.MessagesApi
 import play.libs.akka.AkkaGuiceSupport

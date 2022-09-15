@@ -1,25 +1,19 @@
 package slack
 
 import actors.TxUpdate
-import play.api.i18n.MessagesApi
+import play.api.i18n.{Lang, MessagesApi}
 import util.BitcoinFormatting.{formatSatoshi, linkToAddress, linkToTxHash}
 
 object BlockMessages {
 
-  val txsPerSection = 20
+  implicit val lang: Lang = Lang("en")
 
-//  val blockChairBaseURL = "https://www.blockchair.com/bitcoin"
-//  def linkToTxHash(hash: String): String =
-//    s"<$blockChairBaseURL/transaction/$hash|$hash>"
-//  def linkToAddress(address: String): String =
-//    s"<$blockChairBaseURL/address/$address|$address>"
-//
-//  def formatSatoshi(value: Long): String = {
-//    value match {
-//      case value if value >= 100000000 => (value / 100000000L).toString
-//      case _                           => (value.toDouble / 100000000L).toString
-//    }
-//  }
+  val MESSAGE_NEW_TRANSACTION = "slackChat.newTransaction"
+  val MESSAGE_TO_ADDRESSES = "slackChat.toAddresses"
+  val MESSAGE_TRANSACTION_HASH = "slackChat.transactionHash"
+  val MESSAGE_TOO_MANY_OUTPUTS = "slackChat.tooManyOutputs"
+
+  val txsPerSection = 20
 
   def message(messages: MessagesApi)(tx: TxUpdate): String = {
     val outputs = tx.outputs
@@ -35,9 +29,10 @@ object BlockMessages {
       totalSections: Int
   ): String = {
     if (totalSections > 47) {
-      """"}}," + "{"type":"section","text":{"type":"mrkdwn",""" +
-        """"text":"Transaction contains too many outputs to list here. Visit the Transaction URL to view all""" +
-        """the outputs. "}},{"type":"divider"}]"""
+      """"}},{"type":"section","text":{"type":"mrkdwn",""" +
+        s""""text":"${messages(
+            MESSAGE_TOO_MANY_OUTPUTS
+          )}."}},{"type":"divider"}]"""
     } else {
       if (currentSectionOutputs < txsPerSection && txOutputs.nonEmpty) {
         val newSectionString = s"${linkToAddress(txOutputs.head)}, "
@@ -67,11 +62,13 @@ object BlockMessages {
       txOutputs: Seq[String]
   ): String =
     """[{"type":"header","text":{"type":"plain_text",""" +
-      s""""text":"New Transaction With Value ${formatSatoshi(txValue)}""" +
+      s""""text":"${messages(MESSAGE_NEW_TRANSACTION)} ${formatSatoshi(
+          txValue
+        )}""" +
       """ BTC","emoji":false}},{"type":"section","text":{"type":"mrkdwn",""" +
-      s"""\"text\":\"Transaction Hash: ${linkToTxHash(
+      s"""\"text\":\"${messages(MESSAGE_TRANSACTION_HASH)}: ${linkToTxHash(
           txHash
-        )} to addresses:\"}},""" +
+        )} ${messages(MESSAGE_TO_ADDRESSES)}:\"}},""" +
       """{"type":"section","text":{"type": "mrkdwn", "text": """" +
       buildOutputsSections(messages)(txOutputs, 0, 3)
 }

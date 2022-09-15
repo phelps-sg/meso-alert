@@ -9,3 +9,8 @@ slackResponse.pauseAlertsError = Alerts are not active on this channel.
 # /resume-alerts
 slackResponse.resumeAlerts = OK, I will resume alerts on this channel.
 slackResponse.resumeAlertsError = Alerts are already active on this channel.
+# Messages sent to Slack channels
+slackChat.tooManyOutputs = Transaction contains too many outputs to list here. Visit the Transaction URL to view all.
+slackChat.transactionHash = Transaction Hash
+slackChat.toAddresses = to addresses
+slackChat.newTransaction = New transaction with value

@@ -13,7 +13,28 @@ import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{ConfigurationFixtures, DatabaseGuiceFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MessagesFixtures, ProvidesTestBindings, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlackSignatureVerifierFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, SlickTransactionUpdateDaoFixtures, TxUpdateFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
+import unittests.Fixtures.{
+  ConfigurationFixtures,
+  DatabaseGuiceFixtures,
+  DatabaseInitializer,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  MessagesFixtures,
+  ProvidesTestBindings,
+  SlackChatDaoTestLogic,
+  SlackChatHookDaoFixtures,
+  SlackChatHookFixtures,
+  SlackSignatureVerifierFixtures,
+  SlickSlackTeamDaoFixtures,
+  SlickSlackTeamFixtures,
+  SlickSlashCommandFixtures,
+  SlickSlashCommandHistoryDaoFixtures,
+  SlickTransactionUpdateDaoFixtures,
+  TxUpdateFixtures,
+  WebhookDaoFixtures,
+  WebhookDaoTestLogic,
+  WebhookFixtures
+}
 
 // scalafix:off
 

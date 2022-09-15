@@ -1,12 +1,18 @@
 package unittests
 
-import slack.BlockMessages.blockMessageBuilder
 import controllers.SlackSlashCommandController
 import dao.SlashCommand
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
-import play.api.i18n.DefaultMessagesApi
+import slack.BlockMessages.{
+  MESSAGE_NEW_TRANSACTION,
+  MESSAGE_TOO_MANY_OUTPUTS,
+  MESSAGE_TO_ADDRESSES,
+  MESSAGE_TRANSACTION_HASH,
+  blockMessageBuilder
+}
 import unittests.Fixtures.{
+  MessagesFixtures,
   SlackSignatureVerifierFixtures,
   SlickSlashCommandFixtures
 }
@@ -32,31 +38,46 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
 
   "blockMessageBuilder" should {
 
-    val messages = new DefaultMessagesApi()
+    trait TestFixtures extends MessagesFixtures {
+      val chatMessage: (String, Long, Seq[String]) => String =
+        blockMessageBuilder(messagesApi)
+    }
 
-    "print all outputs if they take up less than 47 sections" in {
-      blockMessageBuilder(messages)("testHash", 10, List("1", "2")) shouldEqual
+    "print all outputs if they take up less than 47 sections" in new TestFixtures {
+      chatMessage(
+        "testHash",
+        10,
+        List("1", "2")
+      ) shouldEqual
         """[{"type":"header","text":{"type":"plain_text",""" +
-        s""""text":"New Transaction With Value ${formatSatoshi(10)}""" +
+        s""""text":"${messagesApi(MESSAGE_NEW_TRANSACTION)} ${formatSatoshi(
+            10
+          )}""" +
         """ BTC","emoji":false}},{"type":"section","text":{"type":"mrkdwn",""" +
-        """"text":"Transaction Hash: """ + linkToTxHash(
+        s""""text":"${messagesApi(
+            MESSAGE_TRANSACTION_HASH
+          )}: """ + linkToTxHash(
           "testHash"
-        ) + """ to addresses:"}},""" +
+        ) + s""" ${messagesApi(MESSAGE_TO_ADDRESSES)}:"}},""" +
         """{"type":"section","text":{"type": "mrkdwn", "text": """" +
         s"${linkToAddress("1")}, ${linkToAddress("2")}, " +
         """"}}, {"type":"divider"}]"""
     }
 
-    "make the last section of the block a link to view all the outputs if there are more than 47 sections" in {
-      blockMessageBuilder(messages)(
-        "testHash",
-        10,
-        List.fill(1000)("testOutput")
-      ) should include
-      """{"type":"section","text":{"type":"mrkdwn",""" +
-        """"text":"Transaction contains too many outputs to list here. Visit the Transaction URL to view all""" +
-        """the outputs. "}}," + "{"type":"divider"}]"""
-    }
+    "make the last section of the block a link to view all the outputs if there are more than 47 sections" in
+      new TestFixtures {
+        val result: String = chatMessage(
+          "testHash",
+          10,
+          List.fill(1000)("testOutput")
+        )
+        result should include(
+          """{"type":"section","text":{"type":"mrkdwn",""" +
+            s""""text":"${messagesApi(
+                MESSAGE_TOO_MANY_OUTPUTS
+              )}"}},{"type":"divider"}]"""
+        )
+      }
   }
 
   "SlashCommandHistoryController" should {

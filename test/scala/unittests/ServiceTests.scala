@@ -17,7 +17,20 @@ import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import slick.dbio.DBIO
-import unittests.Fixtures.{ActorGuiceFixtures, ConfigurationFixtures, DatabaseGuiceFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, MemPoolWatcherFixtures, MessagesFixtures, ProvidesTestBindings, WebhookActorFixtures, WebhookDaoFixtures, WebhookFixtures, WebhookManagerFixtures}
+import unittests.Fixtures.{
+  ActorGuiceFixtures,
+  ConfigurationFixtures,
+  DatabaseGuiceFixtures,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  MemPoolWatcherFixtures,
+  MessagesFixtures,
+  ProvidesTestBindings,
+  WebhookActorFixtures,
+  WebhookDaoFixtures,
+  WebhookFixtures,
+  WebhookManagerFixtures
+}
 
 import java.net.URI
 import scala.concurrent.Future
