@@ -9,6 +9,7 @@ import com.slack.api.methods.response.chat.ChatPostMessageResponse
 import dao.SlackChatHook
 import play.api.{Configuration, Logging}
 import services.SlackManagerService
+import slack.BlockMessages.message
 import slick.SlackChatExecutionContext
 
 import scala.annotation.unused

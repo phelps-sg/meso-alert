@@ -8,6 +8,7 @@ import dao.Webhook
 import monix.eval.Task
 import play.api.Logging
 import play.api.libs.json.Json
+import slack.BlockMessages.message
 import sttp.capabilities.WebSockets
 import sttp.capabilities.monix.MonixStreams
 import sttp.client3._

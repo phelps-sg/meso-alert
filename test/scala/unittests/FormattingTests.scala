@@ -1,6 +1,11 @@
 package unittests
 
-import actors.{blockMessageBuilder, formatSatoshi, linkToAddress, linkToTxHash}
+import slack.BlockMessages.{
+  blockMessageBuilder,
+  formatSatoshi,
+  linkToAddress,
+  linkToTxHash
+}
 import controllers.SlackSlashCommandController
 import dao.SlashCommand
 import org.scalatest.matchers.should
