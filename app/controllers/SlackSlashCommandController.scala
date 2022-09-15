@@ -100,7 +100,7 @@ class SlackSlashCommandController @Inject() (
         case Success(result) => result
         case Failure(ex) =>
           ex.printStackTrace()
-          Future { ServiceUnavailable(ex.getMessage) }
+          Future { Unauthorized(ex.getMessage) }
       }
     }
   }
@@ -124,7 +124,7 @@ class SlackSlashCommandController @Inject() (
           case Failure(ex) =>
             logger.error(ex.getMessage)
             Future {
-              ServiceUnavailable(ex.getMessage)
+              NotAcceptable(ex.getMessage)
             }
         }
     }

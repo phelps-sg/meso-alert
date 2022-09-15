@@ -3,7 +3,7 @@ package actions
 import akka.util.ByteString
 import com.google.inject.Inject
 import play.api.Logging
-import play.api.mvc.Results.ServiceUnavailable
+import play.api.mvc.Results.Unauthorized
 import play.api.mvc._
 import play.core.parsers.FormUrlEncodedParser
 import services.SlackSignatureVerifierService
@@ -61,7 +61,7 @@ class SlackSignatureVerifyAction @Inject() (
           Right(new SlackRequest[A](validate, request))
         }
       case _ =>
-        Future { Left(ServiceUnavailable("Invalid signature headers")) }
+        Future { Left(Unauthorized("Invalid signature headers")) }
     }
 
   }

@@ -20,54 +20,20 @@ import play.api.http.Status.{OK, SERVICE_UNAVAILABLE, UNAUTHORIZED}
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{AnyContentAsFormUrlEncoded, Result, Results}
 import play.api.test.CSRFTokenHelper._
-import play.api.test.Helpers.{
-  GET,
-  POST,
-  call,
-  contentAsJson,
-  contentAsString,
-  status,
-  writeableOf_AnyContentAsEmpty,
-  writeableOf_AnyContentAsFormUrlEncoded
-}
+import play.api.test.Helpers.{GET, POST, call, contentAsJson, contentAsString, status, writeableOf_AnyContentAsEmpty, writeableOf_AnyContentAsFormUrlEncoded}
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slack.BoltException
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{
-  ActorGuiceFixtures,
-  Auth0ActionFixtures,
-  ConfigurationFixtures,
-  DatabaseInitializer,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  FakeApplication,
-  MemPoolWatcherActorFixtures,
-  MemPoolWatcherFixtures,
-  MockMailManagerFixtures,
-  ProvidesTestBindings,
-  SecretsManagerFixtures,
-  SlackChatActorFixtures,
-  SlackChatHookDaoFixtures,
-  SlackEventsControllerFixtures,
-  SlackManagerFixtures,
-  SlackSignatureVerifierFixtures,
-  SlickSlackTeamDaoFixtures,
-  SlickSlackTeamFixtures,
-  SlickSlashCommandFixtures,
-  SlickSlashCommandHistoryDaoFixtures,
-  TxWatchActorFixtures,
-  UserFixtures,
-  WebSocketFixtures
-}
+import unittests.Fixtures.{ActorGuiceFixtures, Auth0ActionFixtures, ConfigurationFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, FakeApplication, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, MockMailManagerFixtures, ProvidesTestBindings, SecretsManagerFixtures, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackEventsControllerFixtures, SlackManagerFixtures, SlackSignatureVerifierFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures}
 import util.Encodings.base64Encode
 
 import scala.collection.compat.immutable.ArraySeq
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 //noinspection TypeAnnotation
 class ControllerTests
@@ -541,16 +507,17 @@ class ControllerTests
       val result = slashCommand {
         fakeRequestValidNoSignature("/pause-alerts", "")
       }
-      status(result) mustEqual SERVICE_UNAVAILABLE
+      status(result) mustEqual UNAUTHORIZED
     }
 
     "return an error message when an invalid Slack signature is supplied" in new TestFixtures {
       override def setSignatureVerifierExpectations() =
-        signatureVerifierExpectations.returning(Success("valid"))
+        signatureVerifierExpectations.returning(Failure(new Exception("Invalid signature")))
       val result = slashCommand {
-        fakeRequestValidNoSignature("/pause-alerts", "")
+        fakeRequestValid("/pause-alerts", "")
       }
-      status(result) mustEqual SERVICE_UNAVAILABLE
+      status(result) mustEqual UNAUTHORIZED
+      contentAsString(result) mustEqual "Invalid signature"
     }
   }
 
