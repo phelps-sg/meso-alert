@@ -17,7 +17,7 @@ curl-install: apt-update
 	sudo apt-get install -y curl
 
 docker-install: apt-update
-	sudo apt-get install -y docker
+	sudo apt-get install -y docker docker-compose
 
 psql-install: apt-update
 	sudo apt-get install -y postgresql-client
@@ -58,6 +58,7 @@ ngrok-install:
 	curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list; sudo apt update; sudo apt install ngrok
 
 install-dev: curl-install sdkman-install jdk-install sbt-install docker-install nvm-install libsodium-install geckodriver-install ngrok-install k8-install psql-install
+	echo 'Launch a new shell to continue... '; read
 
 staging-config:
 	bin/staging-config.sh
@@ -104,7 +105,7 @@ dir-postgres-create:
 	sudo mkdir -p /data/1/meso-alert-db
 
 docker-db-start: dir-postgres-create
-	$(EXPORT_ENV); cd docker; sudo -E docker-compose up -d postgres-db
+	$(EXPORT_ENV); cd docker; sudo -E docker-compose up -d postgres-db; sleep 2
 
 db-init: docker-db-start
 	psql --user meso-alert --db meso-alert --port ${POSTGRES_PORT} --host ${POSTGRES_HOST} -f sql/schema.sql
