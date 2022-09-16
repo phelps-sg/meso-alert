@@ -171,7 +171,7 @@ can be used to base64 encode a secret value.
 cat secret.yaml | kubeseal --controller-namespace default --controller-name sealed-secrets --format yaml > sealed-secret.yaml
 ~~~
 This will output a file named `sealed-secret.yaml` that will contain the encrypted secret values that you used in `secret.yaml`. Copy the contents
-of `sealed-secret.yaml` and append them to [k8/staging/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml) and [k8/production/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml) as needed.
+of `sealed-secret.yaml` and append them to [k8/staging/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml) or [k8/production/sealed-secrets.yaml](k8/staging/sealed-secrets.yaml) as needed.
 
 4. When the application is deployed with the new secrets, delete the temporary file `sealed-secret.yaml`.
 
