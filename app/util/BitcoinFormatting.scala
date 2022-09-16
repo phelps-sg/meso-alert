@@ -19,12 +19,15 @@ object BitcoinFormatting {
     }
   }
 
-  def formatOutputAddresses(outputs: Seq[TxInputOutput]): String =
-    outputs
+  def toAddresses(inputOutputs: Seq[TxInputOutput]): Seq[String] =
+    inputOutputs
       .filterNot(_.address.isEmpty)
-      .map(output => output.address.get)
+      .map(_.address.get)
       .distinct
-      .map(output => linkToAddress(output))
+
+  def formatOutputAddresses(outputs: Seq[TxInputOutput]): String =
+    toAddresses(outputs)
+      .map(linkToAddress)
       .mkString(", ")
 
   def message(tx: TxUpdate): String = {

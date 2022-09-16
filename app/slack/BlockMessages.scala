@@ -2,7 +2,12 @@ package slack
 
 import actors.{TxHash, TxUpdate}
 import play.api.i18n.{Lang, MessagesApi}
-import util.BitcoinFormatting.{formatSatoshi, linkToAddress, linkToTxHash}
+import util.BitcoinFormatting.{
+  formatSatoshi,
+  linkToAddress,
+  linkToTxHash,
+  toAddresses
+}
 
 object BlockMessages {
 
@@ -16,11 +21,7 @@ object BlockMessages {
   val txsPerSection = 20
 
   def message(messages: MessagesApi)(tx: TxUpdate): String = {
-    val outputs = tx.outputs
-      .filterNot(_.address.isEmpty)
-      .map(output => output.address.get)
-      .distinct
-    blockMessageBuilder(messages)(tx.hash, tx.value, outputs)
+    blockMessageBuilder(messages)(tx.hash, tx.value, toAddresses(tx.outputs))
   }
 
   def buildOutputsSections(messages: MessagesApi)(
