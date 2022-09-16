@@ -37,8 +37,12 @@ kubectl create secret docker-registry regcred --docker-server=registry.gitlab.co
 
 ## Configuration
 
-Run the following in a shell from the project root directory, replacing <password> with the 
-postgres password you wish to use for the local staging database:
+1. Choose a password for the postgres database.
+2. If a postgres server is already running on your machine, choose an unused port for the app's postgres database.
+3. Optionally, for Slack functionality visit https://api.slack.com/apps and create a new Slack app, and take note of the credentials in the 'Basic Information' section.
+4. Optionally, for logon functionality visit https://auth0.com/ and create a new SWA Javascript application, and a new API.
+5. Run the following in a shell from the project root directory, replacing <password> with the 
+postgres password, and replacing 5432 with the port you wish to use for the local development database:
 
 ~~~bash
 cat << EOF > docker/.env
