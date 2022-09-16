@@ -91,9 +91,6 @@ class ActorTests
   // akka timeout
   implicit val akkaTimeout = Timeout(5.seconds)
 
-//  lazy val dbBackend: JdbcBackend.Database = database.asInstanceOf[JdbcBackend.Database]
-//  val testExecutionContext = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
-
   // whenReady timeout
   implicit override val patienceConfig =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
@@ -423,15 +420,6 @@ class ActorTests
 
     "provide updates when user is authenticated" in new TestFixturesOneSubscriber {
 
-//      val tx = TxUpdate(
-//        testHash,
-//        10,
-//        java.time.LocalDateTime.now(),
-//        isPending = true,
-//        List(),
-//        List()
-//      )
-
       (mockUser.filter _).expects(tx).returning(true)
       (mockUserManager.authenticate _)
         .expects("test")
@@ -446,15 +434,6 @@ class ActorTests
     }
 
     "not provide updates when credentials are invalid" in new TestFixtures {
-
-//      val tx = TxUpdate(
-//        "testHash",
-//        10,
-//        java.time.LocalDateTime.now(),
-//        isPending = true,
-//        List(),
-//        List()
-//      )
 
       (mockUserManager.authenticate _)
         .expects("test")
