@@ -1,4 +1,3 @@
-import actors.AuthenticationActor.TxInputOutput
 import play.api.libs.json.{JsObject, Json, Writes}
 
 import scala.collection.immutable.ArraySeq

@@ -1,6 +1,6 @@
 package unittests
 
-import actors.AuthenticationActor.{Auth, TxInputOutput}
+import actors.AuthenticationActor.Auth
 import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
 import actors.MemPoolWatcherActor.{
   PeerGroupAlreadyStartedException,
@@ -22,6 +22,7 @@ import actors.{
   Started,
   Stopped,
   TxHash,
+  TxInputOutput,
   TxUpdate,
   Updated
 }

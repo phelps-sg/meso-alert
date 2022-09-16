@@ -1,7 +1,6 @@
 package util
 
-import actors.AuthenticationActor.TxInputOutput
-import actors.{TxHash, TxUpdate}
+import actors.{TxHash, TxInputOutput, TxUpdate}
 
 object BitcoinFormatting {
 

@@ -31,8 +31,6 @@ object AuthenticationActor {
   )(implicit system: ActorSystem): Props =
     Props(new AuthenticationActor(out, memPoolWatcher, userManager))
 
-  case class TxInputOutput(address: Option[String], value: Option[Long])
-
   case class Auth(id: String, token: String) {
     def message: TextMessage.Strict = TextMessage(
       authWrites.writes(this).toString()

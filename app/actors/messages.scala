@@ -1,6 +1,5 @@
 package actors
 
-import actors.AuthenticationActor.TxInputOutput
 import dao.Hook
 import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
@@ -18,6 +17,8 @@ case class Registered[X](hook: Hook[X])
 case class Updated[X](hook: Hook[X])
 case class Start[X](key: X)
 case class Stop[X](key: X)
+
+case class TxInputOutput(address: Option[String], value: Option[Long])
 
 case class TxHash(value: String) extends AnyVal with MappedTo[String]
 
@@ -39,11 +40,9 @@ object TxUpdate {
       time = java.time.LocalDateTime.now(),
       isPending = tx.isPending,
       inputs = (for (input <- tx.getInputs.asScala)
-        yield AuthenticationActor
-          .TxInputOutput(address(input), value(input))).toSeq,
+        yield TxInputOutput(address(input), value(input))).toSeq,
       outputs = (for (output <- tx.getOutputs.asScala)
-        yield AuthenticationActor
-          .TxInputOutput(address(output), value(output))).toSeq
+        yield TxInputOutput(address(output), value(output))).toSeq
     )
 
   // https://bitcoin.stackexchange.com/questions/83481/bitcoinj-java-library-not-decoding-input-addresses-for-some-transactions
