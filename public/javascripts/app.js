@@ -85,6 +85,7 @@ const getUserId = async () => {
 
 const callSecretApi = async () => {
   try {
+    dataLayer.push({'event': 'addtoslack-click'});
     const userID = await getUserId();
     if (userID) {
       const token = await auth0.getTokenSilently()
