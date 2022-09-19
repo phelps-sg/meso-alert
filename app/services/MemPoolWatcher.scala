@@ -9,7 +9,6 @@ import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.store.PostgresFullPrunedBlockStore
 import org.bitcoinj.utils.BriefLogFormatter
 import play.api.{Configuration, Logging}
-import slick.jdbc.JdbcBackend.Database
 import util.FutureInitialisingComponent
 
 import javax.inject.{Inject, Provider, Singleton}
