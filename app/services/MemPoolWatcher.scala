@@ -40,6 +40,7 @@ class MainNetPeerGroup @Inject() (
     config.get[String]("meso-alert.db.properties.password")
   private val dbDatabaseName =
     config.get[String]("meso-alert.db.properties.databaseName")
+  val params: NetworkParameters = MainNetParams.get
   val blockStore = new PostgresFullPrunedBlockStore(
     params,
     1000,
@@ -48,7 +49,6 @@ class MainNetPeerGroup @Inject() (
     dbUserName,
     dbPassword
   )
-  val params: NetworkParameters = MainNetParams.get
   val blockChain = new BlockChain(params, blockStore)
   lazy val get = new PeerGroup(params, blockChain)
 }
