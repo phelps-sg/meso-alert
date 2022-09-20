@@ -18,13 +18,14 @@ import scala.util.{Failure, Success}
 
 object MemPoolWatcherActor {
 
-  case class RegisterWatcher(listener: ActorRef)
-  case object StartPeerGroup
-  case object PeerGroupAlreadyStartedException
+  final case class RegisterWatcher(listener: ActorRef)
+  final case object StartPeerGroup
+  final case class NewTransaction(tx: Transaction)
+  final case class IncrementCounter(key: String)
+  final case object LogCounters
+
+  final case object PeerGroupAlreadyStartedException
       extends Exception("Peer group already started")
-  case class NewTransaction(tx: Transaction)
-  case class IncrementCounter(key: String)
-  case object LogCounters
 
   def props(
       peerGroupSelection: PeerGroupSelection,
