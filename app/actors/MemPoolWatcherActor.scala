@@ -4,7 +4,7 @@ import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import akka.actor.{Actor, ActorRef, Props}
 import akka.pattern.pipe
 import com.google.inject.Inject
-import org.bitcoinj.core.{NetworkParameters, Peer, Transaction}
+import org.bitcoinj.core._
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
 import play.api.Logging
@@ -18,12 +18,13 @@ import scala.util.{Failure, Success}
 
 object MemPoolWatcherActor {
 
-  trait MemPoolWatcherActorMessage
+  sealed trait MemPoolWatcherActorMessage
   final case class RegisterWatcher(listener: ActorRef)
       extends MemPoolWatcherActorMessage
   final case object StartPeerGroup extends MemPoolWatcherActorMessage
   final case class NewTransaction(tx: Transaction)
       extends MemPoolWatcherActorMessage
+  final case class NewBlock(block: Block) extends MemPoolWatcherActorMessage
   final case class IncrementCounter(key: String)
       extends MemPoolWatcherActorMessage
   final case object LogCounters extends MemPoolWatcherActorMessage
@@ -88,6 +89,10 @@ class MemPoolWatcherActor @Inject() (
               initialisePeerGroup()
               peerGroup.addOnTransactionBroadcastListener(
                 (_: Peer, tx: Transaction) => self ! NewTransaction(tx)
+              )
+              peerGroup.addBlocksDownloadedEventListener(
+                (_: Peer, block: Block, _: FilteredBlock, _: Int) =>
+                  self ! NewBlock(block)
               )
 
               Future {
