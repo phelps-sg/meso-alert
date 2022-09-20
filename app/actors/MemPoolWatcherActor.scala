@@ -18,11 +18,15 @@ import scala.util.{Failure, Success}
 
 object MemPoolWatcherActor {
 
+  trait MemPoolWatcherActorMessage
   final case class RegisterWatcher(listener: ActorRef)
-  final case object StartPeerGroup
+      extends MemPoolWatcherActorMessage
+  final case object StartPeerGroup extends MemPoolWatcherActorMessage
   final case class NewTransaction(tx: Transaction)
+      extends MemPoolWatcherActorMessage
   final case class IncrementCounter(key: String)
-  final case object LogCounters
+      extends MemPoolWatcherActorMessage
+  final case object LogCounters extends MemPoolWatcherActorMessage
 
   final case object PeerGroupAlreadyStartedException
       extends Exception("Peer group already started")
@@ -56,61 +60,65 @@ class MemPoolWatcherActor @Inject() (
 
   override def receive: Receive = {
 
-    case IncrementCounter(key: String) =>
-      counters += (key -> (counters(key) + 1))
+    case message: MemPoolWatcherActorMessage =>
+      message match {
 
-    case NewTransaction(tx: Transaction) =>
-      val result: RiskAnalysis.Result =
-        DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze
-      self ! IncrementCounter(TOTAL_KEY)
-      logger.debug(s"tx ${tx.getTxId} result $result")
-      self ! IncrementCounter(result.name)
-      if (result eq RiskAnalysis.Result.NON_STANDARD)
-        self ! IncrementCounter(
-          s"${RiskAnalysis.Result.NON_STANDARD} - ${DefaultRiskAnalysis.isStandard(tx)}"
-        )
+        case IncrementCounter(key: String) =>
+          counters += (key -> (counters(key) + 1))
 
-    case StartPeerGroup =>
-      logger.debug("Received start peer group request.")
+        case NewTransaction(tx: Transaction) =>
+          val result: RiskAnalysis.Result =
+            DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze
+          self ! IncrementCounter(TOTAL_KEY)
+          logger.debug(s"tx ${tx.getTxId} result $result")
+          self ! IncrementCounter(result.name)
+          if (result eq RiskAnalysis.Result.NON_STANDARD)
+            self ! IncrementCounter(
+              s"${RiskAnalysis.Result.NON_STANDARD} - ${DefaultRiskAnalysis.isStandard(tx)}"
+            )
 
-      startTime match {
+        case StartPeerGroup =>
+          logger.debug("Received start peer group request.")
 
-        case None =>
-          logger.debug("Starting peer group.")
-          startTime = Some(System.currentTimeMillis())
-          initialisePeerGroup()
-          peerGroup.addOnTransactionBroadcastListener(
-            (_: Peer, tx: Transaction) => self ! NewTransaction(tx)
+          startTime match {
+
+            case None =>
+              logger.debug("Starting peer group.")
+              startTime = Some(System.currentTimeMillis())
+              initialisePeerGroup()
+              peerGroup.addOnTransactionBroadcastListener(
+                (_: Peer, tx: Transaction) => self ! NewTransaction(tx)
+              )
+
+              Future {
+                peerGroup.start()
+              } map { _ =>
+                Success(Started(peerGroup))
+              } pipeTo sender()
+
+            case Some(_) =>
+              logger.debug("Peer group already started.")
+              sender() ! Failure(PeerGroupAlreadyStartedException)
+          }
+
+        case LogCounters =>
+          logger.debug("logging counters")
+          logger.info(
+            f"Runtime: ${(System.currentTimeMillis - startTime.get) / 1000 / 60}%d minutes"
           )
+          for ((key, value) <- counters) {
+            logger.info(
+              f"  $key%-40s$value%6d  (${value * 100 / counters(TOTAL_KEY)}%d%% of total)"
+            )
+          }
 
-          Future {
-            peerGroup.start()
-          } map { _ =>
-            Success(Started(peerGroup))
-          } pipeTo sender()
-
-        case Some(_) =>
-          logger.debug("Peer group already started.")
-          sender() ! Failure(PeerGroupAlreadyStartedException)
+        case RegisterWatcher(listener) =>
+          logger.debug(s"Registering new listener $listener")
+          peerGroup.addOnTransactionBroadcastListener(
+            (_: Peer, tx: Transaction) => listener ! TxUpdate(tx)
+          )
+          logger.debug("registration completed")
       }
-
-    case LogCounters =>
-      logger.debug("logging counters")
-      logger.info(
-        f"Runtime: ${(System.currentTimeMillis - startTime.get) / 1000 / 60}%d minutes"
-      )
-      for ((key, value) <- counters) {
-        logger.info(
-          f"  $key%-40s$value%6d  (${value * 100 / counters(TOTAL_KEY)}%d%% of total)"
-        )
-      }
-
-    case RegisterWatcher(listener) =>
-      logger.debug(s"Registering new listener $listener")
-      peerGroup.addOnTransactionBroadcastListener((_: Peer, tx: Transaction) =>
-        listener ! TxUpdate(tx)
-      )
-      logger.debug("registration completed")
 
     case x =>
       unrecognizedMessage(x)
