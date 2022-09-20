@@ -78,6 +78,9 @@ class MemPoolWatcherActor @Inject() (
               s"${RiskAnalysis.Result.NON_STANDARD} - ${DefaultRiskAnalysis.isStandard(tx)}"
             )
 
+        case NewBlock(block: Block) =>
+          logger.debug(s"Downloaded block ${block.getHash} with ${block.getTransactions.size()} transactions.")
+
         case StartPeerGroup =>
           logger.debug("Received start peer group request.")
 
@@ -94,7 +97,6 @@ class MemPoolWatcherActor @Inject() (
                 (_: Peer, block: Block, _: FilteredBlock, _: Int) =>
                   self ! NewBlock(block)
               )
-
               Future {
                 peerGroup.start()
               } map { _ =>
