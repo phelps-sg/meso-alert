@@ -64,7 +64,7 @@ staging-config:
 	bin/staging-config.sh
 
 sbt-run: staging-config docker-db-start
-	$(SDK_INIT); sbt run
+	$(SDK_INIT); sbt run -Dlogger.resource=logback-development.xml
 
 sbt-test:
 	$(SDK_INIT); sbt test
