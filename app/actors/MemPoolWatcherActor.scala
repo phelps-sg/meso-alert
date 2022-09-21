@@ -24,15 +24,16 @@ object MemPoolWatcherActor {
   sealed trait MemPoolWatcherActorMessage
   final case class RegisterWatcher(listener: ActorRef)
       extends MemPoolWatcherActorMessage
-  final case object StartPeerGroup extends MemPoolWatcherActorMessage
+  object StartPeerGroup extends MemPoolWatcherActorMessage
   final case class NewTransaction(tx: Transaction)
       extends MemPoolWatcherActorMessage
-  final case class DownloadedBlock(block: Block) extends MemPoolWatcherActorMessage
+  final case class DownloadedBlock(block: Block)
+      extends MemPoolWatcherActorMessage
   final case class IncrementCounter(key: String)
       extends MemPoolWatcherActorMessage
-  final case object LogCounters extends MemPoolWatcherActorMessage
+  case object LogCounters extends MemPoolWatcherActorMessage
 
-  final case object PeerGroupAlreadyStartedException
+  case object PeerGroupAlreadyStartedException
       extends Exception("Peer group already started")
 
   def props(
@@ -40,7 +41,13 @@ object MemPoolWatcherActor {
       netParamsProvider: NetParamsProvider,
       databaseExecutionContext: DatabaseExecutionContext
   ): Props =
-    Props(new MemPoolWatcherActor(peerGroupProvider, netParamsProvider, databaseExecutionContext))
+    Props(
+      new MemPoolWatcherActor(
+        peerGroupProvider,
+        netParamsProvider,
+        databaseExecutionContext
+      )
+    )
 }
 
 class MemPoolWatcherActor @Inject() (
