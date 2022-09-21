@@ -165,7 +165,7 @@ class ActorTests
   // noinspection ZeroIndexToHead
   "MemPoolWatcher" should {
 
-    trait TextFixtures
+    trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
         with MessagesFixtures
@@ -189,7 +189,7 @@ class ActorTests
     }
 
     "send the correct TxUpdate message when a transaction update is received from " +
-      "the bitcoinj peer group" in new TextFixtures {
+      "the bitcoinj peer group" in new TestFixtures {
 
         // Configure user to not filter events.
         (mockUser.filter _).expects(*).returning(true).atLeastOnce()
