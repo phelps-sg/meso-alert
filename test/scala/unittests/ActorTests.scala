@@ -33,7 +33,10 @@ import akka.util.Timeout
 import com.google.common.util.concurrent.ListenableFuture
 import dao._
 import org.bitcoinj.core._
-import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
+import org.bitcoinj.core.listeners.{
+  BlocksDownloadedEventListener,
+  OnTransactionBroadcastListener
+}
 import org.scalamock.handlers.CallHandler1
 import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
@@ -122,6 +125,10 @@ class ActorTests
         (mockPeerGroup.addPeerDiscovery _).expects(*).once()
         (mockPeerGroup
           .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .once()
+        (mockPeerGroup
+          .addBlocksDownloadedEventListener(_: BlocksDownloadedEventListener))
           .expects(*)
           .once()
       }
