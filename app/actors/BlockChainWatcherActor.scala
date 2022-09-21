@@ -11,23 +11,27 @@ import services.BlockChainProvider
 object BlockChainWatcherActor {
   final case class NewBlock(block: StoredBlock)
 
-  def props(blockChainProvider: BlockChainProvider): Props = Props(new BlockChainWatcherActor(blockChainProvider))
+  def props(blockChainProvider: BlockChainProvider): Props = Props(
+    new BlockChainWatcherActor(blockChainProvider)
+  )
 }
 
-class BlockChainWatcherActor @Inject()(
-                                        val blockChainProvider: BlockChainProvider
-                                      ) extends Actor
-  with Logging
-  with UnrecognizedMessageHandlerFatal {
+class BlockChainWatcherActor @Inject() (
+    val blockChainProvider: BlockChainProvider
+) extends Actor
+    with Logging
+    with UnrecognizedMessageHandlerFatal {
 
   import actors.BlockChainWatcherActor._
 
-  blockChainProvider.get.addNewBestBlockListener((block: StoredBlock) => self ! NewBlock(block))
+  blockChainProvider.get.addNewBestBlockListener((block: StoredBlock) =>
+    self ! NewBlock(block)
+  )
 
-  override def receive: Receive = {
-
-    case NewBlock(block) =>
-      logger.info(s"New best block ${block.getHeader.getHash} with height ${block.getHeight}")
+  override def receive: Receive = { case NewBlock(block) =>
+    logger.info(
+      s"New best block ${block.getHeader.getHash} with height ${block.getHeight}"
+    )
   }
 
 }

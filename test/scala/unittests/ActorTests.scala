@@ -2,9 +2,31 @@ package unittests
 
 import actors.AuthenticationActor.Auth
 import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
-import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
-import actors.SlackSecretsActor.{GenerateSecret, Unbind, ValidSecret, VerifySecret}
-import actors.{AuthenticationActor, BlockChainWatcherActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxHash, TxInputOutput, TxUpdate, Updated}
+import actors.MemPoolWatcherActor.{
+  PeerGroupAlreadyStartedException,
+  StartPeerGroup
+}
+import actors.SlackSecretsActor.{
+  GenerateSecret,
+  Unbind,
+  ValidSecret,
+  VerifySecret
+}
+import actors.{
+  AuthenticationActor,
+  BlockChainWatcherActor,
+  HookAlreadyRegisteredException,
+  HookAlreadyStartedException,
+  HookNotRegisteredException,
+  HookNotStartedException,
+  Registered,
+  Started,
+  Stopped,
+  TxHash,
+  TxInputOutput,
+  TxUpdate,
+  Updated
+}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -12,7 +34,11 @@ import akka.util.Timeout
 import com.google.common.util.concurrent.ListenableFuture
 import dao._
 import org.bitcoinj.core._
-import org.bitcoinj.core.listeners.{BlocksDownloadedEventListener, NewBestBlockListener, OnTransactionBroadcastListener}
+import org.bitcoinj.core.listeners.{
+  BlocksDownloadedEventListener,
+  NewBestBlockListener,
+  OnTransactionBroadcastListener
+}
 import org.scalamock.handlers.CallHandler1
 import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
@@ -25,7 +51,30 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
-import unittests.Fixtures.{ActorGuiceFixtures, BlockChainWatcherFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MainNetParamsFixtures, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, MessagesFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackSecretsActorFixtures, TransactionFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
+import unittests.Fixtures.{
+  ActorGuiceFixtures,
+  BlockChainWatcherFixtures,
+  ConfigurationFixtures,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  HookActorTestLogic,
+  MainNetParamsFixtures,
+  MemPoolWatcherActorFixtures,
+  MemPoolWatcherFixtures,
+  MessagesFixtures,
+  ProvidesTestBindings,
+  SlackChatActorFixtures,
+  SlackChatHookDaoFixtures,
+  SlackSecretsActorFixtures,
+  TransactionFixtures,
+  TxPersistenceActorFixtures,
+  TxUpdateFixtures,
+  TxWatchActorFixtures,
+  UserFixtures,
+  WebSocketFixtures,
+  WebhookActorFixtures,
+  WebhookFixtures
+}
 
 import java.net.URI
 import scala.concurrent.Future
