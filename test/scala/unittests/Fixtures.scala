@@ -32,7 +32,6 @@ import com.google.inject.AbstractModule
 import com.typesafe.config.ConfigFactory
 import dao._
 import org.bitcoinj.core.Utils.HEX
-import org.bitcoinj.core.listeners.NewBestBlockListener
 import org.bitcoinj.core._
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.store.BlockStore

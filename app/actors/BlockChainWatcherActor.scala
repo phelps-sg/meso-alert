@@ -4,7 +4,6 @@ import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import akka.actor.{Actor, Props}
 import com.google.inject.Inject
 import org.bitcoinj.core.StoredBlock
-import org.bitcoinj.core.listeners.NewBestBlockListener
 import play.api.Logging
 import services.BlockChainProvider
 
