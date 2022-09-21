@@ -1,29 +1,9 @@
-import actors.{
-  AuthenticationActor,
-  EncryptionActor,
-  HooksManagerActorSlackChat,
-  HooksManagerActorWeb,
-  MemPoolWatcherActor,
-  SlackSecretsActor,
-  TxFilterActor,
-  TxMessagingActorSlackChat,
-  TxMessagingActorWeb,
-  TxPersistenceActor
-}
+import actors.{AuthenticationActor, BlockChainWatcherActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, SlackSecretsActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor}
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import dao._
 import play.libs.akka.AkkaGuiceSupport
-import services.{
-  EncryptionManagerService,
-  HooksManagerSlackChat,
-  HooksManagerSlackChatService,
-  HooksManagerWeb,
-  HooksManagerWebService,
-  MemPoolWatcher,
-  MemPoolWatcherService,
-  SodiumEncryptionManager
-}
+import services.{EncryptionManagerService, HooksManagerSlackChat, HooksManagerSlackChatService, HooksManagerWeb, HooksManagerWebService, MemPoolWatcher, MemPoolWatcherService, SodiumEncryptionManager}
 import slick.jdbc.JdbcBackend.Database
 
 import javax.inject.{Inject, Provider, Singleton}
@@ -35,6 +15,7 @@ class Module extends AbstractModule with AkkaGuiceSupport {
     bindActor(classOf[HooksManagerActorWeb], "webhooks-actor")
     bindActor(classOf[HooksManagerActorSlackChat], "slack-hooks-actor")
     bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")
+    bindActor(classOf[BlockChainWatcherActor], "block-chain-actor")
     bindActor(classOf[EncryptionActor], "encryption-actor")
     bindActor(classOf[TxPersistenceActor], "tx-persistence-actor")
     bindActor(classOf[SlackSecretsActor], "slack-secrets-actor")

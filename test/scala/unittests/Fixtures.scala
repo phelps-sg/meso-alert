@@ -2,28 +2,7 @@ package unittests
 
 import actions.Auth0ValidateJWTAction
 import actors.EncryptionActor.Encrypted
-import actors.{
-  AuthenticationActor,
-  EncryptionActor,
-  HooksManagerActorSlackChat,
-  HooksManagerActorWeb,
-  MemPoolWatcherActor,
-  Register,
-  Registered,
-  SlackSecretsActor,
-  Start,
-  Started,
-  Stop,
-  Stopped,
-  TxFilterActor,
-  TxHash,
-  TxMessagingActorSlackChat,
-  TxMessagingActorWeb,
-  TxPersistenceActor,
-  TxUpdate,
-  Update,
-  Updated
-}
+import actors.{AuthenticationActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, SlackSecretsActor, Start, Started, Stop, Stopped, TxFilterActor, TxHash, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
@@ -31,46 +10,26 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
 import com.typesafe.config.ConfigFactory
 import dao._
-import org.bitcoinj.core.PeerGroup
 import org.bitcoinj.core.Utils.HEX
+import org.bitcoinj.core.listeners.NewBestBlockListener
+import org.bitcoinj.core._
 import org.bitcoinj.params.MainNetParams
+import org.bitcoinj.store.BlockStore
+import org.bitcoinj.wallet.Wallet
 import org.scalamock.handlers.CallHandler1
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
 import pdi.jwt.JwtClaim
 import play.api.i18n.{DefaultMessagesApi, Lang, MessagesApi}
 import play.api.inject.Injector
-import play.api.inject.guice.{
-  GuiceApplicationBuilder,
-  GuiceInjectorBuilder,
-  GuiceableModule
-}
+import play.api.inject.guice.{GuiceApplicationBuilder, GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, JsValue, Json}
 import play.api.mvc.BodyParsers
 import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
 import play.api.{Application, Configuration, Logging, inject}
-import services.{
-  HooksManagerSlackChat,
-  HooksManagerWeb,
-  MailManager,
-  MainNetParamsProvider,
-  MemPoolWatcher,
-  MemPoolWatcherService,
-  PeerGroupProvider,
-  SlackManager,
-  SlackSecretsManagerService,
-  SlackSignatureVerifierService,
-  SodiumEncryptionManager,
-  User,
-  UserManagerService
-}
-import slack.BlockMessages.{
-  MESSAGE_NEW_TRANSACTION,
-  MESSAGE_TOO_MANY_OUTPUTS,
-  MESSAGE_TO_ADDRESSES,
-  MESSAGE_TRANSACTION_HASH
-}
+import services.{BlockChainProvider, HooksManagerSlackChat, HooksManagerWeb, MailManager, MainNetParamsProvider, MemPoolWatcher, MemPoolWatcherService, PeerGroupProvider, SlackManager, SlackSecretsManagerService, SlackSignatureVerifierService, SodiumEncryptionManager, User, UserManagerService}
+import slack.BlockMessages.{MESSAGE_NEW_TRANSACTION, MESSAGE_TOO_MANY_OUTPUTS, MESSAGE_TO_ADDRESSES, MESSAGE_TRANSACTION_HASH}
 import slick.BtcPostgresProfile.api._
 import slick._
 import slick.dbio.{DBIO, Effect}
@@ -116,14 +75,18 @@ object Fixtures {
 
   trait HookManagerMock[X, Y] {
     def start(uri: X): Unit
+
     def register(hook: Y): Unit
+
     def stop(uri: X): Unit
+
     def update(hook: Y): Unit
   }
 
   trait WebhookManagerMock extends HookManagerMock[URI, Webhook]
+
   trait SlackChatManagerMock
-      extends HookManagerMock[SlackChannelId, SlackChatHook]
+    extends HookManagerMock[SlackChannelId, SlackChatHook]
 
   trait MockHookManagerActor[X, Y <: Hook[X]] extends Actor with Logging {
     val mock: HookManagerMock[X, Y]
@@ -154,8 +117,9 @@ object Fixtures {
       new MockWebhookManagerActor(mock)
     )
   }
+
   class MockWebhookManagerActor(val mock: WebhookManagerMock)
-      extends MockHookManagerActor[URI, Webhook]
+    extends MockHookManagerActor[URI, Webhook]
 
   object MockSlackChatManagerActor {
     def props(mock: SlackChatManagerMock) = Props(
@@ -164,7 +128,7 @@ object Fixtures {
   }
 
   class MockSlackChatManagerActor(val mock: SlackChatManagerMock)
-      extends MockHookManagerActor[SlackChannelId, SlackChatHook]
+    extends MockHookManagerActor[SlackChannelId, SlackChatHook]
 
   trait ProvidesInjector {
     val injector: Injector
@@ -216,6 +180,7 @@ object Fixtures {
         "v0=d1c387a20da72e5e07de4e2fb7e93cd9b44c2caa118868aad99c3b20c93de73a"
       )
     )
+
     class SignatureVerifierServiceModule extends AbstractModule {
       override def configure(): Unit = {
         bind(classOf[SlackSignatureVerifierService]).toInstance(
@@ -225,13 +190,15 @@ object Fixtures {
     }
   }
 
-  trait Auth0ActionFixtures { env: FakeApplication with HasExecutionContext =>
+  trait Auth0ActionFixtures {
+    env: FakeApplication with HasExecutionContext =>
     class MockAuth0Action(
-        override protected val validateJwt: String => Try[JwtClaim]
-    ) extends Auth0ValidateJWTAction(
-          fakeApplication.injector.instanceOf[BodyParsers.Default],
-          fakeApplication.configuration
-        )(executionContext) {}
+                           override protected val validateJwt: String => Try[JwtClaim]
+                         ) extends Auth0ValidateJWTAction(
+      fakeApplication.injector.instanceOf[BodyParsers.Default],
+      fakeApplication.configuration
+    )(executionContext) {}
+
     val claim = JwtClaim()
     val mockAuth0ActionAlwaysSuccess = new MockAuth0Action(_ => Success(claim))
     val mockAuth0ActionAlwaysFail = new MockAuth0Action(_ =>
@@ -240,7 +207,7 @@ object Fixtures {
   }
 
   trait ProvidesTestBindings
-      extends HasBindModule
+    extends HasBindModule
       with HasExecutionContext
       with HasActorSystem
       with HasDatabase
@@ -266,7 +233,9 @@ object Fixtures {
     val memPoolWatcher =
       new MemPoolWatcher(memPoolWatcherActor)(actorSystem, executionContext) {
         override def initialiseFuture(): Future[Unit] = {
-          Future { () }
+          Future {
+            ()
+          }
         }
       }
 
@@ -278,7 +247,8 @@ object Fixtures {
     }
   }
 
-  trait TransactionFixtures { env: MemPoolWatcherFixtures =>
+  trait TransactionFixtures {
+    env: MemPoolWatcherFixtures =>
     lazy val transactions = Json
       .parse(Source.fromResource("tx_valid.json").getLines().mkString)
       .as[Array[JsArray]]
@@ -290,27 +260,90 @@ object Fixtures {
       )
   }
 
-  trait WebSocketFixtures extends MockFactory { env: HasActorSystem =>
+  trait WebSocketFixtures extends MockFactory {
+    env: HasActorSystem =>
     val actorSystem: ActorSystem
     val mockWs = mock[WebSocketMock]
     val mockWsActor = actorSystem.actorOf(MockWebsocketActor.props(mockWs))
   }
 
-//  trait MainNetParamsFixtures {
-//    val mainNetParams = MainNetParams.get()
-//  }
+  trait MainNetParamsFixtures {
+    val mainNetParams = MainNetParams.get()
+  }
+
+  trait BlockChainWatcherFixtures extends MockFactory {
+    env: MainNetParamsFixtures =>
+    val params: NetworkParameters = MainNetParams.get()
+    val wallets = new java.util.LinkedList[Wallet]()
+    val blockStore = mock[BlockStore]
+    val mockStoredBlock = mock[StoredBlock]
+    val genesisBlock: Block = params.getGenesisBlock
+
+    (mockStoredBlock.getHeight _).expects().returning(0)
+    (mockStoredBlock.getHeader _)
+      .expects()
+      .returning(genesisBlock)
+      .atLeastOnce()
+    (mockStoredBlock.getPrev _).expects(*).returning(null)
+    (blockStore.getChainHead _).expects().returning(mockStoredBlock)
+
+    //noinspection NotImplementedCode
+    class MockBlockChain
+      extends AbstractBlockChain(params, wallets, blockStore) {
+      override def addToBlockStore(
+                                    storedPrev: StoredBlock,
+                                    block: Block
+                                  ): StoredBlock = ???
+
+      override def addToBlockStore(
+                                    storedPrev: StoredBlock,
+                                    header: Block,
+                                    txOutputChanges: TransactionOutputChanges
+                                  ): StoredBlock = ???
+
+      override def rollbackBlockStore(height: Int): Unit = ???
+
+      override def doSetChainHead(chainHead: StoredBlock): Unit = ???
+
+      override def notSettingChainHead(): Unit = ???
+
+      override def getStoredBlockInCurrentScope(
+                                                 hash: Sha256Hash
+                                               ): StoredBlock = ???
+
+      override def shouldVerifyTransactions(): Boolean = ???
+
+      override def connectTransactions(
+                                        height: Int,
+                                        block: Block
+                                      ): TransactionOutputChanges = ???
+
+      override def connectTransactions(
+                                        newBlock: StoredBlock
+                                      ): TransactionOutputChanges = ???
+
+      override def disconnectTransactions(block: StoredBlock): Unit = ???
+    }
+
+    val mockBlockChain = mock[MockBlockChain]
+
+    class MockBlockChainProvider extends BlockChainProvider {
+      override val get = mockBlockChain
+    }
+  }
 
   trait MemPoolWatcherFixtures extends MockFactory {
 
     val mainNetParams = MainNetParams.get()
+
     class MainNetPeerGroup extends PeerGroup(mainNetParams)
 
     val mockMemPoolWatcher = mock[MemPoolWatcherService]
     val mockPeerGroup = mock[MainNetPeerGroup]
 
     def memPoolWatcherExpectations(
-        ch: CallHandler1[ActorRef, Unit]
-    ): ch.Derived = {
+                                    ch: CallHandler1[ActorRef, Unit]
+                                  ): ch.Derived = {
       ch.never()
     }
 
@@ -373,9 +406,17 @@ object Fixtures {
 
   trait SlackChatHookFixtures {
     val encryptedToken1 =
-      Encrypted(cipherText = Array[Byte] { 1 }, nonce = Array[Byte] { 1 })
+      Encrypted(cipherText = Array[Byte] {
+        1
+      }, nonce = Array[Byte] {
+        1
+      })
     val encryptedToken2 =
-      Encrypted(cipherText = Array[Byte] { 2 }, nonce = Array[Byte] { 2 })
+      Encrypted(cipherText = Array[Byte] {
+        2
+      }, nonce = Array[Byte] {
+        2
+      })
     val originalThreshold = 100L
     val newThreshold = 200L
     val key = SlackChannelId("#test")
@@ -401,7 +442,8 @@ object Fixtures {
       )
   }
 
-  trait DatabaseInitializer { env: HasDatabase with HasExecutionContext =>
+  trait DatabaseInitializer {
+    env: HasDatabase with HasExecutionContext =>
     val db: Database
     implicit val ec = executionContext
 
@@ -464,7 +506,7 @@ object Fixtures {
   }
 
   trait SlackChatDaoTestLogic
-      extends HookDaoTestLogic[SlackChannelId, SlackChatHook] {
+    extends HookDaoTestLogic[SlackChannelId, SlackChatHook] {
     env: HasDatabase with HasExecutionContext =>
 
     override val tableQuery = Tables.slackChatHooks
@@ -487,11 +529,13 @@ object Fixtures {
       )(executionContext)
   }
 
-  trait WebhookDaoFixtures { env: ProvidesInjector =>
+  trait WebhookDaoFixtures {
+    env: ProvidesInjector =>
     val hookDao = injector.instanceOf[WebhookDao]
   }
 
-  trait WebhookActorFixtures { env: ProvidesInjector with HasActorSystem =>
+  trait WebhookActorFixtures {
+    env: ProvidesInjector with HasActorSystem =>
     val actorSystem: ActorSystem
     val hook: Webhook
     val hooksActor = {
@@ -556,7 +600,8 @@ object Fixtures {
     val updatedSlackTeam = slackTeam.copy(teamName = "updated")
   }
 
-  trait SlickSlashCommandFixtures { env: SlackSignatureVerifierFixtures =>
+  trait SlickSlashCommandFixtures {
+    env: SlackSignatureVerifierFixtures =>
     val channelId = SlackChannelId("1234")
     val command = "/test"
     val text = ""
@@ -617,13 +662,15 @@ object Fixtures {
       )
   }
 
-  trait SlickSlashCommandHistoryDaoFixtures { env: ProvidesInjector =>
+  trait SlickSlashCommandHistoryDaoFixtures {
+    env: ProvidesInjector =>
     val injector: Injector
     val slickSlashCommandHistoryDao =
       injector.instanceOf[SlickSlashCommandHistoryDao]
   }
 
-  trait SlickTransactionUpdateDaoFixtures { env: ProvidesInjector =>
+  trait SlickTransactionUpdateDaoFixtures {
+    env: ProvidesInjector =>
     val injector: Injector
     val slickTransactionUpdateDao =
       injector.instanceOf[SlickTransactionUpdateDao]
@@ -735,8 +782,10 @@ object Fixtures {
     env: ConfigurationFixtures with ProvidesInjector =>
     val slackClientExecutionContext =
       injector.instanceOf[SlackClientExecutionContext]
+
     class MockSlackManager
-        extends SlackManager(config, slackClientExecutionContext)
+      extends SlackManager(config, slackClientExecutionContext)
+
     val mockSlackManagerService = mock[MockSlackManager]
   }
 
@@ -766,7 +815,7 @@ object Fixtures {
       with MemPoolWatcherFixtures =>
 
     val actorSystem: ActorSystem
-//    val mockMemPoolWatcher: MemPoolWatcherService
+    //    val mockMemPoolWatcher: MemPoolWatcherService
     val executionContext: ExecutionContext
     val injector: Injector
     val mockTransactionUpdateDao = mock[TransactionUpdateDao]
@@ -831,7 +880,8 @@ object Fixtures {
   }
 
   trait SlackEventsControllerFixtures {
-    val deleteChannelRequestBody: JsValue = Json.parse("""
+    val deleteChannelRequestBody: JsValue = Json.parse(
+      """
   {
     "event" :
     {
@@ -867,7 +917,8 @@ object Fixtures {
     val anotherUserId = RegisteredUserId("test-user-2")
   }
 
-  trait EncryptionActorFixtures { env: HasActorSystem =>
+  trait EncryptionActorFixtures {
+    env: HasActorSystem =>
     val actorSystem: ActorSystem
     val secret: Array[Byte] =
       Array(56, -5, 127, -79, -126, 3, 110, 29, -57, 55, -97, 79, -32, -126, 83,
@@ -880,7 +931,8 @@ object Fixtures {
     val secondPlainTextBinary = secondPlainText.getBytes
   }
 
-  trait WebhooksActorFixtures { env: HasActorSystem with ProvidesInjector =>
+  trait WebhooksActorFixtures {
+    env: HasActorSystem with ProvidesInjector =>
     val actorSystem: ActorSystem
     val injector: Injector
     val hooksActor = {

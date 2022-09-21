@@ -1,7 +1,7 @@
 package services
 
 import com.google.inject.{ImplementedBy, Provider, Singleton}
-import org.bitcoinj.core.{BlockChain, PeerGroup}
+import org.bitcoinj.core.{AbstractBlockChain, BlockChain, PeerGroup}
 import org.bitcoinj.params.{AbstractBitcoinNetParams, MainNetParams}
 import org.bitcoinj.store.PostgresFullPrunedBlockStore
 import play.api.Configuration
@@ -14,8 +14,8 @@ trait NetParamsProvider extends Provider[AbstractBitcoinNetParams] {
 }
 
 @ImplementedBy(classOf[PostgresBlockChain])
-trait BlockChainProvider extends Provider[BlockChain] {
-  val get: BlockChain
+trait BlockChainProvider extends Provider[AbstractBlockChain] {
+  val get: AbstractBlockChain
 }
 
 @ImplementedBy(classOf[BlockChainPeerGroup])
