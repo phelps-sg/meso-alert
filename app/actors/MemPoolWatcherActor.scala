@@ -27,7 +27,7 @@ object MemPoolWatcherActor {
   final case object StartPeerGroup extends MemPoolWatcherActorMessage
   final case class NewTransaction(tx: Transaction)
       extends MemPoolWatcherActorMessage
-  final case class NewBlock(block: Block) extends MemPoolWatcherActorMessage
+  final case class DownloadedBlock(block: Block) extends MemPoolWatcherActorMessage
   final case class IncrementCounter(key: String)
       extends MemPoolWatcherActorMessage
   final case object LogCounters extends MemPoolWatcherActorMessage
@@ -82,7 +82,7 @@ class MemPoolWatcherActor @Inject() (
               s"${RiskAnalysis.Result.NON_STANDARD} - ${DefaultRiskAnalysis.isStandard(tx)}"
             )
 
-        case NewBlock(block: Block) =>
+        case DownloadedBlock(block: Block) =>
           logger.debug(
             s"Downloaded block ${block.getHash} with ${block.getTransactions.size()} transactions."
           )
@@ -101,7 +101,7 @@ class MemPoolWatcherActor @Inject() (
               )
               peerGroup.addBlocksDownloadedEventListener(
                 (_: Peer, block: Block, _: FilteredBlock, _: Int) =>
-                  self ! NewBlock(block)
+                  self ! DownloadedBlock(block)
               )
               Future {
                 peerGroup.start()
