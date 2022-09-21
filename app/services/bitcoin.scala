@@ -35,14 +35,14 @@ trait BlockChainDatabaseConfiguration {
 @Singleton
 class PlayBlockChainDatabaseConfiguration @Inject() (val config: Configuration)
     extends BlockChainDatabaseConfiguration {
-  def serverName =
+  def serverName: String =
     config.get[String]("meso-alert.db.properties.serverName")
-  def portNumber =
+  def portNumber: String =
     config.get[String]("meso-alert.db.properties.portNumber")
-  def userName = config.get[String]("meso-alert.db.properties.user")
-  def password =
+  def userName: String = config.get[String]("meso-alert.db.properties.user")
+  def password: String =
     config.get[String]("meso-alert.db.properties.password")
-  def databaseName =
+  def databaseName: String =
     config.get[String]("meso-alert.db.properties.databaseName")
 }
 
@@ -64,7 +64,7 @@ class PostgresBlockChain @Inject() (
 
 @Singleton
 class MainNetParamsProvider extends NetParamsProvider {
-  val get = MainNetParams.get
+  val get: MainNetParams = MainNetParams.get
 }
 
 @Singleton
