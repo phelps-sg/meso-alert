@@ -54,9 +54,10 @@ import services.{
   HooksManagerSlackChat,
   HooksManagerWeb,
   MailManager,
+  MainNetParamsProvider,
   MemPoolWatcher,
   MemPoolWatcherService,
-  PeerGroupSelection,
+  PeerGroupProvider,
   SlackManager,
   SlackSecretsManagerService,
   SlackSignatureVerifierService,
@@ -252,13 +253,13 @@ object Fixtures {
 
     val executionContext: ExecutionContext
 
-    val pgs = new PeerGroupSelection() {
-      val params = mainNetParams
+    val pgs = new PeerGroupProvider() {
       lazy val get = mockPeerGroup
     }
     val memPoolWatcherActor = actorSystem.actorOf(
       MemPoolWatcherActor.props(
         pgs,
+        new MainNetParamsProvider(),
         injector.instanceOf[DatabaseExecutionContext]
       )
     )

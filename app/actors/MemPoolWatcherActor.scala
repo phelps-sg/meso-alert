@@ -8,7 +8,7 @@ import org.bitcoinj.core._
 import org.bitcoinj.net.discovery.DnsDiscovery
 import org.bitcoinj.wallet.{DefaultRiskAnalysis, RiskAnalysis}
 import play.api.Logging
-import services.PeerGroupSelection
+import services.{NetParamsProvider, PeerGroupProvider}
 import slick.DatabaseExecutionContext
 
 import java.util
@@ -17,6 +17,9 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
 object MemPoolWatcherActor {
+
+  val TOTAL_KEY: String = "TOTAL"
+  val NO_DEPS: util.List[Transaction] = Collections.emptyList
 
   sealed trait MemPoolWatcherActorMessage
   final case class RegisterWatcher(listener: ActorRef)
@@ -33,27 +36,28 @@ object MemPoolWatcherActor {
       extends Exception("Peer group already started")
 
   def props(
-      peerGroupSelection: PeerGroupSelection,
+      peerGroupProvider: PeerGroupProvider,
+      netParamsProvider: NetParamsProvider,
       databaseExecutionContext: DatabaseExecutionContext
   ): Props =
-    Props(new MemPoolWatcherActor(peerGroupSelection, databaseExecutionContext))
+    Props(new MemPoolWatcherActor(peerGroupProvider, netParamsProvider, databaseExecutionContext))
 }
 
 class MemPoolWatcherActor @Inject() (
-    val peerGroupSelection: PeerGroupSelection,
+    val peerGroupProvider: PeerGroupProvider,
+    val netParamsProvider: NetParamsProvider,
     val databaseExecutionContext: DatabaseExecutionContext
 ) extends Actor
     with Logging
     with UnrecognizedMessageHandlerFatal {
 
-  private val TOTAL_KEY: String = "TOTAL"
-  // noinspection ActorMutableStateInspection
-  private val NO_DEPS: util.List[Transaction] = Collections.emptyList
-  private val peerGroup = peerGroupSelection.get
-  implicit val params: NetworkParameters = peerGroupSelection.params
+  private val peerGroup = peerGroupProvider.get
+
+  implicit val params: NetworkParameters = netParamsProvider.get
   implicit val executionContext: DatabaseExecutionContext =
     databaseExecutionContext
 
+  // noinspection ActorMutableStateInspection
   var counters: Map[String, Int] = Map().withDefaultValue(0)
   var startTime: Option[Long] = None
 
@@ -79,7 +83,9 @@ class MemPoolWatcherActor @Inject() (
             )
 
         case NewBlock(block: Block) =>
-          logger.debug(s"Downloaded block ${block.getHash} with ${block.getTransactions.size()} transactions.")
+          logger.debug(
+            s"Downloaded block ${block.getHash} with ${block.getTransactions.size()} transactions."
+          )
 
         case StartPeerGroup =>
           logger.debug("Received start peer group request.")
