@@ -5,10 +5,7 @@ import controllers.SlackSlashCommandController
 import dao.SlashCommand
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
-import slack.BlockMessages.{
-  MESSAGE_TOO_MANY_OUTPUTS,
-  blockMessageBuilder
-}
+import slack.BlockMessages.{MESSAGE_TOO_MANY_OUTPUTS, blockMessageBuilder}
 import unittests.Fixtures.{
   MessagesFixtures,
   SlackSignatureVerifierFixtures,
