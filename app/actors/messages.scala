@@ -1,6 +1,7 @@
 package actors
 
 import dao.Hook
+import org.bitcoinj.core.TransactionConfidence.ConfidenceType
 import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
 import play.api.libs.json.{JsObject, Json, Writes}
@@ -22,27 +23,44 @@ case class TxInputOutput(address: Option[String], value: Option[Long])
 
 case class TxHash(value: String) extends AnyVal with MappedTo[String]
 
+object TxHash {
+  def apply(tx: Transaction): TxHash = TxHash(tx.getTxId.toString)
+}
+
+case class TxConfidence(
+    confType: ConfidenceType,
+    depthInBlocks: Int
+)
+
 case class TxUpdate(
     hash: TxHash,
     value: Long,
     time: java.time.LocalDateTime,
     isPending: Boolean,
     outputs: Seq[TxInputOutput],
-    inputs: Seq[TxInputOutput]
+    inputs: Seq[TxInputOutput],
+    confidence: Option[TxConfidence]
 )
 
 object TxUpdate {
 
   def apply(tx: Transaction)(implicit params: NetworkParameters): TxUpdate =
     TxUpdate(
-      hash = TxHash(tx.getTxId.toString),
+      hash = TxHash(tx),
       value = tx.getOutputSum.value,
       time = java.time.LocalDateTime.now(),
       isPending = tx.isPending,
       inputs = (for (input <- tx.getInputs.asScala)
         yield TxInputOutput(address(input), value(input))).toSeq,
       outputs = (for (output <- tx.getOutputs.asScala)
-        yield TxInputOutput(address(output), value(output))).toSeq
+        yield TxInputOutput(address(output), value(output))).toSeq,
+      confidence = {
+        tx.getConfidence() match {
+          case null => None
+          case conf =>
+            Some(TxConfidence(conf.getConfidenceType, conf.getDepthInBlocks))
+        }
+      }
     )
 
   // https://bitcoin.stackexchange.com/questions/83481/bitcoinj-java-library-not-decoding-input-addresses-for-some-transactions
