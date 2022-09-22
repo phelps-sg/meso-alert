@@ -5,19 +5,13 @@ import controllers.SlackSlashCommandController
 import dao.SlashCommand
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
-import slack.BlockMessages.{
-  MESSAGE_NEW_TRANSACTION,
-  MESSAGE_TOO_MANY_OUTPUTS,
-  MESSAGE_TO_ADDRESSES,
-  MESSAGE_TRANSACTION_HASH,
-  blockMessageBuilder
-}
+import slack.BlockMessages.{MESSAGE_TOO_MANY_OUTPUTS, blockMessageBuilder}
 import unittests.Fixtures.{
   MessagesFixtures,
   SlackSignatureVerifierFixtures,
   SlickSlashCommandFixtures
 }
-import util.BitcoinFormatting.{formatSatoshi, linkToAddress, linkToTxHash}
+import util.BitcoinFormatting.formatSatoshi
 
 import scala.util.{Failure, Success}
 
@@ -45,31 +39,37 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
       val testHash = TxHash("testHash")
     }
 
-    "print all outputs if they take up less than 47 sections" in new TestFixtures {
+    "print all outputs if they take up less than 47 sections - single section" in new TestFixtures {
       chatMessage(
         testHash,
-        10,
+        100000000,
         List("1", "2")
-      ) shouldEqual
-        """[{"type":"header","text":{"type":"plain_text",""" +
-        s""""text":"${messagesApi(MESSAGE_NEW_TRANSACTION)} ${formatSatoshi(
-            10
-          )}""" +
-        """ BTC","emoji":false}},{"type":"section","text":{"type":"mrkdwn",""" +
-        s""""text":"${messagesApi(
-            MESSAGE_TRANSACTION_HASH
-          )}: """ + linkToTxHash(testHash) +
-        s""" ${messagesApi(MESSAGE_TO_ADDRESSES)}:"}},""" +
-        """{"type":"section","text":{"type": "mrkdwn", "text": """" +
-        s"${linkToAddress("1")}, ${linkToAddress("2")}, " +
-        """"}}, {"type":"divider"}]"""
+      ) should fullyMatch regex
+        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https://www\.blockchair\.com/bitcoin/transaction/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},\{"type":"section","text":\{"type": "mrkdwn", "text": "<https://www\.blockchair\.com/bitcoin/address/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>, <https://www\.blockchair\.com/bitcoin/address/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>, "\}\}, \{"type":"divider"\}]"""
+    }
+
+    "print all outputs if they take up less than 47 sections - multiple sections" in new TestFixtures {
+      chatMessage(
+        testHash,
+        100000000,
+        List.range(1, 30, 1).map(x => x.toString)
+      ) should fullyMatch regex
+        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https:\/\/www\.blockchair\.com\/bitcoin\/transaction\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},(\{"type":"section","text":\{"type": "mrkdwn", "text": "(<https:\/\/www\.blockchair\.com\/bitcoin\/address\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>, )+"\}\}, )*\{"type":"divider"\}]"""
+
+      chatMessage(
+        testHash,
+        100000000,
+        List.range(1, 100, 1).map(x => x.toString)
+      ) should fullyMatch regex
+        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https:\/\/www\.blockchair\.com\/bitcoin\/transaction\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},(\{"type":"section","text":\{"type": "mrkdwn", "text": "(<https:\/\/www\.blockchair\.com\/bitcoin\/address\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>, )+"\}\}, )*\{"type":"divider"\}]"""
+
     }
 
     "make the last section of the block a link to view all the outputs if there are more than 47 sections" in
       new TestFixtures {
         val result: String = chatMessage(
           testHash,
-          10,
+          100000000,
           List.fill(1000)("testOutput")
         )
         result should include(

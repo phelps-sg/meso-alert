@@ -44,7 +44,7 @@ object BlockMessages {
         )
       } else if (currentSectionOutputs >= txsPerSection && txOutputs.nonEmpty) {
         val newSectionString = """"}}, """ +
-          """{"type":"section","text":{"type": "mrkdwn", "text": \""" +
+          """{"type":"section","text":{"type": "mrkdwn", "text": """" +
           s"${linkToAddress(txOutputs.head)}, "
         newSectionString + buildOutputsSections(messages)(
           txOutputs.tail,
