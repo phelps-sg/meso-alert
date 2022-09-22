@@ -10,8 +10,10 @@ import services.{BlockChainProvider, NetParamsProvider}
 
 object BlockChainWatcherActor {
 
-  final case class NewBlock(block: StoredBlock)
+  sealed trait BlockChainWatcherMessage
+  final case class NewBlock(block: StoredBlock) extends BlockChainWatcherMessage
   final case class WatchTxConfidence(hash: TxHash, listener: ActorRef)
+      extends BlockChainWatcherMessage
 
   def props(
       blockChainProvider: BlockChainProvider,
@@ -42,18 +44,23 @@ class BlockChainWatcherActor @Inject() (
 
   override def receive: Receive = {
 
-    case NewBlock(block) =>
-      logger.info(
-        s"New best block ${block.getHeader.getHash} with height ${block.getHeight}"
-      )
-      block.getHeader.getTransactions.forEach { tr =>
-        txWatchers.get(TxHash(tr)) map { listener =>
-          listener ! TxUpdate(tr)
-        }
-      }
+    case message: BlockChainWatcherMessage =>
+      message match {
 
-    case WatchTxConfidence(hash: TxHash, listener) =>
-      txWatchers += hash -> listener
+        case NewBlock(block) =>
+          logger.info(
+            s"New best block ${block.getHeader.getHash} with height ${block.getHeight}"
+          )
+          block.getHeader.getTransactions.forEach { tr =>
+            txWatchers.get(TxHash(tr)) map { listener =>
+              listener ! TxUpdate(tr)
+            }
+          }
+
+        case WatchTxConfidence(hash: TxHash, listener) =>
+          txWatchers += hash -> listener
+
+      }
 
     case other =>
       unrecognizedMessage(other)
