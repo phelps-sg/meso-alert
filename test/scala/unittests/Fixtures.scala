@@ -312,12 +312,12 @@ object Fixtures {
   }
 
   trait MainNetParamsFixtures {
-    val mainNetParams = MainNetParams.get()
+    val netParamsProvider = new MainNetParamsProvider
+    val params = netParamsProvider.get
   }
 
   trait BlockChainWatcherFixtures extends MockFactory {
     env: MainNetParamsFixtures =>
-    val params: NetworkParameters = MainNetParams.get()
     val wallets = new java.util.LinkedList[Wallet]()
     val blockStore = mock[BlockStore]
     val mockStoredBlock = mock[StoredBlock]
@@ -730,7 +730,7 @@ object Fixtures {
     val timeStamp = java.time.LocalDateTime.of(2001, 1, 1, 0, 0)
     val testHash = TxHash("testHash")
     val tx =
-      TxUpdate(testHash, 10, timeStamp, isPending = true, List(), List())
+      TxUpdate(testHash, 10, timeStamp, isPending = true, List(), List(), None)
   }
 
   trait HookActorTestLogic[X, Y <: Hook[X], Z] extends DatabaseInitializer {
