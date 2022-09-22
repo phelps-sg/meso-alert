@@ -180,7 +180,10 @@ class ActorTests
 
     "listen for new best blocks on startup" in new TestFixtures {
       val blockChainWatcherActor = actorSystem.actorOf(
-        BlockChainWatcherActor.props(new MockBlockChainProvider())
+        BlockChainWatcherActor.props(
+          new MockBlockChainProvider(),
+          netParamsProvider
+        )
       )
       expectNoMessage()
     }
@@ -287,7 +290,8 @@ class ActorTests
                   TxInputOutput(Some(`outputAddress1`), Some(`value1`)),
                   TxInputOutput(Some(`outputAddress2`), Some(`value2`))
                 ),
-                Seq()
+                Seq(),
+                _
               ) if totalValue == value1 + value2 =>
         }
 
@@ -301,7 +305,8 @@ class ActorTests
                 Seq(
                   TxInputOutput(Some("1AJbsFZ64EpEfS5UAjAfcUG8pH8Jn3rn1F"), _)
                 ),
-                Seq(_)
+                Seq(_),
+                _
               ) =>
         }
 
@@ -322,7 +327,8 @@ class ActorTests
                 ),
                 Seq(
                   TxInputOutput(Some("15vScfMHNrXN4QvWe54q5hwfVoYwG79CS1"), _)
-                )
+                ),
+                _
               ) =>
         }
 
@@ -346,7 +352,8 @@ class ActorTests
                     _
                   )
                 ),
-                Seq(_)
+                Seq(_),
+                _
               ) =>
         }
 
@@ -490,7 +497,8 @@ class ActorTests
         java.time.LocalDateTime.now(),
         isPending = true,
         List(),
-        List()
+        List(),
+        None
       )
       val tx2 = TxUpdate(
         TxHash("testHash2"),
@@ -498,7 +506,8 @@ class ActorTests
         java.time.LocalDateTime.now(),
         isPending = true,
         List(),
-        List()
+        List(),
+        None
       )
 
       (mockUserManager.authenticate _)
