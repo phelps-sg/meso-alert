@@ -38,6 +38,7 @@ class BlockChainWatcherActor @Inject() (
 
   protected var txWatchers: Map[TxHash, ActorRef] = Map()
 
+  logger.debug(s"Adding $self as new best block listener")
   blockChain.addNewBestBlockListener((block: StoredBlock) =>
     self ! NewBlock(block)
   )
@@ -51,9 +52,11 @@ class BlockChainWatcherActor @Inject() (
           logger.info(
             s"New best block ${block.getHeader.getHash} with height ${block.getHeight}"
           )
-          block.getHeader.getTransactions.forEach { tr =>
-            txWatchers.get(TxHash(tr)) map { listener =>
-              listener ! TxUpdate(tr)
+          Option(block.getHeader.getTransactions) map { transactions =>
+            transactions.forEach { tr =>
+              txWatchers.get(TxHash(tr)) map { listener =>
+                listener ! TxUpdate(tr)
+              }
             }
           }
 
