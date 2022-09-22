@@ -27,10 +27,16 @@ class BlockChainWatcherActor @Inject() (
     self ! NewBlock(block)
   )
 
-  override def receive: Receive = { case NewBlock(block) =>
-    logger.info(
-      s"New best block ${block.getHeader.getHash} with height ${block.getHeight}"
-    )
+  override def receive: Receive = {
+
+    case NewBlock(block) =>
+      logger.info(
+        s"New best block ${block.getHeader.getHash} with height ${block.getHeight}"
+      )
+
+    case other =>
+      unrecognizedMessage(other)
+
   }
 
 }
