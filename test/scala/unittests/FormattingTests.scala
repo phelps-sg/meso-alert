@@ -6,10 +6,7 @@ import dao.SlashCommand
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
 import slack.BlockMessages.{
-  MESSAGE_NEW_TRANSACTION,
   MESSAGE_TOO_MANY_OUTPUTS,
-  MESSAGE_TO_ADDRESSES,
-  MESSAGE_TRANSACTION_HASH,
   blockMessageBuilder
 }
 import unittests.Fixtures.{
@@ -17,7 +14,7 @@ import unittests.Fixtures.{
   SlackSignatureVerifierFixtures,
   SlickSlashCommandFixtures
 }
-import util.BitcoinFormatting.{formatSatoshi, linkToAddress, linkToTxHash}
+import util.BitcoinFormatting.formatSatoshi
 
 import scala.util.{Failure, Success}
 
