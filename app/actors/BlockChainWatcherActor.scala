@@ -32,9 +32,11 @@ class BlockChainWatcherActor @Inject() (
 
   implicit val params: AbstractBitcoinNetParams = netParamsProvider.get
 
+  protected val blockChain = blockChainProvider.get
+
   protected var txWatchers: Map[TxHash, ActorRef] = Map()
 
-  blockChainProvider.get.addNewBestBlockListener((block: StoredBlock) =>
+  blockChain.addNewBestBlockListener((block: StoredBlock) =>
     self ! NewBlock(block)
   )
 
