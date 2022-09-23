@@ -1,9 +1,9 @@
 package controllers
 
 import actions.SlackSignatureVerifyAction
+import actions.SlackSignatureVerifyAction._
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.util.ByteString
-import actions.SlackSignatureVerifyAction._
 import com.slack.api.methods.request.auth.AuthTestRequest
 import com.slack.api.methods.request.conversations.ConversationsMembersRequest
 import controllers.SlackSlashCommandController.BotNotInvitedException
@@ -123,7 +123,6 @@ class SlackSlashCommandController @Inject() (
         SlackSlashCommandController.toCommand(formBody) match {
 
           case Success(slashCommand) =>
-
             val channelID = slashCommand.channelId.value
 
             val f = for {
@@ -164,8 +163,12 @@ class SlackSlashCommandController @Inject() (
       .build()
 
     val f = for {
-      botUserId <- slackManagerService.authTest(authTestRequest).map(_.getUserId)
-      members <- slackManagerService.conversationsMembers(conversationsMembersRequest).map(_.getMembers.asScala)
+      botUserId <- slackManagerService
+        .authTest(authTestRequest)
+        .map(_.getUserId)
+      members <- slackManagerService
+        .conversationsMembers(conversationsMembersRequest)
+        .map(_.getMembers.asScala)
     } yield members.contains(botUserId)
 
     f.map {
@@ -173,23 +176,8 @@ class SlackSlashCommandController @Inject() (
         ()
       case false =>
         throw BotNotInvitedException
-      }
     }
-
-//    selfAuthResponse flatMap { response =>
-//     conversationsMembersResponse map { response =>
-//        Option(response.getMembers) match {
-//          case None =>
-//            Future.failed(new Exception("members list not available"))
-//          case Some(members) =>
-//            if (members.contains(botUserId))
-//              ()
-//            else
-//              Future.failed(new Exception("bot not invited"))
-//        }
-//      }
-//    }
-//  }
+  }
 
   def channel(implicit slashCommand: SlashCommand): SlackChannelId =
     slashCommand.channelId
