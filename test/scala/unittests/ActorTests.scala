@@ -204,7 +204,6 @@ class ActorTests
           expectMsgPF(20.seconds) {
             case TxUpdate(`txHash`, _, _, _, _, _, Some(_)) =>
               succeed
-            case _ => fail()
           }
         case Failure(ex) =>
           fail(ex)
