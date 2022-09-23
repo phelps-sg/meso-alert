@@ -82,6 +82,7 @@ import slick.lifted.TableQuery
 import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 
 import java.net.URI
+import java.time.LocalDateTime
 import javax.inject.Provider
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
@@ -374,6 +375,11 @@ object Fixtures {
     class MockBlockChainProvider extends BlockChainProvider {
       override val get = mockBlockChain
     }
+  }
+
+  trait ClockFixtures {
+    def now: LocalDateTime =
+      java.time.LocalDateTime.parse("2022-09-07T00:13:30")
   }
 
   trait MemPoolWatcherFixtures extends MockFactory {
