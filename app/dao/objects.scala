@@ -7,25 +7,21 @@ import util.Encodings.base64Encode
 
 import java.net.URI
 
-final case class RegisteredUserId(value: String)
-    extends AnyVal
-    with MappedTo[String]
+case class RegisteredUserId(value: String) extends AnyVal with MappedTo[String]
 
-final case class SlackTeamId(value: String) extends AnyVal with MappedTo[String]
+case class SlackTeamId(value: String) extends AnyVal with MappedTo[String]
 
-final case class SlackChannelId(value: String)
-    extends AnyVal
-    with MappedTo[String]
+case class SlackChannelId(value: String) extends AnyVal with MappedTo[String]
 
-final case class SlackUserId(value: String) extends AnyVal with MappedTo[String]
+case class SlackUserId(value: String) extends AnyVal with MappedTo[String]
 
-final case class SlackBotId(value: String) extends AnyVal with MappedTo[String]
+case class SlackBotId(value: String) extends AnyVal with MappedTo[String]
 
-final case class Secret(data: Array[Byte]) {
+case class Secret(data: Array[Byte]) {
   override def toString: String = base64Encode(data)
 }
 
-final case class SlashCommand(
+case class SlashCommand(
     id: Option[Int],
     channelId: SlackChannelId,
     command: String,
@@ -45,21 +41,21 @@ trait Hook[+X] extends ThresholdFilter {
   def newStatus(isRunning: Boolean): Hook[X]
 }
 
-final case class Webhook(uri: URI, threshold: Long, isRunning: Boolean)
+case class Webhook(uri: URI, threshold: Long, isRunning: Boolean)
     extends Hook[URI] {
   def key: URI = uri
   override def newStatus(isRunning: Boolean): Hook[URI] =
     copy(isRunning = isRunning)
 }
 
-final case class SlackChatHookEncrypted(
+case class SlackChatHookEncrypted(
     channel: SlackChannelId,
     token: Encrypted,
     threshold: Long,
     isRunning: Boolean
 )
 
-final case class SlackChatHook(
+case class SlackChatHook(
     channel: SlackChannelId,
     token: String,
     threshold: Long,
@@ -70,7 +66,7 @@ final case class SlackChatHook(
     copy(isRunning = isRunning)
 }
 
-final case class SlackTeam(
+case class SlackTeam(
     teamId: SlackTeamId,
     userId: SlackUserId,
     botId: SlackBotId,
@@ -78,8 +74,7 @@ final case class SlackTeam(
     teamName: String,
     registeredUserId: RegisteredUserId
 )
-
-final case class SlackTeamEncrypted(
+case class SlackTeamEncrypted(
     teamId: SlackTeamId,
     userId: SlackUserId,
     botId: SlackBotId,
@@ -88,7 +83,7 @@ final case class SlackTeamEncrypted(
     registeredUserId: RegisteredUserId
 )
 
-final case class TransactionUpdate(
+case class TransactionUpdate(
     id: Option[Long],
     hash: TxHash,
     value: Long,
