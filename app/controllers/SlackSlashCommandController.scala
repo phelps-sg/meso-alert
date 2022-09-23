@@ -15,7 +15,6 @@ import services.{HooksManagerSlackChat, SlackManagerService}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.util.{Failure, Success, Try}
 
 object SlackSlashCommandController {
@@ -135,6 +134,7 @@ class SlackSlashCommandController @Inject() (
               case BotNotInvitedException =>
                 Ok(messagesApi("slackResponse.notInvitedError"))
               case ex: Exception =>
+                ex.printStackTrace()
                 ServiceUnavailable(ex.getMessage)
             }
 

@@ -1,7 +1,7 @@
 package services
 
 import com.google.inject.{ImplementedBy, Inject, Singleton}
-import com.slack.api.methods.MethodsClient
+import com.slack.api.methods.{MethodsClient, SlackApiTextResponse}
 import com.slack.api.methods.request.auth.AuthTestRequest
 import com.slack.api.methods.request.chat.ChatPostMessageRequest
 import com.slack.api.methods.request.conversations.ConversationsMembersRequest
@@ -55,12 +55,23 @@ class SlackManager @Inject() (
 
   implicit val ec: ExecutionContext = slackClientExecutionContext
 
+  def boltFuture[T <: SlackApiTextResponse](block: => T): Future[T] = {
+    Future {
+      val result: T = block
+      if (!result.isOk) {
+        throw new Exception(s"Bolt exception: ${result.getError}")
+      } else {
+        result
+      }
+    }
+  }
+
   override def oauthV2Access(
       request: OAuthV2AccessRequest,
       registeredUserId: RegisteredUserId
   ): Future[SlackTeam] = {
     logger.debug(s"Making oauthV2access API call for $registeredUserId... ")
-    Future { slackMethods.oauthV2Access(request) } map {
+    boltFuture { slackMethods.oauthV2Access(request) } map {
       response: OAuthV2AccessResponse =>
         {
           logger.debug(s"Received oauthV2access response for $registeredUserId")
@@ -79,16 +90,16 @@ class SlackManager @Inject() (
   override def chatPostMessage(
       request: ChatPostMessageRequest
   ): Future[ChatPostMessageResponse] = {
-    Future { slackMethods.chatPostMessage(request) }
+    boltFuture { slackMethods.chatPostMessage(request) }
   }
 
   override def authTest(request: AuthTestRequest): Future[AuthTestResponse] = {
-    Future { slackMethods.authTest(request) }
+    boltFuture { slackMethods.authTest(request) }
   }
 
   override def conversationsMembers(
       request: ConversationsMembersRequest
   ): Future[ConversationsMembersResponse] = {
-    Future { slackMethods.conversationsMembers(request) }
+    boltFuture { slackMethods.conversationsMembers(request) }
   }
 }
