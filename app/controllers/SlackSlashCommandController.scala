@@ -6,6 +6,7 @@ import akka.util.ByteString
 import actions.SlackSignatureVerifyAction._
 import com.slack.api.methods.request.auth.AuthTestRequest
 import com.slack.api.methods.request.conversations.ConversationsMembersRequest
+import controllers.SlackSlashCommandController.BotNotInvitedException
 import dao._
 import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}
@@ -13,7 +14,9 @@ import play.api.mvc._
 import services.{HooksManagerSlackChat, SlackManagerService}
 
 import javax.inject.Inject
+import scala.collection.convert.ImplicitConversions.`collection asJava`
 import scala.concurrent.{ExecutionContext, Future}
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.util.{Failure, Success, Try}
 
 object SlackSlashCommandController {
@@ -28,6 +31,8 @@ object SlackSlashCommandController {
     "user_name",
     "is_enterprise_install"
   )
+
+  case object BotNotInvitedException extends Exception("Bot not invited")
 
   def param(key: String)(implicit
       paramMap: Map[String, Seq[String]]
@@ -118,30 +123,21 @@ class SlackSlashCommandController @Inject() (
         SlackSlashCommandController.toCommand(formBody) match {
 
           case Success(slashCommand) =>
+
             val channelID = slashCommand.channelId.value
-            val accessToken = for {
+
+            val f = for {
               team <- slackTeamDao.find(slashCommand.teamId)
-            } yield team.accessToken
+              _ <- checkBotInvited(team.accessToken, channelID)
+              _ <- slashCommandHistoryDao.record(slashCommand)
+              result <- process(slashCommand)
+            } yield result
 
-            accessToken flatMap { token =>
-              isBotInvited(token, channelID) flatMap {
-                case true =>
-                  val recordCommand =
-                    slashCommandHistoryDao.record(slashCommand)
-
-                  for {
-                    _ <- recordCommand
-                    result <- process(slashCommand)
-                  } yield result
-
-                case false =>
-                  logger.info(
-                    "Bot is not invited to channel, cannot process command."
-                  )
-                  Future {
-                    Ok(messagesApi("slackResponse.notInvitedError"))
-                  }
-              }
+            f recover {
+              case BotNotInvitedException =>
+                Ok(messagesApi("slackResponse.notInvitedError"))
+              case ex: Exception =>
+                ServiceUnavailable(ex.getMessage)
             }
 
           case Failure(ex) =>
@@ -153,32 +149,47 @@ class SlackSlashCommandController @Inject() (
     }
   }
 
-  def isBotInvited(token: String, channelID: String): Future[Boolean] = {
+  def checkBotInvited(token: String, channelID: String): Future[Unit] = {
+
     val authTestRequest =
       AuthTestRequest
         .builder()
         .token(token)
         .build()
-    val selfAuthResponse = slackManagerService.authTest(authTestRequest)
-    selfAuthResponse flatMap { response =>
-      val botUserId = response.getUserId
-      val conversationsMembersRequest = ConversationsMembersRequest
-        .builder()
-        .channel(channelID)
-        .token(token)
-        .build()
-      val conversationsMembersResponse =
-        slackManagerService.conversationsMembers(conversationsMembersRequest)
-      conversationsMembersResponse map { response =>
-        Option(response.getMembers) match {
-          case None =>
-            false
-          case Some(members) =>
-            members.contains(botUserId)
-        }
+
+    val conversationsMembersRequest = ConversationsMembersRequest
+      .builder()
+      .channel(channelID)
+      .token(token)
+      .build()
+
+    val f = for {
+      botUserId <- slackManagerService.authTest(authTestRequest).map(_.getUserId)
+      members <- slackManagerService.conversationsMembers(conversationsMembersRequest).map(_.getMembers.asScala)
+    } yield members.contains(botUserId)
+
+    f.map {
+      case true =>
+        ()
+      case false =>
+        throw BotNotInvitedException
       }
     }
-  }
+
+//    selfAuthResponse flatMap { response =>
+//     conversationsMembersResponse map { response =>
+//        Option(response.getMembers) match {
+//          case None =>
+//            Future.failed(new Exception("members list not available"))
+//          case Some(members) =>
+//            if (members.contains(botUserId))
+//              ()
+//            else
+//              Future.failed(new Exception("bot not invited"))
+//        }
+//      }
+//    }
+//  }
 
   def channel(implicit slashCommand: SlashCommand): SlackChannelId =
     slashCommand.channelId
