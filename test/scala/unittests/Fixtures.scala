@@ -4,6 +4,7 @@ import actions.Auth0ValidateJWTAction
 import actors.EncryptionActor.Encrypted
 import actors.{
   AuthenticationActor,
+  BlockChainWatcherActor,
   EncryptionActor,
   HooksManagerActorSlackChat,
   HooksManagerActorWeb,
@@ -27,6 +28,7 @@ import actors.{
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import com.google.common.io.ByteStreams
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
 import com.typesafe.config.ConfigFactory
@@ -81,6 +83,7 @@ import slick.jdbc.JdbcBackend.Database
 import slick.lifted.TableQuery
 import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 
+import java.io.{FileNotFoundException, InputStream}
 import java.net.URI
 import java.time.LocalDateTime
 import javax.inject.Provider
@@ -97,6 +100,24 @@ object Fixtures {
 
   implicit val d = new Defaultable[ListenableFuture[_]] {
     override val default = null
+  }
+
+  def resourceAsInputStream(resource: String): Try[InputStream] = {
+    val classLoader = Thread.currentThread().getContextClassLoader()
+    Option(classLoader.getResourceAsStream(resource)) match {
+      case Some(in) => Success(in)
+      case None =>
+        Failure(
+          new FileNotFoundException(
+            s"resource '$resource' was not found in the classpath from the given classloader."
+          )
+        )
+    }
+//    Option(classLoader.getResourceAsStream(resource)).toRight {
+//      new FileNotFoundException(
+//        s"resource '$resource' was not found in the classpath from the given classloader."
+//      )
+//    }.toTry
   }
 
   trait WebSocketMock {
@@ -317,8 +338,17 @@ object Fixtures {
     val params = netParamsProvider.get
   }
 
+  trait BlockFixtures { env: MainNetParamsFixtures =>
+    val block169482: Try[Block] = resourceAsInputStream("block169482.dat") map {
+      in =>
+        params
+          .getDefaultSerializer()
+          .makeBlock(ByteStreams.toByteArray(in))
+    }
+  }
+
   trait BlockChainWatcherFixtures extends MockFactory {
-    env: MainNetParamsFixtures =>
+    env: MainNetParamsFixtures with HasActorSystem =>
     val wallets = new java.util.LinkedList[Wallet]()
     val blockStore = mock[BlockStore]
     val mockStoredBlock = mock[StoredBlock]
@@ -375,6 +405,16 @@ object Fixtures {
     class MockBlockChainProvider extends BlockChainProvider {
       override val get = mockBlockChain
     }
+
+    def makeBlockChainWatcherActor = actorSystem.actorOf(
+      BlockChainWatcherActor.props(
+        new MockBlockChainProvider(),
+        netParamsProvider
+      )
+    )
+
+    lazy val blockChainWatcherActor = makeBlockChainWatcherActor
+
   }
 
   trait ClockFixtures {

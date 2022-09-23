@@ -1,10 +1,32 @@
 package unittests
 
 import actors.AuthenticationActor.Auth
+import actors.BlockChainWatcherActor.{NewBlock, WatchTxConfidence}
 import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
-import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
-import actors.SlackSecretsActor.{GenerateSecret, Unbind, ValidSecret, VerifySecret}
-import actors.{AuthenticationActor, BlockChainWatcherActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, Registered, Started, Stopped, TxHash, TxInputOutput, TxUpdate, Updated}
+import actors.MemPoolWatcherActor.{
+  PeerGroupAlreadyStartedException,
+  StartPeerGroup
+}
+import actors.SlackSecretsActor.{
+  GenerateSecret,
+  Unbind,
+  ValidSecret,
+  VerifySecret
+}
+import actors.{
+  AuthenticationActor,
+  HookAlreadyRegisteredException,
+  HookAlreadyStartedException,
+  HookNotRegisteredException,
+  HookNotStartedException,
+  Registered,
+  Started,
+  Stopped,
+  TxHash,
+  TxInputOutput,
+  TxUpdate,
+  Updated
+}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -12,7 +34,11 @@ import akka.util.Timeout
 import com.google.common.util.concurrent.ListenableFuture
 import dao._
 import org.bitcoinj.core._
-import org.bitcoinj.core.listeners.{BlocksDownloadedEventListener, NewBestBlockListener, OnTransactionBroadcastListener}
+import org.bitcoinj.core.listeners.{
+  BlocksDownloadedEventListener,
+  NewBestBlockListener,
+  OnTransactionBroadcastListener
+}
 import org.scalamock.handlers.CallHandler1
 import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
@@ -25,12 +51,39 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
-import unittests.Fixtures.{ActorGuiceFixtures, BlockChainWatcherFixtures, ClockFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MainNetParamsFixtures, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, MessagesFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackSecretsActorFixtures, TransactionFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
+import unittests.Fixtures.{
+  ActorGuiceFixtures,
+  BlockChainWatcherFixtures,
+  BlockFixtures,
+  ClockFixtures,
+  ConfigurationFixtures,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  HookActorTestLogic,
+  MainNetParamsFixtures,
+  MemPoolWatcherActorFixtures,
+  MemPoolWatcherFixtures,
+  MessagesFixtures,
+  ProvidesTestBindings,
+  SlackChatActorFixtures,
+  SlackChatHookDaoFixtures,
+  SlackSecretsActorFixtures,
+  TransactionFixtures,
+  TxPersistenceActorFixtures,
+  TxUpdateFixtures,
+  TxWatchActorFixtures,
+  UserFixtures,
+  WebSocketFixtures,
+  WebhookActorFixtures,
+  WebhookFixtures
+}
 
+import java.math.BigInteger
 import java.net.URI
 import scala.annotation.unused
 import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
@@ -123,7 +176,8 @@ class ActorTests
     trait TestFixtures
         extends FixtureBindings
         with MainNetParamsFixtures
-        with BlockChainWatcherFixtures {
+        with BlockChainWatcherFixtures
+        with BlockFixtures {
 
       (mockBlockChain
         .addNewBestBlockListener(_: NewBestBlockListener))
@@ -132,13 +186,29 @@ class ActorTests
 
     "listen for new best blocks on startup" in new TestFixtures {
       @unused
-      val blockChainWatcherActor = actorSystem.actorOf(
-        BlockChainWatcherActor.props(
-          new MockBlockChainProvider(),
-          netParamsProvider
-        )
-      )
+      val newBlockChainWatcherActor = makeBlockChainWatcherActor
       expectNoMessage()
+    }
+
+    "send transaction updates to listeners when a new block has been added" in new TestFixtures {
+      block169482 match {
+        case Success(block) =>
+          val txHash = TxHash(block.getTransactions.asScala.head)
+          blockChainWatcherActor ! WatchTxConfidence(
+            txHash,
+            self
+          )
+          blockChainWatcherActor ! NewBlock(
+            new StoredBlock(block, BigInteger.ZERO, 0)
+          )
+          expectMsgPF(20.seconds) {
+            case TxUpdate(`txHash`, _, _, _, _, _, Some(_)) =>
+              succeed
+            case _ => fail()
+          }
+        case Failure(ex) =>
+          fail(ex)
+      }
     }
   }
 
