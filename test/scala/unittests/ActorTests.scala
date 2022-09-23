@@ -28,6 +28,7 @@ import services._
 import unittests.Fixtures.{ActorGuiceFixtures, BlockChainWatcherFixtures, ClockFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, MainNetParamsFixtures, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, MessagesFixtures, ProvidesTestBindings, SlackChatActorFixtures, SlackChatHookDaoFixtures, SlackSecretsActorFixtures, TransactionFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
 
 import java.net.URI
+import scala.annotation.unused
 import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.language.postfixOps
@@ -130,6 +131,7 @@ class ActorTests
     }
 
     "listen for new best blocks on startup" in new TestFixtures {
+      @unused
       val blockChainWatcherActor = actorSystem.actorOf(
         BlockChainWatcherActor.props(
           new MockBlockChainProvider(),
