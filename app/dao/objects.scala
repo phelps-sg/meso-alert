@@ -39,8 +39,6 @@ final case class SlashCommand(
     timeStamp: Option[java.time.LocalDateTime]
 )
 
-//case class SlackChannel(id: String)
-
 trait Hook[+X] extends ThresholdFilter {
   def key: X
   val isRunning: Boolean
