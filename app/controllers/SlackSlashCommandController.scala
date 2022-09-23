@@ -170,8 +170,12 @@ class SlackSlashCommandController @Inject() (
       val conversationsMembersResponse =
         slackManagerService.conversationsMembers(conversationsMembersRequest)
       conversationsMembersResponse map { response =>
-        val members = response.getMembers
-        members.contains(botUserId)
+        Option(response.getMembers) match {
+          case None =>
+            false
+          case Some(members) =>
+            members.contains(botUserId)
+        }
       }
     }
   }
