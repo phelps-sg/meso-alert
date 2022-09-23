@@ -26,9 +26,12 @@ import actors.{
 }
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
+import scala.jdk.CollectionConverters._
 import akka.util.Timeout
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
+import com.slack.api.methods.response.auth.AuthTestResponse
+import com.slack.api.methods.response.conversations.ConversationsMembersResponse
 import com.typesafe.config.ConfigFactory
 import dao._
 import org.bitcoinj.core.Utils.HEX
@@ -710,6 +713,15 @@ object Fixtures {
       fakeRequestValidNoSignature(command, amount).withHeaders(
         ArraySeq.unsafeWrapArray(fakeSlackSignatureHeaders): _*
       )
+
+    val testUserId = "testUser"
+    val mockMembers = List(testUserId).asJava
+    val resAuth = new AuthTestResponse
+    resAuth.setUserId(testUserId)
+    val resConvMembersResponse = new ConversationsMembersResponse
+    resConvMembersResponse.setMembers(mockMembers)
+    val resConvMembersResponseBad = new ConversationsMembersResponse
+    resConvMembersResponseBad.setMembers(List("wrongUser").asJava)
   }
 
   trait SlickSlashCommandHistoryDaoFixtures {

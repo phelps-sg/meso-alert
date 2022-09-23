@@ -10,6 +10,7 @@ slackResponse.pauseAlertsError = Alerts are not active on this channel.
 slackResponse.resumeAlerts = OK, I will resume alerts on this channel.
 slackResponse.resumeAlertsError = Alerts are already active on this channel.
 # Messages sent to Slack channels
+slackResponse.notInvitedError = Please invite the bot to a channel before issuing commands.
 slackChat.tooManyOutputs = Transaction contains too many outputs to list here. Visit the Transaction URL to view all.
 slackChat.transactionHash = Transaction Hash
 slackChat.toAddresses = to addresses

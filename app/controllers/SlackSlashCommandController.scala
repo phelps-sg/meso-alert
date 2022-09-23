@@ -4,11 +4,13 @@ import actions.SlackSignatureVerifyAction
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.util.ByteString
 import actions.SlackSignatureVerifyAction._
+import com.slack.api.methods.request.auth.AuthTestRequest
+import com.slack.api.methods.request.conversations.ConversationsMembersRequest
 import dao._
 import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}
 import play.api.mvc._
-import services.HooksManagerSlackChat
+import services.{HooksManagerSlackChat, SlackManagerService}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -84,7 +86,8 @@ class SlackSlashCommandController @Inject() (
     val slashCommandHistoryDao: SlashCommandHistoryDao,
     val slackTeamDao: SlackTeamDao,
     val hooksManager: HooksManagerSlackChat,
-    messagesApi: MessagesApi
+    messagesApi: MessagesApi,
+    protected val slackManagerService: SlackManagerService
 )(implicit val ec: ExecutionContext)
     extends BaseController
     with Logging {
@@ -115,11 +118,31 @@ class SlackSlashCommandController @Inject() (
         SlackSlashCommandController.toCommand(formBody) match {
 
           case Success(slashCommand) =>
-            val recordCommand = slashCommandHistoryDao.record(slashCommand)
-            for {
-              _ <- recordCommand
-              result <- process(slashCommand)
-            } yield result
+            val channelID = slashCommand.channelId.value
+            val accessToken = for {
+              team <- slackTeamDao.find(slashCommand.teamId)
+            } yield team.accessToken
+
+            accessToken flatMap { token =>
+              isBotInvited(token, channelID) flatMap {
+                case true =>
+                  val recordCommand =
+                    slashCommandHistoryDao.record(slashCommand)
+
+                  for {
+                    _ <- recordCommand
+                    result <- process(slashCommand)
+                  } yield result
+
+                case false =>
+                  logger.info(
+                    "Bot is not invited to channel, cannot process command."
+                  )
+                  Future {
+                    Ok(messagesApi("slackResponse.notInvitedError"))
+                  }
+              }
+            }
 
           case Failure(ex) =>
             logger.error(ex.getMessage)
@@ -127,6 +150,29 @@ class SlackSlashCommandController @Inject() (
               NotAcceptable(ex.getMessage)
             }
         }
+    }
+  }
+
+  def isBotInvited(token: String, channelID: String): Future[Boolean] = {
+    val authTestRequest =
+      AuthTestRequest
+        .builder()
+        .token(token)
+        .build()
+    val selfAuthResponse = slackManagerService.authTest(authTestRequest)
+    selfAuthResponse flatMap { response =>
+      val botUserId = response.getUserId
+      val conversationsMembersRequest = ConversationsMembersRequest
+        .builder()
+        .channel(channelID)
+        .token(token)
+        .build()
+      val conversationsMembersResponse =
+        slackManagerService.conversationsMembers(conversationsMembersRequest)
+      conversationsMembersResponse map { response =>
+        val members = response.getMembers
+        members.contains(botUserId)
+      }
     }
   }
 
