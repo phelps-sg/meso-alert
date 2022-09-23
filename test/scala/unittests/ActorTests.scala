@@ -774,7 +774,7 @@ class ActorTests
 
     "verify an existing secret" in new TestFixtures {
       (for {
-        secret <- (slackSecretsActor ? GenerateSecret(userId))
+        secret <- slackSecretsActor ? GenerateSecret(userId)
         verified <- {
           secret match {
             case Success(secret: Secret) =>
@@ -788,7 +788,7 @@ class ActorTests
 
     "reject a secret that has been unbound" in new TestFixtures {
       (for {
-        secret <- (slackSecretsActor ? GenerateSecret(userId))
+        secret <- slackSecretsActor ? GenerateSecret(userId)
         _ <- slackSecretsActor ? Unbind(userId)
         verified <- {
           secret match {
