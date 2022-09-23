@@ -14,7 +14,6 @@ import play.api.mvc._
 import services.{HooksManagerSlackChat, SlackManagerService}
 
 import javax.inject.Inject
-import scala.collection.convert.ImplicitConversions.`collection asJava`
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.util.{Failure, Success, Try}
@@ -168,7 +167,7 @@ class SlackSlashCommandController @Inject() (
         .map(_.getUserId)
       members <- slackManagerService
         .conversationsMembers(conversationsMembersRequest)
-        .map(_.getMembers.asScala)
+        .map(_.getMembers)
     } yield members.contains(botUserId)
 
     f.map {
