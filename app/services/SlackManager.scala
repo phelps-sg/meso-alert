@@ -2,9 +2,13 @@ package services
 
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.slack.api.methods.MethodsClient
+import com.slack.api.methods.request.auth.AuthTestRequest
 import com.slack.api.methods.request.chat.ChatPostMessageRequest
+import com.slack.api.methods.request.conversations.ConversationsMembersRequest
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
+import com.slack.api.methods.response.auth.AuthTestResponse
 import com.slack.api.methods.response.chat.ChatPostMessageResponse
+import com.slack.api.methods.response.conversations.ConversationsMembersResponse
 import com.slack.api.methods.response.oauth.OAuthV2AccessResponse
 import dao._
 import play.api.{Configuration, Logging}
@@ -24,6 +28,14 @@ trait SlackManagerService {
   def chatPostMessage(
       request: ChatPostMessageRequest
   ): Future[ChatPostMessageResponse]
+
+  def authTest(
+      request: AuthTestRequest
+  ): Future[AuthTestResponse]
+
+  def conversationsMembers(
+      request: ConversationsMembersRequest
+  ): Future[ConversationsMembersResponse]
 }
 
 /** A wrapper around the BOLT API. Unlike Bolt: i) the methods in this class
@@ -68,5 +80,15 @@ class SlackManager @Inject() (
       request: ChatPostMessageRequest
   ): Future[ChatPostMessageResponse] = {
     Future { slackMethods.chatPostMessage(request) }
+  }
+
+  override def authTest(request: AuthTestRequest): Future[AuthTestResponse] = {
+    Future { slackMethods.authTest(request) }
+  }
+
+  override def conversationsMembers(
+      request: ConversationsMembersRequest
+  ): Future[ConversationsMembersResponse] = {
+    Future { slackMethods.conversationsMembers(request) }
   }
 }
