@@ -13,7 +13,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.matching.Regex
 
 class SlackAuthController @Inject() (
-//    protected val slackSignatureVerifyAction: SlackSignatureVerifyAction,
     protected val config: Configuration,
     protected val slackTeamDao: SlackTeamDao,
     protected val slackSecretsManagerService: SlackSecretsManagerService,
