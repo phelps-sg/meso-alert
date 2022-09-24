@@ -125,7 +125,7 @@ class SlackSlashCommandController @Inject() (
 
             val f = for {
               team <- slackTeamDao.find(slashCommand.teamId)
-              _ <- checkBotInvited(team.accessToken, channelID)
+//              _ <- checkBotInvited(team.accessToken, channelID)
               _ <- slashCommandHistoryDao.record(slashCommand)
               result <- process(slashCommand)
             } yield result
