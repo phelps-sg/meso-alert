@@ -19,7 +19,7 @@ trait PostgresContainer extends ForAllTestContainer {
     ExecutionContext.fromExecutor(Executors.newFixedThreadPool(6))
 
   override val container: PostgreSQLContainer = PostgreSQLContainer(
-    //    dockerImageNameOverride = "postgres:14.2",
+    dockerImageNameOverride = "postgres:14.2",
     databaseName = "meso-alert-test",
     username = "meso-alert-test",
     password = "meso-alert-test"
