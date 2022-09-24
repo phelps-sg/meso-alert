@@ -64,7 +64,7 @@ install-dev: curl-install sdkman-install jdk-install sbt-install docker-install 
 	echo 'Launch a new shell to continue... '; read
 
 install-pre-commit-hooks:
-	pre-commit install
+	pre-commit install; sed "5i source ~/.sdkman/bin/sdkman-init.sh" .git/hooks/pre-commit > /tmp/pre-commit; cp /tmp/pre-commit .git/hooks/pre-commit; rm /tmp/pre-commit
 
 staging-config:
 	bin/staging-config.sh
