@@ -121,7 +121,7 @@ class SlackSlashCommandController @Inject() (
         SlackSlashCommandController.toCommand(formBody) match {
 
           case Success(slashCommand) =>
-            val channelID = slashCommand.channelId.value
+//            val channelID = slashCommand.channelId.value
 
             val f = for {
               team <- slackTeamDao.find(slashCommand.teamId)
