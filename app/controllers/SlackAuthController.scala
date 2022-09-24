@@ -1,7 +1,7 @@
 package controllers
 
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
-import dao.{Secret, SlackTeam, SlackTeamDao, RegisteredUserId}
+import dao.{RegisteredUserId, Secret, SlackTeam, SlackTeamDao}
 import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
 import play.api.{Configuration, Logging, mvc}
 import services.{SlackManagerService, SlackSecretsManagerService}
@@ -60,7 +60,6 @@ class SlackAuthController @Inject() (
       error: Option[String],
       state: Option[String]
   ): mvc.Action[AnyContent] =
-//        slackSignatureVerifyAction.async { implicit request: Request[AnyContent] =>
     Action.async { implicit request: Request[AnyContent] =>
       logger.debug(
         s"Received slash auth redirect with state $state and code $temporaryCode"
