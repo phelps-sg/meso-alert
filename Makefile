@@ -63,6 +63,9 @@ pre-commit-install:
 install-dev: curl-install sdkman-install jdk-install sbt-install docker-install nvm-install libsodium-install geckodriver-install ngrok-install k8-install psql-install pre-commit-install
 	echo 'Launch a new shell to continue... '; read
 
+install-pre-commit-hooks:
+	pre-commit install
+
 staging-config:
 	bin/staging-config.sh
 
