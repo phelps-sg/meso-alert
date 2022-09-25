@@ -11,7 +11,6 @@ import scala.jdk.CollectionConverters.CollectionHasAsScala
 
 final case class Register[X](hook: Hook[X])
 final case class Update[X](hook: Hook[X])
-final case class Unregister[X](hook: Hook[X])
 final case class Started[X](hook: X)
 final case class Stopped[X](hook: X)
 final case class Registered[X](hook: Hook[X])
