@@ -123,6 +123,8 @@ class ActorTests
     trait TestFixtures
         extends FixtureBindings
         with MessagesFixtures
+        with MainNetParamsFixtures
+        with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with ConfigurationFixtures
         with ActorGuiceFixtures
@@ -218,6 +220,8 @@ class ActorTests
         extends FixtureBindings
         with ConfigurationFixtures
         with MessagesFixtures
+        with MainNetParamsFixtures
+        with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with WebSocketFixtures
         with ActorGuiceFixtures
@@ -388,6 +392,8 @@ class ActorTests
         extends FixtureBindings
         with ConfigurationFixtures
         with MessagesFixtures
+        with MainNetParamsFixtures
+        with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
         with TxUpdateFixtures
@@ -449,6 +455,8 @@ class ActorTests
         with ConfigurationFixtures
         with ClockFixtures
         with MessagesFixtures
+        with MainNetParamsFixtures
+        with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with WebSocketFixtures
         with ActorGuiceFixtures
@@ -558,6 +566,8 @@ class ActorTests
         with ConfigurationFixtures
         with MessagesFixtures
         with MemPoolWatcherFixtures
+        with MainNetParamsFixtures
+        with BlockChainWatcherFixtures
         with ActorGuiceFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
@@ -654,6 +664,8 @@ class ActorTests
         extends FixtureBindings
         with ConfigurationFixtures
         with MessagesFixtures
+        with MainNetParamsFixtures
+        with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
         with WebhookFixtures
@@ -810,6 +822,8 @@ class ActorTests
         extends FixtureBindings
         with ConfigurationFixtures
         with MessagesFixtures
+        with MainNetParamsFixtures
+        with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
         with EncryptionActorFixtures

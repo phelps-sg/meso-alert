@@ -19,10 +19,12 @@ import slick.Tables
 import slick.dbio.DBIO
 import unittests.Fixtures.{
   ActorGuiceFixtures,
+  BlockChainWatcherFixtures,
   ConfigurationFixtures,
   DatabaseGuiceFixtures,
   EncryptionActorFixtures,
   EncryptionManagerFixtures,
+  MainNetParamsFixtures,
   MemPoolWatcherFixtures,
   MessagesFixtures,
   ProvidesTestBindings,
@@ -87,6 +89,8 @@ class ServiceTests
         extends FixtureBindings
         with ConfigurationFixtures
         with MemPoolWatcherFixtures
+        with MainNetParamsFixtures
+        with BlockChainWatcherFixtures
         with ActorGuiceFixtures
         with WebhookDaoFixtures
         with WebhookFixtures

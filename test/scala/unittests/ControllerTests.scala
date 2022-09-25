@@ -39,11 +39,13 @@ import slick.Tables
 import unittests.Fixtures.{
   ActorGuiceFixtures,
   Auth0ActionFixtures,
+  BlockChainWatcherFixtures,
   ConfigurationFixtures,
   DatabaseInitializer,
   EncryptionActorFixtures,
   EncryptionManagerFixtures,
   FakeApplication,
+  MainNetParamsFixtures,
   MemPoolWatcherActorFixtures,
   MemPoolWatcherFixtures,
   MessagesFixtures,
@@ -101,6 +103,8 @@ class ControllerTests
         with ConfigurationFixtures
         with WebSocketFixtures
         with UserFixtures
+        with MainNetParamsFixtures
+        with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with TxWatchActorFixtures
         with MockMailManagerFixtures
@@ -198,7 +202,9 @@ class ControllerTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with MainNetParamsFixtures
         with MemPoolWatcherFixtures
+        with BlockChainWatcherFixtures
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures
         with EncryptionActorFixtures
@@ -302,7 +308,9 @@ class ControllerTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with MainNetParamsFixtures
         with MemPoolWatcherFixtures
+        with BlockChainWatcherFixtures
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures
         with EncryptionActorFixtures
@@ -514,9 +522,9 @@ class ControllerTests
       (mockSlackManagerService.authTest _)
         .expects(*)
         .returning(Future { resAuth })
-      (mockSlackManagerService.conversationsMembers _)
-        .expects(*)
-        .returning(Future { resConvMembersResponse })
+//      (mockSlackManagerService.conversationsMembers _)
+//        .expects(*)
+//        .returning(Future { resConvMembersResponse })
 
       val result = slashCommand {
         fakeRequestValid("/crypto-alert", "10")
@@ -631,7 +639,9 @@ class ControllerTests
         extends FixtureBindings
         with ConfigurationFixtures
         with EncryptionActorFixtures
+        with MainNetParamsFixtures
         with MemPoolWatcherFixtures
+        with BlockChainWatcherFixtures
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures
         with EncryptionManagerFixtures
@@ -808,6 +818,8 @@ class ControllerTests
         extends FixtureBindings
         with ConfigurationFixtures
         with SecretsManagerFixtures
+        with MainNetParamsFixtures
+        with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures

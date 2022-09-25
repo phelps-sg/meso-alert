@@ -27,7 +27,6 @@ import actors.{
 }
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
-import scala.jdk.CollectionConverters._
 import akka.util.Timeout
 import com.google.common.io.ByteStreams
 import com.google.common.util.concurrent.ListenableFuture
@@ -95,6 +94,7 @@ import scala.collection.mutable
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
+import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
 //noinspection TypeAnnotation
@@ -106,7 +106,7 @@ object Fixtures {
   }
 
   def resourceAsInputStream(resource: String): Try[InputStream] = {
-    val classLoader = Thread.currentThread().getContextClassLoader()
+    val classLoader = Thread.currentThread().getContextClassLoader
     Option(classLoader.getResourceAsStream(resource)) match {
       case Some(in) => Success(in)
       case None =>
@@ -224,6 +224,7 @@ object Fixtures {
       with HasExecutionContext
       with SlackSignatureVerifierFixtures
       with MemPoolWatcherActorFixtures
+      with BlockChainWatcherFixtures
       with HasMessagesApi =>
 
     lazy val fakeApplication: Application =
@@ -236,6 +237,9 @@ object Fixtures {
         )
         .overrides(
           new MemPoolWatcherModule()
+        )
+        .overrides(
+          new BlockChainWatcherModule()
         )
         .build()
   }
@@ -344,8 +348,7 @@ object Fixtures {
   trait BlockFixtures { env: MainNetParamsFixtures =>
     val block169482: Try[Block] = resourceAsInputStream("block169482.dat") map {
       in =>
-        params
-          .getDefaultSerializer()
+        params.getDefaultSerializer
           .makeBlock(ByteStreams.toByteArray(in))
     }
   }
@@ -405,19 +408,25 @@ object Fixtures {
 
     val mockBlockChain = mock[MockBlockChain]
 
-    class MockBlockChainProvider extends BlockChainProvider {
+    val mockBlockChainProvider = new BlockChainProvider {
       override val get = mockBlockChain
     }
 
     def makeBlockChainWatcherActor = actorSystem.actorOf(
       BlockChainWatcherActor.props(
-        new MockBlockChainProvider(),
+        mockBlockChainProvider,
         netParamsProvider
       )
     )
 
     lazy val blockChainWatcherActor = makeBlockChainWatcherActor
 
+    class BlockChainWatcherModule() extends AbstractModule {
+      override def configure(): Unit = {
+        super.configure()
+        bind(classOf[BlockChainProvider]).toInstance(mockBlockChainProvider)
+      }
+    }
   }
 
   trait ClockFixtures {
@@ -453,6 +462,7 @@ object Fixtures {
   trait ActorGuiceFixtures extends ProvidesInjector {
     env: ConfigurationFixtures
       with MemPoolWatcherFixtures
+      with BlockChainWatcherFixtures
       with HasActorSystem
       with HasBindModule =>
 
@@ -460,6 +470,11 @@ object Fixtures {
       .bindings(bindModule)
       .overrides(inject.bind(classOf[Configuration]).toInstance(config))
       .overrides(inject.bind(classOf[ActorSystem]).toInstance(actorSystem))
+      .overrides(
+        inject
+          .bind(classOf[BlockChainProvider])
+          .toInstance(mockBlockChainProvider)
+      )
       .overrides(
         inject
           .bind(classOf[MemPoolWatcherService])
