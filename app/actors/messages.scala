@@ -9,30 +9,28 @@ import slick.lifted.MappedTo
 
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 
-case class Register[X](hook: Hook[X])
-case class Update[X](hook: Hook[X])
-case class Unregister[X](hook: Hook[X])
-case class Started[X](hook: X)
-case class Stopped[X](hook: X)
-case class Registered[X](hook: Hook[X])
-case class Updated[X](hook: Hook[X])
-case class Start[X](key: X)
-case class Stop[X](key: X)
-
-case class TxInputOutput(address: Option[String], value: Option[Long])
-
-case class TxHash(value: String) extends AnyVal with MappedTo[String]
+final case class Register[X](hook: Hook[X])
+final case class Update[X](hook: Hook[X])
+final case class Unregister[X](hook: Hook[X])
+final case class Started[X](hook: X)
+final case class Stopped[X](hook: X)
+final case class Registered[X](hook: Hook[X])
+final case class Updated[X](hook: Hook[X])
+final case class Start[X](key: X)
+final case class Stop[X](key: X)
+final case class TxInputOutput(address: Option[String], value: Option[Long])
+final case class TxHash(value: String) extends AnyVal with MappedTo[String]
 
 object TxHash {
   def apply(tx: Transaction): TxHash = TxHash(tx.getTxId.toString)
 }
 
-case class TxConfidence(
+final case class TxConfidence(
     confType: ConfidenceType,
     depthInBlocks: Int
 )
 
-case class TxUpdate(
+final case class TxUpdate(
     hash: TxHash,
     value: Long,
     time: java.time.LocalDateTime,
