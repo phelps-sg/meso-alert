@@ -25,7 +25,7 @@ class SlackAuthController @Inject() (
 
   val AuthRegEx: Regex = """\((.*),(.*)\)""".r
 
-  case class InvalidAuthState(state: Option[String])
+  final case class InvalidAuthState(state: Option[String])
       extends Exception(s"Invalid state parameter: $state")
 
   protected def oauthV2Access(
