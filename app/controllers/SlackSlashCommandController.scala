@@ -196,7 +196,7 @@ class SlackSlashCommandController @Inject() (
             val f = for {
               team <- slackTeamDao.find(slashCommand.teamId)
               _ <- hooksManager.update(
-                SlackChatHook(
+                SlackChatHookPlainText(
                   channel,
                   token = team.accessToken,
                   amount * 100000000,

@@ -6,7 +6,7 @@ import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import com.slack.api.methods.request.chat.ChatPostMessageRequest
 import com.slack.api.methods.response.chat.ChatPostMessageResponse
-import dao.SlackChatHook
+import dao.SlackChatHookPlainText
 import play.api.i18n.MessagesApi
 import play.api.{Configuration, Logging}
 import services.SlackManagerService
@@ -21,8 +21,8 @@ import scala.util.Random
 
 object TxMessagingActorSlackChat {
 
-  trait Factory extends TxMessagingActorFactory[SlackChatHook] {
-    def apply(@unused hook: SlackChatHook): Actor
+  trait Factory extends TxMessagingActorFactory[SlackChatHookPlainText] {
+    def apply(@unused hook: SlackChatHookPlainText): Actor
   }
 
 }
@@ -33,7 +33,7 @@ class TxMessagingActorSlackChat @Inject() (
     sce: SlackChatExecutionContext,
     val random: Random,
     protected val messagesApi: MessagesApi,
-    @Assisted hook: SlackChatHook
+    @Assisted hook: SlackChatHookPlainText
 ) extends Actor
     with TxRetryOrDie[ChatPostMessageResponse]
     with Timers

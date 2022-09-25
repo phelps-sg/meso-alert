@@ -575,7 +575,7 @@ class ActorTests
         with SlackChatActorFixtures
         with HookActorTestLogic[
           SlackChannelId,
-          SlackChatHook,
+          SlackChatHookPlainText,
           SlackChatHookEncrypted
         ] {
 

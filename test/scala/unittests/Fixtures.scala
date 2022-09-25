@@ -159,7 +159,7 @@ object Fixtures {
   trait WebhookManagerMock extends HookManagerMock[URI, Webhook]
 
   trait SlackChatManagerMock
-      extends HookManagerMock[SlackChannelId, SlackChatHook]
+      extends HookManagerMock[SlackChannelId, SlackChatHookPlainText]
 
   trait MockHookManagerActor[X, Y <: Hook[X]] extends Actor with Logging {
     val mock: HookManagerMock[X, Y]
@@ -201,7 +201,7 @@ object Fixtures {
   }
 
   class MockSlackChatManagerActor(val mock: SlackChatManagerMock)
-      extends MockHookManagerActor[SlackChannelId, SlackChatHook]
+      extends MockHookManagerActor[SlackChannelId, SlackChatHookPlainText]
 
   trait ProvidesInjector {
     val injector: Injector
@@ -543,14 +543,14 @@ object Fixtures {
     val originalThreshold = 100L
     val newThreshold = 200L
     val key = SlackChannelId("#test")
-    val hook = SlackChatHook(
+    val hook = SlackChatHookPlainText(
       key,
       threshold = originalThreshold,
       isRunning = true,
       token = "test_token_1"
     )
     val stoppedHook = hook.copy(isRunning = false)
-    val newHook = SlackChatHook(
+    val newHook = SlackChatHookPlainText(
       key,
       threshold = newThreshold,
       isRunning = true,
@@ -629,7 +629,7 @@ object Fixtures {
   }
 
   trait SlackChatDaoTestLogic
-      extends HookDaoTestLogic[SlackChannelId, SlackChatHook] {
+      extends HookDaoTestLogic[SlackChannelId, SlackChatHookPlainText] {
     env: HasDatabase with HasExecutionContext =>
 
     override val tableQuery = Tables.slackChatHooks

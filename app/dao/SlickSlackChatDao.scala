@@ -17,18 +17,18 @@ class SlickSlackChatDao @Inject() (
     val encryptionManager: EncryptionManagerService
 )(implicit val ec: ExecutionContext)
     extends SlackChatHookDao
-    with SlickHookDao[SlackChannelId, SlackChatHook, SlackChatHookEncrypted]
+    with SlickHookDao[SlackChannelId, SlackChatHookPlainText, SlackChatHookEncrypted]
     with FutureInitialisingComponent {
 
   initialise()
 
   override def table = Tables.slackChatHooks
-  override val lookupValueQuery: SlackChatHook => Query[
+  override val lookupValueQuery: SlackChatHookPlainText => Query[
     Tables.SlackChatHooks,
     SlackChatHookEncrypted,
     Seq
   ] =
-    (hook: SlackChatHook) =>
+    (hook: SlackChatHookPlainText) =>
       Tables.slackChatHooks.filter(_.channel_id === hook.channel.value)
   override val lookupKeyQuery: SlackChannelId => Query[
     Tables.SlackChatHooks,
@@ -58,7 +58,7 @@ class SlickSlackChatDao @Inject() (
   }
 
   override protected def toDB(
-      hook: SlackChatHook
+      hook: SlackChatHookPlainText
   ): Future[SlackChatHookEncrypted] =
     encryptionManager.encrypt(hook.token.getBytes) map { encrypted =>
       SlackChatHookEncrypted(
@@ -71,9 +71,9 @@ class SlickSlackChatDao @Inject() (
 
   override protected def fromDB(
       hook: SlackChatHookEncrypted
-  ): Future[SlackChatHook] =
+  ): Future[SlackChatHookPlainText] =
     encryptionManager.decrypt(hook.token) map { decrypted =>
-      SlackChatHook(
+      SlackChatHookPlainText(
         channel = hook.channel,
         token = decrypted.asString,
         threshold = hook.threshold,
