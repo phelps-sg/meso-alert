@@ -4,6 +4,4 @@ repos:
       default_stages: [push] #change to commit if desired
       hooks: #mix and match any of the following:
         -   id: sbt-scalafmt
-            stages: [push]
         -   id: sbt-scalafix
-            stages: [push]
