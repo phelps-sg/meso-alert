@@ -37,6 +37,10 @@ import com.typesafe.config.ConfigFactory
 import dao._
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
+import org.bitcoinj.core.listeners.{
+  NewBestBlockListener,
+  OnTransactionBroadcastListener
+}
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.store.BlockStore
 import org.bitcoinj.wallet.Wallet
@@ -407,6 +411,8 @@ object Fixtures {
     }
 
     val mockBlockChain = mock[MockBlockChain]
+    (mockBlockChain.getChainHead _).expects().once()
+    (mockBlockChain.addNewBestBlockListener(_: NewBestBlockListener)).expects(*)
 
     val mockBlockChainProvider = new BlockChainProvider {
       override val get = mockBlockChain
@@ -442,6 +448,9 @@ object Fixtures {
 
     val mockMemPoolWatcher = mock[MemPoolWatcherService]
     val mockPeerGroup = mock[MainNetPeerGroup]
+    (mockPeerGroup
+      .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+      .expects(*)
 
     def memPoolWatcherExpectations(
         ch: CallHandler1[ActorRef, Unit]
