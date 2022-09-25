@@ -14,29 +14,29 @@ import scala.util.{Failure, Success}
 
 object SlackSecretsActor {
 
-  case class ValidSecret(id: RegisteredUserId)
+  final case class ValidSecret(id: RegisteredUserId)
 
-  case class InvalidSecretException(id: RegisteredUserId, secret: Secret)
+  final case class InvalidSecretException(id: RegisteredUserId, secret: Secret)
       extends Exception(s"Invalid secret: ${base64Encode(secret.data)} for $id")
 
   sealed trait SlackSecretsCommand
-  case class GenerateSecret(userId: RegisteredUserId)
+  final case class GenerateSecret(userId: RegisteredUserId)
       extends SlackSecretsCommand
-  case class RecordSecret(
+  final case class RecordSecret(
       userId: RegisteredUserId,
       secret: Secret,
       replyTo: ActorRef
   ) extends SlackSecretsCommand
-  case class Unbind(userId: RegisteredUserId) extends SlackSecretsCommand
-  case class VerifySecret(userId: RegisteredUserId, secret: Secret)
+  final case class Unbind(userId: RegisteredUserId) extends SlackSecretsCommand
+  final case class VerifySecret(userId: RegisteredUserId, secret: Secret)
       extends SlackSecretsCommand
 
   sealed trait SlackSecretsEvent
-  case class BindEvent(userId: RegisteredUserId, secret: Secret)
+  final case class BindEvent(userId: RegisteredUserId, secret: Secret)
       extends SlackSecretsEvent
-  case class UnbindEvent(userId: RegisteredUserId) extends SlackSecretsEvent
+  final case class UnbindEvent(userId: RegisteredUserId) extends SlackSecretsEvent
 
-  case class SecretsState(mapping: Map[RegisteredUserId, Secret]) {
+  final case class SecretsState(mapping: Map[RegisteredUserId, Secret]) {
 
     def updated(evt: SlackSecretsEvent): SecretsState = {
       evt match {
