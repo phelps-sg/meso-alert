@@ -14,10 +14,10 @@ import scala.util.{Failure, Success}
 
 object SlackSecretsActor {
 
-  final case class ValidSecret(id: RegisteredUserId)
-
   final case class InvalidSecretException(id: RegisteredUserId, secret: Secret)
       extends Exception(s"Invalid secret: ${base64Encode(secret.data)} for $id")
+
+  final case class ValidSecret(id: RegisteredUserId)
 
   sealed trait SlackSecretsCommand
   final case class GenerateSecret(userId: RegisteredUserId)
