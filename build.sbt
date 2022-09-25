@@ -56,7 +56,7 @@ val jwtScalaVersion = "9.1.0"
 libraryDependencies ++= Seq(
   "com.github.jwt-scala" %% "jwt-play" % jwtScalaVersion,
   "com.github.jwt-scala" %% "jwt-core" % jwtScalaVersion,
-  "com.auth0" % "jwks-rsa" % "0.21.1"
+  "com.auth0" % "jwks-rsa" % "0.21.2"
 )
 
 // Workaround for https://github.com/jwt-scala/jwt-scala/issues/403
