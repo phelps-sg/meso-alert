@@ -47,8 +47,17 @@ class Auth0Controller @Inject() (
         "slackUrl" -> result.slackUrl
       )
 
-  case class Auth0Configuration(clientId: String, domain: Uri, audience: Uri)
-  case class Result(userId: RegisteredUserId, secret: Secret, slackUrl: String)
+  final case class Auth0Configuration(
+      clientId: String,
+      domain: Uri,
+      audience: Uri
+  )
+
+  final case class Result(
+      userId: RegisteredUserId,
+      secret: Secret,
+      slackUrl: String
+  )
 
   def configuration(): Action[AnyContent] = Action { _ =>
     Ok(Json.toJson(auth0Configuration))
