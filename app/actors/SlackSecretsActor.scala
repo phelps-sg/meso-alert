@@ -3,7 +3,7 @@ import actors.MessageHandlers.UnRecognizedMessageHandlerWithBounce
 import akka.actor.{ActorRef, Props}
 import akka.persistence._
 import com.google.inject.Inject
-import dao.{Secret, RegisteredUserId}
+import dao.{RegisteredUserId, Secret}
 import play.api.Logging
 import services.EncryptionManagerService
 import slick.EncryptionExecutionContext
@@ -34,7 +34,8 @@ object SlackSecretsActor {
   sealed trait SlackSecretsEvent
   final case class BindEvent(userId: RegisteredUserId, secret: Secret)
       extends SlackSecretsEvent
-  final case class UnbindEvent(userId: RegisteredUserId) extends SlackSecretsEvent
+  final case class UnbindEvent(userId: RegisteredUserId)
+      extends SlackSecretsEvent
 
   final case class SecretsState(mapping: Map[RegisteredUserId, Secret]) {
 
