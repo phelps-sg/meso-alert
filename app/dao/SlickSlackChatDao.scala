@@ -17,7 +17,11 @@ class SlickSlackChatDao @Inject() (
     val encryptionManager: EncryptionManagerService
 )(implicit val ec: ExecutionContext)
     extends SlackChatHookDao
-    with SlickHookDao[SlackChannelId, SlackChatHookPlainText, SlackChatHookEncrypted]
+    with SlickHookDao[
+      SlackChannelId,
+      SlackChatHookPlainText,
+      SlackChatHookEncrypted
+    ]
     with FutureInitialisingComponent {
 
   initialise()

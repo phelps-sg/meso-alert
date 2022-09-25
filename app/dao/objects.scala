@@ -7,11 +7,15 @@ import util.Encodings.base64Encode
 
 import java.net.URI
 
-final case class RegisteredUserId(value: String) extends AnyVal with MappedTo[String]
+final case class RegisteredUserId(value: String)
+    extends AnyVal
+    with MappedTo[String]
 
 final case class SlackTeamId(value: String) extends AnyVal with MappedTo[String]
 
-final case class SlackChannelId(value: String) extends AnyVal with MappedTo[String]
+final case class SlackChannelId(value: String)
+    extends AnyVal
+    with MappedTo[String]
 
 final case class SlackUserId(value: String) extends AnyVal with MappedTo[String]
 
