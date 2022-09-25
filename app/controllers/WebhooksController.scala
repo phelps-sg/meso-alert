@@ -16,8 +16,8 @@ class WebhooksController @Inject() (
 )(implicit system: ActorSystem, ex: ExecutionContext)
     extends BaseController {
 
-  case class UriDto(uri: String)
-  case class HookDto(uri: String, threshold: Long)
+  final case class UriDto(uri: String)
+  final case class HookDto(uri: String, threshold: Long)
 
   implicit val uriJson: OFormat[UriDto] = Json.format[UriDto]
   implicit val hookJson: OFormat[HookDto] = Json.format[HookDto]
