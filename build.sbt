@@ -8,7 +8,7 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 inThisBuild(
   List(
-    scalaVersion := "2.13.8",
+    scalaVersion := "2.13.9",
     scalafixScalaBinaryVersion := "2.13",
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision,
