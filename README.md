@@ -19,12 +19,6 @@ To install the tools needed to build and run the application from the shell run:
 make install-dev
 ~~~
 
-#### Install pre-commit hooks
-
-~~~bash
-make install-pre-commit-hooks
-~~~
-
 ### Ensure that docker is logged into the container registry
 
 #### On local development machines
