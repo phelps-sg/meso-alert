@@ -4,9 +4,6 @@ import actions.SlackSignatureVerifyAction
 import actions.SlackSignatureVerifyAction._
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.util.ByteString
-import com.slack.api.methods.request.auth.AuthTestRequest
-import com.slack.api.methods.request.conversations.ConversationsMembersRequest
-import controllers.SlackSlashCommandController.BotNotInvitedException
 import dao._
 import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}
@@ -29,8 +26,6 @@ object SlackSlashCommandController {
     "user_name",
     "is_enterprise_install"
   )
-
-  case object BotNotInvitedException extends Exception("Bot not invited")
 
   def param(key: String)(implicit
       paramMap: Map[String, Seq[String]]
@@ -121,21 +116,14 @@ class SlackSlashCommandController @Inject() (
         SlackSlashCommandController.toCommand(formBody) match {
 
           case Success(slashCommand) =>
-//            val channelID = slashCommand.channelId.value
-
             val f = for {
-              team <- slackTeamDao.find(slashCommand.teamId)
-//              _ <- checkBotInvited(team.accessToken, channelID)
               _ <- slashCommandHistoryDao.record(slashCommand)
               result <- process(slashCommand)
             } yield result
 
-            f recover {
-              case BotNotInvitedException =>
-                Ok(messagesApi("slackResponse.notInvitedError"))
-              case ex: Exception =>
-                ex.printStackTrace()
-                ServiceUnavailable(ex.getMessage)
+            f recover { case ex: Exception =>
+              ex.printStackTrace()
+              ServiceUnavailable(ex.getMessage)
             }
 
           case Failure(ex) =>
@@ -144,37 +132,6 @@ class SlackSlashCommandController @Inject() (
               NotAcceptable(ex.getMessage)
             }
         }
-    }
-  }
-
-  def checkBotInvited(token: String, channelID: String): Future[Unit] = {
-
-    val authTestRequest =
-      AuthTestRequest
-        .builder()
-        .token(token)
-        .build()
-
-    val conversationsMembersRequest = ConversationsMembersRequest
-      .builder()
-      .channel(channelID)
-      .token(token)
-      .build()
-
-    val f = for {
-      botUserId <- slackManagerService
-        .authTest(authTestRequest)
-        .map(_.getUserId)
-      members <- slackManagerService
-        .conversationsMembers(conversationsMembersRequest)
-        .map(_.getMembers)
-    } yield members.contains(botUserId)
-
-    f.map {
-      case true =>
-        ()
-      case false =>
-        throw BotNotInvitedException
     }
   }
 
