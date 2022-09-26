@@ -1,6 +1,6 @@
 repos:
   -   repo: https://github.com/phelps-sg/scala-pre-commit-hooks
-      rev: v0.3.9
+      rev: v0.3.11
       default_stages: [push] #change to commit if desired
       hooks: #mix and match any of the following:
         -   id: sbt-scalafmt
