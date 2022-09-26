@@ -488,21 +488,6 @@ class ControllerTests
       status(result) mustEqual OK
     }
 
-//    "return correct message when issuing a command while bot is not invited" in new TestFixtures {
-//      (mockSlackManagerService.authTest _)
-//        .expects(*)
-//        .returning(Future { resAuth })
-//      (mockSlackManagerService.conversationsMembers _)
-//        .expects(*)
-//        .returning(Future { resConvMembersResponseBad })
-//
-//      val result = slashCommand {
-//        fakeRequestValid("/crypto-alert", "5")
-//      }
-//      status(result) mustEqual OK
-//      contentAsString(result) mustEqual "slackResponse.notInvitedError"
-//    }
-
     "return correct message when issuing a valid /crypto-alert command" in new TestFixtures {
       (mockSlackManagerService.authTest _)
         .expects(*)
@@ -522,9 +507,6 @@ class ControllerTests
       (mockSlackManagerService.authTest _)
         .expects(*)
         .returning(Future { resAuth })
-//      (mockSlackManagerService.conversationsMembers _)
-//        .expects(*)
-//        .returning(Future { resConvMembersResponse })
 
       val result = slashCommand {
         fakeRequestValid("/crypto-alert", "10")

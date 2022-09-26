@@ -43,14 +43,14 @@ class FunctionalTests
     pressKeys(Keys.ENTER.toString)
   }
 
-  def inviteToChannel(botName: String): Unit = {
-    explicitWait()
-    pressKeys(s"@$botName")
-    clickOn(By.xpath("/html/body/div[9]/div/div/div/div/div/ul/li/div"))
-    explicitWait()
-    pressKeys(Keys.ENTER.toString)
-    pressKeys(Keys.ENTER.toString)
-  }
+//  def inviteToChannel(botName: String): Unit = {
+//    explicitWait()
+//    pressKeys(s"@$botName")
+//    clickOn(By.xpath("/html/body/div[9]/div/div/div/div/div/ul/li/div"))
+//    explicitWait()
+//    pressKeys(Keys.ENTER.toString)
+//    pressKeys(Keys.ENTER.toString)
+//  }
 
   def removeFromChannel(botName: String): Unit = {
     explicitWait()
@@ -233,13 +233,6 @@ class FunctionalTests
     pageTitle should be("Block Insights - Access free real-time mempool data")
   }
 
-  "inviting bot to a channel using the '@' command" should "be successful" in {
-    slackSignIn(workspace, slackEmail, slackPassword)
-    createChannel("testing")
-    inviteToChannel("block-insights-staging")
-    removeFromChannel("block-insights-staging")
-  }
-
   "issuing command /crypto-alert 100" should "result in correct response message" in {
     slackSignIn(workspace, slackEmail, slackPassword)
     find(
@@ -248,7 +241,6 @@ class FunctionalTests
       )
     )
       .foreach(elem => click on elem)
-    inviteToChannel("block-insights-staging")
     webDriver
       .findElement(By.className("ql-editor"))
       .sendKeys("/crypto-alert 100")
