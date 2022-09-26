@@ -10,13 +10,14 @@ case class BoltException(msg: String) extends Exception(msg)
 
 object FutureConverters {
 
-  implicit class BoltFuture[X <: SlackApiTextResponse](
-      completableFuture: CompletableFuture[X]
-  ) {
-    def asScalaFuture(implicit ec: ExecutionContext): Future[X] =
-      completableFuture.asScala map { result =>
-        if (result.isOk) result else throw BoltException(result.getError)
-      }
+  def checkIsOK[T <: SlackApiTextResponse](result: T): T = {
+    if (result.isOk) result else throw BoltException(result.getError)
+  }
+
+  def BoltFuture[T <: SlackApiTextResponse](
+      block: => T
+  )(implicit ec: ExecutionContext): Future[T] = {
+    Future { checkIsOK(block) }
   }
 
 }
