@@ -235,6 +235,7 @@ class FunctionalTests
 
   "issuing command /crypto-alert 100" should "result in correct response message" in {
     slackSignIn(workspace, slackEmail, slackPassword)
+    createChannel("testing")
     find(
       xpath(
         "//span[contains(@class, 'p-channel_sidebar__name') and text()='test']"
