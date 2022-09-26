@@ -1,52 +1,67 @@
-display_information:
-  name: Block Insights
-  description: Block Insights provides real-time tracking and analysis of large transactions.
-  background_color: "#000000"
-  long_description: "Block Insights provides real-time tracking and analysis of large transactions, making the mempool transparent and accessible to the crypto-economy. \r
-
-    \r
-
-    Access real-time mempool transaction data before they are confirmed on-chain. \r
-
-    \r
-
-    We cover multiple chains including Bitcoin, Ethereum, Solana, Polygon, Binance and more."
-features:
-  bot_user:
-    display_name: block-insights
-    always_online: false
-  slash_commands:
-    - command: /crypto-alert
-      url: https://blockinsights.co.uk/api/slack/slash
-      description: Configures alert for cryptocurrency
-      usage_hint: "[threshold in BTC]"
-      should_escape: false
-    - command: /pause-alerts
-      url: https://blockinsights.co.uk/api/slack/slash
-      description: Pause active alerts for this channel
-      should_escape: false
-    - command: /resume-alerts
-      url: https://blockinsights.co.uk/api/slack/slash
-      description: Resume alerts for this channel
-      should_escape: false
-oauth_config:
-  redirect_urls:
-    - https://blockinsights.co.uk/api/slack/auth
-  scopes:
-    user:
-      - channels:read
-    bot:
-      - commands
-      - chat:write
-      - links:write
-      - channels:read
-settings:
-  event_subscriptions:
-    request_url: https://blockinsights.co.uk/api/slack/events
-    user_events:
-      - channel_deleted
-    bot_events:
-      - channel_deleted
-  org_deploy_enabled: false
-  socket_mode_enabled: false
-  token_rotation_enabled: false
+{
+  "display_information": {
+    "name": "Block Insights",
+    "description": "Block Insights provides real-time tracking and analysis of large transactions.",
+    "background_color": "#121212",
+    "long_description": "Block Insights provides real-time tracking and analysis of large transactions, making the mempool transparent and accessible to the crypto-economy. \r\n\r\nAccess real-time mempool transaction data before they are confirmed on-chain. \r\n\r\nWe cover multiple chains including Bitcoin, Ethereum, Solana, Polygon, Binance and more."
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "block-insights",
+      "always_online": false
+    },
+    "slash_commands": [
+      {
+        "command": "/crypto-alert",
+        "url": "https://blockinsights.co.uk/api/slack/slash",
+        "description": "Configures alert for cryptocurrency",
+        "usage_hint": "[threshold in BTC]",
+        "should_escape": false
+      },
+      {
+        "command": "/pause-alerts",
+        "url": "https://blockinsights.co.uk/api/slack/slash",
+        "description": "Pause active alerts for this channel",
+        "should_escape": false
+      },
+      {
+        "command": "/resume-alerts",
+        "url": "https://blockinsights.co.uk/api/slack/slash",
+        "description": "Resume alerts for this channel",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "redirect_urls": [
+      "https://blockinsights.co.uk/api/slack/auth",
+      "https://auth.blockinsights.co.uk/login/callback"
+    ],
+    "scopes": {
+      "user": [
+        "channels:read"
+      ],
+      "bot": [
+        "channels:read",
+        "chat:write",
+        "commands",
+        "links:write",
+        "chat:write.public"
+      ]
+    }
+  },
+  "settings": {
+    "event_subscriptions": {
+      "request_url": "https://blockinsights.co.uk/api/slack/events",
+      "user_events": [
+        "channel_deleted"
+      ],
+      "bot_events": [
+        "channel_deleted"
+      ]
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}
