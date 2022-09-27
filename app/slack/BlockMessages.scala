@@ -9,6 +9,8 @@ import util.BitcoinFormatting.{
   toAddresses
 }
 
+import scala.annotation.tailrec
+
 object BlockMessages {
 
   implicit val lang: Lang = Lang("en")
@@ -24,35 +26,41 @@ object BlockMessages {
     blockMessageBuilder(messages)(tx.hash, tx.value, toAddresses(tx.outputs))
   }
 
+  @tailrec
   def buildOutputsSections(messages: MessagesApi)(
       txOutputs: Seq[String],
       currentSectionOutputs: Int,
-      totalSections: Int
+      totalSections: Int,
+      currentSectionString: String
   ): String = {
     if (totalSections > 47) {
-      """"}},{"type":"section","text":{"type":"mrkdwn",""" +
+      currentSectionString +
+        """"}},{"type":"section","text":{"type":"mrkdwn",""" +
         s""""text":"${messages(
             MESSAGE_TOO_MANY_OUTPUTS
           )}"}},{"type":"divider"}]"""
     } else {
       if (currentSectionOutputs < txsPerSection && txOutputs.nonEmpty) {
         val newSectionString = s"${linkToAddress(txOutputs.head)}, "
-        newSectionString + buildOutputsSections(messages)(
+        buildOutputsSections(messages)(
           txOutputs.tail,
           currentSectionOutputs + 1,
-          totalSections
+          totalSections,
+          currentSectionString + newSectionString
         )
       } else if (currentSectionOutputs >= txsPerSection && txOutputs.nonEmpty) {
         val newSectionString = """"}}, """ +
           """{"type":"section","text":{"type": "mrkdwn", "text": """" +
           s"${linkToAddress(txOutputs.head)}, "
-        newSectionString + buildOutputsSections(messages)(
+        buildOutputsSections(messages)(
           txOutputs.tail,
           1,
-          totalSections + 1
+          totalSections + 1,
+          currentSectionString + newSectionString
         )
       } else {
-        """"}}, {"type":"divider"}]"""
+        currentSectionString +
+          """"}}, {"type":"divider"}]"""
       }
     }
   }
@@ -71,5 +79,5 @@ object BlockMessages {
           txHash
         )} ${messages(MESSAGE_TO_ADDRESSES)}:\"}},""" +
       """{"type":"section","text":{"type": "mrkdwn", "text": """" +
-      buildOutputsSections(messages)(txOutputs, 0, 3)
+      buildOutputsSections(messages)(txOutputs, 0, 3, "")
 }
