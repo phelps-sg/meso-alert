@@ -59,7 +59,7 @@ object BlockMessages {
           currentSectionString + newSectionString
         )
       } else {
-        currentSectionString +
+        currentSectionString.take(currentSectionString.length-2) + " " +
           """"}}, {"type":"divider"}]"""
       }
     }

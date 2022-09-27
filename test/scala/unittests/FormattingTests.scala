@@ -45,7 +45,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
         100000000,
         List("1", "2")
       ) should fullyMatch regex
-        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https://www\.blockchair\.com/bitcoin/transaction/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},\{"type":"section","text":\{"type": "mrkdwn", "text": "<https://www\.blockchair\.com/bitcoin/address/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>, <https://www\.blockchair\.com/bitcoin/address/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>, "\}\}, \{"type":"divider"\}]"""
+        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https://www\.blockchair\.com/bitcoin/transaction/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},\{"type":"section","text":\{"type": "mrkdwn", "text": "<https://www\.blockchair\.com/bitcoin/address/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>, <https://www\.blockchair\.com/bitcoin/address/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> "\}\}, \{"type":"divider"\}]"""
     }
 
     "print all outputs if they take up less than 47 sections - multiple sections" in new TestFixtures {
@@ -54,14 +54,14 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
         100000000,
         List.range(1, 30, 1).map(x => x.toString)
       ) should fullyMatch regex
-        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https:\/\/www\.blockchair\.com\/bitcoin\/transaction\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},(\{"type":"section","text":\{"type": "mrkdwn", "text": "(<https:\/\/www\.blockchair\.com\/bitcoin\/address\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>, )+"\}\}, )*\{"type":"divider"\}]"""
+        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https:\/\/www\.blockchair\.com\/bitcoin\/transaction\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},(\{"type":"section","text":\{"type": "mrkdwn", "text": "(<https:\/\/www\.blockchair\.com\/bitcoin\/address\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>(,)* )+"\}\}, )*\{"type":"divider"\}]"""
 
       chatMessage(
         testHash,
         100000000,
         List.range(1, 100, 1).map(x => x.toString)
       ) should fullyMatch regex
-        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https:\/\/www\.blockchair\.com\/bitcoin\/transaction\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},(\{"type":"section","text":\{"type": "mrkdwn", "text": "(<https:\/\/www\.blockchair\.com\/bitcoin\/address\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>, )+"\}\}, )*\{"type":"divider"\}]"""
+        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https:\/\/www\.blockchair\.com\/bitcoin\/transaction\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},(\{"type":"section","text":\{"type": "mrkdwn", "text": "(<https:\/\/www\.blockchair\.com\/bitcoin\/address\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>(,)* )+"\}\}, )*\{"type":"divider"\}]"""
 
     }
 
