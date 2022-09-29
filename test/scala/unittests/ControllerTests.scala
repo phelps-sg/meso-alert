@@ -530,6 +530,21 @@ class ControllerTests
       contentAsString(result) mustEqual "slackResponse.generalError"
     }
 
+    "return correct message when asking for help with /crypto-alert" in new TestFixtures {
+      (mockSlackManagerService.authTest _)
+        .expects(*)
+        .returning(Future { resAuth })
+      (mockSlackManagerService.conversationsMembers _)
+        .expects(*)
+        .returning(Future { resConvMembersResponse })
+
+      val result = slashCommand {
+        fakeRequestValid("/crypto-alert", "help")
+      }
+      status(result) mustEqual OK
+      contentAsString(result) mustEqual "slackResponse.cryptoAlertHelp"
+    }
+
     "return correct message when pausing alerts" in new TestFixtures {
       (mockSlackManagerService.authTest _)
         .expects(*)
@@ -560,6 +575,21 @@ class ControllerTests
         )
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.pauseAlertsError"
+    }
+
+    "return correct message when asking for help with /pause-alerts" in new TestFixtures {
+      (mockSlackManagerService.authTest _)
+        .expects(*)
+        .returning(Future { resAuth })
+      (mockSlackManagerService.conversationsMembers _)
+        .expects(*)
+        .returning(Future { resConvMembersResponse })
+
+      val result = slashCommand {
+        fakeRequestValid("/pause-alerts", "help")
+      }
+      status(result) mustEqual OK
+      contentAsString(result) mustEqual "slackResponse.pauseAlertsHelp"
     }
 
     "return correct message when resuming alerts" in new TestFixtures {
@@ -594,6 +624,21 @@ class ControllerTests
         )
       status(result) mustEqual OK
       contentAsString(result) mustEqual "slackResponse.resumeAlertsError"
+    }
+
+    "return correct message when asking for help with /resume-alerts" in new TestFixtures {
+      (mockSlackManagerService.authTest _)
+        .expects(*)
+        .returning(Future { resAuth })
+      (mockSlackManagerService.conversationsMembers _)
+        .expects(*)
+        .returning(Future { resConvMembersResponse })
+
+      val result = slashCommand {
+        fakeRequestValid("/resume-alerts", "help")
+      }
+      status(result) mustEqual OK
+      contentAsString(result) mustEqual "slackResponse.resumeAlertsHelp"
     }
 
     "return an error message when no Slack signature is supplied" in new TestFixtures {

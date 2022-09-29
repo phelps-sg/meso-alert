@@ -144,6 +144,10 @@ class SlackSlashCommandController @Inject() (
 
     args match {
 
+      case Array("help") =>
+        logger.debug("crypto-alert help")
+        Future { Ok(messagesApi("slackResponse.cryptoAlertHelp")) }
+
       case Array(_) | Array(_, "btc") =>
         args.head.toLongOption match {
 
@@ -197,25 +201,49 @@ class SlackSlashCommandController @Inject() (
   }
 
   def pauseAlerts(implicit slashCommand: SlashCommand): Future[Result] = {
-    logger.debug("Pausing alerts")
-    val f = for {
-      stopped <- hooksManager.stop(channel)
-    } yield stopped
-    f.map { _ => Ok(messagesApi("slackResponse.pauseAlerts")) }
-      .recover { case HookNotStartedException(_) =>
-        Ok(messagesApi("slackResponse.pauseAlertsError"))
-      }
+
+    val args = slashCommand.text.toLowerCase.split("\\s+")
+
+    args match {
+
+      case Array("help") =>
+        logger.debug("pause-alerts help")
+        Future {
+          Ok(messagesApi("slackResponse.pauseAlertsHelp"))
+        }
+      case Array("") =>
+        logger.debug("Pausing alerts")
+        val f = for {
+          stopped <- hooksManager.stop(channel)
+        } yield stopped
+        f.map { _ => Ok(messagesApi("slackResponse.pauseAlerts")) }
+          .recover { case HookNotStartedException(_) =>
+            Ok(messagesApi("slackResponse.pauseAlertsError"))
+          }
+    }
+
   }
 
   def resumeAlerts(implicit slashCommand: SlashCommand): Future[Result] = {
-    logger.debug("Resuming alerts")
-    val f = for {
-      started <- hooksManager.start(channel)
-    } yield started
-    f.map { _ => Ok(messagesApi("slackResponse.resumeAlerts")) }
-      .recover { case HookAlreadyStartedException(_) =>
-        Ok(messagesApi("slackResponse.resumeAlertsError"))
-      }
+    val args = slashCommand.text.toLowerCase.split("\\s+")
+
+    args match {
+
+      case Array("help") =>
+        logger.debug("resume-alerts help")
+        Future {
+          Ok(messagesApi("slackResponse.resumeAlertsHelp"))
+        }
+      case Array("") =>
+        logger.debug("Resuming alerts")
+        val f = for {
+          started <- hooksManager.start(channel)
+        } yield started
+        f.map { _ => Ok(messagesApi("slackResponse.resumeAlerts")) }
+          .recover { case HookAlreadyStartedException(_) =>
+            Ok(messagesApi("slackResponse.resumeAlertsError"))
+          }
+    }
   }
 
   def process(implicit slashCommand: SlashCommand): Future[Result] = {
