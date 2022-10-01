@@ -51,13 +51,9 @@ object TxUpdate {
         yield TxInputOutput(address(input), value(input))).toSeq,
       outputs = (for (output <- tx.getOutputs.asScala)
         yield TxInputOutput(address(output), value(output))).toSeq,
-      confidence = {
-        tx.getConfidence() match {
-          case null => None
-          case conf =>
-            Some(TxConfidence(conf.getConfidenceType, conf.getDepthInBlocks))
-        }
-      }
+      confidence = Option(tx.getConfidence()).map(conf =>
+        TxConfidence(conf.getConfidenceType, conf.getDepthInBlocks)
+      )
     )
 
   // https://bitcoin.stackexchange.com/questions/83481/bitcoinj-java-library-not-decoding-input-addresses-for-some-transactions
