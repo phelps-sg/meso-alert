@@ -28,14 +28,14 @@ libraryDependencies ++= List(
   "io.circe" %% "circe-generic" % "0.14.3"
 )
 
-val slickVersion = "3.3.3"
+val slickVersion = "3.4.1"
 libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % slickVersion,
   "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
   "org.postgresql" % "postgresql" % "42.5.0"
 )
 
-libraryDependencies += "com.github.tminglei" %% "slick-pg_play-json" % "0.20.4"
+libraryDependencies += "com.github.tminglei" %% "slick-pg_play-json" % "0.21.0"
 
 val boltVersion = "1.25.1"
 libraryDependencies ++= List(
@@ -52,16 +52,17 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion % Test
 )
 
-val jwtScalaVersion = "9.1.0"
+val jwtScalaVersion = "9.1.1"
 libraryDependencies ++= Seq(
   "com.github.jwt-scala" %% "jwt-play" % jwtScalaVersion,
   "com.github.jwt-scala" %% "jwt-core" % jwtScalaVersion,
   "com.auth0" % "jwks-rsa" % "0.21.2"
 )
 
-// Workaround for https://github.com/jwt-scala/jwt-scala/issues/403
 dependencyOverrides += "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.11.4"
-dependencyOverrides += "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.1"
+dependencyOverrides += "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.4"
+dependencyOverrides += "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.1"
+
 
 Test / testForkedParallel := true
 Test / parallelExecution := true
