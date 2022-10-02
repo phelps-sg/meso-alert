@@ -3,12 +3,15 @@ slackResponse.cryptoAlertNew = OK, I will send updates on any BTC transactions e
 slackResponse.cryptoAlertReconfig = OK, I have reconfigured the alerts on this channel with a new threshold of {0} BTC.
 slackResponse.generalError = Usage: `/crypto-alert [threshold amount] [currency]`
 slackResponse.currencyError = I currently only provide alerts for BTC, but other currencies are coming soon.
+slackResponse.cryptoAlertHelp = Usage: "/crypto-alert X" or "/crypto-alert X btc" (more currencies coming soon!)
 # /pause-alerts
 slackResponse.pauseAlerts = OK, I have paused alerts for this channel.
 slackResponse.pauseAlertsError = Alerts are not active on this channel.
+slackResponse.pauseAlertsHelp = Usage: "/pause-alerts" on a channel with active alerts to pause them.
 # /resume-alerts
 slackResponse.resumeAlerts = OK, I will resume alerts on this channel.
 slackResponse.resumeAlertsError = Alerts are already active on this channel.
+slackResponse.resumeAlertsHelp = Usage: "/resume-alerts" on a channel with paused alerts to resume them.
 # Messages sent to Slack channels
 slackResponse.notInvitedError = Please invite the bot to a channel before issuing commands.
 slackChat.tooManyOutputs = Transaction contains too many outputs to list here. Visit the Transaction URL to view all.
