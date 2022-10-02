@@ -44,11 +44,12 @@ libraryDependencies ++= List(
   "com.slack.api" % "bolt-jetty" %  boltVersion
 )
 
-val AkkaVersion = "2.6.19"
+val AkkaVersion = "2.6.20"
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence" % AkkaVersion,
   "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
   "com.typesafe.akka" %% "akka-remote" % AkkaVersion,
+  "com.typesafe.akka" %% "akka-serialization-jackson" % AkkaVersion,
   "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion % Test
 )
 
