@@ -211,6 +211,7 @@ class SlackSlashCommandController @Inject() (
         Future {
           Ok(messagesApi("slackResponse.pauseAlertsHelp"))
         }
+
       case Array("") =>
         logger.debug("Pausing alerts")
         val f = for {
@@ -234,6 +235,7 @@ class SlackSlashCommandController @Inject() (
         Future {
           Ok(messagesApi("slackResponse.resumeAlertsHelp"))
         }
+
       case Array("") =>
         logger.debug("Resuming alerts")
         val f = for {
