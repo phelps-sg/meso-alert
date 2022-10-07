@@ -89,10 +89,10 @@ object TxUpdate {
   }
 
   def value(input: TransactionInput): Option[Long] =
-    if (input.getValue == null) None else Some(input.getValue.value)
+    Option(input.getValue).map(_.value)
 
   def value(output: TransactionOutput): Option[Long] =
-    if (output.getValue == null) None else Some(output.getValue.value)
+    Option(output.getValue).map(_.value)
 
   // noinspection ConvertExpressionToSAM
   implicit val txUpdateWrites: Writes[TxUpdate] = new Writes[TxUpdate] {
