@@ -489,13 +489,6 @@ class ControllerTests
     }
 
     "return correct message when issuing a valid /crypto-alert command" in new TestFixtures {
-      (mockSlackManagerService.authTest _)
-        .expects(*)
-        .returning(Future { resAuth })
-      (mockSlackManagerService.conversationsMembers _)
-        .expects(*)
-        .returning(Future { resConvMembersResponse })
-
       val result = slashCommand {
         fakeRequestValid("/crypto-alert", "5")
       }
@@ -504,10 +497,6 @@ class ControllerTests
     }
 
     "return reconfigure message when reconfiguring alerts" in new TestFixtures {
-      (mockSlackManagerService.authTest _)
-        .expects(*)
-        .returning(Future { resAuth })
-
       val result = slashCommand {
         fakeRequestValid("/crypto-alert", "10")
       }
@@ -516,13 +505,6 @@ class ControllerTests
     }
 
     "return error message when not supplying amount to /crypto-alert" in new TestFixtures {
-      (mockSlackManagerService.authTest _)
-        .expects(*)
-        .returning(Future { resAuth })
-      (mockSlackManagerService.conversationsMembers _)
-        .expects(*)
-        .returning(Future { resConvMembersResponse })
-
       val result = slashCommand {
         fakeRequestValid("/crypto-alert", "")
       }
@@ -531,13 +513,6 @@ class ControllerTests
     }
 
     "return correct message when asking for help with /crypto-alert" in new TestFixtures {
-      (mockSlackManagerService.authTest _)
-        .expects(*)
-        .returning(Future { resAuth })
-      (mockSlackManagerService.conversationsMembers _)
-        .expects(*)
-        .returning(Future { resConvMembersResponse })
-
       val result = slashCommand {
         fakeRequestValid("/crypto-alert", "help")
       }
@@ -546,13 +521,6 @@ class ControllerTests
     }
 
     "return correct message when pausing alerts" in new TestFixtures {
-      (mockSlackManagerService.authTest _)
-        .expects(*)
-        .returning(Future { resAuth })
-      (mockSlackManagerService.conversationsMembers _)
-        .expects(*)
-        .returning(Future { resConvMembersResponse })
-
       val result = slashCommand {
         fakeRequestValid("/pause-alerts", "")
       }
@@ -561,13 +529,6 @@ class ControllerTests
     }
 
     "return error message when pausing alerts when there are no alerts active" in new TestFixtures {
-      (mockSlackManagerService.authTest _)
-        .expects(*)
-        .returning(Future { resAuth })
-      (mockSlackManagerService.conversationsMembers _)
-        .expects(*)
-        .returning(Future { resConvMembersResponse })
-
       val result =
         call(
           controller.slashCommand,
@@ -578,13 +539,6 @@ class ControllerTests
     }
 
     "return correct message when asking for help with /pause-alerts" in new TestFixtures {
-      (mockSlackManagerService.authTest _)
-        .expects(*)
-        .returning(Future { resAuth })
-      (mockSlackManagerService.conversationsMembers _)
-        .expects(*)
-        .returning(Future { resConvMembersResponse })
-
       val result = slashCommand {
         fakeRequestValid("/pause-alerts", "help")
       }
@@ -593,13 +547,6 @@ class ControllerTests
     }
 
     "return correct message when resuming alerts" in new TestFixtures {
-      (mockSlackManagerService.authTest _)
-        .expects(*)
-        .returning(Future { resAuth })
-      (mockSlackManagerService.conversationsMembers _)
-        .expects(*)
-        .returning(Future { resConvMembersResponse })
-
       val result =
         call(
           controller.slashCommand,
@@ -610,13 +557,6 @@ class ControllerTests
     }
 
     "return error message when resuming alerts when there are no alerts active" in new TestFixtures {
-      (mockSlackManagerService.authTest _)
-        .expects(*)
-        .returning(Future { resAuth })
-      (mockSlackManagerService.conversationsMembers _)
-        .expects(*)
-        .returning(Future { resConvMembersResponse })
-
       val result =
         call(
           controller.slashCommand,
@@ -627,13 +567,6 @@ class ControllerTests
     }
 
     "return correct message when asking for help with /resume-alerts" in new TestFixtures {
-      (mockSlackManagerService.authTest _)
-        .expects(*)
-        .returning(Future { resAuth })
-      (mockSlackManagerService.conversationsMembers _)
-        .expects(*)
-        .returning(Future { resConvMembersResponse })
-
       val result = slashCommand {
         fakeRequestValid("/resume-alerts", "help")
       }
@@ -707,7 +640,7 @@ class ControllerTests
     "reject an invalid auth state" in new TestFixtures {
 
       (mockSlackManagerService.oauthV2Access _)
-        .expects(*, *)
+        .expects(*, *, *, *)
         .anyNumberOfTimes()
 
       (mockSlackSecretsManagerService.verifySecret _)
@@ -733,7 +666,7 @@ class ControllerTests
     "display an error if authorisation fails" in new TestFixtures {
 
       (mockSlackManagerService.oauthV2Access _)
-        .expects(*, *)
+        .expects(*, *, *, *)
         .once()
         .returning(Future.failed(BoltException("access denied")))
 
@@ -770,7 +703,7 @@ class ControllerTests
     "display successful installation page and record team to database if authorisation succeeds" in new TestFixtures {
 
       (mockSlackManagerService.oauthV2Access _)
-        .expects(*, *)
+        .expects(*, *, *, *)
         .once()
         .returning(Future { slackTeam })
 

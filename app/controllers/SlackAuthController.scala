@@ -1,6 +1,5 @@
 package controllers
 
-import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
 import dao.{RegisteredUserId, Secret, SlackTeam, SlackTeamDao}
 import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
 import play.api.{Configuration, Logging, mvc}
@@ -32,12 +31,12 @@ class SlackAuthController @Inject() (
       temporaryCode: String,
       userId: RegisteredUserId
   ): Future[SlackTeam] = {
-    val slackRequest = OAuthV2AccessRequest.builder
-      .clientId(slackClientId)
-      .clientSecret(slackClientSecret)
-      .code(temporaryCode)
-      .build()
-    slackManagerService.oauthV2Access(slackRequest, userId)
+    slackManagerService.oauthV2Access(
+      slackClientId,
+      slackClientSecret,
+      temporaryCode,
+      userId
+    )
   }
 
   protected def verifyState(state: Option[String]): Future[RegisteredUserId] = {
