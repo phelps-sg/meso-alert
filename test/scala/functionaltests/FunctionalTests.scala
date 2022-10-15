@@ -1,8 +1,8 @@
 package functionaltests
 
+import org.openqa.selenium._
 import org.openqa.selenium.firefox.{FirefoxDriver, FirefoxOptions}
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
-import org.openqa.selenium._
 import org.scalatest.flatspec
 import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
@@ -18,11 +18,11 @@ class FunctionalTests
   val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
   val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
-  val headless: Boolean = System.getenv("SELENIUM_SHOW_WINDOW") == null
-  val stagingURL: String = System.getenv("STAGING_URL") match {
-    case url: String => url
-    case null        => "https://meso-alert-staging.eu.ngrok.io"
-  }
+  val headless: Boolean = Option(System.getenv("SELENIUM_SHOW_WINDOW"))
+    .map(_.toBoolean)
+    .getOrElse(false)
+  val stagingURL: String = Option(System.getenv("STAGING_URL"))
+    .getOrElse("https://meso-alert-staging.eu.ngrok.io")
 
   private val options = new FirefoxOptions().setHeadless(headless)
 
