@@ -28,6 +28,8 @@ class FunctionalTests
 
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
 
+  setCaptureDir("./captures")
+
   implicitlyWait(Span(20, Seconds))
 
   def slackSignIn(workspace: String, email: String, pwd: String): Unit = {
@@ -147,11 +149,13 @@ class FunctionalTests
     go to stagingURL
     acceptBlockInsightsCookies()
     pageTitle should be("Block Insights - Access free real-time mempool data")
+    capture to "HomePage"
   }
 
   "The feedback form" should "render" in {
     go to s"$stagingURL/feedback"
     pageTitle should be("Feedback Form")
+    capture to "FeedbackForm"
   }
 
   "Entering valid feedback form data and submitting" should "result in 'Message sent successfully'" in {
@@ -160,6 +164,7 @@ class FunctionalTests
     emailField("email").value = "test@example.com"
     textArea("message").value = "An example feedback message."
     submit()
+    capture to "ValidFeedbackSubmission"
     assert(find("alert-success").isDefined)
   }
 
@@ -186,6 +191,7 @@ class FunctionalTests
       "/html/body/div/main/section/div/div/div/form/div[2]/button"
     )
     explicitWait()
+    capture to "Login"
     assert(find("dropdownMenuButton").isDefined)
   }
 
@@ -202,6 +208,7 @@ class FunctionalTests
     click on xpath("//*[@id=\"signin_btn\"]")
     explicitWait()
     click on xpath("/html/body/div[1]/div/form/div/div[2]/a")
+    capture to "CancelInstallation"
     pageTitle should be("Block Insights - Access free real-time mempool data")
   }
 
@@ -221,6 +228,7 @@ class FunctionalTests
       webDriver
         .findElement(By.xpath("/html/body/div[1]/div/form/div/div[2]/button"))
         .click()
+      capture to "InstallToWorkspace"
       pageTitle should be("Installation successful")
     }
 
@@ -230,6 +238,7 @@ class FunctionalTests
     clickOn(By.id("dropdownMenuButton"))
     click on id("qsLogoutBtn")
     assert(find("qsLoginBtn").isDefined)
+    capture to "Logout"
     pageTitle should be("Block Insights - Access free real-time mempool data")
   }
 
@@ -246,6 +255,7 @@ class FunctionalTests
       .findElement(By.className("ql-editor"))
       .sendKeys("/crypto-alert 100")
     pressKeys(Keys.ENTER.toString)
+    capture to "CryptoAlert100"
     val result = find(
       xpath(
         "//span[text()='OK, I will send updates on any BTC transactions exceeding 100 BTC.']"
@@ -264,6 +274,7 @@ class FunctionalTests
       .foreach(elem => click on elem)
     pressKeys("/pause-alerts")
     pressKeys(Keys.ENTER.toString)
+    capture to "PauseAlerts"
     val result =
       find(xpath("//span[text()='OK, I have paused alerts for this channel.']"))
     assert(result.isDefined)
@@ -279,6 +290,7 @@ class FunctionalTests
       .foreach(elem => click on elem)
     pressKeys("/resume-alerts")
     pressKeys(Keys.ENTER.toString)
+    capture to "ResumeAlerts"
     val result =
       find(xpath("//span[text()='OK, I will resume alerts on this channel.']"))
     assert(result.isDefined)

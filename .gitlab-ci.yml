@@ -45,6 +45,10 @@ staging-functional-tests:
     - make -e sbt-functional-tests
   only:
     - master
+  artifacts:
+    paths:
+      - captures/*
+    expire_in: 1 week
 
 production-functional-tests:
   stage: production-functional-tests
@@ -54,6 +58,10 @@ production-functional-tests:
   only:
     - master
   when: manual
+  artifacts:
+    paths:
+      - captures/*
+    expire_in: 1 week
 
 k8-staging:
   stage: deploy-staging
