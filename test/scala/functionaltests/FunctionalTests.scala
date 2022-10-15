@@ -27,12 +27,14 @@ class FunctionalTests
     .getOrElse("https://meso-alert-staging.eu.ngrok.io")
   val rootDir: String = Option(System.getenv("CI_PROJECT_DIR"))
     .getOrElse(".")
+  val captureDir = "${rootDir}/captures"
 
   private val options = new FirefoxOptions().setHeadless(headless)
 
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
 
-  setCaptureDir("${rootDir}/captures")
+  logger.info(s"Capturing screen shots to ${captureDir}")
+  setCaptureDir(captureDir)
 
   implicitlyWait(Span(20, Seconds))
 
