@@ -48,6 +48,7 @@ staging-functional-tests:
   artifacts:
     paths:
       - captures/*.png
+    when: on_failure
     expire_in: 1 week
 
 production-functional-tests:
@@ -61,6 +62,7 @@ production-functional-tests:
   artifacts:
     paths:
       - captures/*.png
+    when: on_failure
     expire_in: 1 week
 
 k8-staging:
