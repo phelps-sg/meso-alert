@@ -7,28 +7,32 @@ import org.scalatest.flatspec
 import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
 import org.scalatestplus.selenium.WebBrowser
+import play.api.Logging
 
 import java.time.Duration
 
 class FunctionalTests
     extends flatspec.AnyFlatSpec
     with should.Matchers
-    with WebBrowser {
+    with WebBrowser
+    with Logging {
 
   val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
   val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
   val headless: Boolean = Option(System.getenv("SELENIUM_SHOW_WINDOW"))
     .map(_.toBoolean)
-    .getOrElse(false)
+    .getOrElse(true)
   val stagingURL: String = Option(System.getenv("STAGING_URL"))
     .getOrElse("https://meso-alert-staging.eu.ngrok.io")
+  val rootDir: String = Option(System.getenv("CI_PROJECT_DIR"))
+    .getOrElse(".")
 
   private val options = new FirefoxOptions().setHeadless(headless)
 
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
 
-  setCaptureDir("./captures")
+  setCaptureDir("${rootDir}/captures")
 
   implicitlyWait(Span(20, Seconds))
 
