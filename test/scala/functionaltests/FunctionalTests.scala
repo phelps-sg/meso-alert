@@ -27,7 +27,7 @@ class FunctionalTests
     .getOrElse("https://meso-alert-staging.eu.ngrok.io")
   val rootDir: String = Option(System.getenv("CI_PROJECT_DIR"))
     .getOrElse(".")
-  val captureDir = "${rootDir}/captures"
+  val captureDir = s"${rootDir}/captures"
 
   private val options = new FirefoxOptions().setHeadless(headless)
 
