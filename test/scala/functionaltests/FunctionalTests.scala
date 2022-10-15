@@ -20,7 +20,7 @@ class FunctionalTests
   val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
   val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
-  val headless: Boolean = Option(System.getenv("SELENIUM_SHOW_WINDOW"))
+  val headless: Boolean = Option(System.getenv("SELENIUM_HEADLESS"))
     .map(_.toBoolean)
     .getOrElse(true)
   val stagingURL: String = Option(System.getenv("STAGING_URL"))
