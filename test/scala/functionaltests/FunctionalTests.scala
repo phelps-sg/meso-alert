@@ -261,6 +261,7 @@ class FunctionalTests
       .findElement(By.className("ql-editor"))
       .sendKeys("/crypto-alert 100")
     pressKeys(Keys.ENTER.toString)
+    explicitWait()
     capture to "CryptoAlert100"
     val result = find(
       xpath(
@@ -280,6 +281,7 @@ class FunctionalTests
       .foreach(elem => click on elem)
     pressKeys("/pause-alerts")
     pressKeys(Keys.ENTER.toString)
+    explicitWait()
     capture to "PauseAlerts"
     val result =
       find(xpath("//span[text()='OK, I have paused alerts for this channel.']"))
@@ -297,6 +299,7 @@ class FunctionalTests
     pressKeys("/resume-alerts")
     pressKeys(Keys.ENTER.toString)
     capture to "ResumeAlerts"
+    explicitWait()
     val result =
       find(xpath("//span[text()='OK, I will resume alerts on this channel.']"))
     assert(result.isDefined)
