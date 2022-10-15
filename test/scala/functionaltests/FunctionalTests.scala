@@ -259,13 +259,13 @@ class FunctionalTests
       .foreach(elem => click on elem)
     webDriver
       .findElement(By.className("ql-editor"))
-      .sendKeys("/crypto-alert 100")
+      .sendKeys("/crypto-alert 1000000")
     pressKeys(Keys.ENTER.toString)
     explicitWait()
-    capture to "CryptoAlert100"
+    capture to "CryptoAlert"
     val result = find(
       xpath(
-        "//span[text()='OK, I will send updates on any BTC transactions exceeding 100 BTC.']"
+        "//span[text()='OK, I will send updates on any BTC transactions exceeding 1000000 BTC.']"
       )
     )
     assert(result.isDefined)
