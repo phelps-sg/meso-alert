@@ -265,7 +265,7 @@ class FunctionalTests
     capture to "CryptoAlert"
     val result = find(
       xpath(
-        "//span[text()='OK, I will send updates on any BTC transactions exceeding 1000000 BTC.']"
+        "//span[text()='OK, I will send updates on any BTC transactions exceeding 1,000,000 BTC.']"
       )
     )
     assert(result.isDefined)
