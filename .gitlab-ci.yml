@@ -47,7 +47,7 @@ staging-functional-tests:
     - master
   artifacts:
     paths:
-      - captures/*
+      - captures/*.png
     expire_in: 1 week
 
 production-functional-tests:
@@ -60,7 +60,7 @@ production-functional-tests:
   when: manual
   artifacts:
     paths:
-      - captures/*
+      - captures/*.png
     expire_in: 1 week
 
 k8-staging:
