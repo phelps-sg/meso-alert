@@ -298,8 +298,8 @@ class FunctionalTests
       .foreach(elem => click on elem)
     pressKeys("/resume-alerts")
     pressKeys(Keys.ENTER.toString)
-    capture to "ResumeAlerts"
     explicitWait()
+    capture to "ResumeAlerts"
     val result =
       find(xpath("//span[text()='OK, I will resume alerts on this channel.']"))
     assert(result.isDefined)
