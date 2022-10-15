@@ -151,6 +151,20 @@ class FunctionalTests
 
   def explicitWait(): Option[Element] = find(xpath("//wait"))
 
+  def findSlashCommandResponse(message: String): Option[Element] =
+    find(
+      xpath(
+        s"""//div[@class=".p-rich_text_section" and text()='$message']"""
+      )
+    )
+
+  def clickOnChannel(channel: String): Unit =
+    find(
+      xpath(
+        s"""//span[contains(@class, 'p-channel_sidebar__name') and text()='$channel']"""
+      )
+    ).foreach(elem => click on elem)
+
   "The home page" should "render" in {
     go to stagingURL
     acceptBlockInsightsCookies()
@@ -251,57 +265,46 @@ class FunctionalTests
   "issuing command /crypto-alert 100" should "result in correct response message" in {
     slackSignIn(workspace, slackEmail, slackPassword)
     createChannel("testing")
-    find(
-      xpath(
-        "//span[contains(@class, 'p-channel_sidebar__name') and text()='test']"
-      )
-    )
-      .foreach(elem => click on elem)
+//    find(
+//      xpath(
+//        "//span[contains(@class, 'p-channel_sidebar__name') and text()='test']"
+//      )
+//    )
+//      .foreach(elem => click on elem)
+    clickOnChannel("testing")
     webDriver
       .findElement(By.className("ql-editor"))
       .sendKeys("/crypto-alert 1000000")
     pressKeys(Keys.ENTER.toString)
     explicitWait()
     capture to "CryptoAlert"
-    val result = find(
-      xpath(
-        "//span[text()='OK, I will send updates on any BTC transactions exceeding 1,000,000 BTC.']"
-      )
+    val result = findSlashCommandResponse(
+      "OK, I will send updates on any BTC transactions exceeding 1,000,000 BTC."
     )
     assert(result.isDefined)
   }
 
   "issuing command /pause-alerts" should "result in correct response message" in {
     slackSignIn(workspace, slackEmail, slackPassword)
-    find(
-      xpath(
-        "//span[contains(@class, 'p-channel_sidebar__name') and text()='testing']"
-      )
-    )
-      .foreach(elem => click on elem)
+    clickOnChannel("testing")
     pressKeys("/pause-alerts")
     pressKeys(Keys.ENTER.toString)
     explicitWait()
     capture to "PauseAlerts"
     val result =
-      find(xpath("//span[text()='OK, I have paused alerts for this channel.']"))
+      findSlashCommandResponse("OK, I have paused alerts for this channel.")
     assert(result.isDefined)
   }
 
   "issuing command /resume-alerts" should "result in correct response message" in {
     slackSignIn(workspace, slackEmail, slackPassword)
-    find(
-      xpath(
-        "//span[contains(@class, 'p-channel_sidebar__name') and text()='testing']"
-      )
-    )
-      .foreach(elem => click on elem)
+    clickOnChannel("testing")
     pressKeys("/resume-alerts")
     pressKeys(Keys.ENTER.toString)
     explicitWait()
     capture to "ResumeAlerts"
     val result =
-      find(xpath("//span[text()='OK, I will resume alerts on this channel.']"))
+      findSlashCommandResponse("OK, I will resume alerts on this channel.")
     assert(result.isDefined)
     deleteChannel("testing")
   }
