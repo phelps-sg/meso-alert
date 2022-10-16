@@ -151,12 +151,12 @@ class FunctionalTests
 
   def explicitWait(): Option[Element] = find(xpath("//wait"))
 
-  def findSlashCommandResponse(message: String): Option[Element] =
+  def responseContains(message: String): Boolean =
     find(
       xpath(
         s"""//div[@class="p-rich_text_section" and text()='$message']"""
       )
-    )
+    ).isDefined
 
   def clickOnChannel(channel: String): Unit =
     find(
@@ -278,10 +278,11 @@ class FunctionalTests
     pressKeys(Keys.ENTER.toString)
     explicitWait()
     capture to "CryptoAlert"
-    val result = findSlashCommandResponse(
-      "OK, I will send updates on any BTC transactions exceeding 1,000,000 BTC."
+    assert(
+      responseContains(
+        "OK, I will send updates on any BTC transactions exceeding 1,000,000 BTC."
+      )
     )
-    assert(result.isDefined)
   }
 
   "issuing command /pause-alerts" should "result in correct response message" in {
@@ -291,9 +292,7 @@ class FunctionalTests
     pressKeys(Keys.ENTER.toString)
     explicitWait()
     capture to "PauseAlerts"
-    val result =
-      findSlashCommandResponse("OK, I have paused alerts for this channel.")
-    assert(result.isDefined)
+    assert(responseContains("OK, I have paused alerts for this channel."))
   }
 
   "issuing command /resume-alerts" should "result in correct response message" in {
@@ -303,9 +302,6 @@ class FunctionalTests
     pressKeys(Keys.ENTER.toString)
     explicitWait()
     capture to "ResumeAlerts"
-    val result =
-      findSlashCommandResponse("OK, I will resume alerts on this channel.")
-    assert(result.isDefined)
-    deleteChannel("testing")
+    assert(responseContains("OK, I will resume alerts on this channel."))
   }
 }
