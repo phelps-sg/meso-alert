@@ -154,7 +154,7 @@ class FunctionalTests
   def findSlashCommandResponse(message: String): Option[Element] =
     find(
       xpath(
-        s"""//div[@class=".p-rich_text_section" and text()='$message']"""
+        s"""//div[@class="p-rich_text_section" and text()='$message']"""
       )
     )
 
