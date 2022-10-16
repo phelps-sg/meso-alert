@@ -292,12 +292,6 @@ class FunctionalTests
     val amount = 1000000
     slackSignIn(workspace, slackEmail, slackPassword)
     createChannel("testing")
-//    find(
-//      xpath(
-//        "//span[contains(@class, 'p-channel_sidebar__name') and text()='test']"
-//      )
-//    )
-//      .foreach(elem => click on elem)
     clickOnChannel("testing")
     webDriver
       .findElement(By.className("ql-editor"))
