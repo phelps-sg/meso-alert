@@ -179,7 +179,7 @@ class FunctionalTests
   def responseContains(message: String): Boolean = {
     find(
       xpath(
-        s"""//div[@class="p-rich_text_section" and text()='$message']"""
+        s"""//div[contains(@class, 'p-rich_text_section') and text()='$message']"""
       )
     ).isDefined
   }
