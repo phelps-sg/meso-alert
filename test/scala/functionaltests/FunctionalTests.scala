@@ -36,7 +36,7 @@ class FunctionalTests
     .getOrElse(".")
   val captureDir: String = s"$rootDir/captures"
 
-  implicit val lang = Lang("en")
+  implicit val lang: Lang = Lang("en")
   val messagesApi: MessagesApi =
     fakeApplication().injector.instanceOf[MessagesApi]
 
