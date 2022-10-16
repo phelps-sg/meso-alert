@@ -191,16 +191,17 @@ class FunctionalTests
   "The feedback form" should "render" in {
     go to s"$stagingURL/feedback"
     pageTitle should be("Feedback Form")
-    capture to "FeedbackForm"
+    capture to "FeedbackForm-post"
   }
 
   "Entering valid feedback form data and submitting" should "result in 'Message sent successfully'" in {
     go to s"$stagingURL/feedback"
+    capture to "ValidFeedbackSubmission-pre"
     textField("name").value = "Test Name"
     emailField("email").value = "test@example.com"
     textArea("message").value = "An example feedback message."
     submit()
-    capture to "ValidFeedbackSubmission"
+    capture to "ValidFeedbackSubmission-post"
     assert(find("alert-success").isDefined)
   }
 
@@ -219,6 +220,7 @@ class FunctionalTests
 
   "Login with valid credentials" should "result in the user being authenticated" in {
     go to stagingURL
+    capture to "Login-pre"
     explicitWait()
     click on id("qsLoginBtn")
     textField("username").value = slackEmail
@@ -227,13 +229,14 @@ class FunctionalTests
       "/html/body/div/main/section/div/div/div/form/div[2]/button"
     )
     explicitWait()
-    capture to "Login"
+    capture to "Login-post"
     assert(find("dropdownMenuButton").isDefined)
   }
 
   "canceling bot installation during 'add to slack'" should "redirect to home page " in {
     go to stagingURL
     explicitWait()
+    capture to "CancelInstallation-pre"
     click on id("addToSlackBtn")
     checkForCookieMessage()
     textField("domain").value = workspace
@@ -244,7 +247,7 @@ class FunctionalTests
     click on xpath("//*[@id=\"signin_btn\"]")
     explicitWait()
     click on xpath("/html/body/div[1]/div/form/div/div[2]/a")
-    capture to "CancelInstallation"
+    capture to "CancelInstallation-post"
     pageTitle should be("Block Insights - Access free real-time mempool data")
   }
 
@@ -252,6 +255,7 @@ class FunctionalTests
     "result in the successful installation page" in {
       go to stagingURL
       explicitWait()
+      capture to "InstallToWorkspace-pre"
       click on id("addToSlackBtn")
       checkForCookieMessage()
       new WebDriverWait(webDriver, Duration.ofSeconds(10))
@@ -264,23 +268,25 @@ class FunctionalTests
       webDriver
         .findElement(By.xpath("/html/body/div[1]/div/form/div/div[2]/button"))
         .click()
-      capture to "InstallToWorkspace"
+      capture to "InstallToWorkspace-post"
       pageTitle should be("Installation successful")
     }
 
   "Logging out" should "be successful" in {
     go to stagingURL
     explicitWait()
+    capture to "Logout-pre"
     clickOn(By.id("dropdownMenuButton"))
     click on id("qsLogoutBtn")
     assert(find("qsLoginBtn").isDefined)
-    capture to "Logout"
+    capture to "Logout-post"
     pageTitle should be("Block Insights - Access free real-time mempool data")
   }
 
   "issuing command /crypto-alert" should "result in correct response message" in {
     val amount = 1000000
     slackSignIn(workspace, slackEmail, slackPassword)
+    capture to "CryptoAlert-pre"
     createChannel("testing")
     clickOnChannel("testing")
     webDriver
@@ -288,7 +294,7 @@ class FunctionalTests
       .sendKeys(s"/crypto-alert $amount")
     pressKeys(Keys.ENTER.toString)
     explicitWait()
-    capture to "CryptoAlert"
+    capture to "CryptoAlert-post"
     assert(
       responseContains(
         messagesApi(MESSAGE_CRYPTO_ALERT_NEW, amount)
@@ -299,20 +305,22 @@ class FunctionalTests
   "issuing command /pause-alerts" should "result in correct response message" in {
     slackSignIn(workspace, slackEmail, slackPassword)
     clickOnChannel("testing")
+    capture to "PauseAlerts-pre"
     pressKeys("/pause-alerts")
     pressKeys(Keys.ENTER.toString)
     explicitWait()
-    capture to "PauseAlerts"
+    capture to "PauseAlerts-post"
     assert(responseContains(messagesApi(MESSAGE_PAUSE_ALERTS)))
   }
 
   "issuing command /resume-alerts" should "result in correct response message" in {
     slackSignIn(workspace, slackEmail, slackPassword)
     clickOnChannel("testing")
+    capture to "ResumeAlerts-pre"
     pressKeys("/resume-alerts")
     pressKeys(Keys.ENTER.toString)
     explicitWait()
-    capture to "ResumeAlerts"
+    capture to "ResumeAlerts-post"
     assert(responseContains(messagesApi(MESSAGE_RESUME_ALERTS)))
   }
 }
