@@ -75,15 +75,6 @@ class FunctionalTests
     pressKeys(Keys.ENTER.toString)
   }
 
-//  def inviteToChannel(botName: String): Unit = {
-//    explicitWait()
-//    pressKeys(s"@$botName")
-//    clickOn(By.xpath("/html/body/div[9]/div/div/div/div/div/ul/li/div"))
-//    explicitWait()
-//    pressKeys(Keys.ENTER.toString)
-//    pressKeys(Keys.ENTER.toString)
-//  }
-
   def removeFromChannel(botName: String): Unit = {
     explicitWait()
     clickOnWithJs(
