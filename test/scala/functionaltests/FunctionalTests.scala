@@ -11,10 +11,9 @@ import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 import org.scalatest.flatspec
 import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
-import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.selenium.WebBrowser
 import play.api.Logging
-import play.api.i18n.{Lang, MessagesApi}
+import play.api.i18n.{DefaultMessagesApi, Lang, Messages, MessagesApi}
 
 import java.time.Duration
 
@@ -22,12 +21,15 @@ class FunctionalTests
     extends flatspec.AnyFlatSpec
     with should.Matchers
     with WebBrowser
-    with GuiceOneAppPerSuite
     with Logging {
 
   val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
   val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
+  val waitInterval: Int =
+    Option(System.getenv("SELENIUM_WAIT_INTERVAL_SECONDS"))
+      .map(_.toInt)
+      .getOrElse(20)
   val headless: Boolean =
     Option(System.getenv("SELENIUM_HEADLESS")).forall(_.toBoolean)
   val stagingURL: String = Option(System.getenv("STAGING_URL"))
@@ -37,8 +39,17 @@ class FunctionalTests
   val captureDir: String = s"$rootDir/captures"
 
   implicit val lang: Lang = Lang("en")
-  val messagesApi: MessagesApi =
-    fakeApplication().injector.instanceOf[MessagesApi]
+  val classLoader = Thread.currentThread().getContextClassLoader
+  val messageFile = classLoader.getResource("messages")
+  val messages: Map[String, String] = Messages
+    .parse(
+      Messages.UrlMessageSource(messageFile),
+      messageFile.getPath
+    )
+    .fold(e => throw e, identity)
+  val messagesApi: MessagesApi = new DefaultMessagesApi(
+    Map(lang.code -> messages)
+  )
 
   private val options = new FirefoxOptions().setHeadless(headless)
 
@@ -47,7 +58,7 @@ class FunctionalTests
   logger.info(s"Capturing screen shots to $captureDir")
   setCaptureDir(captureDir)
 
-  implicitlyWait(Span(20, Seconds))
+  implicitlyWait(Span(waitInterval, Seconds))
 
   def slackSignIn(workspace: String, email: String, pwd: String): Unit = {
     go to "https://slack.com/workspace-signin"
@@ -162,12 +173,13 @@ class FunctionalTests
 
   def explicitWait(): Option[Element] = find(xpath("//wait"))
 
-  def responseContains(message: String): Boolean =
+  def responseContains(message: String): Boolean = {
     find(
       xpath(
         s"""//div[@class="p-rich_text_section" and text()='$message']"""
       )
     ).isDefined
+  }
 
   def clickOnChannel(channel: String): Unit =
     find(
