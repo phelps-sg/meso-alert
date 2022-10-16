@@ -97,6 +97,7 @@ email.smtpPort = ${EMAIL_SMTP_PORT}
 email.host = "${EMAIL_HOST}"
 email.hostPassword = "${EMAIL_HOST_PASSWORD}"
 email.destination = "${EMAIL_DESTINATION}"
+email.destinationSupport = "${EMAIL_DESTINATION_SUPPORT}"
 
 akka.persistence {
 

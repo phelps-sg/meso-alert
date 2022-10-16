@@ -31,6 +31,7 @@ if [ -d "/etc/secrets" ]; then
   EMAIL_HOST=$(cat /etc/secrets/email/username)
   EMAIL_HOST_PASSWORD=$(cat /etc/secrets/email/password)
   EMAIL_DESTINATION=feedback@symbiotica.ai
+  EMAIL_DESTINATION_SUPPORT=support@symbiotica.ai
 
 else
 
@@ -50,6 +51,7 @@ email.smtpPort = "${EMAIL_SMTP_PORT}"
 email.host = "${EMAIL_HOST}"
 email.hostPassword = "${EMAIL_HOST_PASSWORD}"
 email.destination = "${EMAIL_DESTINATION}"
+email.destinationSupport = "${EMAIL_DESTINATION_SUPPORT}"
 
 play.filters.disabled+=play.filters.hosts.AllowedHostsFilter
 play.http.secret.key="${PLAY_KEY}"
