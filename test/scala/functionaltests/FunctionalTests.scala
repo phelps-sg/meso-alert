@@ -26,10 +26,10 @@ class FunctionalTests
   val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
   val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
-  val waitInterval: Int =
-    Option(System.getenv("SELENIUM_WAIT_INTERVAL_SECONDS"))
+  val waitInterval: Span =
+    Span(Option(System.getenv("SELENIUM_WAIT_INTERVAL_SECONDS"))
       .map(_.toInt)
-      .getOrElse(20)
+      .getOrElse(20), Seconds)
   val headless: Boolean =
     Option(System.getenv("SELENIUM_HEADLESS")).forall(_.toBoolean)
   val stagingURL: String = Option(System.getenv("STAGING_URL"))
@@ -58,7 +58,7 @@ class FunctionalTests
   logger.info(s"Capturing screen shots to $captureDir")
   setCaptureDir(captureDir)
 
-  implicitlyWait(Span(waitInterval, Seconds))
+  implicitlyWait(waitInterval)
 
   def slackSignIn(workspace: String, email: String, pwd: String): Unit = {
     go to "https://slack.com/workspace-signin"
