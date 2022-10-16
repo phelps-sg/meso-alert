@@ -10,7 +10,11 @@ import scala.concurrent.Future
 
 @ImplementedBy(classOf[MailManagerService])
 trait MailManager {
-  def sendEmail(subject: String, content: String): Future[Unit]
+  def sendEmail(
+      to: String,
+      subject: String,
+      content: String
+  ): Future[Unit]
 }
 
 @Singleton
@@ -19,23 +23,29 @@ class MailManagerService @Inject() (
     implicit val emailExecutionContext: EmailExecutionContext
 ) extends MailManager {
 
-  protected val emailSmtpHost: String = config.get[String]("email.smtpHost")
-  protected val emailSmtpPort: Int = config.get[Int]("email.smtpPort")
-  protected val emailHost: String = config.get[String]("email.host")
-  protected val emailPassword: String = config.get[String]("email.hostPassword")
-  protected val emailDestination: String =
-    config.get[String]("email.destination")
+  protected val host: String =
+    config.get[String]("email.smtpHost")
+  protected val port: Int = config.get[Int]("email.smtpPort")
+  protected val password: String =
+    config.get[String]("email.hostPassword")
+  protected val username: String =
+    config.get[String]("email.host")
 
-  val mailer: Mailer = Mailer(emailSmtpHost, emailSmtpPort)
-    .auth(true)
-    .as(emailHost, emailPassword)
-    .startTls(true)()
+  val mailer: Mailer =
+    Mailer(host, port)
+      .auth(true)
+      .as(username, password)
+      .startTls(true)()
 
-  def sendEmail(subject: String, content: String): Future[Unit] = {
+  def sendEmail(
+      to: String,
+      subject: String,
+      content: String
+  ): Future[Unit] = {
     mailer(
       Envelope
-        .from(new InternetAddress(emailHost))
-        .to(new InternetAddress(emailDestination))
+        .from(new InternetAddress(username))
+        .to(new InternetAddress(to))
         .subject(subject)
         .content(Text(content))
     )

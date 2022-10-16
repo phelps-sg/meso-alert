@@ -59,6 +59,7 @@ EMAIL_SMTP_PORT=587
 EMAIL_HOST='<source address>'
 EMAIL_HOST_PASSWORD='<changeMe>'
 EMAIL_DESTINATION='feedback@symbiotica.ai'
+EMAIL_DESTINATION_SUPPORT='support@symbiotica.ai'
 SLACK_DEPLOY_URL='<copy from Slack / Manage Distribution / Sharable URL>'
 AUTH0_DOMAIN='<copy from auth0 domain>'
 AUTH0_CLIENT_ID='<copy from auth0 client id>'

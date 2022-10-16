@@ -10,12 +10,12 @@ import controllers._
 import dao._
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
 import org.scalamock.handlers.CallHandler1
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.{Assertion, BeforeAndAfterAll}
 import play.api.http.Status.{OK, SERVICE_UNAVAILABLE, UNAUTHORIZED}
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{AnyContentAsFormUrlEncoded, Result, Results}
@@ -122,6 +122,47 @@ class ControllerTests
           .expects(*)
           .never()
       }
+
+      def persistEmailDeliveryTest(
+          request: FakeRequest[AnyContentAsFormUrlEncoded],
+          testType: String
+      ): Assertion = {
+        (mockMailManager.sendEmail _)
+          .expects(*, *, *)
+          .returning(Future.failed(new Exception("error")))
+        val result = controller.postEmailForm().apply(request.withCSRFToken)
+        val body = contentAsString(result)
+        status(result) mustEqual OK
+        body should include("value=\"testName\"")
+        body should include("value=\"test@test.com\"")
+        body should include(s">This is a test $testType message.<")
+      }
+
+      def failedEmailDeliveryTest(
+          request: FakeRequest[AnyContentAsFormUrlEncoded]
+      ): Assertion = {
+        (mockMailManager.sendEmail _)
+          .expects(*, *, *)
+          .returning(Future.failed(new Exception("error")))
+        val result = controller.postEmailForm().apply(request.withCSRFToken)
+        val body = contentAsString(result)
+        status(result) mustEqual OK
+        body should include("<div class=\"alert failed\" id=\"alert-failed\">")
+      }
+
+      def successfulEmailDeliveryTest(
+          request: FakeRequest[AnyContentAsFormUrlEncoded]
+      ): Assertion = {
+        (mockMailManager.sendEmail _)
+          .expects(*, *, *)
+          .returning(Future(()))
+        val result = controller.postEmailForm().apply(request.withCSRFToken)
+        val body = contentAsString(result)
+        status(result) mustEqual OK
+        body should include(
+          "<div class=\"alert success\" id=\"alert-success\">"
+        )
+      }
     }
 
     "render privacy policy" in new TestFixtures {
@@ -145,7 +186,7 @@ class ControllerTests
       val result = controller.feedbackPage().apply(FakeRequest().withCSRFToken)
       val body = contentAsString(result)
       status(result) mustEqual OK
-      body should include("<form action=\"/feedback")
+      body should include("<form action=\"/email_form")
       body should not include "<div class=\"alert failed\" id=\"alert-failed\">"
       body should not include "<div class=\"alert success\" id=\"alert-success\">"
     }
@@ -153,48 +194,54 @@ class ControllerTests
     "send an email when feedback form is submitted with valid data" in
       new TestFixtures {
         (mockMailManager.sendEmail _)
-          .expects(expectedValidEmailSubject, feedbackMessage)
+          .expects(*, *, *)
           .returning(Future(()))
 
-        val request = fakeRequestFormSubmission
-        controller.create().apply(request.withCSRFToken)
+        val request = feedbackFormSubmission
+        controller.postEmailForm().apply(request.withCSRFToken)
       }
 
     "notify user of successful email delivery" in new TestFixtures {
-      (mockMailManager.sendEmail _)
-        .expects(expectedValidEmailSubject, feedbackMessage)
-        .returning(Future(()))
-
-      val request = fakeRequestFormSubmission
-      val result = controller.create().apply(request.withCSRFToken)
-      val body = contentAsString(result)
-      status(result) mustEqual OK
-      body should include("<div class=\"alert success\" id=\"alert-success\">")
+      successfulEmailDeliveryTest(feedbackFormSubmission)
     }
 
     "notify user of failed email delivery" in new TestFixtures {
-      (mockMailManager.sendEmail _)
-        .expects(expectedValidEmailSubject, feedbackMessage)
-        .returning(Future.failed(new Exception("error")))
-
-      val request = fakeRequestFormSubmission
-      val result = controller.create().apply(request.withCSRFToken)
-      val body = contentAsString(result)
-      status(result) mustEqual OK
-      body should include("<div class=\"alert failed\" id=\"alert-failed\">")
+      failedEmailDeliveryTest(feedbackFormSubmission)
     }
 
     "persist form data in case of a transient smtp failure" in new TestFixtures {
-      (mockMailManager.sendEmail _)
-        .expects(expectedValidEmailSubject, feedbackMessage)
-        .returning(Future.failed(new Exception("error")))
-      val request = fakeRequestFormSubmission
-      val result = controller.create().apply(request.withCSRFToken)
+      persistEmailDeliveryTest(feedbackFormSubmission, "feedback")
+    }
+
+    "render support form without email delivery outcome message when using http method GET at /support" in new TestFixtures {
+      val result = controller.supportPage().apply(FakeRequest().withCSRFToken)
       val body = contentAsString(result)
       status(result) mustEqual OK
-      body should include("value=\"testName\"")
-      body should include("value=\"test@test.com\"")
-      body should include(">This is a test feedback message.<")
+      body should include("<form action=\"/email_form")
+      body should not include "<div class=\"alert failed\" id=\"alert-failed\">"
+      body should not include "<div class=\"alert success\" id=\"alert-success\">"
+    }
+
+    "send an email when support form is submitted with valid data" in
+      new TestFixtures {
+        (mockMailManager.sendEmail _)
+          .expects(*, *, *)
+          .returning(Future(()))
+
+        val request = supportFormSubmission
+        controller.postEmailForm().apply(request.withCSRFToken)
+      }
+
+    "notify user of successful email delivery - support" in new TestFixtures {
+      successfulEmailDeliveryTest(supportFormSubmission)
+    }
+
+    "notify user of failed email delivery - support" in new TestFixtures {
+      failedEmailDeliveryTest(supportFormSubmission)
+    }
+
+    "persist form data in case of a transient smtp failure - support" in new TestFixtures {
+      persistEmailDeliveryTest(supportFormSubmission, "support")
     }
   }
 

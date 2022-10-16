@@ -4,21 +4,22 @@
 # ~~~~
 
 # An example controller showing a sample home page
-GET     /                           controllers.HomeController.index()
+GET         /                            controllers.HomeController.index()
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+GET         /assets/*file                controllers.Assets.versioned(path="/public", file: Asset)
 #GET     /ws                         controllers.WebsocketController.websocket
 #POST    /api/webhooks/start         controllers.WebhooksController.start
 #POST    /api/webhooks/stop          controllers.WebhooksController.stop
 #POST    /api/webhooks/register      controllers.WebhooksController.register
-POST    /api/slack/slash            controllers.SlackSlashCommandController.slashCommand
-GET     /api/slack/auth             controllers.SlackAuthController.authRedirect(code: Option[String], error: Option[String], state: Option[String])
-POST    /api/slack/events           controllers.SlackEventsController.eventsAPI()
-GET     /api/auth0/config           controllers.Auth0Controller.configuration()
-GET     /api/auth0/secret           controllers.Auth0Controller.secret(userId: Option[String])
-GET     /feedback                   controllers.HomeController.feedbackPage()
-GET     /privacy_policy             controllers.HomeController.privacyPolicy()
-GET     /terms_and_conditions       controllers.HomeController.termsAndConditions()
-GET     /website_disclaimer         controllers.HomeController.websiteDisclaimer()
-POST    /feedback                   controllers.HomeController.create()
+POST        /api/slack/slash             controllers.SlackSlashCommandController.slashCommand
+GET         /api/slack/auth              controllers.SlackAuthController.authRedirect(code: Option[String], error: Option[String], state: Option[String])
+POST        /api/slack/events            controllers.SlackEventsController.eventsAPI()
+GET         /api/auth0/config            controllers.Auth0Controller.configuration()
+GET         /api/auth0/secret            controllers.Auth0Controller.secret(userId: Option[String])
+GET         /feedback                    controllers.HomeController.feedbackPage()
+GET         /support                     controllers.HomeController.supportPage()
+GET         /privacy_policy              controllers.HomeController.privacyPolicy()
+GET         /terms_and_conditions        controllers.HomeController.termsAndConditions()
+GET         /website_disclaimer          controllers.HomeController.websiteDisclaimer()
+POST        /email_form                  controllers.HomeController.postEmailForm()

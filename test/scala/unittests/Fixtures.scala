@@ -56,7 +56,7 @@ import play.api.inject.guice.{
   GuiceableModule
 }
 import play.api.libs.json.{JsArray, JsValue, Json}
-import play.api.mvc.BodyParsers
+import play.api.mvc.{AnyContentAsFormUrlEncoded, BodyParsers}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
 import play.api.{Application, Configuration, Logging, inject}
@@ -930,12 +930,24 @@ object Fixtures {
     val emailName = "testName"
     val emailAddress = "test@test.com"
     val feedbackMessage = "This is a test feedback message."
+    val feedbackFormType = "Feedback"
+    val supportFormType = "Support"
+    val supportMessage = "This is a test support message."
     val expectedValidEmailSubject = "Feedback - testName test@test.com"
-    val fakeRequestFormSubmission =
+    val expectedValidEmailSubjectSupport = "Support - testName test@test.com"
+    val feedbackFormSubmission: FakeRequest[AnyContentAsFormUrlEncoded] =
       FakeRequest(POST, "/").withFormUrlEncodedBody(
+        ("formType", feedbackFormType),
         ("name", emailName),
         ("email", emailAddress),
         ("message", feedbackMessage)
+      )
+    val supportFormSubmission: FakeRequest[AnyContentAsFormUrlEncoded] =
+      FakeRequest(POST, "/").withFormUrlEncodedBody(
+        ("formType", supportFormType),
+        ("name", emailName),
+        ("email", emailAddress),
+        ("message", supportMessage)
       )
     val mockMailManager = mock[MailManager]
   }
