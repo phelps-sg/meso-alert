@@ -113,6 +113,20 @@ class HomeController @Inject() (
       case EmailFormType.feedback => emailDestinationFeedback
     }
 
+  def formView(
+      formType: EmailFormType,
+      status: String,
+      supportForm: Form[EmailFormData],
+      feedbackForm: Form[EmailFormData]
+  )(implicit request: Request[AnyContent]) = {
+    formType match {
+      case EmailFormType.support =>
+        views.html.support(status, supportForm)
+      case EmailFormType.feedback =>
+        views.html.feedback(status, feedbackForm)
+    }
+  }
+
   def sendEmail(
       formType: EmailFormType
   )(implicit request: Request[AnyContent]): Future[Result] = {
@@ -129,13 +143,14 @@ class HomeController @Inject() (
             .sendEmail(emailDestination(formType), subject, formData.email)
             .map { _ =>
               logger.info("email delivered")
-              formType match {
-                case EmailFormType.support =>
-                  Ok(views.html.support("success", supportForm))
-                case EmailFormType.feedback =>
-                  Ok(views.html.feedback("success", feedbackForm))
-              }
-
+              Ok(
+                formView(
+                  formType,
+                  status = "success",
+                  supportForm = supportForm,
+                  feedbackForm = feedbackForm
+                )
+              )
             } recover { case ex: Exception =>
             logger.error(ex.getMessage)
             ex.printStackTrace()
@@ -146,14 +161,14 @@ class HomeController @Inject() (
               formData.message
             )
             val filledForm = emailForm.fill(formDataFill)
-            val status = "failed"
-            val view = formType match {
-              case EmailFormType.support =>
-                views.html.support(status, filledForm)
-              case EmailFormType.feedback =>
-                views.html.feedback(status, filledForm)
-            }
-            Ok(view)
+            Ok(
+              formView(
+                formType,
+                status = "failed",
+                supportForm = filledForm,
+                feedbackForm = filledForm
+              )
+            )
           }
         }
       )
