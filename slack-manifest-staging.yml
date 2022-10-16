@@ -43,9 +43,8 @@
       "bot": [
         "channels:read",
         "chat:write",
-        "commands",
-        "links:write",
-        "chat:write.public"
+        "chat:write.public",
+        "commands"
       ]
     }
   },
