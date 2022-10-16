@@ -9,6 +9,7 @@ import play.api.i18n.I18nSupport
 import play.api.libs.concurrent.CustomExecutionContext
 import play.api.mvc._
 import play.api.{Configuration, Logging}
+import play.twirl.api.Html
 import services.MailManager
 
 import javax.inject._
@@ -113,12 +114,12 @@ class HomeController @Inject() (
       case EmailFormType.feedback => emailDestinationFeedback
     }
 
-  def formView(
+  def emailFormView(
       formType: EmailFormType,
       status: String,
       supportForm: Form[EmailFormData],
       feedbackForm: Form[EmailFormData]
-  )(implicit request: Request[AnyContent]) = {
+  )(implicit request: Request[AnyContent]): Html = {
     formType match {
       case EmailFormType.support =>
         views.html.support(status, supportForm)
@@ -144,7 +145,7 @@ class HomeController @Inject() (
             .map { _ =>
               logger.info("email delivered")
               Ok(
-                formView(
+                emailFormView(
                   formType,
                   status = "success",
                   supportForm = supportForm,
@@ -162,7 +163,7 @@ class HomeController @Inject() (
             )
             val filledForm = emailForm.fill(formDataFill)
             Ok(
-              formView(
+              emailFormView(
                 formType,
                 status = "failed",
                 supportForm = filledForm,
