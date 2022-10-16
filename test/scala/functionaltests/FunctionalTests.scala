@@ -27,9 +27,12 @@ class FunctionalTests
   val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
   val waitInterval: Span =
-    Span(Option(System.getenv("SELENIUM_WAIT_INTERVAL_SECONDS"))
-      .map(_.toInt)
-      .getOrElse(20), Seconds)
+    Span(
+      Option(System.getenv("SELENIUM_WAIT_INTERVAL_SECONDS"))
+        .map(_.toInt)
+        .getOrElse(20),
+      Seconds
+    )
   val headless: Boolean =
     Option(System.getenv("SELENIUM_HEADLESS")).forall(_.toBoolean)
   val stagingURL: String = Option(System.getenv("STAGING_URL"))
@@ -39,8 +42,8 @@ class FunctionalTests
   val captureDir: String = s"$rootDir/captures"
 
   implicit val lang: Lang = Lang("en")
-  val classLoader = Thread.currentThread().getContextClassLoader
-  val messageFile = classLoader.getResource("messages")
+  private val classLoader = Thread.currentThread().getContextClassLoader
+  private val messageFile = classLoader.getResource("messages")
   val messages: Map[String, String] = Messages
     .parse(
       Messages.UrlMessageSource(messageFile),
