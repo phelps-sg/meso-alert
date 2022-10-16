@@ -4,6 +4,7 @@ import actions.SlackSignatureVerifyAction
 import actions.SlackSignatureVerifyAction._
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.util.ByteString
+import controllers.SlackSlashCommandController._
 import dao._
 import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}
@@ -15,6 +16,19 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 object SlackSlashCommandController {
+
+  val MESSAGE_CRYPTO_ALERT_HELP: String = "slackResponse.cryptoAlertHelp"
+  val MESSAGE_CRYPTO_ALERT_NEW: String = "slackResponse.cryptoAlertNew"
+  val MESSAGE_CRYPTO_ALERT_RECONFIG: String =
+    "slackResponse.cryptoAlertReconfig"
+  val MESSAGE_GENERAL_ERROR: String = "slackResponse.generalError"
+  val MESSAGE_CURRENCY_ERROR: String = "slackResponse.currencyError"
+  val MESSAGE_PAUSE_ALERTS_HELP: String = "slackResponse.pauseAlertsHelp"
+  val MESSAGE_PAUSE_ALERTS: String = "slackResponse.pauseAlerts"
+  val MESSAGE_PAUSE_ALERTS_ERROR: String = "slackResponse.pauseAlertsError"
+  val MESSAGE_RESUME_ALERTS_HELP: String = "slackResponse.resumeAlertsHelp"
+  val MESSAGE_RESUME_ALERTS: String = "slackResponse.resumeAlerts"
+  val MESSAGE_RESUME_ALERTS_ERROR: String = "slackResponse.resumeAlertsError"
 
   private val coreAttributes = List("channel_id", "command", "text")
 
@@ -146,7 +160,7 @@ class SlackSlashCommandController @Inject() (
 
       case Array("help") =>
         logger.debug("crypto-alert help")
-        Future { Ok(messagesApi("slackResponse.cryptoAlertHelp")) }
+        Future { Ok(messagesApi(MESSAGE_CRYPTO_ALERT_HELP)) }
 
       case Array(_) | Array(_, "btc") =>
         args.head.toLongOption match {
@@ -167,37 +181,36 @@ class SlackSlashCommandController @Inject() (
               started <- hooksManager.start(channel)
             } yield started
             f.map { _ =>
-              Ok(messagesApi("slackResponse.cryptoAlertNew", amount))
+              Ok(messagesApi(MESSAGE_CRYPTO_ALERT_NEW, amount))
             }.recoverWith { case HookAlreadyStartedException(_) =>
               val f = for {
                 _ <- hooksManager.stop(channel)
                 restarted <- hooksManager.start(channel)
               } yield restarted
               f.map { _ =>
-                Ok(messagesApi("slackResponse.cryptoAlertReconfig", amount))
+                Ok(messagesApi(MESSAGE_CRYPTO_ALERT_RECONFIG, amount))
               }
             }
 
           case None =>
             logger.debug(s"Invalid amount ${slashCommand.text}")
             Future {
-              Ok(messagesApi("slackResponse.generalError"))
+              Ok(messagesApi(MESSAGE_GENERAL_ERROR))
             }
 
         }
 
       case Array(_, _) =>
         Future {
-          Ok(messagesApi("slackResponse.currencyError"))
+          Ok(messagesApi(MESSAGE_CURRENCY_ERROR))
         }
 
       case _ =>
         Future {
-          Ok(messagesApi("slackResponse.generalError"))
+          Ok(messagesApi(MESSAGE_GENERAL_ERROR))
         }
 
     }
-
   }
 
   def pauseAlerts(implicit slashCommand: SlashCommand): Future[Result] = {
@@ -209,7 +222,7 @@ class SlackSlashCommandController @Inject() (
       case Array("help") =>
         logger.debug("pause-alerts help")
         Future {
-          Ok(messagesApi("slackResponse.pauseAlertsHelp"))
+          Ok(messagesApi(MESSAGE_PAUSE_ALERTS_HELP))
         }
 
       case Array("") =>
@@ -217,12 +230,11 @@ class SlackSlashCommandController @Inject() (
         val f = for {
           stopped <- hooksManager.stop(channel)
         } yield stopped
-        f.map { _ => Ok(messagesApi("slackResponse.pauseAlerts")) }
+        f.map { _ => Ok(messagesApi(MESSAGE_PAUSE_ALERTS)) }
           .recover { case HookNotStartedException(_) =>
-            Ok(messagesApi("slackResponse.pauseAlertsError"))
+            Ok(messagesApi(MESSAGE_PAUSE_ALERTS_ERROR))
           }
     }
-
   }
 
   def resumeAlerts(implicit slashCommand: SlashCommand): Future[Result] = {
@@ -233,7 +245,7 @@ class SlackSlashCommandController @Inject() (
       case Array("help") =>
         logger.debug("resume-alerts help")
         Future {
-          Ok(messagesApi("slackResponse.resumeAlertsHelp"))
+          Ok(messagesApi(MESSAGE_RESUME_ALERTS_HELP))
         }
 
       case Array("") =>
@@ -241,9 +253,9 @@ class SlackSlashCommandController @Inject() (
         val f = for {
           started <- hooksManager.start(channel)
         } yield started
-        f.map { _ => Ok(messagesApi("slackResponse.resumeAlerts")) }
+        f.map { _ => Ok(messagesApi(MESSAGE_RESUME_ALERTS)) }
           .recover { case HookAlreadyStartedException(_) =>
-            Ok(messagesApi("slackResponse.resumeAlertsError"))
+            Ok(messagesApi(MESSAGE_RESUME_ALERTS_ERROR))
           }
     }
   }

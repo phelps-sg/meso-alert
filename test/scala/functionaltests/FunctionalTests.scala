@@ -1,13 +1,20 @@
 package functionaltests
 
+import controllers.SlackSlashCommandController.{
+  MESSAGE_CRYPTO_ALERT_NEW,
+  MESSAGE_PAUSE_ALERTS,
+  MESSAGE_RESUME_ALERTS
+}
 import org.openqa.selenium._
 import org.openqa.selenium.firefox.{FirefoxDriver, FirefoxOptions}
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
 import org.scalatest.flatspec
 import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import org.scalatestplus.selenium.WebBrowser
 import play.api.Logging
+import play.api.i18n.{Lang, MessagesApi}
 
 import java.time.Duration
 
@@ -15,25 +22,29 @@ class FunctionalTests
     extends flatspec.AnyFlatSpec
     with should.Matchers
     with WebBrowser
+    with GuiceOneAppPerSuite
     with Logging {
 
   val workspace: String = System.getenv("SLACK_TEST_WORKSPACE")
   val slackEmail: String = System.getenv("SLACK_TEST_EMAIL")
   val slackPassword: String = System.getenv("SLACK_TEST_PASSWORD")
-  val headless: Boolean = Option(System.getenv("SELENIUM_HEADLESS"))
-    .map(_.toBoolean)
-    .getOrElse(true)
+  val headless: Boolean =
+    Option(System.getenv("SELENIUM_HEADLESS")).forall(_.toBoolean)
   val stagingURL: String = Option(System.getenv("STAGING_URL"))
     .getOrElse("https://meso-alert-staging.eu.ngrok.io")
   val rootDir: String = Option(System.getenv("CI_PROJECT_DIR"))
     .getOrElse(".")
-  val captureDir: String = s"${rootDir}/captures"
+  val captureDir: String = s"$rootDir/captures"
+
+  implicit val lang = Lang("en")
+  val messagesApi: MessagesApi =
+    fakeApplication().injector.instanceOf[MessagesApi]
 
   private val options = new FirefoxOptions().setHeadless(headless)
 
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
 
-  logger.info(s"Capturing screen shots to ${captureDir}")
+  logger.info(s"Capturing screen shots to $captureDir")
   setCaptureDir(captureDir)
 
   implicitlyWait(Span(20, Seconds))
@@ -262,7 +273,8 @@ class FunctionalTests
     pageTitle should be("Block Insights - Access free real-time mempool data")
   }
 
-  "issuing command /crypto-alert 100" should "result in correct response message" in {
+  "issuing command /crypto-alert" should "result in correct response message" in {
+    val amount = 1000000
     slackSignIn(workspace, slackEmail, slackPassword)
     createChannel("testing")
 //    find(
@@ -274,13 +286,13 @@ class FunctionalTests
     clickOnChannel("testing")
     webDriver
       .findElement(By.className("ql-editor"))
-      .sendKeys("/crypto-alert 1000000")
+      .sendKeys(s"/crypto-alert $amount")
     pressKeys(Keys.ENTER.toString)
     explicitWait()
     capture to "CryptoAlert"
     assert(
       responseContains(
-        "OK, I will send updates on any BTC transactions exceeding 1,000,000 BTC."
+        messagesApi(MESSAGE_CRYPTO_ALERT_NEW, amount)
       )
     )
   }
@@ -292,7 +304,7 @@ class FunctionalTests
     pressKeys(Keys.ENTER.toString)
     explicitWait()
     capture to "PauseAlerts"
-    assert(responseContains("OK, I have paused alerts for this channel."))
+    assert(responseContains(messagesApi(MESSAGE_PAUSE_ALERTS)))
   }
 
   "issuing command /resume-alerts" should "result in correct response message" in {
@@ -302,6 +314,6 @@ class FunctionalTests
     pressKeys(Keys.ENTER.toString)
     explicitWait()
     capture to "ResumeAlerts"
-    assert(responseContains("OK, I will resume alerts on this channel."))
+    assert(responseContains(messagesApi(MESSAGE_RESUME_ALERTS)))
   }
 }
