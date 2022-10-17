@@ -3,7 +3,7 @@
     "name": "Block Insights",
     "description": "Block Insights provides real-time tracking and analysis of large transactions.",
     "background_color": "#121212",
-    "long_description": "Block Insights provides real-time tracking and analysis of large transactions, making the mempool transparent and accessible to the crypto-economy. \r\n\r\nAccess real-time mempool transaction data before they are confirmed on-chain. \r\n\r\nWe cover multiple chains including Bitcoin, Ethereum, Solana, Polygon, Binance and more."
+    "long_description": "Block Insights provides real-time tracking and analysis of large transactions, making the mempool transparent and accessible to the crypto-economy. \r\n\r\nAccess real-time mempool transaction data before it is confirmed on-chain."
   },
   "features": {
     "bot_user": {
