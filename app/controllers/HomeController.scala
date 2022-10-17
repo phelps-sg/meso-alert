@@ -19,13 +19,16 @@ object EmailFormType extends Enumeration {
 }
 
 object HomeController {
+
   import EmailFormType._
+
   case class EmailFormData(
       formType: EmailFormType,
       name: String,
       email: String,
       message: String
   ) {}
+
   object EmailFormData {
     def apply(
         formType: String,
@@ -54,10 +57,81 @@ class HomeController @Inject() (
 
   import EmailFormType._
 
-  protected val emailDestinationFeedback: String =
-    config.get[String]("email.destination")
-  protected val emailDestinationSupport: String =
-    config.get[String]("email.destinationSupport")
+  abstract class FormEmailManager(val emailForm: Form[EmailFormData])(implicit
+      val request: Request[AnyContent]
+  ) {
+    def destination: String
+
+    val formType: EmailFormType
+
+    def formView(status: String, form: Form[EmailFormData]): Html
+
+    def sendEmail(): Future[Result] = {
+      emailForm
+        .bindFromRequest()
+        .fold(
+          _ =>
+            Future {
+              BadRequest
+            },
+          formData => {
+            val subject = s"$formType - ${formData.name} ${formData.email}"
+            mailManager
+              .sendEmail(destination, subject, formData.email)
+              .map { _ =>
+                logger.info("email delivered")
+                Ok(
+                  formView(status = "success", emailForm)
+                )
+              } recover { case ex: Exception =>
+              logger.error(ex.getMessage)
+              ex.printStackTrace()
+              val formDataFill = EmailFormData(
+                formType,
+                formData.name,
+                formData.email,
+                formData.message
+              )
+              val filledForm = emailForm.fill(formDataFill)
+              Ok(
+                formView(status = "failed", filledForm)
+              )
+            }
+          }
+        )
+    }
+  }
+
+  class SupportFormEmailManager(implicit
+      request: Request[AnyContent]
+  ) extends FormEmailManager(supportForm)(request) {
+    override def destination: String =
+      config.get[String]("email.destinationSupport")
+    override val formType: EmailFormType = EmailFormType.support
+    override def formView(status: String, form: Form[EmailFormData]): Html =
+      views.html.support(status, form)
+  }
+
+  class FeedbackFormEmailManager(implicit
+      request: Request[AnyContent]
+  ) extends FormEmailManager(feedbackForm)(request) {
+    override def destination: String =
+      config.get[String]("email.destination")
+    override val formType: EmailFormType = EmailFormType.feedback
+    override def formView(status: String, form: Form[EmailFormData]): Html =
+      views.html.feedback(status, form)
+  }
+
+  object FormEmailManager {
+    def apply(formType: EmailFormType)(implicit
+        request: Request[AnyContent]
+    ): FormEmailManager = formType match {
+      case EmailFormType.support =>
+        new SupportFormEmailManager()(request)
+      case EmailFormType.feedback =>
+        new FeedbackFormEmailManager()(request)
+    }
+  }
 
   val emailFormMapping: Mapping[EmailFormData] = mapping(
     "formType" -> nonEmptyText,
@@ -98,73 +172,6 @@ class HomeController @Inject() (
     Ok(views.html.terms_and_conditions())
   }
 
-  def emailDestination(formType: EmailFormType): String =
-    formType match {
-      case EmailFormType.support  => emailDestinationSupport
-      case EmailFormType.feedback => emailDestinationFeedback
-    }
-
-  def emailFormView(
-      formType: EmailFormType,
-      status: String,
-      supportForm: Form[EmailFormData],
-      feedbackForm: Form[EmailFormData]
-  )(implicit request: Request[AnyContent]): Html = {
-    formType match {
-      case EmailFormType.support =>
-        views.html.support(status, supportForm)
-      case EmailFormType.feedback =>
-        views.html.feedback(status, feedbackForm)
-    }
-  }
-
-  def sendEmail(
-      formType: EmailFormType
-  )(implicit request: Request[AnyContent]): Future[Result] = {
-    emailForm
-      .bindFromRequest()
-      .fold(
-        _ =>
-          Future {
-            BadRequest
-          },
-        formData => {
-          val subject = s"$formType - ${formData.name} ${formData.email}"
-          mailManager
-            .sendEmail(emailDestination(formType), subject, formData.email)
-            .map { _ =>
-              logger.info("email delivered")
-              Ok(
-                emailFormView(
-                  formType,
-                  status = "success",
-                  supportForm = supportForm,
-                  feedbackForm = feedbackForm
-                )
-              )
-            } recover { case ex: Exception =>
-            logger.error(ex.getMessage)
-            ex.printStackTrace()
-            val formDataFill = EmailFormData(
-              formType,
-              formData.name,
-              formData.email,
-              formData.message
-            )
-            val filledForm = emailForm.fill(formDataFill)
-            Ok(
-              emailFormView(
-                formType,
-                status = "failed",
-                supportForm = filledForm,
-                feedbackForm = filledForm
-              )
-            )
-          }
-        }
-      )
-  }
-
   def postEmailForm(): Action[AnyContent] = Action.async { implicit request =>
     logger.info(request.body.toString)
     val formType: EmailFormType = emailForm
@@ -173,6 +180,6 @@ class HomeController @Inject() (
         _ => throw new Exception("Error parsing form"),
         formData => formData.formType
       )
-    sendEmail(formType)
+    FormEmailManager(formType).sendEmail()
   }
 }
