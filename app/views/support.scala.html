@@ -1,8 +1,8 @@
 @import controllers.HomeController.EmailFormData
 @(emailDeliveryOutcome: String, supportForm: Form[EmailFormData])(implicit request: RequestHeader, messages: Messages)
-    @main("Support Page") {
-        @contact_form(emailDeliveryOutcome, "Support", supportForm,
-            "        Any problems or questions on how to use the app?           ",
-            "How do I set up an alert for bitcoin?", "Support")
-    }
+@main("Support Page") {
+    @contact_form(emailDeliveryOutcome, "Support", supportForm,
+        "Please use the form below if you have any questions on how to use the app, or if you are experiencing technical difficulties.",
+        "How do I set up an alert for bitcoin?", "Support")
+}
 
