@@ -1,8 +1,8 @@
 package services
 import com.google.inject.ImplementedBy
-import controllers.EmailExecutionContext
 import courier.{Envelope, Mailer, Text}
 import play.api.Configuration
+import slick.EmailExecutionContext
 
 import javax.inject.{Inject, Singleton}
 import javax.mail.internet.InternetAddress

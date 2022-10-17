@@ -1,12 +1,9 @@
 package controllers
 
-import akka.actor.ActorSystem
-import com.google.inject.ImplementedBy
 import controllers.HomeController.EmailFormData
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
 import play.api.i18n.I18nSupport
-import play.api.libs.concurrent.CustomExecutionContext
 import play.api.mvc._
 import play.api.{Configuration, Logging}
 import play.twirl.api.Html
@@ -20,13 +17,6 @@ object EmailFormType extends Enumeration {
   val feedback: Value = Value("Feedback")
   val support: Value = Value("Support")
 }
-
-@ImplementedBy(classOf[EmailExecutionContextImpl])
-trait EmailExecutionContext extends ExecutionContext
-
-class EmailExecutionContextImpl @Inject() (system: ActorSystem)
-    extends CustomExecutionContext(system, "email.dispatcher")
-    with EmailExecutionContext
 
 object HomeController {
   import EmailFormType._
