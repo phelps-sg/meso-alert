@@ -3,7 +3,7 @@
 
 <main class="main">
   <div class="header section">
-    <div class="container justify-center">
+    <div class="container justify-left">
       <div style="opacity: 0;
           -webkit-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
           -moz-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
@@ -16,9 +16,68 @@
           -moz-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
           -ms-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
           transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)" class="page-load fade-two">
-        <p class="sub-heading center">
-          Track bitcoin transactions as they happen.
-          <a href="https://slack.com/get-started#/createnew">Create a Slack workspace</a> and then click on the button below to get started.
+        <p class="sub-heading left">
+          Bitcoin investors can gain block insight on likely price volatility by monitoring the frequency and size of transactions (flow) in real-time.
+          <br>
+            <br>
+            <b> Greater flow of bitcoins to different addresses  = greater price movements (volatility) on BTC/USD. </b>
+            <br>
+            <br>
+          Being aware of changes in flow can alert investors to the need for action. Block Insights can provide you
+          with this powerful information for free and allow you to set the minimum transaction size you want to monitor from 1 BTC upwards.
+            <br>
+            <br>
+            This could be the beginning of your journey with Block Insights where the team of PhDs leading this project
+            aim to bring analytics and information to people to help advance and democratise distributed ledger technology.
+            The first port of call on this journey is to support crypto-investors. Follow our short Q and A path, and see if you
+            should become a Block insights early adopter or ambassador and drive the community.
+
+            <br>
+            <br>
+            <b> Q1) Do you want to be alerted of large Bitcoin transactions just before they are processed by the network? </b>
+          <br> Giving you insight into future price volatility and network activity.
+            <br>
+            <br>
+            <a href="#q1_yes_alerted_of_large_btc">YES</a>
+            <br>
+            <a href="#q1_no_alerted_of_large_btc">NO</a>
+            <br>
+            <br>
+
+            <a id="yes_q1_alerted_of_large_btc">  <b>  Q2) Have you ever used or heard of SLACK? </b>
+              <br> We current deliver our transaction monitoring service through SLACK a very popular business
+              social media/communication/collaboration tool, like WhatsApp for inside a business, and sometimes
+              between businesses.</a>
+            <br>
+            <a href="#q2_yes_i_use_slack">YES, I use SLACK</a>
+            <br>
+            <a href="#q2_yes_but_never_used_slack">YES, but I have never used SLACK </a>
+            <br>
+            <a href="#q2_no">NO</a>
+
+
+            <br>
+            <a id="q2_yes_i_use_slack"> <b> Now, simply press the button below. </b> </a>
+              If you are already logged into Slack in your browser it will be even smoother
+      <div class="container justify-center">
+        <div style="opacity: 0;
+          -webkit-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
+          -moz-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
+          -ms-transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0);
+          transform: translate3d(0, 20PX, 0) scale3d(1, 1, 1) rotateX(0) rotateY(0) rotateZ(0) skew(0, 0)" class="page-load fade-three">
+          <button onclick="callSecretApi()" class="button slack w-inline-block" id="addToSlackBtn">
+            <img src="@routes.Assets.versioned("images/slack_logo.svg")" alt="The Slack logo." width="61.5"
+            class="slack-logo"/>
+            <div>Add to Slack</div>
+          </button>
+        </div>
+      </div>
+
+            <a id="q1_no_alerted_of_large_btc"> Shame!! Perhaps you might be interested in one of our near future proposed
+              services or want to suggest a service you would love to exist or wished was more accessible. <br> </a>
+
+
+            <a href="https://slack.com/get-started#/createnew">Create a Slack workspace</a> and then click on the button below to get started.
         </p>
       </div>
       <!-- Slack link -->
@@ -37,7 +96,7 @@
   </div>
   <div id="about" class="features section">
     <div class="container">
-      <h2 class="heading center">Access free real-time <br> mempool data</h2>
+      <h2 class="heading center">Bitcoin: free real-time <br> transactiion </h2>
       <p class="sub-heading center">
         Get real-time alerts on large transfers of cryptocurrency directly to Slack.
       </p>
@@ -50,13 +109,13 @@
           <div id="features" class="feature-content">
             <h3 class="heading medium">About</h3>
             <p class="text">Block Insights provides real-time tracking and analysis of large transactions,
-              making mempool data freely accessible to ecosystem participants
+              making pending transaction (aka. mempool) data freely accessible to ecosystem.
             </p>
             <p class="text">
               Every second, thousands of new transactions appear in the mempool
             </p>
             <ul>
-              <li>  Our alert service traces transactions across public blockchains over an entire transaction's
+              <li>  Our alert service traces transactions across the Bitcoin blockchain over an entire transaction's
                 lifecycle, from inception to finality.
               </li>
             </ul>
@@ -123,6 +182,7 @@
       </div>
     </div>
   </div>
+
 
 </main>
 
