@@ -1,13 +1,16 @@
 package functionaltests
 
-import controllers.SlackSlashCommandController.{MESSAGE_CRYPTO_ALERT_NEW, MESSAGE_PAUSE_ALERTS, MESSAGE_RESUME_ALERTS}
+import controllers.SlackSlashCommandController.{
+  MESSAGE_CRYPTO_ALERT_NEW,
+  MESSAGE_PAUSE_ALERTS,
+  MESSAGE_RESUME_ALERTS
+}
 import org.openqa.selenium._
 import org.openqa.selenium.firefox.{FirefoxDriver, FirefoxOptions}
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
-import org.scalatest.Assertions.succeed
-import org.scalatest.{Assertion, flatspec}
 import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
+import org.scalatest.{Assertion, flatspec}
 import org.scalatestplus.selenium.WebBrowser
 import play.api.Logging
 import play.api.i18n.{DefaultMessagesApi, Lang, Messages, MessagesApi}
