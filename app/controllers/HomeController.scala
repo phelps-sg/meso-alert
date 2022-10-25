@@ -28,7 +28,7 @@ object HomeController {
       email: String,
       message: String
   ) {
-    def subjectLine = s"${formType} - ${name} ${email}"
+    def subjectLine: String = s"${formType} - ${name} ${email}"
   }
 
   object EmailFormData {
