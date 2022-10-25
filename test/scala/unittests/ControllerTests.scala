@@ -153,12 +153,13 @@ class ControllerTests
       }
 
       def successfulEmailDeliveryTest(
-          attrs: Map[String, String]
+          attrs: Map[String, String],
+          destinationEmail: String
       ): Assertion = {
         val request = emailFormSubmission(attrs)
         val formData = emailFormData(attrs)
         (mockMailManager.sendEmail _)
-          .expects(*, formData.subjectLine, formData.message)
+          .expects(destinationEmail, formData.subjectLine, formData.message)
           .returning(Future(()))
         val result = controller.postEmailForm().apply(request.withCSRFToken)
         val body = contentAsString(result)
@@ -205,11 +206,17 @@ class ControllerTests
       }
 
     "notify user of successful email delivery - feedback" in new TestFixtures {
-      successfulEmailDeliveryTest(feedbackFormAttrs)
+      successfulEmailDeliveryTest(
+        feedbackFormAttrs,
+        config.get[String]("email.destination")
+      )
     }
 
     "notify user of successful email delivery - support" in new TestFixtures {
-      successfulEmailDeliveryTest(supportFormAttrs)
+      successfulEmailDeliveryTest(
+        supportFormAttrs,
+        config.get[String]("email.destinationSupport")
+      )
     }
 
     "notify user of failed email delivery - support" in new TestFixtures {
