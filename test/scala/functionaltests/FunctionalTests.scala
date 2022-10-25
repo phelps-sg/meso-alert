@@ -265,6 +265,7 @@ class FunctionalTests
     checkForCookieMessage()
     textField("domain").value = workspace
     pressKeys(Keys.ENTER.toString)
+    click on xpath("/html/body/div[1]/div/div/div[2]/div[3]/div[4]/span/a")
     click on id("email")
     pressKeys(slackEmail)
     pwdField("password").value = slackPassword
