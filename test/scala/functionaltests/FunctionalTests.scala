@@ -1,14 +1,11 @@
 package functionaltests
 
-import controllers.SlackSlashCommandController.{
-  MESSAGE_CRYPTO_ALERT_NEW,
-  MESSAGE_PAUSE_ALERTS,
-  MESSAGE_RESUME_ALERTS
-}
+import controllers.SlackSlashCommandController.{MESSAGE_CRYPTO_ALERT_NEW, MESSAGE_PAUSE_ALERTS, MESSAGE_RESUME_ALERTS}
 import org.openqa.selenium._
 import org.openqa.selenium.firefox.{FirefoxDriver, FirefoxOptions}
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
-import org.scalatest.flatspec
+import org.scalatest.Assertions.succeed
+import org.scalatest.{Assertion, flatspec}
 import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
 import org.scalatestplus.selenium.WebBrowser
@@ -155,12 +152,15 @@ class FunctionalTests
     webDriver.findElement(locator).click()
   }
 
-  def acceptBlockInsightsCookies(): Unit = {
-    val cookies = find("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll")
+  def acceptBlockInsightsCookies(): Assertion = {
+    val elementId = "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"
+    val cookies = find(elementId)
     cookies match {
       case Some(_) =>
-        clickOn(By.id("CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"))
+        clickOn(By.id(elementId))
+        succeed
       case None =>
+        fail("Could not find opt-in button")
     }
   }
 
