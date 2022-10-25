@@ -216,7 +216,7 @@ class ControllerTests
     }
 
     "notify user of failed email delivery - feedback" in new TestFixtures {
-      failedEmailDeliveryTest(supportFormAttrs)
+      failedEmailDeliveryTest(feedbackFormAttrs)
     }
 
     "persist form data in case of a transient smtp failure" in new TestFixtures {
