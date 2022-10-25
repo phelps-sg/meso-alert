@@ -277,6 +277,7 @@ class FunctionalTests
       capture to "InstallToWorkspace-pre"
       click on id("addToSlackBtn")
       checkForCookieMessage()
+      capture to "InstallToWorkspace-waitForAllow"
       new WebDriverWait(webDriver, Duration.ofSeconds(10))
         .ignoring(classOf[StaleElementReferenceException])
         .until(
