@@ -27,7 +27,9 @@ object HomeController {
       name: String,
       email: String,
       message: String
-  ) {}
+  ) {
+    def subjectLine = s"${formType} - ${name} ${email}"
+  }
 
   object EmailFormData {
     def apply(
@@ -42,7 +44,6 @@ object HomeController {
     ): Option[(String, String, String, String)] =
       Some(form.formType.toString, form.name, form.email, form.message)
   }
-
 }
 
 @Singleton
@@ -75,9 +76,8 @@ class HomeController @Inject() (
               BadRequest
             },
           formData => {
-            val subject = s"$formType - ${formData.name} ${formData.email}"
             mailManager
-              .sendEmail(destination, subject, formData.message)
+              .sendEmail(destination, formData.subjectLine, formData.message)
               .map { _ =>
                 logger.info("email delivered")
                 Ok(
