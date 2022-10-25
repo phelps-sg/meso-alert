@@ -56,7 +56,7 @@ import play.api.inject.guice.{
   GuiceableModule
 }
 import play.api.libs.json.{JsArray, JsValue, Json}
-import play.api.mvc.{AnyContentAsFormUrlEncoded, BodyParsers}
+import play.api.mvc.BodyParsers
 import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
 import play.api.{Application, Configuration, Logging, inject}
