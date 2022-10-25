@@ -156,8 +156,9 @@ class ControllerTests
           attrs: Map[String, String]
       ): Assertion = {
         val request = emailFormSubmission(attrs)
+        val formData = emailFormData(attrs)
         (mockMailManager.sendEmail _)
-          .expects(*, *, attrs("message"))
+          .expects(*, formData.subjectLine, formData.message)
           .returning(Future(()))
         val result = controller.postEmailForm().apply(request.withCSRFToken)
         val body = contentAsString(result)

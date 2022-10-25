@@ -34,6 +34,7 @@ import com.google.inject.AbstractModule
 import com.slack.api.methods.response.auth.AuthTestResponse
 import com.slack.api.methods.response.conversations.ConversationsMembersResponse
 import com.typesafe.config.ConfigFactory
+import controllers.HomeController.EmailFormData
 import dao._
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
@@ -950,6 +951,13 @@ object Fixtures {
     def emailFormSubmission(attrs: Map[String, String]) =
       FakeRequest(POST, "/").withFormUrlEncodedBody(
         attrs.toSeq: _*
+      )
+    def emailFormData(attrs: Map[String, String]) =
+      EmailFormData(
+        attrs("formType"),
+        attrs("name"),
+        attrs("email"),
+        attrs("message")
       )
     val mockMailManager = mock[MailManager]
   }
