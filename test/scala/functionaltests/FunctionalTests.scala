@@ -92,11 +92,16 @@ class FunctionalTests
     click on className("c-button--danger")
   }
 
-  def checkForCookieMessage(): Unit = {
+  def checkForCookieMessage(): Assertion = {
+    capture to "CheckForCookieMessage-pre"
     val cookies = find("onetrust-reject-all-handler")
     cookies match {
-      case Some(_) => click on id("onetrust-reject-all-handler")
-      case None    =>
+      case Some(_) =>
+        click on id("onetrust-reject-all-handler")
+        capture to "CheckForCookieMessage-post"
+        succeed
+      case None =>
+        fail("Could not find onetrust-reject-all-handler")
     }
   }
 
