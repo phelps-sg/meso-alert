@@ -156,11 +156,13 @@ class FunctionalTests
   }
 
   def acceptBlockInsightsCookies(): Assertion = {
+    capture to "AcceptCookies-pre"
     val elementId = "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"
     val cookies = find(elementId)
     cookies match {
       case Some(_) =>
         clickOn(By.id(elementId))
+        capture to "AcceptCookies-post"
         succeed
       case None =>
         fail("Could not find opt-in button")
@@ -184,6 +186,17 @@ class FunctionalTests
       )
     ).foreach(elem => click on elem)
 
+  def testEmailForm(url: String): Assertion = {
+    go to url
+    capture to "ValidFeedbackSubmission-pre"
+    textField("name").value = "Test Name"
+    emailField("email").value = "test@example.com"
+    textArea("message").value = "An example message."
+    submit()
+    capture to "ValidFeedbackSubmission-post"
+    assert(find("alert-success").isDefined)
+  }
+
   "The home page" should "render" in {
     go to stagingURL
     acceptBlockInsightsCookies()
@@ -197,15 +210,18 @@ class FunctionalTests
     capture to "FeedbackForm-post"
   }
 
+  "The support form" should "render" in {
+    go to s"$stagingURL/support"
+    pageTitle should be("Support Page")
+    capture to "FeedbackForm-post"
+  }
+
   "Entering valid feedback form data and submitting" should "result in 'Message sent successfully'" in {
-    go to s"$stagingURL/feedback"
-    capture to "ValidFeedbackSubmission-pre"
-    textField("name").value = "Test Name"
-    emailField("email").value = "test@example.com"
-    textArea("message").value = "An example feedback message."
-    submit()
-    capture to "ValidFeedbackSubmission-post"
-    assert(find("alert-success").isDefined)
+    testEmailForm(s"$stagingURL/feedback")
+  }
+
+  "Entering valid support form data and submitting" should "result in 'Message sent successfully'" in {
+    testEmailForm(s"$stagingURL/support")
   }
 
 //  "Login with invalid credentials" should "result in a login error" in {
