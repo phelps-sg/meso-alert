@@ -124,9 +124,10 @@ class ControllerTests
       }
 
       def persistEmailDeliveryTest(
-          request: FakeRequest[AnyContentAsFormUrlEncoded],
+          attrs: Map[String, String],
           testType: String
       ): Assertion = {
+        val request = emailFormSubmission(attrs)
         (mockMailManager.sendEmail _)
           .expects(*, *, *)
           .returning(Future.failed(new Exception("error")))
@@ -139,8 +140,9 @@ class ControllerTests
       }
 
       def failedEmailDeliveryTest(
-          request: FakeRequest[AnyContentAsFormUrlEncoded]
+          attrs: Map[String, String]
       ): Assertion = {
+        val request = emailFormSubmission(attrs)
         (mockMailManager.sendEmail _)
           .expects(*, *, *)
           .returning(Future.failed(new Exception("error")))
@@ -151,10 +153,11 @@ class ControllerTests
       }
 
       def successfulEmailDeliveryTest(
-          request: FakeRequest[AnyContentAsFormUrlEncoded]
+          attrs: Map[String, String]
       ): Assertion = {
+        val request = emailFormSubmission(attrs)
         (mockMailManager.sendEmail _)
-          .expects(*, *, *)
+          .expects(*, *, attrs("message"))
           .returning(Future(()))
         val result = controller.postEmailForm().apply(request.withCSRFToken)
         val body = contentAsString(result)
@@ -196,21 +199,20 @@ class ControllerTests
         (mockMailManager.sendEmail _)
           .expects(*, *, *)
           .returning(Future(()))
-
-        val request = feedbackFormSubmission
+        val request = emailFormSubmission(feedbackFormAttrs)
         controller.postEmailForm().apply(request.withCSRFToken)
       }
 
-    "notify user of successful email delivery" in new TestFixtures {
-      successfulEmailDeliveryTest(feedbackFormSubmission)
+    "notify user of successful email delivery - feedback" in new TestFixtures {
+      successfulEmailDeliveryTest(feedbackFormAttrs)
     }
 
-    "notify user of failed email delivery" in new TestFixtures {
-      failedEmailDeliveryTest(feedbackFormSubmission)
+    "notify user of failed email delivery - feedback" in new TestFixtures {
+      failedEmailDeliveryTest(feedbackFormAttrs)
     }
 
     "persist form data in case of a transient smtp failure" in new TestFixtures {
-      persistEmailDeliveryTest(feedbackFormSubmission, "feedback")
+      persistEmailDeliveryTest(feedbackFormAttrs, "feedback")
     }
 
     "render support form without email delivery outcome message when using http method GET at /support" in new TestFixtures {
@@ -228,20 +230,20 @@ class ControllerTests
           .expects(*, *, *)
           .returning(Future(()))
 
-        val request = supportFormSubmission
+        val request = emailFormSubmission(supportFormAttrs)
         controller.postEmailForm().apply(request.withCSRFToken)
       }
 
     "notify user of successful email delivery - support" in new TestFixtures {
-      successfulEmailDeliveryTest(supportFormSubmission)
+      successfulEmailDeliveryTest(supportFormAttrs)
     }
 
     "notify user of failed email delivery - support" in new TestFixtures {
-      failedEmailDeliveryTest(supportFormSubmission)
+      failedEmailDeliveryTest(supportFormAttrs)
     }
 
     "persist form data in case of a transient smtp failure - support" in new TestFixtures {
-      persistEmailDeliveryTest(supportFormSubmission, "support")
+      persistEmailDeliveryTest(supportFormAttrs, "support")
     }
   }
 

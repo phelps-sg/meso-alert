@@ -935,19 +935,21 @@ object Fixtures {
     val supportMessage = "This is a test support message."
     val expectedValidEmailSubject = "Feedback - testName test@test.com"
     val expectedValidEmailSubjectSupport = "Support - testName test@test.com"
-    val feedbackFormSubmission: FakeRequest[AnyContentAsFormUrlEncoded] =
+    val feedbackFormAttrs: Map[String, String] = Map[String, String](
+      "formType" -> feedbackFormType,
+      "name" -> emailName,
+      "email" -> emailAddress,
+      "message" -> feedbackMessage
+    )
+    val supportFormAttrs: Map[String, String] = Map[String, String](
+      "formType" -> supportFormType,
+      "name" -> emailName,
+      "email" -> emailAddress,
+      "message" -> supportMessage
+    )
+    def emailFormSubmission(attrs: Map[String, String]) =
       FakeRequest(POST, "/").withFormUrlEncodedBody(
-        ("formType", feedbackFormType),
-        ("name", emailName),
-        ("email", emailAddress),
-        ("message", feedbackMessage)
-      )
-    val supportFormSubmission: FakeRequest[AnyContentAsFormUrlEncoded] =
-      FakeRequest(POST, "/").withFormUrlEncodedBody(
-        ("formType", supportFormType),
-        ("name", emailName),
-        ("email", emailAddress),
-        ("message", supportMessage)
+        attrs.toSeq: _*
       )
     val mockMailManager = mock[MailManager]
   }

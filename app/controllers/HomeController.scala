@@ -77,7 +77,7 @@ class HomeController @Inject() (
           formData => {
             val subject = s"$formType - ${formData.name} ${formData.email}"
             mailManager
-              .sendEmail(destination, subject, formData.email)
+              .sendEmail(destination, subject, formData.message)
               .map { _ =>
                 logger.info("email delivered")
                 Ok(
