@@ -1,6 +1,6 @@
 package controllers
 
-import actions.SignatureHelpers
+import actions.HMACSignatureHelpers
 import actions.SignatureVerifyAction._
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.util.ByteString
@@ -103,7 +103,7 @@ class SlackSlashCommandController @Inject() (
     protected val slackManagerService: SlackManagerService
 )(implicit val ec: ExecutionContext)
     extends BaseController
-    with SignatureHelpers
+    with HMACSignatureHelpers
     with Logging {
 
   implicit val lang: Lang = Lang("en")

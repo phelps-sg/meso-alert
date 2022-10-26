@@ -29,7 +29,7 @@ class SignedRequest[A](
 
 /** Helper functions for processing signed requests
   */
-trait SignatureHelpers { env: BaseControllerHelpers =>
+trait HMACSignatureHelpers { env: BaseControllerHelpers =>
 
   /** Helper function to create an asynchronous action which: validates a
     * signature on a `SignedRequest`, then parses the request body, and finally

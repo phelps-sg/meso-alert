@@ -1,6 +1,6 @@
 package controllers
 
-import actions.SignatureHelpers
+import actions.HMACSignatureHelpers
 import actors.HookNotStartedException
 import akka.util.ByteString
 import dao.SlackChannelId
@@ -19,7 +19,7 @@ class SlackEventsController @Inject() (
     protected val slackSignatureVerifyAction: SlackSignatureVerifyAction
 )(implicit ec: ExecutionContext)
     extends BaseController
-    with SignatureHelpers
+    with HMACSignatureHelpers
     with Logging {
 
   protected val whenSignatureValid
