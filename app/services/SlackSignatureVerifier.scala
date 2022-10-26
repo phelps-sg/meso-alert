@@ -8,9 +8,9 @@ import scala.util.{Failure, Success, Try}
 @ImplementedBy(classOf[SlackSignatureVerifier])
 trait SignatureVerifierService {
   def validate(
-                timestamp: String,
-                body: String,
-                signature: String
+      timestamp: String,
+      body: String,
+      signature: String
   ): Try[String]
 }
 
@@ -21,9 +21,9 @@ class SlackSignatureVerifier @Inject() (protected val config: Configuration)
   val signingSecret: String = config.get[String]("slack.signingSecret")
 
   def validate(
-                timestamp: String,
-                body: String,
-                signature: String
+      timestamp: String,
+      body: String,
+      signature: String
   ): Try[String] = {
     import javax.crypto.Mac
     import javax.crypto.spec.SecretKeySpec
