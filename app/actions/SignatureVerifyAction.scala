@@ -73,12 +73,12 @@ object SignatureVerifyAction {
     FormUrlEncodedParser.parse(new String(rawBody))
 
   implicit class SignedRequestByteStringValidator(
-      slackRequest: SignedRequest[ByteString]
+      signedRequest: SignedRequest[ByteString]
   ) {
     def validateSignatureAgainstBody[T](parser: Array[Byte] => T): Try[T] = {
-      val raw = slackRequest.body.utf8String
-      slackRequest.validateSignature(raw) map { _ =>
-        parser(slackRequest.body.toArray)
+      val raw = signedRequest.body.utf8String
+      signedRequest.validateSignature(raw) map { _ =>
+        parser(signedRequest.body.toArray)
       }
     }
   }
