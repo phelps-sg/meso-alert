@@ -95,7 +95,7 @@ class ControllerTests
   }
 
   implicit override val patienceConfig: PatienceConfig =
-    PatienceConfig(timeout = Span(2, Seconds), interval = Span(5, Millis))
+    PatienceConfig(timeout = Span(20, Seconds), interval = Span(200, Millis))
 
   "HomeController" should {
 
@@ -348,7 +348,7 @@ class ControllerTests
         )
       val result = eventsController.eventsAPI().apply(fakeRequest)
       status(result) mustEqual OK
-      Thread.sleep(3000)
+
       val dbContents = db.run(Tables.slackChatHooks.result).futureValue
 
       eventually {
