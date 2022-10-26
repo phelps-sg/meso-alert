@@ -55,12 +55,9 @@ object SlackSignatureVerifyAction {
       }
     }
   }
-
-  val HEADERS_TIMESTAMP: String = "X-Slack-Request-Timestamp"
-  val HEADERS_SIGNATURE: String = "X-Slack-Signature"
 }
 
-class SlackSignatureVerifyAction @Inject() (
+abstract class SignatureVerifyAction(
     val parser: BodyParsers.Default,
     signatureVerifierService: SignatureVerifierService
 )(implicit ec: ExecutionContext)
@@ -68,17 +65,17 @@ class SlackSignatureVerifyAction @Inject() (
     with ActionRefiner[Request, SlackRequest]
     with Logging {
 
+  val headersTimestamp: String
+  val headersSignature: String
+
   override protected def executionContext: ExecutionContext = ec
 
   override protected def refine[A](
       request: Request[A]
   ): Future[Either[Result, SlackRequest[A]]] = {
 
-    val timestamp =
-      request.headers.get(SlackSignatureVerifyAction.HEADERS_TIMESTAMP)
-
-    val signature =
-      request.headers.get(SlackSignatureVerifyAction.HEADERS_SIGNATURE)
+    val timestamp = request.headers.get(headersTimestamp)
+    val signature = request.headers.get(headersSignature)
 
     (timestamp, signature) match {
       case (Some(timestamp), Some(signature)) =>
@@ -90,7 +87,14 @@ class SlackSignatureVerifyAction @Inject() (
       case _ =>
         Future { Left(Unauthorized("Invalid signature headers")) }
     }
-
   }
+}
 
+class SlackSignatureVerifyAction @Inject() (
+    parser: BodyParsers.Default,
+    signatureVerifierService: SignatureVerifierService
+)(implicit ec: ExecutionContext)
+    extends SignatureVerifyAction(parser, signatureVerifierService) {
+  override val headersTimestamp: String = "X-Slack-Request-Timestamp"
+  override val headersSignature: String = "X-Slack-Signature"
 }
