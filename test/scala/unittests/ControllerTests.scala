@@ -10,12 +10,12 @@ import controllers._
 import dao._
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
 import org.scalamock.handlers.CallHandler1
+import org.scalatest.Assertion
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
-import org.scalatest.{Assertion, BeforeAndAfterAll}
 import play.api.http.Status.{OK, SERVICE_UNAVAILABLE, UNAUTHORIZED}
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{AnyContentAsFormUrlEncoded, Result, Results}
@@ -81,8 +81,7 @@ class ControllerTests
     with should.Matchers
     with ScalaFutures
     with Results
-    with Eventually
-    with BeforeAndAfterAll {
+    with Eventually {
 
   // noinspection TypeAnnotation
   trait FixtureBindings extends ProvidesTestBindings with MessagesFixtures {
@@ -95,7 +94,7 @@ class ControllerTests
   }
 
   implicit override val patienceConfig: PatienceConfig =
-    PatienceConfig(timeout = Span(20, Seconds), interval = Span(200, Millis))
+    PatienceConfig(timeout = Span(10, Seconds), interval = Span(200, Millis))
 
   "HomeController" should {
 
@@ -349,10 +348,10 @@ class ControllerTests
       val result = eventsController.eventsAPI().apply(fakeRequest)
       status(result) mustEqual OK
 
-      val dbContents = db.run(Tables.slackChatHooks.result).futureValue
+      def dbContentsFuture = db.run(Tables.slackChatHooks.result)
 
       eventually {
-        dbContents should matchPattern {
+        dbContentsFuture.futureValue should matchPattern {
           case Vector(
                 SlackChatHookEncrypted(
                   `channelId`,
