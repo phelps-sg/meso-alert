@@ -1,7 +1,7 @@
 package controllers
 
-import actions.SlackSignatureVerifyAction
 import actions.SlackSignatureVerifyAction._
+import actions.{SlackSignatureHelpers, SlackSignatureVerifyAction}
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.util.ByteString
 import controllers.SlackSlashCommandController._
@@ -102,29 +102,20 @@ class SlackSlashCommandController @Inject() (
     protected val slackManagerService: SlackManagerService
 )(implicit val ec: ExecutionContext)
     extends BaseController
+    with SlackSignatureHelpers
     with Logging {
 
   implicit val lang: Lang = Lang("en")
 
-  def slashCommand: Action[ByteString] = {
-    slackSignatureVerifyAction.async(parse.byteString) { request =>
-      logger.debug("received slash command")
-      request
-        .validateSignatureAgainstBody(formUrlEncodedParser)
-        .map(processForm) match {
-        case Success(result) => result
-        case Failure(ex) =>
-          ex.printStackTrace()
-          Future { Unauthorized(ex.getMessage) }
-      }
-    }
-  }
-
-  def processForm(formBody: Map[String, Seq[String]]): Future[Result] = {
+  def slashCommand: Action[ByteString] = validateSignatureAndProcess(
+    slackSignatureVerifyAction
+  )(formUrlEncodedParser) { formBody =>
     SlackSlashCommandController.param("ssl_check")(formBody) match {
 
       case Some("1") =>
-        Future { Ok }
+        Future {
+          Ok
+        }
 
       case _ =>
         SlackSlashCommandController.toCommand(formBody) match {

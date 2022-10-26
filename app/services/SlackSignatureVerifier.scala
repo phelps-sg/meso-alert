@@ -6,24 +6,24 @@ import play.api.Configuration
 import scala.util.{Failure, Success, Try}
 
 @ImplementedBy(classOf[SlackSignatureVerifier])
-trait SlackSignatureVerifierService {
+trait SignatureVerifierService {
   def validate(
-      timestamp: String,
-      body: String,
-      slackSignature: String
+                timestamp: String,
+                body: String,
+                signature: String
   ): Try[String]
 }
 
 @Singleton
 class SlackSignatureVerifier @Inject() (protected val config: Configuration)
-    extends SlackSignatureVerifierService {
+    extends SignatureVerifierService {
 
   val signingSecret: String = config.get[String]("slack.signingSecret")
 
   def validate(
-      timestamp: String,
-      body: String,
-      slackSignature: String
+                timestamp: String,
+                body: String,
+                signature: String
   ): Try[String] = {
     import javax.crypto.Mac
     import javax.crypto.spec.SecretKeySpec
@@ -38,7 +38,7 @@ class SlackSignatureVerifier @Inject() (protected val config: Configuration)
     val signatureBytes = mac.doFinal(payload.getBytes)
     val expectedSignature =
       s"v0=${DatatypeConverter.printHexBinary(signatureBytes).toLowerCase}"
-    if (slackSignature == expectedSignature) {
+    if (signature == expectedSignature) {
       Success(body)
     } else {
       Failure(new Exception("Invalid signature"))

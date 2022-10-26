@@ -73,7 +73,7 @@ import services.{
   PeerGroupProvider,
   SlackManager,
   SlackSecretsManagerService,
-  SlackSignatureVerifierService,
+  SignatureVerifierService,
   SodiumEncryptionManager,
   User,
   UserManagerService
@@ -251,7 +251,7 @@ object Fixtures {
   }
 
   trait SlackSignatureVerifierFixtures extends MockFactory {
-    val mockSlackSignatureVerifierService = mock[SlackSignatureVerifierService]
+    val mockSlackSignatureVerifierService = mock[SignatureVerifierService]
     val fakeSlackSignatureHeaders = Array(
       ("X-Slack-Request-Timestamp", "1663156082"),
       (
@@ -262,7 +262,7 @@ object Fixtures {
 
     class SignatureVerifierServiceModule extends AbstractModule {
       override def configure(): Unit = {
-        bind(classOf[SlackSignatureVerifierService]).toInstance(
+        bind(classOf[SignatureVerifierService]).toInstance(
           mockSlackSignatureVerifierService
         )
       }

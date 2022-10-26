@@ -1,18 +1,16 @@
 package controllers
 
-import actions.SlackSignatureVerifyAction
-import actions.SlackSignatureVerifyAction._
+import actions.{SlackSignatureHelpers, SlackSignatureVerifyAction}
 import actors.HookNotStartedException
 import akka.util.ByteString
 import dao.SlackChannelId
 import play.api.Logging
-import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
+import play.api.libs.json.Json
+import play.api.mvc.{Action, BaseController, ControllerComponents}
 import services.HooksManagerSlackChat
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 
 class SlackEventsController @Inject() (
     val controllerComponents: ControllerComponents,
@@ -20,20 +18,34 @@ class SlackEventsController @Inject() (
     protected val slackSignatureVerifyAction: SlackSignatureVerifyAction
 )(implicit ec: ExecutionContext)
     extends BaseController
+    with SlackSignatureHelpers
     with Logging {
 
-  def eventsAPI(): Action[ByteString] = {
-    slackSignatureVerifyAction.async(parse.byteString) { request =>
-      request
-        .validateSignatureAgainstBody(Json.parse)
-        .map(processSlackEvent) match {
-        case Success(result) => result
-        case Failure(ex) =>
-          ex.printStackTrace()
-          Future { Unauthorized(ex.getMessage) }
-      }
+  def eventsAPI(): Action[ByteString] =
+    validateSignatureAndProcess(slackSignatureVerifyAction)(Json.parse) {
+      requestBody =>
+        {
+          val isChallenge = (requestBody \ "challenge").asOpt[String]
+          isChallenge match {
+            case Some(challengeValue) =>
+              Future {
+                Ok(challengeValue)
+              }
+            case None =>
+              val eventType = (requestBody \ "event" \ "type").as[String]
+              eventType match {
+                case "channel_deleted" =>
+                  val channel = (requestBody \ "event" \ "channel").as[String]
+                  stopHook(SlackChannelId(channel))
+                case ev =>
+                  logger.warn(s"Received unhandled event $ev")
+                  Future {
+                    NotAcceptable
+                  }
+              }
+          }
+        }
     }
-  }
 
   def stopHook(channelId: SlackChannelId): Future[Status] = {
     val f = for {
@@ -50,27 +62,27 @@ class SlackEventsController @Inject() (
     }
   }
 
-  def processSlackEvent(requestBody: JsValue): Future[Result] = {
-    // deal with the one-time challenge sent from the Events api to verify ownership of url
-    val isChallenge = (requestBody \ "challenge").asOpt[String]
-    isChallenge match {
-      case Some(challengeValue) =>
-        Future {
-          Ok(challengeValue)
-        }
-      case None =>
-        val eventType = (requestBody \ "event" \ "type").as[String]
-        eventType match {
-          case "channel_deleted" =>
-            val channel = (requestBody \ "event" \ "channel").as[String]
-            stopHook(SlackChannelId(channel))
-          case ev =>
-            logger.warn(s"Received unhandled event $ev")
-            Future {
-              NotAcceptable
-            }
-        }
-    }
-  }
-
+//  def processSlackEvent(requestBody: JsValue): Future[Result] = {
+//     deal with the one-time challenge sent from the Events api to verify ownership of url
+//    val isChallenge = (requestBody \ "challenge").asOpt[String]
+//    isChallenge match {
+//      case Some(challengeValue) =>
+//        Future {
+//          Ok(challengeValue)
+//        }
+//      case None =>
+//        val eventType = (requestBody \ "event" \ "type").as[String]
+//        eventType match {
+//          case "channel_deleted" =>
+//            val channel = (requestBody \ "event" \ "channel").as[String]
+//            stopHook(SlackChannelId(channel))
+//          case ev =>
+//            logger.warn(s"Received unhandled event $ev")
+//            Future {
+//              NotAcceptable
+//            }
+//        }
+//    }
+//  }
+//
 }
