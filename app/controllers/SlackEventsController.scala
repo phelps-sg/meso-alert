@@ -63,27 +63,4 @@ class SlackEventsController @Inject() (
     }
   }
 
-//  def processSlackEvent(requestBody: JsValue): Future[Result] = {
-//     deal with the one-time challenge sent from the Events api to verify ownership of url
-//    val isChallenge = (requestBody \ "challenge").asOpt[String]
-//    isChallenge match {
-//      case Some(challengeValue) =>
-//        Future {
-//          Ok(challengeValue)
-//        }
-//      case None =>
-//        val eventType = (requestBody \ "event" \ "type").as[String]
-//        eventType match {
-//          case "channel_deleted" =>
-//            val channel = (requestBody \ "event" \ "channel").as[String]
-//            stopHook(SlackChannelId(channel))
-//          case ev =>
-//            logger.warn(s"Received unhandled event $ev")
-//            Future {
-//              NotAcceptable
-//            }
-//        }
-//    }
-//  }
-//
 }
