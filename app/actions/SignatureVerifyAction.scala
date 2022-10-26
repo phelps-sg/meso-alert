@@ -7,32 +7,59 @@ import play.api.mvc.Results.Unauthorized
 import play.api.mvc._
 import play.core.parsers.FormUrlEncodedParser
 import services.SignatureVerifierService
-import slack.SlackSignatureVerifyAction
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
+/** A Play Request containing an HMAC signature (as per
+  * [[https://www.ietf.org/rfc/rfc2104.txt RFC 2104]]).
+  *
+  * @param validateSignature
+  *   A call-back to validate the signature
+  * @param request
+  *   The original request
+  * @tparam A
+  *   The body content type
+  */
 class SignedRequest[A](
     val validateSignature: String => Try[String],
     request: Request[A]
 ) extends WrappedRequest[A](request)
 
+/** Helper functions for processing signed requests
+  */
 trait SignatureHelpers { env: BaseControllerHelpers =>
 
+  /** Helper function to create an asynchronous action which: validates a
+    * signature on a `SignedRequest`, then parses the request body, and finally
+    * processes the parsed data to return the final result. If the signature
+    * headers are not supplied, or they are invalid, then the action will return
+    * a 401 result in the future.
+    *
+    * @param signatureVerifyAction
+    *   The action used to verify the signature headers
+    * @param bodyParser
+    *   A call-back to parse the raw (`Array[Byte]`) body
+    * @param bodyProcessor
+    *   A call-back to process the parsed body and return a future result
+    * @param ec
+    *   The execution context for the future
+    * @tparam T
+    *   The body content type expected by the body processor
+    */
   def validateSignatureAndProcess[T](
-      slackSignatureVerifyAction: SlackSignatureVerifyAction
+      signatureVerifyAction: SignatureVerifyAction
   )(
-      parser: Array[Byte] => T
+      bodyParser: Array[Byte] => T
   )(
-      processor: T => Future[Result]
+      bodyProcessor: T => Future[Result]
   )(implicit ec: ExecutionContext): Action[ByteString] =
-    slackSignatureVerifyAction.async(parse.byteString) { request =>
+    signatureVerifyAction.async(parse.byteString) { request =>
       request
-        .validateSignatureAgainstBody(parser)
-        .map(processor) match {
+        .validateSignatureAgainstBody(bodyParser)
+        .map(bodyProcessor) match {
         case Success(result) => result
         case Failure(ex) =>
-          ex.printStackTrace()
           Future {
             Unauthorized(ex.getMessage)
           }
@@ -57,6 +84,18 @@ object SignatureVerifyAction {
   }
 }
 
+/** Abstract class for Play actions which verify HMAC signatures. Sub-classes
+  * should override the `headersTimestamp` and `headersSignature` members with
+  * the header keys that contain the timestamp and signature respectively.
+  * Inject a mock `SignatureVerifierService` for unit testing.
+  *
+  * @param parser
+  *   The body parser
+  * @param signatureVerifierService
+  *   The service used to validate the signature against the body
+  * @param ec
+  *   The execution context
+  */
 abstract class SignatureVerifyAction(
     val parser: BodyParsers.Default,
     signatureVerifierService: SignatureVerifierService
