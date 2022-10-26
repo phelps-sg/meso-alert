@@ -70,12 +70,25 @@ trait SignatureHelpers { env: BaseControllerHelpers =>
 
 object SignatureVerifyAction {
 
+  /** Convenience function to parse url-encoded form data
+    */
   def formUrlEncodedParser(rawBody: Array[Byte]): Map[String, Seq[String]] =
     FormUrlEncodedParser.parse(new String(rawBody))
 
   implicit class SignedRequestByteStringValidator(
       signedRequest: SignedRequest[ByteString]
   ) {
+
+    /** Validate the signed request's signature against the body of the original
+      * request represented as a UTF-8 string, and then parse the raw body.
+      * @param parser
+      *   Call-back to parse the raw body
+      * @tparam T
+      *   The type of the parsed body
+      * @return
+      *   If the signature is valid then return `Success` with the parsed body,
+      *   otherwise if the signature is invalid then result in `Failure`.
+      */
     def validateSignatureAgainstBody[T](parser: Array[Byte] => T): Try[T] = {
       val raw = signedRequest.body.utf8String
       signedRequest.validateSignature(raw) map { _ =>
