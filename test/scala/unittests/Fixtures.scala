@@ -1,6 +1,6 @@
 package unittests
 
-import actions.{Auth0ValidateJWTAction, SlackSignatureVerifyAction}
+import actions.{Auth0ValidateJWTAction}
 import actors.EncryptionActor.Encrypted
 import actors.{
   AuthenticationActor,
@@ -84,6 +84,7 @@ import slack.BlockMessages.{
   MESSAGE_TO_ADDRESSES,
   MESSAGE_TRANSACTION_HASH
 }
+import slack.SlackSignatureVerifyAction
 import slick.BtcPostgresProfile.api._
 import slick._
 import slick.dbio.{DBIO, Effect}

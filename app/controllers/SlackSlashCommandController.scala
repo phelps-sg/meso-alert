@@ -1,7 +1,7 @@
 package controllers
 
-import actions.SlackSignatureVerifyAction._
-import actions.{SlackSignatureHelpers, SlackSignatureVerifyAction}
+import actions.SignatureVerifyAction._
+import actions.SignatureHelpers
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.util.ByteString
 import controllers.SlackSlashCommandController._
@@ -10,6 +10,7 @@ import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}
 import play.api.mvc._
 import services.{HooksManagerSlackChat, SlackManagerService}
+import slack.SlackSignatureVerifyAction
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -102,7 +103,7 @@ class SlackSlashCommandController @Inject() (
     protected val slackManagerService: SlackManagerService
 )(implicit val ec: ExecutionContext)
     extends BaseController
-    with SlackSignatureHelpers
+    with SignatureHelpers
     with Logging {
 
   implicit val lang: Lang = Lang("en")

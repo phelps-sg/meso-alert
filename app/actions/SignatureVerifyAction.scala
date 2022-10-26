@@ -1,23 +1,23 @@
 package actions
 
-import actions.SlackSignatureVerifyAction.SlackRequestByteStringValidator
+import actions.SignatureVerifyAction.SignedRequestByteStringValidator
 import akka.util.ByteString
-import com.google.inject.Inject
 import play.api.Logging
 import play.api.mvc.Results.Unauthorized
 import play.api.mvc._
 import play.core.parsers.FormUrlEncodedParser
 import services.SignatureVerifierService
+import slack.SlackSignatureVerifyAction
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-class SlackRequest[A](
+class SignedRequest[A](
     val validateSignature: String => Try[String],
     request: Request[A]
 ) extends WrappedRequest[A](request)
 
-trait SlackSignatureHelpers { env: BaseControllerHelpers =>
+trait SignatureHelpers { env: BaseControllerHelpers =>
 
   def validateSignatureAndProcess[T](
       slackSignatureVerifyAction: SlackSignatureVerifyAction
@@ -40,13 +40,13 @@ trait SlackSignatureHelpers { env: BaseControllerHelpers =>
     }
 }
 
-object SlackSignatureVerifyAction {
+object SignatureVerifyAction {
 
   def formUrlEncodedParser(rawBody: Array[Byte]): Map[String, Seq[String]] =
     FormUrlEncodedParser.parse(new String(rawBody))
 
-  implicit class SlackRequestByteStringValidator(
-      slackRequest: SlackRequest[ByteString]
+  implicit class SignedRequestByteStringValidator(
+      slackRequest: SignedRequest[ByteString]
   ) {
     def validateSignatureAgainstBody[T](parser: Array[Byte] => T): Try[T] = {
       val raw = slackRequest.body.utf8String
@@ -61,8 +61,8 @@ abstract class SignatureVerifyAction(
     val parser: BodyParsers.Default,
     signatureVerifierService: SignatureVerifierService
 )(implicit ec: ExecutionContext)
-    extends ActionBuilder[SlackRequest, AnyContent]
-    with ActionRefiner[Request, SlackRequest]
+    extends ActionBuilder[SignedRequest, AnyContent]
+    with ActionRefiner[Request, SignedRequest]
     with Logging {
 
   val headersTimestamp: String
@@ -72,7 +72,7 @@ abstract class SignatureVerifyAction(
 
   override protected def refine[A](
       request: Request[A]
-  ): Future[Either[Result, SlackRequest[A]]] = {
+  ): Future[Either[Result, SignedRequest[A]]] = {
 
     val timestamp = request.headers.get(headersTimestamp)
     val signature = request.headers.get(headersSignature)
@@ -82,19 +82,10 @@ abstract class SignatureVerifyAction(
         Future.successful {
           val validate = (body: String) =>
             signatureVerifierService.validate(timestamp, body, signature)
-          Right(new SlackRequest[A](validate, request))
+          Right(new SignedRequest[A](validate, request))
         }
       case _ =>
         Future { Left(Unauthorized("Invalid signature headers")) }
     }
   }
-}
-
-class SlackSignatureVerifyAction @Inject() (
-    parser: BodyParsers.Default,
-    signatureVerifierService: SignatureVerifierService
-)(implicit ec: ExecutionContext)
-    extends SignatureVerifyAction(parser, signatureVerifierService) {
-  override val headersTimestamp: String = "X-Slack-Request-Timestamp"
-  override val headersSignature: String = "X-Slack-Signature"
 }

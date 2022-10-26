@@ -1,6 +1,6 @@
 package controllers
 
-import actions.{SlackSignatureHelpers, SlackSignatureVerifyAction}
+import actions.SignatureHelpers
 import actors.HookNotStartedException
 import akka.util.ByteString
 import dao.SlackChannelId
@@ -8,6 +8,7 @@ import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, BaseController, ControllerComponents}
 import services.HooksManagerSlackChat
+import slack.SlackSignatureVerifyAction
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -18,7 +19,7 @@ class SlackEventsController @Inject() (
     protected val slackSignatureVerifyAction: SlackSignatureVerifyAction
 )(implicit ec: ExecutionContext)
     extends BaseController
-    with SlackSignatureHelpers
+    with SignatureHelpers
     with Logging {
 
   def eventsAPI(): Action[ByteString] =
