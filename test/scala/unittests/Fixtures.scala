@@ -1,6 +1,6 @@
 package unittests
 
-import actions.Auth0ValidateJWTAction
+import actions.{Auth0ValidateJWTAction, SlackSignatureVerifyAction}
 import actors.EncryptionActor.Encrypted
 import actors.{
   AuthenticationActor,
@@ -27,7 +27,7 @@ import actors.{
 }
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
-import akka.util.Timeout
+import akka.util.{ByteString, Timeout}
 import com.google.common.io.ByteStreams
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
@@ -35,6 +35,7 @@ import com.slack.api.methods.response.auth.AuthTestResponse
 import com.slack.api.methods.response.conversations.ConversationsMembersResponse
 import com.typesafe.config.ConfigFactory
 import controllers.HomeController.EmailFormData
+import controllers.SlackSlashCommandController
 import dao._
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
@@ -45,7 +46,7 @@ import org.bitcoinj.core.listeners.{
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.store.BlockStore
 import org.bitcoinj.wallet.Wallet
-import org.scalamock.handlers.CallHandler1
+import org.scalamock.handlers.{CallHandler1, CallHandler3}
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
 import pdi.jwt.JwtClaim
@@ -56,10 +57,10 @@ import play.api.inject.guice.{
   GuiceInjectorBuilder,
   GuiceableModule
 }
-import play.api.libs.json.{JsArray, JsValue, Json}
-import play.api.mvc.BodyParsers
-import play.api.test.FakeRequest
+import play.api.libs.json.{JsArray, Json}
+import play.api.mvc.{AnyContentAsFormUrlEncoded, BodyParsers}
 import play.api.test.Helpers.POST
+import play.api.test.{FakeRequest, Helpers}
 import play.api.{Application, Configuration, Logging, inject}
 import services.{
   BlockChainProvider,
@@ -780,9 +781,19 @@ object Fixtures {
           "is_enterprise_install" -> "false"
         )
 
-    def fakeRequestValid(command: String, amount: String) =
-      fakeRequestValidNoSignature(command, amount).withHeaders(
+    def withFakeSlackSignatureHeaders[T](
+        request: FakeRequest[T]
+    ): FakeRequest[T] =
+      request.withHeaders(
         ArraySeq.unsafeWrapArray(fakeSlackSignatureHeaders): _*
+      )
+
+    def fakeRequestValid(
+        command: String,
+        amount: String
+    ): FakeRequest[AnyContentAsFormUrlEncoded] =
+      withFakeSlackSignatureHeaders(
+        fakeRequestValidNoSignature(command, amount)
       )
 
     val testUserId = "testUser"
@@ -793,6 +804,50 @@ object Fixtures {
     resConvMembersResponse.setMembers(mockMembers)
     val resConvMembersResponseBad = new ConversationsMembersResponse
     resConvMembersResponseBad.setMembers(List("wrongUser").asJava)
+  }
+
+  trait SlackSlashCommandControllerFixtures {
+    env: FakeApplication
+      with SlickSlashCommandHistoryDaoFixtures
+      with SlickSlackTeamDaoFixtures
+      with SlackChatHookDaoFixtures
+      with SlackChatActorFixtures
+      with MessagesFixtures
+      with SlackManagerFixtures
+      with SlackSignatureVerifierFixtures
+      with HasExecutionContext
+      with HasActorSystem =>
+
+    private implicit val ec = executionContext
+    private implicit val system = actorSystem
+
+    val slackSignatureVerifyAction =
+      fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
+
+    val slackSlashCommandController = new SlackSlashCommandController(
+      slackSignatureVerifyAction,
+      Helpers.stubControllerComponents(),
+      slashCommandHistoryDao = slickSlashCommandHistoryDao,
+      slackTeamDao = slickSlackTeamDao,
+      hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
+      messagesApi,
+      mockSlackManagerService
+    )
+
+    val signatureVerifierExpectations =
+      (mockSlackSignatureVerifierService.validate _)
+        .expects(*, *, *)
+        .anyNumberOfTimes()
+
+    def setSignatureVerifierExpectations()
+        : CallHandler3[String, String, String, Try[String]] =
+      signatureVerifierExpectations.returning(Success("valid"))
+    setSignatureVerifierExpectations()
+
+    (mockSlackSignatureVerifierService.validate _)
+      .expects(*, *, *)
+      .returning(Success("valid"))
+      .anyNumberOfTimes()
   }
 
   trait SlickSlashCommandHistoryDaoFixtures {
@@ -1034,7 +1089,9 @@ object Fixtures {
   }
 
   trait SlackEventsControllerFixtures {
-    val deleteChannelRequestBody: JsValue = Json.parse("""
+    val deleteChannelRequestBody = ByteString(
+      Json
+        .parse("""
   {
     "event" :
     {
@@ -1042,7 +1099,8 @@ object Fixtures {
       "channel" : "1234"
     }
   }
-  """)
+  """).toString()
+    )
   }
 
   trait EncryptionManagerFixtures {

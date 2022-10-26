@@ -1,6 +1,6 @@
 package unittests
 
-import actions.{Auth0ValidateJWTAction, SlackSignatureVerifyAction}
+import actions.Auth0ValidateJWTAction
 import actors.EncryptionActor.Encrypted
 import actors.SlackSecretsActor.{InvalidSecretException, Unbind, ValidSecret}
 import akka.actor.{ActorRef, ActorSystem}
@@ -57,6 +57,7 @@ import unittests.Fixtures.{
   SlackEventsControllerFixtures,
   SlackManagerFixtures,
   SlackSignatureVerifierFixtures,
+  SlackSlashCommandControllerFixtures,
   SlickSlackTeamDaoFixtures,
   SlickSlackTeamFixtures,
   SlickSlashCommandFixtures,
@@ -70,7 +71,7 @@ import util.Encodings.base64Encode
 import scala.collection.compat.immutable.ArraySeq
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.util.{Failure, Success}
+import scala.util.Failure
 
 //noinspection TypeAnnotation
 class ControllerTests
@@ -275,24 +276,27 @@ class ControllerTests
         with SlackEventsControllerFixtures
         with SlackSignatureVerifierFixtures
         with SlackManagerFixtures
-        with FakeApplication {
+        with FakeApplication
+        with SlackSlashCommandControllerFixtures {
 
-      val controller = new SlackEventsController(
-        Helpers.stubControllerComponents(),
-        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor)
-      )
+//      val signatureVerifyAction =
+//        fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
 
-      val action =
-        fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
-      val commandController = new SlackSlashCommandController(
-        action,
+      val eventsController = new SlackEventsController(
         Helpers.stubControllerComponents(),
-        slashCommandHistoryDao = slickSlashCommandHistoryDao,
-        slackTeamDao = slickSlackTeamDao,
         hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
-        messagesApi,
-        mockSlackManagerService
+        slackSignatureVerifyAction
       )
+
+//      val slackSlashCommandController = new SlackSlashCommandController(
+//        signatureVerifyAction,
+//        Helpers.stubControllerComponents(),
+//        slashCommandHistoryDao = slickSlashCommandHistoryDao,
+//        slackTeamDao = slickSlackTeamDao,
+//        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
+//        messagesApi,
+//        mockSlackManagerService
+//      )
 
       memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
         .anyNumberOfTimes()
@@ -321,7 +325,7 @@ class ControllerTests
           _ <- db.run(
             Tables.slackTeams += slackTeamEncrypted
           )
-          response <- commandController.process(cryptoAlertCommand)
+          response <- slackSlashCommandController.process(cryptoAlertCommand)
           dbContents <- db.run(Tables.slackChatHooks.result)
         } yield (response, dbContents)
       }.futureValue should matchPattern {
@@ -339,8 +343,10 @@ class ControllerTests
       }
 
       val fakeRequest =
-        FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
-      val result = controller.eventsAPI().apply(fakeRequest)
+        withFakeSlackSignatureHeaders(
+          FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
+        )
+      val result = eventsController.eventsAPI().apply(fakeRequest)
       status(result) mustEqual OK
       Thread.sleep(3000)
       val dbContents = db.run(Tables.slackChatHooks.result).futureValue
@@ -357,6 +363,26 @@ class ControllerTests
               ) =>
         }
       }
+    }
+
+    "return unauthorised status when no signature headers are supplied" in new TestFixtures {
+      val fakeRequest =
+        FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
+      val result = eventsController.eventsAPI().apply(fakeRequest)
+      status(result) mustEqual UNAUTHORIZED
+    }
+
+    "return unauthorised status when invalid signature headers are supplied" in new TestFixtures {
+      override def setSignatureVerifierExpectations() =
+        signatureVerifierExpectations.returning(
+          Failure(new Exception("Invalid signature"))
+        )
+      val fakeRequest =
+        withFakeSlackSignatureHeaders(
+          FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
+        )
+      val result = eventsController.eventsAPI().apply(fakeRequest)
+      status(result) mustEqual UNAUTHORIZED
     }
   }
 
@@ -380,26 +406,28 @@ class ControllerTests
         with DatabaseInitializer
         with SlackSignatureVerifierFixtures
         with SlackManagerFixtures
-        with FakeApplication {
+        with FakeApplication
+        with SlackSlashCommandControllerFixtures {
 
 //      encryptionManager.init()
 
-      val action =
-        fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
-      val controller = new SlackSlashCommandController(
-        action,
-        Helpers.stubControllerComponents(),
-        slashCommandHistoryDao = slickSlashCommandHistoryDao,
-        slackTeamDao = slickSlackTeamDao,
-        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
-        messagesApi,
-        mockSlackManagerService
-      )
+//      val slackSignatureVerifyAction =
+//        fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
+
+//      val slackSlashCommandController = new SlackSlashCommandController(
+//        slackSignatureVerifyAction,
+//        Helpers.stubControllerComponents(),
+//        slashCommandHistoryDao = slickSlashCommandHistoryDao,
+//        slackTeamDao = slickSlackTeamDao,
+//        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
+//        messagesApi,
+//        mockSlackManagerService
+//      )
 
       def slashCommand(
           makeFakeRequest: => FakeRequest[AnyContentAsFormUrlEncoded]
       ) =
-        call(controller.slashCommand, makeFakeRequest)
+        call(slackSlashCommandController.slashCommand, makeFakeRequest)
 
       override def memPoolWatcherExpectations(
           ch: CallHandler1[ActorRef, Unit]
@@ -414,19 +442,20 @@ class ControllerTests
           .anyNumberOfTimes()
       }
 
-      val signatureVerifierExpectations =
-        (mockSlackSignatureVerifierService.validate _)
-          .expects(*, *, *)
-          .anyNumberOfTimes()
+//      val signatureVerifierExpectations =
+//        (mockSlackSignatureVerifierService.validate _)
+//          .expects(*, *, *)
+//          .anyNumberOfTimes()
 
-      def setSignatureVerifierExpectations() =
-        signatureVerifierExpectations.returning(Success("valid"))
-      setSignatureVerifierExpectations()
+//      def setSignatureVerifierExpectations()
+//          : CallHandler3[String, String, String, Try[String]] =
+//        signatureVerifierExpectations.returning(Success("valid"))
+//      setSignatureVerifierExpectations()
 
-      (mockSlackSignatureVerifierService.validate _)
-        .expects(*, *, *)
-        .returning(Success("valid"))
-        .anyNumberOfTimes()
+//      (mockSlackSignatureVerifierService.validate _)
+//        .expects(*, *, *)
+//        .returning(Success("valid"))
+//        .anyNumberOfTimes()
 
       def submitCommand(
           command: SlashCommand
@@ -444,7 +473,7 @@ class ControllerTests
                 RegisteredUserId("test-user@test.domain")
               )
             )
-            response <- controller.process(command)
+            response <- slackSlashCommandController.process(command)
             dbContents <- db.run(Tables.slackChatHooks.result)
             _ <- db.run(Tables.slackChatHooks.delete)
           } yield (response, dbContents)
@@ -529,7 +558,7 @@ class ControllerTests
           None
         )
 
-      val response = controller.process(cryptoAlertCommand)
+      val response = slackSlashCommandController.process(cryptoAlertCommand)
 
       contentAsString(
         response
@@ -541,7 +570,7 @@ class ControllerTests
         FakeRequest(POST, "/")
           .withFormUrlEncodedBody(("ssl_check", "1"))
           .withHeaders(ArraySeq.unsafeWrapArray(fakeSlackSignatureHeaders): _*)
-      val result = call(controller.slashCommand, fakeRequest)
+      val result = call(slackSlashCommandController.slashCommand, fakeRequest)
       status(result) mustEqual OK
     }
 
@@ -588,7 +617,7 @@ class ControllerTests
     "return error message when pausing alerts when there are no alerts active" in new TestFixtures {
       val result =
         call(
-          controller.slashCommand,
+          slackSlashCommandController.slashCommand,
           fakeRequestValid("/pause-alerts", "")
         )
       status(result) mustEqual OK
@@ -606,7 +635,7 @@ class ControllerTests
     "return correct message when resuming alerts" in new TestFixtures {
       val result =
         call(
-          controller.slashCommand,
+          slackSlashCommandController.slashCommand,
           fakeRequestValid("/resume-alerts", "")
         )
       status(result) mustEqual OK
@@ -616,7 +645,7 @@ class ControllerTests
     "return error message when resuming alerts when there are no alerts active" in new TestFixtures {
       val result =
         call(
-          controller.slashCommand,
+          slackSlashCommandController.slashCommand,
           fakeRequestValid("/resume-alerts", "")
         )
       status(result) mustEqual OK

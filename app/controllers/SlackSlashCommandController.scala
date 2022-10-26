@@ -110,7 +110,7 @@ class SlackSlashCommandController @Inject() (
     slackSignatureVerifyAction.async(parse.byteString) { request =>
       logger.debug("received slash command")
       request
-        .validateSignatureAgainstBody()
+        .validateSignatureAgainstBody(formUrlEncodedParser)
         .map(processForm) match {
         case Success(result) => result
         case Failure(ex) =>

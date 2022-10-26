@@ -18,13 +18,16 @@ class SlackRequest[A](
 
 object SlackSignatureVerifyAction {
 
+  def formUrlEncodedParser(rawBody: Array[Byte]): Map[String, Seq[String]] =
+    FormUrlEncodedParser.parse(new String(rawBody))
+
   implicit class SlackRequestByteStringValidator(
       slackRequest: SlackRequest[ByteString]
   ) {
-    def validateSignatureAgainstBody(): Try[Map[String, Seq[String]]] = {
+    def validateSignatureAgainstBody[T](parser: Array[Byte] => T): Try[T] = {
       val raw = slackRequest.body.utf8String
       slackRequest.validateSignature(raw) map { _ =>
-        FormUrlEncodedParser.parse(new String(slackRequest.body.toArray))
+        parser(slackRequest.body.toArray)
       }
     }
   }
