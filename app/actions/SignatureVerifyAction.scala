@@ -15,7 +15,8 @@ import scala.util.{Failure, Success, Try}
   * [[https://www.ietf.org/rfc/rfc2104.txt RFC 2104]]).
   *
   * @param validateSignature
-  *   A call-back to validate the signature
+  *   A call-back to validate the signature which returns a `Failure` if the
+  *   signature is invalid
   * @param request
   *   The original request
   * @tparam A
