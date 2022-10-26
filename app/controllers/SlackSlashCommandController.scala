@@ -1,7 +1,7 @@
 package controllers
 
-import actions.SignatureVerifyAction._
 import actions.SignatureHelpers
+import actions.SignatureVerifyAction._
 import actors.{HookAlreadyStartedException, HookNotStartedException}
 import akka.util.ByteString
 import controllers.SlackSlashCommandController._
@@ -108,9 +108,11 @@ class SlackSlashCommandController @Inject() (
 
   implicit val lang: Lang = Lang("en")
 
-  def slashCommand: Action[ByteString] = validateSignatureAndProcess(
-    slackSignatureVerifyAction
-  )(formUrlEncodedParser) { formBody =>
+  protected val whenSignatureValid
+      : (Map[String, Seq[String]] => Future[Result]) => Action[ByteString] =
+    whenSignatureValid(slackSignatureVerifyAction)(formUrlEncodedParser)
+
+  def slashCommand: Action[ByteString] = whenSignatureValid { formBody =>
     SlackSlashCommandController.param("ssl_check")(formBody) match {
 
       case Some("1") =>

@@ -48,7 +48,7 @@ trait SignatureHelpers { env: BaseControllerHelpers =>
     * @tparam T
     *   The body content type expected by the body processor
     */
-  def validateSignatureAndProcess[T](
+  def whenSignatureValid[T](
       signatureVerifyAction: SignatureVerifyAction
   )(
       bodyParser: Array[Byte] => T
