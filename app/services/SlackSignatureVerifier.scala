@@ -5,6 +5,9 @@ import play.api.Configuration
 
 import scala.util.{Failure, Success, Try}
 
+case class InvalidSignatureException(expectedSignature: String)
+    extends Exception(s"Invalid signature: expected $expectedSignature")
+
 @ImplementedBy(classOf[SlackSignatureVerifier])
 trait SignatureVerifierService {
   def validate(
@@ -41,7 +44,7 @@ class SlackSignatureVerifier @Inject() (protected val config: Configuration)
     if (signature == expectedSignature) {
       Success(body)
     } else {
-      Failure(new Exception("Invalid signature"))
+      Failure(InvalidSignatureException(expectedSignature))
     }
   }
 }
