@@ -24,7 +24,9 @@ class SlackEventsController @Inject() (
 
   def eventsAPI(): Action[ByteString] = {
     slackSignatureVerifyAction.async(parse.byteString) { request =>
-      request.validateSignatureAgainstBody(Json.parse).map(processJson) match {
+      request
+        .validateSignatureAgainstBody(Json.parse)
+        .map(processSlackEvent) match {
         case Success(result) => result
         case Failure(ex) =>
           ex.printStackTrace()
@@ -48,7 +50,7 @@ class SlackEventsController @Inject() (
     }
   }
 
-  def processJson(requestBody: JsValue): Future[Result] = {
+  def processSlackEvent(requestBody: JsValue): Future[Result] = {
     // deal with the one-time challenge sent from the Events api to verify ownership of url
     val isChallenge = (requestBody \ "challenge").asOpt[String]
     isChallenge match {
