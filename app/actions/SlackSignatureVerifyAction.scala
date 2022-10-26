@@ -62,7 +62,7 @@ object SlackSignatureVerifyAction {
 
 class SlackSignatureVerifyAction @Inject() (
     val parser: BodyParsers.Default,
-    slackSignatureVerifierService: SignatureVerifierService
+    signatureVerifierService: SignatureVerifierService
 )(implicit ec: ExecutionContext)
     extends ActionBuilder[SlackRequest, AnyContent]
     with ActionRefiner[Request, SlackRequest]
@@ -84,7 +84,7 @@ class SlackSignatureVerifyAction @Inject() (
       case (Some(timestamp), Some(signature)) =>
         Future.successful {
           val validate = (body: String) =>
-            slackSignatureVerifierService.validate(timestamp, body, signature)
+            signatureVerifierService.validate(timestamp, body, signature)
           Right(new SlackRequest[A](validate, request))
         }
       case _ =>
