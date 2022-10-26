@@ -108,39 +108,39 @@ class SlackSlashCommandController @Inject() (
 
   implicit val lang: Lang = Lang("en")
 
-  protected val whenSignatureValid
-      : (Map[String, Seq[String]] => Future[Result]) => Action[ByteString] =
+  private val whenSignatureValid =
     whenSignatureValid(slackSignatureVerifyAction)(formUrlEncodedParser)
 
-  def slashCommand: Action[ByteString] = whenSignatureValid { formBody =>
-    SlackSlashCommandController.param("ssl_check")(formBody) match {
+  def slashCommand: Action[ByteString] = whenSignatureValid {
+    body: Map[String, Seq[String]] =>
+      SlackSlashCommandController.param("ssl_check")(body) match {
 
-      case Some("1") =>
-        Future {
-          Ok
-        }
+        case Some("1") =>
+          Future {
+            Ok
+          }
 
-      case _ =>
-        SlackSlashCommandController.toCommand(formBody) match {
+        case _ =>
+          SlackSlashCommandController.toCommand(body) match {
 
-          case Success(slashCommand) =>
-            val f = for {
-              _ <- slashCommandHistoryDao.record(slashCommand)
-              result <- process(slashCommand)
-            } yield result
+            case Success(slashCommand) =>
+              val f = for {
+                _ <- slashCommandHistoryDao.record(slashCommand)
+                result <- process(slashCommand)
+              } yield result
 
-            f recover { case ex: Exception =>
-              ex.printStackTrace()
-              ServiceUnavailable(ex.getMessage)
-            }
+              f recover { case ex: Exception =>
+                ex.printStackTrace()
+                ServiceUnavailable(ex.getMessage)
+              }
 
-          case Failure(ex) =>
-            logger.error(ex.getMessage)
-            Future {
-              NotAcceptable(ex.getMessage)
-            }
-        }
-    }
+            case Failure(ex) =>
+              logger.error(ex.getMessage)
+              Future {
+                NotAcceptable(ex.getMessage)
+              }
+          }
+      }
   }
 
   def channel(implicit slashCommand: SlashCommand): SlackChannelId =

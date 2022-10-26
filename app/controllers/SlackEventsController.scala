@@ -6,7 +6,7 @@ import akka.util.ByteString
 import dao.SlackChannelId
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
+import play.api.mvc.{Action, BaseController, ControllerComponents}
 import services.HooksManagerSlackChat
 import slack.SlackSignatureVerifyAction
 
@@ -22,24 +22,23 @@ class SlackEventsController @Inject() (
     with HMACSignatureHelpers
     with Logging {
 
-  protected val whenSignatureValid
-      : (JsValue => Future[Result]) => Action[ByteString] =
+  private val whenSignatureValid =
     whenSignatureValid(slackSignatureVerifyAction)(Json.parse)
 
   def eventsAPI(): Action[ByteString] =
-    whenSignatureValid { requestBody =>
+    whenSignatureValid { body: JsValue =>
       {
-        val isChallenge = (requestBody \ "challenge").asOpt[String]
+        val isChallenge = (body \ "challenge").asOpt[String]
         isChallenge match {
           case Some(challengeValue) =>
             Future {
               Ok(challengeValue)
             }
           case None =>
-            val eventType = (requestBody \ "event" \ "type").as[String]
+            val eventType = (body \ "event" \ "type").as[String]
             eventType match {
               case "channel_deleted" =>
-                val channel = (requestBody \ "event" \ "channel").as[String]
+                val channel = (body \ "event" \ "channel").as[String]
                 stopHook(SlackChannelId(channel))
               case ev =>
                 logger.warn(s"Received unhandled event $ev")
