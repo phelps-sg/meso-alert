@@ -66,7 +66,7 @@ class FunctionalTests
     go to "https://slack.com/workspace-signin"
     delete all cookies
     reloadPage()
-    checkForCookieMessage()
+    checkForCookieMessage("SlackSignIn")
     textField("domain").value = workspace
     pressKeys(Keys.ENTER.toString)
     click on id("email")
@@ -92,13 +92,13 @@ class FunctionalTests
     click on className("c-button--danger")
   }
 
-  def checkForCookieMessage(): Assertion = {
-    capture to "CheckForCookieMessage-pre"
+  def checkForCookieMessage(capturePrefix: String): Assertion = {
+    capture to s"$capturePrefix-CheckForCookieMessage-pre"
     val cookies = find("onetrust-reject-all-handler")
     cookies match {
       case Some(_) =>
         click on id("onetrust-reject-all-handler")
-        capture to "CheckForCookieMessage-post"
+        capture to s"$capturePrefix-CheckForCookieMessage-post"
         succeed
       case None =>
         fail("Could not find onetrust-reject-all-handler")
@@ -262,16 +262,20 @@ class FunctionalTests
     explicitWait()
     capture to "CancelInstallation-pre"
     click on id("addToSlackBtn")
-    checkForCookieMessage()
+    capture to "CancelInstallation-addToSlackBtn"
+    checkForCookieMessage("CancelInstallation")
     textField("domain").value = workspace
     pressKeys(Keys.ENTER.toString)
+    capture to "CancelInstallation-domain"
     click on xpath("/html/body/div[1]/div/div/div[2]/div[3]/div[4]/span/a")
     click on id("email")
     pressKeys(slackEmail)
     pwdField("password").value = slackPassword
     click on xpath("//*[@id=\"signin_btn\"]")
     explicitWait()
-    click on xpath("/html/body/div[1]/div/form/div/div[2]/a")
+    capture to "CancelInstallation-signInToSlack"
+    val cancelXPath = "/html/body/div[1]/div/form/div/div[2]/a"
+    click on xpath(cancelXPath)
     capture to "CancelInstallation-post"
     pageTitle should be("Block Insights - Access free real-time mempool data")
   }
@@ -282,7 +286,7 @@ class FunctionalTests
       explicitWait()
       capture to "InstallToWorkspace-pre"
       click on id("addToSlackBtn")
-      checkForCookieMessage()
+      checkForCookieMessage("InstallToWorkSpace")
       capture to "InstallToWorkspace-waitForAllow"
       val allowButtonXPath = "/html/body/div[1]/div/form/div/div[2]/button"
       new WebDriverWait(webDriver, Duration.ofSeconds(10))
