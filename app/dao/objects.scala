@@ -75,6 +75,8 @@ final case class SlackChatHookPlainText(
 ) extends SlackChatHook {
   override def newStatus(isRunning: Boolean): SlackChatHookPlainText =
     copy(isRunning = isRunning)
+  override def toString: String =
+    s"${getClass().getSimpleName}($channel,<redacted>,$threshold,$isRunning)"
 }
 
 final case class SlackTeam(

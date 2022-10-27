@@ -2,7 +2,7 @@ package unittests
 
 import actors.TxHash
 import controllers.SlackSlashCommandController
-import dao.SlashCommand
+import dao.{SlackChannelId, SlackChatHookPlainText, SlashCommand}
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
 import slack.BlockMessages.{MESSAGE_TOO_MANY_OUTPUTS, blockMessageBuilder}
@@ -123,6 +123,15 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
       SlackSlashCommandController.toCommand(paramMap) should matchPattern {
         case Failure(_) =>
       }
+    }
+  }
+
+  "SlackChatHookPlainText" should {
+    "not reveal token when rendered as string" in {
+      val hook =
+        SlackChatHookPlainText(SlackChannelId("channel"), "secret", 1, false)
+      val result = hook.toString()
+      result should not include "secret"
     }
   }
 
