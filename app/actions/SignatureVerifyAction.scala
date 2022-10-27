@@ -48,7 +48,7 @@ trait HMACSignatureHelpers { env: BaseControllerHelpers =>
     * @tparam T
     *   The body content type expected by the body processor
     */
-  def whenSignatureValid[T](
+  def validateSignatureParseAndProcess[T](
       signatureVerifyAction: SignatureVerifyAction
   )(
       bodyParser: Array[Byte] => T

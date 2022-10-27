@@ -23,7 +23,7 @@ class SlackEventsController @Inject() (
     with Logging {
 
   private val whenSignatureValid =
-    whenSignatureValid(slackSignatureVerifyAction)(Json.parse)
+    validateSignatureParseAndProcess(slackSignatureVerifyAction)(Json.parse)(_)
 
   def eventsAPI(): Action[ByteString] =
     whenSignatureValid { body: JsValue =>
