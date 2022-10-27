@@ -109,7 +109,9 @@ class SlackSlashCommandController @Inject() (
   implicit val lang: Lang = Lang("en")
 
   private val whenSignatureValid =
-    validateSignatureParseAndProcess(slackSignatureVerifyAction)(formUrlEncodedParser)(_)
+    validateSignatureParseAndProcess(slackSignatureVerifyAction)(
+      formUrlEncodedParser
+    )(_)
 
   def slashCommand: Action[ByteString] = whenSignatureValid {
     body: Map[String, Seq[String]] =>
