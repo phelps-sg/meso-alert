@@ -284,15 +284,14 @@ class FunctionalTests
       click on id("addToSlackBtn")
       checkForCookieMessage()
       capture to "InstallToWorkspace-waitForAllow"
+      val allowButtonXPath = "/html/body/div[1]/div/form/div/div[2]/button"
       new WebDriverWait(webDriver, Duration.ofSeconds(10))
         .ignoring(classOf[StaleElementReferenceException])
         .until(
-          ExpectedConditions.elementToBeClickable(
-            By.xpath("/html/body/div[1]/div/form/div/div[2]/button")
-          )
+          ExpectedConditions.elementToBeClickable(By.xpath(allowButtonXPath))
         )
       webDriver
-        .findElement(By.xpath("/html/body/div[1]/div/form/div/div[2]/button"))
+        .findElement(By.xpath(allowButtonXPath))
         .click()
       capture to "InstallToWorkspace-post"
       pageTitle should be("Installation successful")
