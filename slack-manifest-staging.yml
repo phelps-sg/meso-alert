@@ -1,65 +1,65 @@
 {
-  "display_information": {
-    "name": "Block Insights (Staging)",
-    "description": "Block Insights provides real-time tracking and analysis of large transactions.",
-    "background_color": "#121212",
-    "long_description": "Block Insights provides real-time tracking and analysis of large transactions, making the mempool transparent and accessible to the crypto-economy. \r\n\r\nAccess real-time mempool transaction data before they are confirmed on-chain. \r\n\r\nWe cover multiple chains including Bitcoin, Ethereum, Solana, Polygon, Binance and more."
-  },
-  "features": {
-    "bot_user": {
-      "display_name": "block-insights-staging",
-      "always_online": false
+    "display_information": {
+        "name": "Block Insights (Staging)",
+        "description": "Block Insights provides real-time tracking of cryptocurrency transactions.",
+        "background_color": "#121212",
+        "long_description": "Block Insights alerts you to cryptocurrency transactions as they happen by messaging you in your Slack channels.  You can setup and manage multiple alerts in different channels without leaving Slack.  Simply type slash commands into a channel to start receiving alerts.  For example, typing /crypto-alert 5 BTC will send a chat message every time there is a a bitcoin transaction larger than 5 BTC.  Alerts can be paused or resumed by typing /pause-alerts or /resume-alerts into the channel."
     },
-    "slash_commands": [
-      {
-        "command": "/crypto-alert",
-        "url": "https://meso-alert-staging.eu.ngrok.io/api/slack/slash",
-        "description": "Configures alert for cryptocurrency",
-        "usage_hint": "[threshold in BTC]",
-        "should_escape": false
-      },
-      {
-        "command": "/pause-alerts",
-        "url": "https://meso-alert-staging.eu.ngrok.io/api/slack/slash",
-        "description": "Pause active alerts for this channel",
-        "should_escape": false
-      },
-      {
-        "command": "/resume-alerts",
-        "url": "https://meso-alert-staging.eu.ngrok.io/api/slack/slash",
-        "description": "Resume alerts for this channel",
-        "should_escape": false
-      }
-    ]
-  },
-  "oauth_config": {
-    "redirect_urls": [
-      "https://meso-alert-staging.eu.ngrok.io/api/slack/auth"
-    ],
-    "scopes": {
-      "user": [
-        "channels:read"
-      ],
-      "bot": [
-        "channels:read",
-        "chat:write",
-        "chat:write.public",
-        "commands"
-      ]
+    "features": {
+        "bot_user": {
+            "display_name": "block-insights-staging",
+            "always_online": false
+        },
+        "slash_commands": [
+            {
+                "command": "/crypto-alert",
+                "url": "https://meso-alert-staging.eu.ngrok.io/api/slack/slash",
+                "description": "Configures alert for cryptocurrency",
+                "usage_hint": "[threshold in BTC]",
+                "should_escape": false
+            },
+            {
+                "command": "/pause-alerts",
+                "url": "https://meso-alert-staging.eu.ngrok.io/api/slack/slash",
+                "description": "Pause active alerts for this channel",
+                "should_escape": false
+            },
+            {
+                "command": "/resume-alerts",
+                "url": "https://meso-alert-staging.eu.ngrok.io/api/slack/slash",
+                "description": "Resume alerts for this channel",
+                "should_escape": false
+            }
+        ]
+    },
+    "oauth_config": {
+        "redirect_urls": [
+            "https://meso-alert-staging.eu.ngrok.io/api/slack/auth"
+        ],
+        "scopes": {
+            "user": [
+                "channels:read"
+            ],
+            "bot": [
+                "channels:read",
+                "chat:write",
+                "chat:write.public",
+                "commands"
+            ]
+        }
+    },
+    "settings": {
+        "event_subscriptions": {
+            "request_url": "https://meso-alert-staging.eu.ngrok.io/api/slack/events",
+            "user_events": [
+                "channel_deleted"
+            ],
+            "bot_events": [
+                "channel_deleted"
+            ]
+        },
+        "org_deploy_enabled": false,
+        "socket_mode_enabled": false,
+        "token_rotation_enabled": false
     }
-  },
-  "settings": {
-    "event_subscriptions": {
-      "request_url": "https://meso-alert-staging.eu.ngrok.io/api/slack/events",
-      "user_events": [
-        "channel_deleted"
-      ],
-      "bot_events": [
-        "channel_deleted"
-      ]
-    },
-    "org_deploy_enabled": false,
-    "socket_mode_enabled": false,
-    "token_rotation_enabled": false
-  }
 }
