@@ -346,6 +346,7 @@ class FunctionalTests
     slackSignIn(workspace, slackEmail, slackPassword)
     capture to "CryptoAlert-pre"
     createChannel("testing")
+    explicitWait()
     clickOnChannel("testing")
     webDriver
       .findElement(By.className("ql-editor"))
