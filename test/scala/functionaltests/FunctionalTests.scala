@@ -54,7 +54,7 @@ class FunctionalTests
     Map(lang.code -> messages)
   )
 
-  private val options = new FirefoxOptions().setHeadless(false)
+  private val options = new FirefoxOptions().setHeadless(headless)
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
 
   logger.info(s"Capturing screen shots to $captureDir")
