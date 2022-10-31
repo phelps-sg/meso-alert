@@ -30,7 +30,7 @@ class FunctionalTests
     Span(
       Option(System.getenv("SELENIUM_WAIT_INTERVAL_SECONDS"))
         .map(_.toInt)
-        .getOrElse(20),
+        .getOrElse(10),
       Seconds
     )
   val headless: Boolean =
@@ -54,7 +54,7 @@ class FunctionalTests
     Map(lang.code -> messages)
   )
 
-  private val options = new FirefoxOptions().setHeadless(headless)
+  private val options = new FirefoxOptions().setHeadless(false)
   implicit val webDriver: FirefoxDriver = new FirefoxDriver(options)
 
   logger.info(s"Capturing screen shots to $captureDir")
@@ -62,11 +62,13 @@ class FunctionalTests
 
   implicitlyWait(waitInterval)
 
-  def slackSignIn(workspace: String, email: String, pwd: String): Unit = {
+  def slackSignIn(workspace: String, email: String, pwd: String, cookiesAccept: Boolean = false): Unit = {
     go to "https://slack.com/workspace-signin"
-    delete all cookies
-    reloadPage()
-    checkForCookieMessage("SlackSignIn")
+    if (!cookiesAccept) {
+      delete all cookies
+      reloadPage()
+    }
+    checkForCookieMessage("SlackSignIn", cookiesAccept)
     textField("domain").value = workspace
     pressKeys(Keys.ENTER.toString)
     click on id("email")
@@ -92,14 +94,20 @@ class FunctionalTests
     click on className("c-button--danger")
   }
 
-  def checkForCookieMessage(capturePrefix: String): Assertion = {
-    capture to s"$capturePrefix-CheckForCookieMessage-pre"
+  def checkForCookieMessage(capturePrefix: String, keepCookies: Boolean = false): Assertion = {
+    capture to "CheckForCookieMessage-pre"
     val cookies = find("onetrust-reject-all-handler")
     cookies match {
       case Some(_) =>
-        click on id("onetrust-reject-all-handler")
-        capture to s"$capturePrefix-CheckForCookieMessage-post"
-        succeed
+        if (!keepCookies) {
+          click on id("onetrust-reject-all-handler")
+          capture to "CheckForCookieMessage-post"
+          succeed
+        } else {
+          click on id("onetrust-accept-btn-handler")
+          capture to "CheckForCookieMessage-post"
+          succeed
+        }
       case None =>
         fail("Could not find onetrust-reject-all-handler")
     }
@@ -121,6 +129,17 @@ class FunctionalTests
     enter(s"$name")
     clickOn(By.xpath("//button[text()='Create']"))
     clickOn(By.xpath("/html/body/div[9]/div/div/div[3]/div/div/div/button"))
+  }
+
+  def checkForManualLogin(): Unit = {
+    val manual = find(
+      xpath("/html/body/div[1]/div/div/div[2]/div[3]/div[4]/span/a")
+    )
+    manual match {
+      case Some(e) =>
+        click on e
+      case None =>
+    }
   }
 
   def cleanUp(): Unit = {
@@ -259,46 +278,47 @@ class FunctionalTests
 
   "canceling bot installation during 'add to slack'" should "redirect to home page " in {
     go to stagingURL
-    explicitWait()
     capture to "CancelInstallation-pre"
+    explicitWait()
     click on id("addToSlackBtn")
-    capture to "CancelInstallation-addToSlackBtn"
-    checkForCookieMessage("CancelInstallation")
+    checkForCookieMessage("CancelInstallation", true)
     textField("domain").value = workspace
     pressKeys(Keys.ENTER.toString)
-    capture to "CancelInstallation-domain"
-    click on xpath("/html/body/div[1]/div/div/div[2]/div[3]/div[4]/span/a")
+    checkForManualLogin()
     click on id("email")
     pressKeys(slackEmail)
     pwdField("password").value = slackPassword
     click on xpath("//*[@id=\"signin_btn\"]")
     explicitWait()
-    capture to "CancelInstallation-signInToSlack"
-    val cancelXPath = "/html/body/div[1]/div/form/div/div[2]/a"
-    click on xpath(cancelXPath)
+    go to stagingURL
+    explicitWait()
+    capture to "CancelInstallation-pre"
+    click on id("addToSlackBtn")
+    explicitWait()
+    click on xpath("/html/body/div[1]/div/form/div/div[2]/a")
     capture to "CancelInstallation-post"
     pageTitle should be("Block Insights - Access free real-time mempool data")
   }
 
   "clicking on 'add to slack' and installing the app to a workspace" should
     "result in the successful installation page" in {
-      go to stagingURL
-      explicitWait()
-      capture to "InstallToWorkspace-pre"
-      click on id("addToSlackBtn")
-      checkForCookieMessage("InstallToWorkSpace")
-      capture to "InstallToWorkspace-waitForAllow"
-      val allowButtonXPath = "/html/body/div[1]/div/form/div/div[2]/button"
-      new WebDriverWait(webDriver, Duration.ofSeconds(10))
-        .ignoring(classOf[StaleElementReferenceException])
-        .until(
-          ExpectedConditions.elementToBeClickable(By.xpath(allowButtonXPath))
+    go to stagingURL
+    explicitWait()
+    capture to "InstallToWorkspace-pre"
+    click on id("addToSlackBtn")
+    capture to "InstallToWorkspace-waitForAllow"
+    new WebDriverWait(webDriver, Duration.ofSeconds(10))
+      .ignoring(classOf[StaleElementReferenceException])
+      .until(
+        ExpectedConditions.elementToBeClickable(
+          By.xpath("/html/body/div[1]/div/form/div/div[2]/button")
         )
-      webDriver
-        .findElement(By.xpath(allowButtonXPath))
-        .click()
-      capture to "InstallToWorkspace-post"
-      pageTitle should be("Installation successful")
+      )
+    webDriver
+      .findElement(By.xpath("/html/body/div[1]/div/form/div/div[2]/button"))
+      .click()
+    capture to "InstallToWorkspace-post"
+    pageTitle should be("Installation successful")
     }
 
   "Logging out" should "be successful" in {
