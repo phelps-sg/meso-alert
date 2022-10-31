@@ -62,7 +62,12 @@ class FunctionalTests
 
   implicitlyWait(waitInterval)
 
-  def slackSignIn(workspace: String, email: String, pwd: String, cookiesAccept: Boolean = false): Unit = {
+  def slackSignIn(
+      workspace: String,
+      email: String,
+      pwd: String,
+      cookiesAccept: Boolean = false
+  ): Unit = {
     go to "https://slack.com/workspace-signin"
     if (!cookiesAccept) {
       delete all cookies
@@ -95,7 +100,10 @@ class FunctionalTests
     click on className("c-button--danger")
   }
 
-  def checkForCookieMessage(capturePrefix: String, keepCookies: Boolean = false): Assertion = {
+  def checkForCookieMessage(
+      capturePrefix: String,
+      keepCookies: Boolean = false
+  ): Assertion = {
     capture to "CheckForCookieMessage-pre"
     val cookies = find("onetrust-reject-all-handler")
     cookies match {
@@ -303,23 +311,23 @@ class FunctionalTests
 
   "clicking on 'add to slack' and installing the app to a workspace" should
     "result in the successful installation page" in {
-    go to stagingURL
-    explicitWait()
-    capture to "InstallToWorkspace-pre"
-    click on id("addToSlackBtn")
-    capture to "InstallToWorkspace-waitForAllow"
-    new WebDriverWait(webDriver, Duration.ofSeconds(10))
-      .ignoring(classOf[StaleElementReferenceException])
-      .until(
-        ExpectedConditions.elementToBeClickable(
-          By.xpath("/html/body/div[1]/div/form/div/div[2]/button")
+      go to stagingURL
+      explicitWait()
+      capture to "InstallToWorkspace-pre"
+      click on id("addToSlackBtn")
+      capture to "InstallToWorkspace-waitForAllow"
+      new WebDriverWait(webDriver, Duration.ofSeconds(10))
+        .ignoring(classOf[StaleElementReferenceException])
+        .until(
+          ExpectedConditions.elementToBeClickable(
+            By.xpath("/html/body/div[1]/div/form/div/div[2]/button")
+          )
         )
-      )
-    webDriver
-      .findElement(By.xpath("/html/body/div[1]/div/form/div/div[2]/button"))
-      .click()
-    capture to "InstallToWorkspace-post"
-    pageTitle should be("Installation successful")
+      webDriver
+        .findElement(By.xpath("/html/body/div[1]/div/form/div/div[2]/button"))
+        .click()
+      capture to "InstallToWorkspace-post"
+      pageTitle should be("Installation successful")
     }
 
   "Logging out" should "be successful" in {
