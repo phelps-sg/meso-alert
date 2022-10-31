@@ -71,6 +71,7 @@ class FunctionalTests
     checkForCookieMessage("SlackSignIn", cookiesAccept)
     textField("domain").value = workspace
     pressKeys(Keys.ENTER.toString)
+    checkForManualLogin()
     click on id("email")
     pressKeys(email)
     pwdField("password").value = pwd
