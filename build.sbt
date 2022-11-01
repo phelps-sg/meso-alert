@@ -37,7 +37,7 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += "com.github.tminglei" %% "slick-pg_play-json" % "0.21.0"
 
-val boltVersion = "1.25.1"
+val boltVersion = "1.26.1"
 libraryDependencies ++= List(
   "com.slack.api" % "bolt" % boltVersion,
   "com.slack.api" % "bolt-servlet" %  boltVersion,
