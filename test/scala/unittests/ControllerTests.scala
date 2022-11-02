@@ -75,7 +75,7 @@ import scala.util.Failure
 
 //noinspection TypeAnnotation
 class ControllerTests
-  extends TestKit(ActorSystem("meso-alert-controller-tests"))
+    extends TestKit(ActorSystem("meso-alert-controller-tests"))
     with AnyWordSpecLike
     with PostgresContainer
     with should.Matchers
@@ -99,7 +99,7 @@ class ControllerTests
   "HomeController" should {
 
     trait TestFixtures
-      extends FixtureBindings
+        extends FixtureBindings
         with ConfigurationFixtures
         with WebSocketFixtures
         with UserFixtures
@@ -124,9 +124,9 @@ class ControllerTests
       }
 
       def persistEmailDeliveryTest(
-                                    attrs: Map[String, String],
-                                    testType: String
-                                  ): Assertion = {
+          attrs: Map[String, String],
+          testType: String
+      ): Assertion = {
         val request = emailFormSubmission(attrs)
         (mockMailManager.sendEmail _)
           .expects(*, *, *)
@@ -140,8 +140,8 @@ class ControllerTests
       }
 
       def failedEmailDeliveryTest(
-                                   attrs: Map[String, String]
-                                 ): Assertion = {
+          attrs: Map[String, String]
+      ): Assertion = {
         val request = emailFormSubmission(attrs)
         (mockMailManager.sendEmail _)
           .expects(*, *, *)
@@ -153,9 +153,9 @@ class ControllerTests
       }
 
       def successfulEmailDeliveryTest(
-                                       attrs: Map[String, String],
-                                       destinationEmail: String
-                                     ): Assertion = {
+          attrs: Map[String, String],
+          destinationEmail: String
+      ): Assertion = {
         val request = emailFormSubmission(attrs)
         val formData = emailFormData(attrs)
         (mockMailManager.sendEmail _)
@@ -257,7 +257,7 @@ class ControllerTests
 
   "SlackEventsController" should {
     trait TestFixtures
-      extends FixtureBindings
+        extends FixtureBindings
         with ConfigurationFixtures
         with MainNetParamsFixtures
         with MemPoolWatcherFixtures
@@ -329,16 +329,16 @@ class ControllerTests
         } yield (response, dbContents)
       }.futureValue should matchPattern {
         case (
-          _: Result,
-          Seq(
-          SlackChatHookEncrypted(
-          `channelId`,
-          _: Encrypted,
-          500000000,
-          true
-          )
-          )
-          ) =>
+              _: Result,
+              Seq(
+                SlackChatHookEncrypted(
+                  `channelId`,
+                  _: Encrypted,
+                  500000000,
+                  true
+                )
+              )
+            ) =>
       }
 
       val fakeRequest =
@@ -353,13 +353,13 @@ class ControllerTests
       eventually {
         dbContentsFuture.futureValue should matchPattern {
           case Vector(
-          SlackChatHookEncrypted(
-          `channelId`,
-          _: Encrypted,
-          500000000,
-          false
-          )
-          ) =>
+                SlackChatHookEncrypted(
+                  `channelId`,
+                  _: Encrypted,
+                  500000000,
+                  false
+                )
+              ) =>
         }
       }
     }
@@ -389,7 +389,7 @@ class ControllerTests
   "SlackSlashCommandController" should {
 
     trait TestFixtures
-      extends FixtureBindings
+        extends FixtureBindings
         with ConfigurationFixtures
         with MainNetParamsFixtures
         with MemPoolWatcherFixtures
@@ -425,13 +425,13 @@ class ControllerTests
       //      )
 
       def slashCommand(
-                        makeFakeRequest: => FakeRequest[AnyContentAsFormUrlEncoded]
-                      ) =
+          makeFakeRequest: => FakeRequest[AnyContentAsFormUrlEncoded]
+      ) =
         call(slackSlashCommandController.slashCommand, makeFakeRequest)
 
       override def memPoolWatcherExpectations(
-                                               ch: CallHandler1[ActorRef, Unit]
-                                             ): CallHandler1[ActorRef, Unit] = {
+          ch: CallHandler1[ActorRef, Unit]
+      ): CallHandler1[ActorRef, Unit] = {
         ch.atLeastOnce()
       }
 
@@ -458,8 +458,8 @@ class ControllerTests
       //        .anyNumberOfTimes()
 
       def submitCommand(
-                         command: SlashCommand
-                       ): Future[(Result, Seq[SlackChatHookEncrypted])] = {
+          command: SlashCommand
+      ): Future[(Result, Seq[SlackChatHookEncrypted])] = {
         afterDbInit {
           for {
             encrypted <- encryptionManager.encrypt(testToken.getBytes)
@@ -486,16 +486,16 @@ class ControllerTests
 
       futureValue should matchPattern {
         case (
-          _: Result,
-          Seq(
-          SlackChatHookEncrypted(
-          `channelId`,
-          _: Encrypted,
-          500000000,
-          true
-          )
-          )
-          ) =>
+              _: Result,
+              Seq(
+                SlackChatHookEncrypted(
+                  `channelId`,
+                  _: Encrypted,
+                  500000000,
+                  true
+                )
+              )
+            ) =>
       }
 
       futureValue match {
@@ -524,16 +524,16 @@ class ControllerTests
 
       futureValue should matchPattern {
         case (
-          _: Result,
-          Seq(
-          SlackChatHookEncrypted(
-          `channelId`,
-          _: Encrypted,
-          500000000,
-          true
-          )
-          )
-          ) =>
+              _: Result,
+              Seq(
+                SlackChatHookEncrypted(
+                  `channelId`,
+                  _: Encrypted,
+                  500000000,
+                  true
+                )
+              )
+            ) =>
       }
 
       futureValue match {
@@ -659,7 +659,9 @@ class ControllerTests
           fakeRequestValidBadChannel("/resume-alerts", "")
         )
       status(result) mustEqual OK
-      contentAsString(result) mustEqual "slackResponse.resumeAlertsErrorNotConfigured"
+      contentAsString(
+        result
+      ) mustEqual "slackResponse.resumeAlertsErrorNotConfigured"
     }
 
     "return correct message when asking for help with /resume-alerts" in new TestFixtures {
@@ -693,7 +695,7 @@ class ControllerTests
 
   "SlackAuthController" should {
     trait TestFixtures
-      extends FixtureBindings
+        extends FixtureBindings
         with ConfigurationFixtures
         with EncryptionActorFixtures
         with MainNetParamsFixtures
@@ -847,15 +849,15 @@ class ControllerTests
         )
       }.futureValue should matchPattern {
         case Seq(
-        SlackTeamEncrypted(
-        `teamId`,
-        `teamUserId`,
-        `botId`,
-        Encrypted(_, _),
-        `teamName`,
-        `registeredUserId`
-        )
-        ) =>
+              SlackTeamEncrypted(
+                `teamId`,
+                `teamUserId`,
+                `botId`,
+                Encrypted(_, _),
+                `teamName`,
+                `registeredUserId`
+              )
+            ) =>
       }
     }
 
@@ -882,7 +884,7 @@ class ControllerTests
   "Auth0Controller" should {
 
     trait TestFixtures
-      extends FixtureBindings
+        extends FixtureBindings
         with ConfigurationFixtures
         with SecretsManagerFixtures
         with MainNetParamsFixtures

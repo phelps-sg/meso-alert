@@ -162,7 +162,7 @@ object Fixtures {
   trait WebhookManagerMock extends HookManagerMock[URI, Webhook]
 
   trait SlackChatManagerMock
-    extends HookManagerMock[SlackChannelId, SlackChatHookPlainText]
+      extends HookManagerMock[SlackChannelId, SlackChatHookPlainText]
 
   trait MockHookManagerActor[X, Y <: Hook[X]] extends Actor with Logging {
     val mock: HookManagerMock[X, Y]
@@ -195,7 +195,7 @@ object Fixtures {
   }
 
   class MockWebhookManagerActor(val mock: WebhookManagerMock)
-    extends MockHookManagerActor[URI, Webhook]
+      extends MockHookManagerActor[URI, Webhook]
 
   object MockSlackChatManagerActor {
     def props(mock: SlackChatManagerMock) = Props(
@@ -204,7 +204,7 @@ object Fixtures {
   }
 
   class MockSlackChatManagerActor(val mock: SlackChatManagerMock)
-    extends MockHookManagerActor[SlackChannelId, SlackChatHookPlainText]
+      extends MockHookManagerActor[SlackChannelId, SlackChatHookPlainText]
 
   trait ProvidesInjector {
     val injector: Injector
@@ -273,11 +273,11 @@ object Fixtures {
   trait Auth0ActionFixtures {
     env: FakeApplication with HasExecutionContext =>
     class MockAuth0Action(
-                           override protected val validateJwt: String => Try[JwtClaim]
-                         ) extends Auth0ValidateJWTAction(
-      fakeApplication.injector.instanceOf[BodyParsers.Default],
-      fakeApplication.configuration
-    )(executionContext) {}
+        override protected val validateJwt: String => Try[JwtClaim]
+    ) extends Auth0ValidateJWTAction(
+          fakeApplication.injector.instanceOf[BodyParsers.Default],
+          fakeApplication.configuration
+        )(executionContext) {}
 
     val claim = JwtClaim()
     val mockAuth0ActionAlwaysSuccess = new MockAuth0Action(_ => Success(claim))
@@ -287,7 +287,7 @@ object Fixtures {
   }
 
   trait ProvidesTestBindings
-    extends HasBindModule
+      extends HasBindModule
       with HasExecutionContext
       with HasActorSystem
       with HasDatabase
@@ -378,17 +378,17 @@ object Fixtures {
 
     // noinspection NotImplementedCode
     class MockBlockChain
-      extends AbstractBlockChain(params, wallets, blockStore) {
+        extends AbstractBlockChain(params, wallets, blockStore) {
       override def addToBlockStore(
-                                    storedPrev: StoredBlock,
-                                    block: Block
-                                  ): StoredBlock = ???
+          storedPrev: StoredBlock,
+          block: Block
+      ): StoredBlock = ???
 
       override def addToBlockStore(
-                                    storedPrev: StoredBlock,
-                                    header: Block,
-                                    txOutputChanges: TransactionOutputChanges
-                                  ): StoredBlock = ???
+          storedPrev: StoredBlock,
+          header: Block,
+          txOutputChanges: TransactionOutputChanges
+      ): StoredBlock = ???
 
       override def rollbackBlockStore(height: Int): Unit = ???
 
@@ -397,19 +397,19 @@ object Fixtures {
       override def notSettingChainHead(): Unit = ???
 
       override def getStoredBlockInCurrentScope(
-                                                 hash: Sha256Hash
-                                               ): StoredBlock = ???
+          hash: Sha256Hash
+      ): StoredBlock = ???
 
       override def shouldVerifyTransactions(): Boolean = ???
 
       override def connectTransactions(
-                                        height: Int,
-                                        block: Block
-                                      ): TransactionOutputChanges = ???
+          height: Int,
+          block: Block
+      ): TransactionOutputChanges = ???
 
       override def connectTransactions(
-                                        newBlock: StoredBlock
-                                      ): TransactionOutputChanges = ???
+          newBlock: StoredBlock
+      ): TransactionOutputChanges = ???
 
       override def disconnectTransactions(block: StoredBlock): Unit = ???
     }
@@ -457,8 +457,8 @@ object Fixtures {
       .expects(*)
 
     def memPoolWatcherExpectations(
-                                    ch: CallHandler1[ActorRef, Unit]
-                                  ): ch.Derived = {
+        ch: CallHandler1[ActorRef, Unit]
+    ): ch.Derived = {
       ch.never()
     }
 
@@ -633,7 +633,7 @@ object Fixtures {
   }
 
   trait SlackChatDaoTestLogic
-    extends HookDaoTestLogic[SlackChannelId, SlackChatHookPlainText] {
+      extends HookDaoTestLogic[SlackChannelId, SlackChatHookPlainText] {
     env: HasDatabase with HasExecutionContext =>
 
     override val tableQuery = Tables.slackChatHooks
@@ -800,24 +800,24 @@ object Fixtures {
         )
 
     def withFakeSlackSignatureHeaders[T](
-                                          request: FakeRequest[T]
-                                        ): FakeRequest[T] =
+        request: FakeRequest[T]
+    ): FakeRequest[T] =
       request.withHeaders(
         ArraySeq.unsafeWrapArray(fakeSlackSignatureHeaders): _*
       )
 
     def fakeRequestValid(
-                          command: String,
-                          amount: String
-                        ): FakeRequest[AnyContentAsFormUrlEncoded] =
+        command: String,
+        amount: String
+    ): FakeRequest[AnyContentAsFormUrlEncoded] =
       withFakeSlackSignatureHeaders(
         fakeRequestValidNoSignature(command, amount)
       )
 
     def fakeRequestValidBadChannel(
-                                    command: String,
-                                    amount: String
-                                  ): FakeRequest[AnyContentAsFormUrlEncoded] =
+        command: String,
+        amount: String
+    ): FakeRequest[AnyContentAsFormUrlEncoded] =
       withFakeSlackSignatureHeaders(
         fakeRequestValidNoSignatureBadChannel(command, amount)
       )
@@ -866,7 +866,7 @@ object Fixtures {
         .anyNumberOfTimes()
 
     def setSignatureVerifierExpectations()
-    : CallHandler3[String, String, String, Try[String]] =
+        : CallHandler3[String, String, String, Try[String]] =
       signatureVerifierExpectations.returning(Success("valid"))
 
     setSignatureVerifierExpectations()
@@ -999,7 +999,7 @@ object Fixtures {
       injector.instanceOf[SlackClientExecutionContext]
 
     class MockSlackManager
-      extends SlackManager(config, slackClientExecutionContext)
+        extends SlackManager(config, slackClientExecutionContext)
 
     val mockSlackManagerService = mock[MockSlackManager]
   }
@@ -1121,8 +1121,7 @@ object Fixtures {
   trait SlackEventsControllerFixtures {
     val deleteChannelRequestBody = ByteString(
       Json
-        .parse(
-          """
+        .parse("""
   {
     "event" :
     {
