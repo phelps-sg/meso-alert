@@ -11,6 +11,8 @@ slackResponse.pauseAlertsHelp = Usage: "/pause-alerts" on a channel with active 
 # /resume-alerts
 slackResponse.resumeAlerts = OK, I will resume alerts on this channel.
 slackResponse.resumeAlertsError = Alerts are already active on this channel.
+slackResponse.resumeAlertsErrorNotConfigured = There are no configured alerts on this channel.
+
 slackResponse.resumeAlertsHelp = Usage: "/resume-alerts" on a channel with paused alerts to resume them.
 # Messages sent to Slack channels
 slackResponse.notInvitedError = Please invite the bot to a channel before issuing commands.

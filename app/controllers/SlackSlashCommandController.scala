@@ -2,7 +2,7 @@ package controllers
 
 import actions.HMACSignatureHelpers
 import actions.SignatureVerifyAction._
-import actors.{HookAlreadyStartedException, HookNotStartedException}
+import actors.{HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException}
 import akka.util.ByteString
 import controllers.SlackSlashCommandController._
 import dao._
@@ -30,6 +30,7 @@ object SlackSlashCommandController {
   val MESSAGE_RESUME_ALERTS_HELP: String = "slackResponse.resumeAlertsHelp"
   val MESSAGE_RESUME_ALERTS: String = "slackResponse.resumeAlerts"
   val MESSAGE_RESUME_ALERTS_ERROR: String = "slackResponse.resumeAlertsError"
+  val MESSAGE_RESUME_ALERTS_ERROR_NOT_CONFIGURED = "slackResponse.resumeAlertsErrorNotConfigured"
 
   private val coreAttributes = List("channel_id", "command", "text")
 
@@ -43,25 +44,25 @@ object SlackSlashCommandController {
   )
 
   def param(key: String)(implicit
-      paramMap: Map[String, Seq[String]]
+                         paramMap: Map[String, Seq[String]]
   ): Option[String] =
     Try(paramMap(key).headOption).orElse(Success(None)).get
 
   def toCommand(implicit
-      paramMap: Map[String, Seq[String]]
-  ): Try[SlashCommand] = {
+                paramMap: Map[String, Seq[String]]
+               ): Try[SlashCommand] = {
     val attributes = coreAttributes.map(param)
     attributes match {
       case Seq(Some(channelId), Some(command), Some(args)) =>
         optionalAttributes.map(param) match {
           case Seq(
-                teamDomain,
-                Some(teamId),
-                channelName,
-                userId,
-                userName,
-                isEnterpriseInstall
-              ) =>
+          teamDomain,
+          Some(teamId),
+          channelName,
+          userId,
+          userName,
+          isEnterpriseInstall
+          ) =>
             Success(
               SlashCommand(
                 None,
@@ -93,16 +94,16 @@ object SlackSlashCommandController {
 
 }
 
-class SlackSlashCommandController @Inject() (
-    protected val slackSignatureVerifyAction: SlackSignatureVerifyAction,
-    val controllerComponents: ControllerComponents,
-    val slashCommandHistoryDao: SlashCommandHistoryDao,
-    val slackTeamDao: SlackTeamDao,
-    val hooksManager: HooksManagerSlackChat,
-    messagesApi: MessagesApi,
-    protected val slackManagerService: SlackManagerService
-)(implicit val ec: ExecutionContext)
-    extends BaseController
+class SlackSlashCommandController @Inject()(
+                                             protected val slackSignatureVerifyAction: SlackSignatureVerifyAction,
+                                             val controllerComponents: ControllerComponents,
+                                             val slashCommandHistoryDao: SlashCommandHistoryDao,
+                                             val slackTeamDao: SlackTeamDao,
+                                             val hooksManager: HooksManagerSlackChat,
+                                             messagesApi: MessagesApi,
+                                             protected val slackManagerService: SlackManagerService
+                                           )(implicit val ec: ExecutionContext)
+  extends BaseController
     with HMACSignatureHelpers
     with Logging {
 
@@ -156,7 +157,9 @@ class SlackSlashCommandController @Inject() (
 
       case Array("help") =>
         logger.debug("crypto-alert help")
-        Future { Ok(messagesApi(MESSAGE_CRYPTO_ALERT_HELP)) }
+        Future {
+          Ok(messagesApi(MESSAGE_CRYPTO_ALERT_HELP))
+        }
 
       case Array(_) | Array(_, "btc") =>
         args.head.toLongOption match {
@@ -250,16 +253,19 @@ class SlackSlashCommandController @Inject() (
           started <- hooksManager.start(channel)
         } yield started
         f.map { _ => Ok(messagesApi(MESSAGE_RESUME_ALERTS)) }
-          .recover { case HookAlreadyStartedException(_) =>
-            Ok(messagesApi(MESSAGE_RESUME_ALERTS_ERROR))
+          .recover {
+            case HookAlreadyStartedException(_) =>
+              Ok(messagesApi(MESSAGE_RESUME_ALERTS_ERROR))
+            case HookNotRegisteredException(_) =>
+              Ok(messagesApi(MESSAGE_RESUME_ALERTS_ERROR_NOT_CONFIGURED))
           }
     }
   }
 
   def process(implicit slashCommand: SlashCommand): Future[Result] = {
     slashCommand.command match {
-      case "/crypto-alert"  => cryptoAlert
-      case "/pause-alerts"  => pauseAlerts
+      case "/crypto-alert" => cryptoAlert
+      case "/pause-alerts" => pauseAlerts
       case "/resume-alerts" => resumeAlerts
     }
   }

@@ -75,7 +75,7 @@ import scala.util.Failure
 
 //noinspection TypeAnnotation
 class ControllerTests
-    extends TestKit(ActorSystem("meso-alert-controller-tests"))
+  extends TestKit(ActorSystem("meso-alert-controller-tests"))
     with AnyWordSpecLike
     with PostgresContainer
     with should.Matchers
@@ -99,7 +99,7 @@ class ControllerTests
   "HomeController" should {
 
     trait TestFixtures
-        extends FixtureBindings
+      extends FixtureBindings
         with ConfigurationFixtures
         with WebSocketFixtures
         with UserFixtures
@@ -124,9 +124,9 @@ class ControllerTests
       }
 
       def persistEmailDeliveryTest(
-          attrs: Map[String, String],
-          testType: String
-      ): Assertion = {
+                                    attrs: Map[String, String],
+                                    testType: String
+                                  ): Assertion = {
         val request = emailFormSubmission(attrs)
         (mockMailManager.sendEmail _)
           .expects(*, *, *)
@@ -140,8 +140,8 @@ class ControllerTests
       }
 
       def failedEmailDeliveryTest(
-          attrs: Map[String, String]
-      ): Assertion = {
+                                   attrs: Map[String, String]
+                                 ): Assertion = {
         val request = emailFormSubmission(attrs)
         (mockMailManager.sendEmail _)
           .expects(*, *, *)
@@ -153,9 +153,9 @@ class ControllerTests
       }
 
       def successfulEmailDeliveryTest(
-          attrs: Map[String, String],
-          destinationEmail: String
-      ): Assertion = {
+                                       attrs: Map[String, String],
+                                       destinationEmail: String
+                                     ): Assertion = {
         val request = emailFormSubmission(attrs)
         val formData = emailFormData(attrs)
         (mockMailManager.sendEmail _)
@@ -257,7 +257,7 @@ class ControllerTests
 
   "SlackEventsController" should {
     trait TestFixtures
-        extends FixtureBindings
+      extends FixtureBindings
         with ConfigurationFixtures
         with MainNetParamsFixtures
         with MemPoolWatcherFixtures
@@ -278,8 +278,8 @@ class ControllerTests
         with FakeApplication
         with SlackSlashCommandControllerFixtures {
 
-//      val signatureVerifyAction =
-//        fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
+      //      val signatureVerifyAction =
+      //        fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
 
       val eventsController = new SlackEventsController(
         Helpers.stubControllerComponents(),
@@ -287,15 +287,15 @@ class ControllerTests
         slackSignatureVerifyAction
       )
 
-//      val slackSlashCommandController = new SlackSlashCommandController(
-//        signatureVerifyAction,
-//        Helpers.stubControllerComponents(),
-//        slashCommandHistoryDao = slickSlashCommandHistoryDao,
-//        slackTeamDao = slickSlackTeamDao,
-//        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
-//        messagesApi,
-//        mockSlackManagerService
-//      )
+      //      val slackSlashCommandController = new SlackSlashCommandController(
+      //        signatureVerifyAction,
+      //        Helpers.stubControllerComponents(),
+      //        slashCommandHistoryDao = slickSlashCommandHistoryDao,
+      //        slackTeamDao = slickSlackTeamDao,
+      //        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
+      //        messagesApi,
+      //        mockSlackManagerService
+      //      )
 
       memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
         .anyNumberOfTimes()
@@ -329,16 +329,16 @@ class ControllerTests
         } yield (response, dbContents)
       }.futureValue should matchPattern {
         case (
-              _: Result,
-              Seq(
-                SlackChatHookEncrypted(
-                  `channelId`,
-                  _: Encrypted,
-                  500000000,
-                  true
-                )
-              )
-            ) =>
+          _: Result,
+          Seq(
+          SlackChatHookEncrypted(
+          `channelId`,
+          _: Encrypted,
+          500000000,
+          true
+          )
+          )
+          ) =>
       }
 
       val fakeRequest =
@@ -353,13 +353,13 @@ class ControllerTests
       eventually {
         dbContentsFuture.futureValue should matchPattern {
           case Vector(
-                SlackChatHookEncrypted(
-                  `channelId`,
-                  _: Encrypted,
-                  500000000,
-                  false
-                )
-              ) =>
+          SlackChatHookEncrypted(
+          `channelId`,
+          _: Encrypted,
+          500000000,
+          false
+          )
+          ) =>
         }
       }
     }
@@ -376,6 +376,7 @@ class ControllerTests
         signatureVerifierExpectations.returning(
           Failure(new Exception("Invalid signature"))
         )
+
       val fakeRequest =
         withFakeSlackSignatureHeaders(
           FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
@@ -388,7 +389,7 @@ class ControllerTests
   "SlackSlashCommandController" should {
 
     trait TestFixtures
-        extends FixtureBindings
+      extends FixtureBindings
         with ConfigurationFixtures
         with MainNetParamsFixtures
         with MemPoolWatcherFixtures
@@ -408,29 +409,29 @@ class ControllerTests
         with FakeApplication
         with SlackSlashCommandControllerFixtures {
 
-//      encryptionManager.init()
+      //      encryptionManager.init()
 
-//      val slackSignatureVerifyAction =
-//        fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
+      //      val slackSignatureVerifyAction =
+      //        fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
 
-//      val slackSlashCommandController = new SlackSlashCommandController(
-//        slackSignatureVerifyAction,
-//        Helpers.stubControllerComponents(),
-//        slashCommandHistoryDao = slickSlashCommandHistoryDao,
-//        slackTeamDao = slickSlackTeamDao,
-//        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
-//        messagesApi,
-//        mockSlackManagerService
-//      )
+      //      val slackSlashCommandController = new SlackSlashCommandController(
+      //        slackSignatureVerifyAction,
+      //        Helpers.stubControllerComponents(),
+      //        slashCommandHistoryDao = slickSlashCommandHistoryDao,
+      //        slackTeamDao = slickSlackTeamDao,
+      //        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
+      //        messagesApi,
+      //        mockSlackManagerService
+      //      )
 
       def slashCommand(
-          makeFakeRequest: => FakeRequest[AnyContentAsFormUrlEncoded]
-      ) =
+                        makeFakeRequest: => FakeRequest[AnyContentAsFormUrlEncoded]
+                      ) =
         call(slackSlashCommandController.slashCommand, makeFakeRequest)
 
       override def memPoolWatcherExpectations(
-          ch: CallHandler1[ActorRef, Unit]
-      ): CallHandler1[ActorRef, Unit] = {
+                                               ch: CallHandler1[ActorRef, Unit]
+                                             ): CallHandler1[ActorRef, Unit] = {
         ch.atLeastOnce()
       }
 
@@ -441,24 +442,24 @@ class ControllerTests
           .anyNumberOfTimes()
       }
 
-//      val signatureVerifierExpectations =
-//        (mockSlackSignatureVerifierService.validate _)
-//          .expects(*, *, *)
-//          .anyNumberOfTimes()
+      //      val signatureVerifierExpectations =
+      //        (mockSlackSignatureVerifierService.validate _)
+      //          .expects(*, *, *)
+      //          .anyNumberOfTimes()
 
-//      def setSignatureVerifierExpectations()
-//          : CallHandler3[String, String, String, Try[String]] =
-//        signatureVerifierExpectations.returning(Success("valid"))
-//      setSignatureVerifierExpectations()
+      //      def setSignatureVerifierExpectations()
+      //          : CallHandler3[String, String, String, Try[String]] =
+      //        signatureVerifierExpectations.returning(Success("valid"))
+      //      setSignatureVerifierExpectations()
 
-//      (mockSlackSignatureVerifierService.validate _)
-//        .expects(*, *, *)
-//        .returning(Success("valid"))
-//        .anyNumberOfTimes()
+      //      (mockSlackSignatureVerifierService.validate _)
+      //        .expects(*, *, *)
+      //        .returning(Success("valid"))
+      //        .anyNumberOfTimes()
 
       def submitCommand(
-          command: SlashCommand
-      ): Future[(Result, Seq[SlackChatHookEncrypted])] = {
+                         command: SlashCommand
+                       ): Future[(Result, Seq[SlackChatHookEncrypted])] = {
         afterDbInit {
           for {
             encrypted <- encryptionManager.encrypt(testToken.getBytes)
@@ -485,16 +486,16 @@ class ControllerTests
 
       futureValue should matchPattern {
         case (
-              _: Result,
-              Seq(
-                SlackChatHookEncrypted(
-                  `channelId`,
-                  _: Encrypted,
-                  500000000,
-                  true
-                )
-              )
-            ) =>
+          _: Result,
+          Seq(
+          SlackChatHookEncrypted(
+          `channelId`,
+          _: Encrypted,
+          500000000,
+          true
+          )
+          )
+          ) =>
       }
 
       futureValue match {
@@ -523,16 +524,16 @@ class ControllerTests
 
       futureValue should matchPattern {
         case (
-              _: Result,
-              Seq(
-                SlackChatHookEncrypted(
-                  `channelId`,
-                  _: Encrypted,
-                  500000000,
-                  true
-                )
-              )
-            ) =>
+          _: Result,
+          Seq(
+          SlackChatHookEncrypted(
+          `channelId`,
+          _: Encrypted,
+          500000000,
+          true
+          )
+          )
+          ) =>
       }
 
       futureValue match {
@@ -651,6 +652,16 @@ class ControllerTests
       contentAsString(result) mustEqual "slackResponse.resumeAlertsError"
     }
 
+    "return error message when resuming alerts when there are no alerts configured in the channel" in new TestFixtures {
+      val result =
+        call(
+          slackSlashCommandController.slashCommand,
+          fakeRequestValidBadChannel("/resume-alerts", "")
+        )
+      status(result) mustEqual OK
+      contentAsString(result) mustEqual "slackResponse.resumeAlertsErrorNotConfigured"
+    }
+
     "return correct message when asking for help with /resume-alerts" in new TestFixtures {
       val result = slashCommand {
         fakeRequestValid("/resume-alerts", "help")
@@ -671,6 +682,7 @@ class ControllerTests
         signatureVerifierExpectations.returning(
           Failure(new Exception("Invalid signature"))
         )
+
       val result = slashCommand {
         fakeRequestValid("/pause-alerts", "")
       }
@@ -681,7 +693,7 @@ class ControllerTests
 
   "SlackAuthController" should {
     trait TestFixtures
-        extends FixtureBindings
+      extends FixtureBindings
         with ConfigurationFixtures
         with EncryptionActorFixtures
         with MainNetParamsFixtures
@@ -758,12 +770,16 @@ class ControllerTests
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)
         .once()
-        .returning(Future { ValidSecret(RegisteredUserId(user)) })
+        .returning(Future {
+          ValidSecret(RegisteredUserId(user))
+        })
 
       (mockSlackSecretsManagerService.unbind _)
         .expects(RegisteredUserId(user))
         .once()
-        .returning(Future { Unbind(RegisteredUserId(user)) })
+        .returning(Future {
+          Unbind(RegisteredUserId(user))
+        })
 
       afterDbInit {
         val result = call(
@@ -790,17 +806,23 @@ class ControllerTests
       (mockSlackManagerService.oauthV2Access _)
         .expects(*, *, *, *)
         .once()
-        .returning(Future { slackTeam })
+        .returning(Future {
+          slackTeam
+        })
 
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)
         .once()
-        .returning(Future { ValidSecret(RegisteredUserId(user)) })
+        .returning(Future {
+          ValidSecret(RegisteredUserId(user))
+        })
 
       (mockSlackSecretsManagerService.unbind _)
         .expects(RegisteredUserId(user))
         .once()
-        .returning(Future { Unbind(RegisteredUserId(user)) })
+        .returning(Future {
+          Unbind(RegisteredUserId(user))
+        })
 
       afterDbInit {
 
@@ -825,15 +847,15 @@ class ControllerTests
         )
       }.futureValue should matchPattern {
         case Seq(
-              SlackTeamEncrypted(
-                `teamId`,
-                `teamUserId`,
-                `botId`,
-                Encrypted(_, _),
-                `teamName`,
-                `registeredUserId`
-              )
-            ) =>
+        SlackTeamEncrypted(
+        `teamId`,
+        `teamUserId`,
+        `botId`,
+        Encrypted(_, _),
+        `teamName`,
+        `registeredUserId`
+        )
+        ) =>
       }
     }
 
@@ -860,7 +882,7 @@ class ControllerTests
   "Auth0Controller" should {
 
     trait TestFixtures
-        extends FixtureBindings
+      extends FixtureBindings
         with ConfigurationFixtures
         with SecretsManagerFixtures
         with MainNetParamsFixtures
@@ -879,7 +901,9 @@ class ControllerTests
 
       (mockSlackSecretsManagerService.generateSecret _)
         .expects(*)
-        .returning(Future { slackAuthSecret })
+        .returning(Future {
+          slackAuthSecret
+        })
         .anyNumberOfTimes()
 
       val controller =
@@ -915,6 +939,7 @@ class ControllerTests
     "return unauthorized when not supplying a JWT token to the secret endpoint" in new TestFixtures {
       override def mockAuth0Action: Auth0ValidateJWTAction =
         mockAuth0ActionAlwaysFail
+
       val request = FakeRequest(GET, "")
       val result = call(controller.secret(uid = testUser), request)
       status(result) mustEqual UNAUTHORIZED
@@ -923,6 +948,7 @@ class ControllerTests
     "return unauthorized when supplying an invalid JWT token to the secret end point" in new TestFixtures {
       override def mockAuth0Action: Auth0ValidateJWTAction =
         mockAuth0ActionAlwaysFail
+
       val request =
         FakeRequest(GET, "").withHeaders(
           "Authorization" -> "Bearer fake-invalid"
@@ -934,6 +960,7 @@ class ControllerTests
     "return a valid secret when supplying a valid user and JWT token to the secret end point" in new TestFixtures {
       override def mockAuth0Action: Auth0ValidateJWTAction =
         mockAuth0ActionAlwaysSuccess
+
       val request =
         FakeRequest(GET, "").withHeaders("Authorization" -> "Bearer fake-valid")
       val result = call(controller.secret(uid = testUser), request)
