@@ -34,14 +34,10 @@
       "https://meso-alert-development.eu.ngrok.io/api/slack/auth"
     ],
     "scopes": {
-      "user": [
-        "channels:read"
-      ],
       "bot": [
         "channels:read",
         "chat:write",
         "commands",
-        "links:write",
         "chat:write.public"
       ]
     }
@@ -49,9 +45,6 @@
   "settings": {
     "event_subscriptions": {
       "request_url": "https://meso-alert-development.eu.ngrok.io/api/slack/events",
-      "user_events": [
-        "channel_deleted"
-      ],
       "bot_events": [
         "channel_deleted"
       ]

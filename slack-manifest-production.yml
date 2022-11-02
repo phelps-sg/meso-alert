@@ -38,9 +38,6 @@
       "https://auth.blockinsights.co.uk/login/callback"
     ],
     "scopes": {
-      "user": [
-        "channels:read"
-      ],
       "bot": [
         "channels:read",
         "chat:write",
@@ -52,9 +49,6 @@
   "settings": {
     "event_subscriptions": {
       "request_url": "https://blockinsights.co.uk/api/slack/events",
-      "user_events": [
-        "channel_deleted"
-      ],
       "bot_events": [
         "channel_deleted"
       ]
