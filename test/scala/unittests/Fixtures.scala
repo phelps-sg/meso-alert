@@ -1,6 +1,6 @@
 package unittests
 
-import actions.{Auth0ValidateJWTAction}
+import actions.Auth0ValidateJWTAction
 import actors.EncryptionActor.Encrypted
 import actors.{
   AuthenticationActor,
@@ -123,11 +123,11 @@ object Fixtures {
           )
         )
     }
-//    Option(classLoader.getResourceAsStream(resource)).toRight {
-//      new FileNotFoundException(
-//        s"resource '$resource' was not found in the classpath from the given classloader."
-//      )
-//    }.toTry
+    //    Option(classLoader.getResourceAsStream(resource)).toRight {
+    //      new FileNotFoundException(
+    //        s"resource '$resource' was not found in the classpath from the given classloader."
+    //      )
+    //    }.toTry
   }
 
   trait WebSocketMock {
@@ -352,7 +352,8 @@ object Fixtures {
     val params = netParamsProvider.get
   }
 
-  trait BlockFixtures { env: MainNetParamsFixtures =>
+  trait BlockFixtures {
+    env: MainNetParamsFixtures =>
     val block169482: Try[Block] = resourceAsInputStream("block169482.dat") map {
       in =>
         params.getDefaultSerializer
@@ -729,6 +730,7 @@ object Fixtures {
   trait SlickSlashCommandFixtures {
     env: SlackSignatureVerifierFixtures =>
     val channelId = SlackChannelId("1234")
+    val channelIdBad = SlackChannelId("4321")
     val command = "/test"
     val text = ""
     val teamDomain = None
@@ -782,6 +784,21 @@ object Fixtures {
           "is_enterprise_install" -> "false"
         )
 
+    def fakeRequestValidNoSignatureBadChannel(command: String, amount: String) =
+      FakeRequest(POST, "/")
+        .withFormUrlEncodedBody(
+          "token" -> testToken,
+          "team_id" -> slashCommandTeamId.value,
+          "team_domain" -> "",
+          "channel_id" -> channelIdBad.value,
+          "channel_name" -> "testChannelBad",
+          "user_id" -> "91011",
+          "user_name" -> "test-user",
+          "command" -> command,
+          "text" -> amount,
+          "is_enterprise_install" -> "false"
+        )
+
     def withFakeSlackSignatureHeaders[T](
         request: FakeRequest[T]
     ): FakeRequest[T] =
@@ -795,6 +812,14 @@ object Fixtures {
     ): FakeRequest[AnyContentAsFormUrlEncoded] =
       withFakeSlackSignatureHeaders(
         fakeRequestValidNoSignature(command, amount)
+      )
+
+    def fakeRequestValidBadChannel(
+        command: String,
+        amount: String
+    ): FakeRequest[AnyContentAsFormUrlEncoded] =
+      withFakeSlackSignatureHeaders(
+        fakeRequestValidNoSignatureBadChannel(command, amount)
       )
 
     val testUserId = "testUser"
@@ -843,6 +868,7 @@ object Fixtures {
     def setSignatureVerifierExpectations()
         : CallHandler3[String, String, String, Try[String]] =
       signatureVerifierExpectations.returning(Success("valid"))
+
     setSignatureVerifierExpectations()
 
     (mockSlackSignatureVerifierService.validate _)
@@ -1004,10 +1030,12 @@ object Fixtures {
       "email" -> emailAddress,
       "message" -> supportMessage
     )
+
     def emailFormSubmission(attrs: Map[String, String]) =
       FakeRequest(POST, "/").withFormUrlEncodedBody(
         attrs.toSeq: _*
       )
+
     def emailFormData(attrs: Map[String, String]) =
       EmailFormData(
         attrs("formType"),
@@ -1015,6 +1043,7 @@ object Fixtures {
         attrs("email"),
         attrs("message")
       )
+
     val mockMailManager = mock[MailManager]
   }
 
