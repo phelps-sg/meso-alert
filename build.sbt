@@ -44,7 +44,7 @@ libraryDependencies ++= List(
   "com.slack.api" % "bolt-jetty" %  boltVersion
 )
 
-val AkkaVersion = "2.6.20"
+val AkkaVersion = "2.7.0"
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence" % AkkaVersion,
   "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
@@ -62,8 +62,6 @@ libraryDependencies ++= Seq(
   "com.auth0" % "jwks-rsa" % "0.21.2"
 )
 
-dependencyOverrides += "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.11.4"
-dependencyOverrides += "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.4"
 dependencyOverrides += "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.1"
 
 
