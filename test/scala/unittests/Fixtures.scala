@@ -71,9 +71,9 @@ import services.{
   MemPoolWatcher,
   MemPoolWatcherService,
   PeerGroupProvider,
+  SignatureVerifierService,
   SlackManager,
   SlackSecretsManagerService,
-  SignatureVerifierService,
   SodiumEncryptionManager,
   User,
   UserManagerService
@@ -123,11 +123,6 @@ object Fixtures {
           )
         )
     }
-    //    Option(classLoader.getResourceAsStream(resource)).toRight {
-    //      new FileNotFoundException(
-    //        s"resource '$resource' was not found in the classpath from the given classloader."
-    //      )
-    //    }.toTry
   }
 
   trait WebSocketMock {

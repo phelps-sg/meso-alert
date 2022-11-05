@@ -31,8 +31,6 @@ class UnitTestModule(
         val get: scala.util.Random = new scala.util.Random(1000)
       })
     bind(classOf[ExecutionContext]).toInstance(testExecutionContext)
-    //      bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")
-    //      bindActor(classOf[WebhooksActor], "webhooks-actor")
     bindActorFactory(
       classOf[TxMessagingActorWeb],
       classOf[TxMessagingActorWeb.Factory]

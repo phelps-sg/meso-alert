@@ -278,24 +278,11 @@ class ControllerTests
         with FakeApplication
         with SlackSlashCommandControllerFixtures {
 
-      //      val signatureVerifyAction =
-      //        fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
-
       val eventsController = new SlackEventsController(
         Helpers.stubControllerComponents(),
         hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
         slackSignatureVerifyAction
       )
-
-      //      val slackSlashCommandController = new SlackSlashCommandController(
-      //        signatureVerifyAction,
-      //        Helpers.stubControllerComponents(),
-      //        slashCommandHistoryDao = slickSlashCommandHistoryDao,
-      //        slackTeamDao = slickSlackTeamDao,
-      //        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
-      //        messagesApi,
-      //        mockSlackManagerService
-      //      )
 
       memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
         .anyNumberOfTimes()
@@ -409,21 +396,6 @@ class ControllerTests
         with FakeApplication
         with SlackSlashCommandControllerFixtures {
 
-      //      encryptionManager.init()
-
-      //      val slackSignatureVerifyAction =
-      //        fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
-
-      //      val slackSlashCommandController = new SlackSlashCommandController(
-      //        slackSignatureVerifyAction,
-      //        Helpers.stubControllerComponents(),
-      //        slashCommandHistoryDao = slickSlashCommandHistoryDao,
-      //        slackTeamDao = slickSlackTeamDao,
-      //        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
-      //        messagesApi,
-      //        mockSlackManagerService
-      //      )
-
       def slashCommand(
           makeFakeRequest: => FakeRequest[AnyContentAsFormUrlEncoded]
       ) =
@@ -441,21 +413,6 @@ class ControllerTests
           .expects(*)
           .anyNumberOfTimes()
       }
-
-      //      val signatureVerifierExpectations =
-      //        (mockSlackSignatureVerifierService.validate _)
-      //          .expects(*, *, *)
-      //          .anyNumberOfTimes()
-
-      //      def setSignatureVerifierExpectations()
-      //          : CallHandler3[String, String, String, Try[String]] =
-      //        signatureVerifierExpectations.returning(Success("valid"))
-      //      setSignatureVerifierExpectations()
-
-      //      (mockSlackSignatureVerifierService.validate _)
-      //        .expects(*, *, *)
-      //        .returning(Success("valid"))
-      //        .anyNumberOfTimes()
 
       def submitCommand(
           command: SlashCommand
