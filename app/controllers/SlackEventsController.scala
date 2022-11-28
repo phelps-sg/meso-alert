@@ -2,7 +2,10 @@ package controllers
 
 import actors.HookNotStartedException
 import akka.util.ByteString
-import com.mesonomics.playhmacsignatures.{HMACSignatureHelpers, SlackSignatureVerifyAction}
+import com.mesonomics.playhmacsignatures.{
+  HMACSignatureHelpers,
+  SlackSignatureVerifyAction
+}
 import dao.SlackChannelId
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}

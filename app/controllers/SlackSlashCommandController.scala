@@ -108,7 +108,7 @@ class SlackSlashCommandController @Inject() (
     val hooksManager: HooksManagerSlackChat,
     messagesApi: MessagesApi,
     protected val slackManagerService: SlackManagerService,
-    protected implicit val slackSignatureVerifyAction: SlackSignatureVerifyAction,
+    protected implicit val slackSignatureVerifyAction: SlackSignatureVerifyAction
 )(implicit val ec: ExecutionContext)
     extends BaseController
     with HMACSignatureHelpers
