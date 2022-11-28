@@ -1,20 +1,22 @@
 package controllers
 
-import actions.HMACSignatureHelpers
-import actions.SignatureVerifyAction._
 import actors.{
   HookAlreadyStartedException,
   HookNotRegisteredException,
   HookNotStartedException
 }
 import akka.util.ByteString
+import com.mesonomics.playhmacsignatures.SignatureVerifyAction.formUrlEncodedParser
+import com.mesonomics.playhmacsignatures.{
+  HMACSignatureHelpers,
+  SlackSignatureVerifyAction
+}
 import controllers.SlackSlashCommandController._
 import dao._
 import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}
 import play.api.mvc._
 import services.{HooksManagerSlackChat, SlackManagerService}
-import slack.SlackSignatureVerifyAction
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -100,13 +102,13 @@ object SlackSlashCommandController {
 }
 
 class SlackSlashCommandController @Inject() (
-    protected val slackSignatureVerifyAction: SlackSignatureVerifyAction,
     val controllerComponents: ControllerComponents,
     val slashCommandHistoryDao: SlashCommandHistoryDao,
     val slackTeamDao: SlackTeamDao,
     val hooksManager: HooksManagerSlackChat,
     messagesApi: MessagesApi,
-    protected val slackManagerService: SlackManagerService
+    protected val slackManagerService: SlackManagerService,
+    protected implicit val slackSignatureVerifyAction: SlackSignatureVerifyAction,
 )(implicit val ec: ExecutionContext)
     extends BaseController
     with HMACSignatureHelpers
@@ -115,9 +117,7 @@ class SlackSlashCommandController @Inject() (
   implicit val lang: Lang = Lang("en")
 
   private val whenSignatureValid =
-    validateSignatureParseAndProcess(slackSignatureVerifyAction)(
-      formUrlEncodedParser
-    )(_)
+    validateSignatureParseAndProcess(formUrlEncodedParser)(_)
 
   def slashCommand: Action[ByteString] = whenSignatureValid {
     body: Map[String, Seq[String]] =>

@@ -1,14 +1,13 @@
 package controllers
 
-import actions.HMACSignatureHelpers
 import actors.HookNotStartedException
 import akka.util.ByteString
+import com.mesonomics.playhmacsignatures.{HMACSignatureHelpers, SlackSignatureVerifyAction}
 import dao.SlackChannelId
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, BaseController, ControllerComponents}
 import services.HooksManagerSlackChat
-import slack.SlackSignatureVerifyAction
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -16,17 +15,17 @@ import scala.concurrent.{ExecutionContext, Future}
 class SlackEventsController @Inject() (
     val controllerComponents: ControllerComponents,
     val hooksManager: HooksManagerSlackChat,
-    protected val slackSignatureVerifyAction: SlackSignatureVerifyAction
+    protected implicit val slackSignatureVerifyAction: SlackSignatureVerifyAction
 )(implicit ec: ExecutionContext)
     extends BaseController
     with HMACSignatureHelpers
     with Logging {
 
-  private val whenSignatureValid =
-    validateSignatureParseAndProcess(slackSignatureVerifyAction)(Json.parse)(_)
+  private val onSignatureValid =
+    validateSignatureParseAndProcess(Json.parse)(_)
 
   def eventsAPI(): Action[ByteString] =
-    whenSignatureValid { body: JsValue =>
+    onSignatureValid { body: JsValue =>
       {
         val isChallenge = (body \ "challenge").asOpt[String]
         isChallenge match {

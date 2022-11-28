@@ -27,10 +27,15 @@ import actors.{
 }
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
+import akka.stream.Materializer
 import akka.util.{ByteString, Timeout}
 import com.google.common.io.ByteStreams
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
+import com.mesonomics.playhmacsignatures.{
+  SignatureVerifierService,
+  SlackSignatureVerifyAction
+}
 import com.slack.api.methods.response.auth.AuthTestResponse
 import com.slack.api.methods.response.conversations.ConversationsMembersResponse
 import com.typesafe.config.ConfigFactory
@@ -46,7 +51,7 @@ import org.bitcoinj.core.listeners.{
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.store.BlockStore
 import org.bitcoinj.wallet.Wallet
-import org.scalamock.handlers.{CallHandler1, CallHandler3}
+import org.scalamock.handlers.{CallHandler1, CallHandler8}
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
 import pdi.jwt.JwtClaim
@@ -71,7 +76,6 @@ import services.{
   MemPoolWatcher,
   MemPoolWatcherService,
   PeerGroupProvider,
-  SignatureVerifierService,
   SlackManager,
   SlackSecretsManagerService,
   SodiumEncryptionManager,
@@ -84,7 +88,6 @@ import slack.BlockMessages.{
   MESSAGE_TO_ADDRESSES,
   MESSAGE_TRANSACTION_HASH
 }
-import slack.SlackSignatureVerifyAction
 import slick.BtcPostgresProfile.api._
 import slick._
 import slick.dbio.{DBIO, Effect}
@@ -94,11 +97,11 @@ import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 
 import java.io.{FileNotFoundException, InputStream}
 import java.net.URI
-import java.time.LocalDateTime
+import java.time.{Clock, LocalDateTime}
 import javax.inject.Provider
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
 import scala.jdk.CollectionConverters._
@@ -828,7 +831,7 @@ object Fixtures {
   }
 
   trait SlackSlashCommandControllerFixtures {
-    env: FakeApplication
+    env: ConfigurationFixtures
       with SlickSlashCommandHistoryDaoFixtures
       with SlickSlackTeamDaoFixtures
       with SlackChatHookDaoFixtures
@@ -842,34 +845,46 @@ object Fixtures {
     private implicit val ec = executionContext
     private implicit val system = actorSystem
 
-    val slackSignatureVerifyAction =
-      fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
+    implicit val mat: Materializer = Materializer(system)
+    val bp = new BodyParsers.Default()
+
+    val slackSignatureVerifyAction = new SlackSignatureVerifyAction(
+      bp,
+      config,
+      mockSlackSignatureVerifierService
+    )
 
     val slackSlashCommandController = new SlackSlashCommandController(
-      slackSignatureVerifyAction,
       Helpers.stubControllerComponents(),
       slashCommandHistoryDao = slickSlashCommandHistoryDao,
       slackTeamDao = slickSlackTeamDao,
       hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
       messagesApi,
-      mockSlackManagerService
+      mockSlackManagerService,
+      slackSignatureVerifyAction
     )
 
     val signatureVerifierExpectations =
-      (mockSlackSignatureVerifierService.validate _)
-        .expects(*, *, *)
+      (mockSlackSignatureVerifierService
+        .validate(_: Clock)(_: Duration)(_: (Long, ByteString) => String)(
+          _: Array[Byte] => ByteString
+        )(_: String)(
+          _: Long,
+          _: ByteString,
+          _: ByteString
+        ))
+        .expects(*, *, *, *, *, *, *, *)
         .anyNumberOfTimes()
 
     def setSignatureVerifierExpectations()
-        : CallHandler3[String, String, String, Try[String]] =
-      signatureVerifierExpectations.returning(Success("valid"))
+        : CallHandler8[Clock, Duration, (Long, ByteString) => String, Array[
+          Byte
+        ] => ByteString, String, Long, ByteString, ByteString, Try[
+          ByteString
+        ]] =
+      signatureVerifierExpectations.returning(Success(ByteString("valid")))
 
     setSignatureVerifierExpectations()
-
-    (mockSlackSignatureVerifierService.validate _)
-      .expects(*, *, *)
-      .returning(Success("valid"))
-      .anyNumberOfTimes()
   }
 
   trait SlickSlashCommandHistoryDaoFixtures {
