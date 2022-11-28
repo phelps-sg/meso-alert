@@ -55,7 +55,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion % Test
 )
 
-val jwtScalaVersion = "9.1.1"
+val jwtScalaVersion = "9.1.2"
 libraryDependencies ++= Seq(
   "com.github.jwt-scala" %% "jwt-play" % jwtScalaVersion,
   "com.github.jwt-scala" %% "jwt-core" % jwtScalaVersion,
