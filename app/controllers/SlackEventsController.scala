@@ -24,8 +24,7 @@ class SlackEventsController @Inject() (
     with HMACSignatureHelpers
     with Logging {
 
-  private val onSignatureValid =
-    validateSignatureParseAndProcess(Json.parse)(_)
+  private val onSignatureValid = validateSignatureAsync(Json.parse)(_)
 
   def eventsAPI(): Action[ByteString] =
     onSignatureValid { body: JsValue =>
