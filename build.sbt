@@ -23,8 +23,8 @@ libraryDependencies += "org.abstractj.kalium" % "kalium" % "0.8.0"
 libraryDependencies += "com.github.daddykotex" %% "courier" % "3.2.0"
 
 libraryDependencies ++= List(
-  "com.softwaremill.sttp.client3" %% "async-http-client-backend-monix" % "3.8.0",
-  "com.softwaremill.sttp.client3" %% "circe" % "3.8.0",
+  "com.softwaremill.sttp.client3" %% "async-http-client-backend-monix" % "3.8.3",
+  "com.softwaremill.sttp.client3" %% "circe" % "3.8.3",
   "io.circe" %% "circe-generic" % "0.14.3"
 )
 
@@ -37,7 +37,7 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += "com.github.tminglei" %% "slick-pg_play-json" % "0.21.0"
 
-val boltVersion = "1.26.1"
+val boltVersion = "1.27.1"
 libraryDependencies ++= List(
   "com.slack.api" % "bolt" % boltVersion,
   "com.slack.api" % "bolt-servlet" %  boltVersion,
