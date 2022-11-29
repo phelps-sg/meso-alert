@@ -42,9 +42,9 @@ import unittests.Fixtures.{
   BlockChainWatcherFixtures,
   ConfigurationFixtures,
   DatabaseInitializer,
+  DefaultBodyParserFixtures,
   EncryptionActorFixtures,
   EncryptionManagerFixtures,
-  FakeApplication,
   MainNetParamsFixtures,
   MemPoolWatcherActorFixtures,
   MemPoolWatcherFixtures,
@@ -275,7 +275,7 @@ class ControllerTests
         with SlackEventsControllerFixtures
         with SlackSignatureVerifierFixtures
         with SlackManagerFixtures
-        with FakeApplication
+        with DefaultBodyParserFixtures
         with SlackSlashCommandControllerFixtures {
 
       val eventsController = new SlackEventsController(
@@ -393,7 +393,7 @@ class ControllerTests
         with DatabaseInitializer
         with SlackSignatureVerifierFixtures
         with SlackManagerFixtures
-        with FakeApplication
+        with DefaultBodyParserFixtures
         with SlackSlashCommandControllerFixtures {
 
       def slashCommand(
@@ -668,8 +668,7 @@ class ControllerTests
         with SlickSlackTeamFixtures
         with SlickSlashCommandFixtures
         with DatabaseInitializer
-        with SlackSignatureVerifierFixtures
-        with FakeApplication {
+        with SlackSignatureVerifierFixtures {
 
       val user: String = "test-user@test-domain.com"
       val slackAuthState: String =
@@ -850,7 +849,7 @@ class ControllerTests
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures
         with SlackSignatureVerifierFixtures
-        with FakeApplication
+        with DefaultBodyParserFixtures
         with Auth0ActionFixtures {
 
       def mockAuth0Action: Auth0ValidateJWTAction = mockAuth0ActionAlwaysSuccess

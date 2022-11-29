@@ -58,16 +58,12 @@ import org.scalamock.util.Defaultable
 import pdi.jwt.JwtClaim
 import play.api.i18n.{DefaultMessagesApi, Lang, MessagesApi}
 import play.api.inject.Injector
-import play.api.inject.guice.{
-  GuiceApplicationBuilder,
-  GuiceInjectorBuilder,
-  GuiceableModule
-}
+import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
 import play.api.libs.json.{JsArray, Json}
 import play.api.mvc.{AnyContentAsFormUrlEncoded, BodyParsers}
 import play.api.test.Helpers.POST
 import play.api.test.{FakeRequest, Helpers}
-import play.api.{Application, Configuration, Logging, inject}
+import play.api.{Configuration, Logging, inject}
 import services.{
   BlockChainProvider,
   HooksManagerSlackChat,
@@ -225,31 +221,6 @@ object Fixtures {
     val bindModule: GuiceableModule
   }
 
-  trait FakeApplication {
-    env: HasDatabase
-      with HasExecutionContext
-      with SlackSignatureVerifierFixtures
-      with MemPoolWatcherActorFixtures
-      with BlockChainWatcherFixtures
-      with HasMessagesApi =>
-
-    lazy val fakeApplication: Application =
-      new GuiceApplicationBuilder()
-        .overrides(
-          new UnitTestModule(db, executionContext, messagesApi)
-        )
-        .overrides(
-          new SignatureVerifierServiceModule()
-        )
-        .overrides(
-          new MemPoolWatcherModule()
-        )
-        .overrides(
-          new BlockChainWatcherModule()
-        )
-        .build()
-  }
-
   trait SlackSignatureVerifierFixtures extends MockFactory {
     val mockSlackSignatureVerifierService = mock[SignatureVerifierService]
     val fakeSlackSignatureHeaders = Array(
@@ -259,24 +230,23 @@ object Fixtures {
         "v0=d1c387a20da72e5e07de4e2fb7e93cd9b44c2caa118868aad99c3b20c93de73a"
       )
     )
+  }
 
-    class SignatureVerifierServiceModule extends AbstractModule {
-      override def configure(): Unit = {
-        bind(classOf[SignatureVerifierService]).toInstance(
-          mockSlackSignatureVerifierService
-        )
-      }
-    }
+  trait DefaultBodyParserFixtures {
+    env: HasExecutionContext with HasActorSystem =>
+    private implicit val system = actorSystem
+    implicit val mat: Materializer = Materializer(system)
+    val bodyParser = new BodyParsers.Default()
   }
 
   trait Auth0ActionFixtures {
-    env: FakeApplication with HasExecutionContext =>
+    env: ConfigurationFixtures
+      with DefaultBodyParserFixtures
+      with HasExecutionContext =>
+
     class MockAuth0Action(
         override protected val validateJwt: String => Try[JwtClaim]
-    ) extends Auth0ValidateJWTAction(
-          fakeApplication.injector.instanceOf[BodyParsers.Default],
-          fakeApplication.configuration
-        )(executionContext) {}
+    ) extends Auth0ValidateJWTAction(bodyParser, config)(executionContext) {}
 
     val claim = JwtClaim()
     val mockAuth0ActionAlwaysSuccess = new MockAuth0Action(_ => Success(claim))
@@ -841,16 +811,14 @@ object Fixtures {
       with SlackManagerFixtures
       with SlackSignatureVerifierFixtures
       with HasExecutionContext
-      with HasActorSystem =>
+      with HasActorSystem
+      with DefaultBodyParserFixtures =>
 
     private implicit val ec = executionContext
     private implicit val system = actorSystem
 
-    implicit val mat: Materializer = Materializer(system)
-    val bp = new BodyParsers.Default()
-
     val slackSignatureVerifyAction = new SlackSignatureVerifyAction(
-      bp,
+      bodyParser,
       config,
       mockSlackSignatureVerifierService
     )
