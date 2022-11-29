@@ -39,31 +39,31 @@ docker:
   only:
     - master
 
-staging-functional-tests:
-  stage: staging-functional-tests
-  script:
-    - make -e sbt-functional-tests
-  only:
-    - master
-  artifacts:
-    paths:
-      - captures/*.png
-    when: on_failure
-    expire_in: 1 week
-
-production-functional-tests:
-  stage: production-functional-tests
-  script:
-    - export STAGING_URL='https://blockinsights.co.uk'
-    - make -e sbt-functional-tests
-  only:
-    - master
-  when: manual
-  artifacts:
-    paths:
-      - captures/*.png
-    when: on_failure
-    expire_in: 1 week
+#staging-functional-tests:
+#  stage: staging-functional-tests
+#  script:
+#    - make -e sbt-functional-tests
+#  only:
+#    - master
+#  artifacts:
+#    paths:
+#      - captures/*.png
+#    when: on_failure
+#    expire_in: 1 week
+#
+#production-functional-tests:
+#  stage: production-functional-tests
+#  script:
+#    - export STAGING_URL='https://blockinsights.co.uk'
+#    - make -e sbt-functional-tests
+#  only:
+#    - master
+#  when: manual
+#  artifacts:
+#    paths:
+#      - captures/*.png
+#    when: on_failure
+#    expire_in: 1 week
 
 k8-staging:
   stage: deploy-staging
