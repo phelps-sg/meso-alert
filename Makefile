@@ -3,7 +3,7 @@ SHELL=/bin/bash
 SDK_INIT=source ~/.sdkman/bin/sdkman-init.sh
 NVM_INIT=source ~/.nvm/nvm.sh
 
-JAVA_VERSION=11.0.12-open
+JAVA_VERSION=11.0.17-amzn
 
 EXPORT_ENV=export PLAY_SECRET=$(PLAY_SECRET)
 
