@@ -34,6 +34,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
 import com.mesonomics.playhmacsignatures.{
   EpochSeconds,
+  HmacSignature,
   SignatureVerifierService,
   SlackSignatureVerifyAction
 }
@@ -838,11 +839,11 @@ object Fixtures {
         .validate(_: Clock)(_: Duration)(
           _: (EpochSeconds, ByteString) => String
         )(
-          _: Array[Byte] => ByteString
+          _: Array[Byte] => HmacSignature
         )(_: String)(
           _: EpochSeconds,
           _: ByteString,
-          _: ByteString
+          _: HmacSignature
         ))
         .expects(*, *, *, *, *, *, *, *)
         .anyNumberOfTimes()
@@ -851,11 +852,11 @@ object Fixtures {
       Clock,
       Duration,
       (EpochSeconds, ByteString) => String,
-      Array[Byte] => ByteString,
+      Array[Byte] => HmacSignature,
       String,
       EpochSeconds,
       ByteString,
-      ByteString,
+      HmacSignature,
       Try[ByteString]
     ] =
       signatureVerifierExpectations.returning(Success(ByteString("valid")))
