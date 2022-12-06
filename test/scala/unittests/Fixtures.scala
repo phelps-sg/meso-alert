@@ -33,7 +33,6 @@ import com.google.common.io.ByteStreams
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
 import com.mesonomics.playhmacsignatures.{
-  EpochSeconds,
   SignatureVerifierService,
   SlackSignatureVerifyAction
 }
@@ -836,11 +835,11 @@ object Fixtures {
     val signatureVerifierExpectations =
       (mockSlackSignatureVerifierService
         .validate(_: Clock)(_: Duration)(
-          _: (EpochSeconds, ByteString) => String
+          _: (Long, ByteString) => String
         )(
           _: Array[Byte] => ByteString
         )(_: String)(
-          _: EpochSeconds,
+          _: Long,
           _: ByteString,
           _: ByteString
         ))
@@ -850,10 +849,10 @@ object Fixtures {
     def setSignatureVerifierExpectations(): CallHandler8[
       Clock,
       Duration,
-      (EpochSeconds, ByteString) => String,
+      (Long, ByteString) => String,
       Array[Byte] => ByteString,
       String,
-      EpochSeconds,
+      Long,
       ByteString,
       ByteString,
       Try[ByteString]
