@@ -124,7 +124,7 @@ class SlackSlashCommandController @Inject() (
       SlackSlashCommandController.param("ssl_check")(body) match {
 
         case Some("1") =>
-          Future {
+          Future.successful {
             Ok
           }
 
@@ -162,7 +162,7 @@ class SlackSlashCommandController @Inject() (
 
       case Array("help") =>
         logger.debug("crypto-alert help")
-        Future {
+        Future.successful {
           Ok(messagesApi(MESSAGE_CRYPTO_ALERT_HELP))
         }
 
@@ -198,19 +198,19 @@ class SlackSlashCommandController @Inject() (
 
           case None =>
             logger.debug(s"Invalid amount ${slashCommand.text}")
-            Future {
+            Future.successful {
               Ok(messagesApi(MESSAGE_GENERAL_ERROR))
             }
 
         }
 
       case Array(_, _) =>
-        Future {
+        Future.successful {
           Ok(messagesApi(MESSAGE_CURRENCY_ERROR))
         }
 
       case _ =>
-        Future {
+        Future.successful {
           Ok(messagesApi(MESSAGE_GENERAL_ERROR))
         }
 
@@ -225,7 +225,7 @@ class SlackSlashCommandController @Inject() (
 
       case Array("help") =>
         logger.debug("pause-alerts help")
-        Future {
+        Future.successful {
           Ok(messagesApi(MESSAGE_PAUSE_ALERTS_HELP))
         }
 
@@ -248,7 +248,7 @@ class SlackSlashCommandController @Inject() (
 
       case Array("help") =>
         logger.debug("resume-alerts help")
-        Future {
+        Future.successful {
           Ok(messagesApi(MESSAGE_RESUME_ALERTS_HELP))
         }
 

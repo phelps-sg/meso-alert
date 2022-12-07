@@ -32,7 +32,7 @@ class SlackEventsController @Inject() (
         val isChallenge = (body \ "challenge").asOpt[String]
         isChallenge match {
           case Some(challengeValue) =>
-            Future {
+            Future.successful {
               Ok(challengeValue)
             }
           case None =>
@@ -43,7 +43,7 @@ class SlackEventsController @Inject() (
                 stopHook(SlackChannelId(channel))
               case ev =>
                 logger.warn(s"Received unhandled event $ev")
-                Future {
+                Future.successful {
                   NotAcceptable
                 }
             }
