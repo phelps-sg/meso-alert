@@ -121,25 +121,32 @@ class SlackSlashCommandController @Inject() (
   private val onSignatureValid =
     validateSignatureAsync(formUrlEncodedParser)(_)
 
-  def slashCommand: Action[ByteString] = onSignatureValid {
-    body: Map[String, Seq[String]] =>
-      SlackSlashCommandController.param("ssl_check")(body) match {
-
-        case Some("1") =>
-          Future.successful { Ok }
-
-        case _ =>
-          val f = for {
-            slashCommand <- SlackSlashCommandController.toCommand(body)
-            _ <- slashCommandHistoryDao.record(slashCommand)
-            result <- process(slashCommand)
-          } yield result
-          f recover { case ex: Exception =>
-            logger.error(ex.getMessage)
-            NotAcceptable(ex.getMessage)
-          }
+  def slashCommand: Action[ByteString] = onSignatureValid { body =>
+    onSlashCommand(body) { slashCommand =>
+      val f = for {
+        _ <- slashCommandHistoryDao.record(slashCommand)
+        result <- process(slashCommand)
+      } yield result
+      f recover { case ex: Exception =>
+        logger.error(ex.getMessage)
+        NotAcceptable(ex.getMessage)
       }
+    }
   }
+
+  /** Check whether the body contains an SSL verification request (ssl_check=1)
+    * and if so respond with 200, otherwise attempt to parse the body as a slash
+    * command and process it using the supplied function.
+    */
+  def onSlashCommand(
+      body: Map[String, Seq[String]]
+  )(processCommand: SlashCommand => Future[Result]): Future[Result] =
+    SlackSlashCommandController.param("ssl_check")(body) match {
+      case Some("1") =>
+        Future.successful { Ok }
+      case _ =>
+        SlackSlashCommandController.toCommand(body).flatMap(processCommand)
+    }
 
   def channel(implicit slashCommand: SlashCommand): SlackChannelId =
     slashCommand.channelId
