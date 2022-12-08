@@ -9,6 +9,7 @@ import play.api.i18n.MessagesApi
 import play.api.{Configuration, Logging}
 import services.SlackManagerService
 import slack.BlockMessages
+import slack.BlockMessages.Blocks
 import slick.SlackChatExecutionContext
 
 import scala.annotation.unused
@@ -47,7 +48,7 @@ class TxMessagingActorSlackChat @Inject() (
 
   override def success(): Unit = logger.debug("Successfully posted message")
 
-  val message: TxUpdate => String = BlockMessages.message(messagesApi)
+  val message: TxUpdate => Blocks = BlockMessages.message(messagesApi)
 
   override def process(tx: TxUpdate): Future[Unit] = {
     val msg = message(tx)

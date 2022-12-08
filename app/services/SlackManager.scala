@@ -7,6 +7,7 @@ import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
 import com.slack.api.methods.response.oauth.OAuthV2AccessResponse
 import dao._
 import play.api.{Configuration, Logging}
+import slack.BlockMessages.Blocks
 import slack.FutureConverters.BoltFuture
 import slack.SlackClient
 import slick.SlackClientExecutionContext
@@ -28,7 +29,7 @@ trait SlackManagerService {
       username: String,
       channel: SlackChannelId,
       text: String,
-      blocks: String
+      blocks: Blocks
   ): Future[Unit]
 
 }
@@ -83,14 +84,14 @@ class SlackManager @Inject() (
       username: String,
       channel: SlackChannelId,
       text: String,
-      blocks: String
+      blocks: Blocks
   ): Future[Unit] = {
     val request = ChatPostMessageRequest.builder
       .token(token)
       .username(username)
       .channel(channel.value)
       .text(text)
-      .blocksAsString(blocks)
+      .blocksAsString(blocks.value)
       .build
     BoltFuture { slackMethods.chatPostMessage(request) } map { _ => () }
   }

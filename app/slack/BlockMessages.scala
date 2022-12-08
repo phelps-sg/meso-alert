@@ -13,6 +13,8 @@ import scala.annotation.tailrec
 
 object BlockMessages {
 
+  case class Blocks(value: String) extends AnyVal
+
   implicit val lang: Lang = Lang("en")
 
   val MESSAGE_NEW_TRANSACTION = "slackChat.newTransaction"
@@ -22,7 +24,7 @@ object BlockMessages {
 
   val txsPerSection = 20
 
-  def message(messages: MessagesApi)(tx: TxUpdate): String = {
+  def message(messages: MessagesApi)(tx: TxUpdate): Blocks = {
     blockMessageBuilder(messages)(tx.hash, tx.value, toAddresses(tx.outputs))
   }
 
@@ -32,13 +34,15 @@ object BlockMessages {
       currentSectionOutputs: Int,
       totalSections: Int,
       currentSectionString: String
-  ): String = {
+  ): Blocks = {
     if (totalSections > 47) {
-      currentSectionString +
-        """"}},{"type":"section","text":{"type":"mrkdwn",""" +
-        s""""text":"${messages(
-            MESSAGE_TOO_MANY_OUTPUTS
-          )}"}},{"type":"divider"}]"""
+      Blocks(
+        currentSectionString +
+          """"}},{"type":"section","text":{"type":"mrkdwn",""" +
+          s""""text":"${messages(
+              MESSAGE_TOO_MANY_OUTPUTS
+            )}"}},{"type":"divider"}]"""
+      )
     } else {
       if (currentSectionOutputs < txsPerSection && txOutputs.nonEmpty) {
         val newSectionString = s"${linkToAddress(txOutputs.head)}, "
@@ -59,8 +63,10 @@ object BlockMessages {
           currentSectionString + newSectionString
         )
       } else {
-        currentSectionString.take(currentSectionString.length - 2) + " " +
-          """"}}, {"type":"divider"}]"""
+        Blocks(
+          currentSectionString.take(currentSectionString.length - 2) + " " +
+            """"}}, {"type":"divider"}]"""
+        )
       }
     }
   }
@@ -69,15 +75,18 @@ object BlockMessages {
       txHash: TxHash,
       txValue: Long,
       txOutputs: Seq[String]
-  ): String =
-    """[{"type":"header","text":{"type":"plain_text",""" +
-      s""""text":"${messages(MESSAGE_NEW_TRANSACTION)} ${formatSatoshi(
-          txValue
-        )}""" +
-      """ BTC","emoji":false}},{"type":"section","text":{"type":"mrkdwn",""" +
-      s"""\"text\":\"${messages(MESSAGE_TRANSACTION_HASH)}: ${linkToTxHash(
-          txHash
-        )} ${messages(MESSAGE_TO_ADDRESSES)}:\"}},""" +
-      """{"type":"section","text":{"type": "mrkdwn", "text": """" +
-      buildOutputsSections(messages)(txOutputs, 0, 3, "")
+  ): Blocks = {
+    Blocks(
+      """[{"type":"header","text":{"type":"plain_text",""" +
+        s""""text":"${messages(MESSAGE_NEW_TRANSACTION)} ${formatSatoshi(
+            txValue
+          )}""" +
+        """ BTC","emoji":false}},{"type":"section","text":{"type":"mrkdwn",""" +
+        s"""\"text\":\"${messages(MESSAGE_TRANSACTION_HASH)}: ${linkToTxHash(
+            txHash
+          )} ${messages(MESSAGE_TO_ADDRESSES)}:\"}},""" +
+        """{"type":"section","text":{"type": "mrkdwn", "text": """" +
+        buildOutputsSections(messages)(txOutputs, 0, 3, "").value
+    )
+  }
 }

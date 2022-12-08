@@ -5,7 +5,11 @@ import controllers.SlackSlashCommandController
 import dao.{SlackChannelId, SlackChatHookPlainText, SlashCommand}
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
-import slack.BlockMessages.{MESSAGE_TOO_MANY_OUTPUTS, blockMessageBuilder}
+import slack.BlockMessages.{
+  Blocks,
+  MESSAGE_TOO_MANY_OUTPUTS,
+  blockMessageBuilder
+}
 import unittests.Fixtures.{
   MessagesFixtures,
   SlackSignatureVerifierFixtures,
@@ -34,13 +38,17 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
   "blockMessageBuilder" should {
 
     trait TestFixtures extends MessagesFixtures {
-      val chatMessage: (TxHash, Long, Seq[String]) => String =
+      val chatMessage: (TxHash, Long, Seq[String]) => Blocks =
         blockMessageBuilder(messagesApi)
+
+      def chatMessageStr(txHash: TxHash, amount: Long, addresses: Seq[String]) =
+        chatMessage(txHash, amount, addresses).value
+
       val testHash = TxHash("testHash")
     }
 
     "print all outputs if they take up less than 47 sections - single section" in new TestFixtures {
-      chatMessage(
+      chatMessageStr(
         testHash,
         100000000,
         List("1", "2")
@@ -49,14 +57,14 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
     }
 
     "print all outputs if they take up less than 47 sections - multiple sections" in new TestFixtures {
-      chatMessage(
+      chatMessageStr(
         testHash,
         100000000,
         List.range(1, 30, 1).map(x => x.toString)
       ) should fullyMatch regex
         """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https:\/\/www\.blockchair\.com\/bitcoin\/transaction\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},(\{"type":"section","text":\{"type": "mrkdwn", "text": "(<https:\/\/www\.blockchair\.com\/bitcoin\/address\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>(,)* )+"\}\}, )*\{"type":"divider"\}]"""
 
-      chatMessage(
+      chatMessageStr(
         testHash,
         100000000,
         List.range(1, 100, 1).map(x => x.toString)
@@ -67,7 +75,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
 
     "make the last section of the block a link to view all the outputs if there are more than 47 sections" in
       new TestFixtures {
-        val result: String = chatMessage(
+        val result: String = chatMessageStr(
           testHash,
           100000000,
           List.fill(1000)("testOutput")
@@ -129,7 +137,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
   "SlackChatHookPlainText" should {
     "not reveal token when rendered as string" in {
       val hook =
-        SlackChatHookPlainText(SlackChannelId("channel"), "secret", 1, false)
+        SlackChatHookPlainText(SlackChannelId("channel"), "secret", 1, isRunning = false)
       val result = hook.toString()
       result should not include "secret"
     }
