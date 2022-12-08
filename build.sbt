@@ -62,7 +62,7 @@ libraryDependencies ++= Seq(
   "com.auth0" % "jwks-rsa" % "0.21.2"
 )
 
-libraryDependencies += "com.mesonomics" %% "play-hmac-signatures" % "0.5.3"
+libraryDependencies += "com.mesonomics" %% "play-hmac-signatures" % "0.5.4"
 
 dependencyOverrides += "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.1"
 
