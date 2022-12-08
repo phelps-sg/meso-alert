@@ -2,7 +2,13 @@ package unittests
 
 import actors.TxHash
 import controllers.SlackSlashCommandController
-import dao.{SlackChannelId, SlackChatHookPlainText, SlashCommand}
+import dao.{
+  SlackAuthToken,
+  SlackChannelId,
+  SlackChatHookPlainText,
+  SlashCommand
+}
+import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
 import slack.BlockMessages.{
@@ -103,8 +109,10 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
           "command" -> Vector(command),
           "text" -> Vector(text)
         )
-      SlackSlashCommandController.toCommand(paramMap) should matchPattern {
-        case Success(
+      SlackSlashCommandController
+        .toCommand(paramMap)
+        .futureValue should matchPattern {
+        case
               SlashCommand(
                 None,
                 `channelId`,
@@ -118,7 +126,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
                 None,
                 Some(_: java.time.LocalDateTime)
               )
-            ) =>
+             =>
       }
     }
 
@@ -128,16 +136,20 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
           "channel_id" -> Vector(channelId.value)
         )
       }
-      SlackSlashCommandController.toCommand(paramMap) should matchPattern {
-        case Failure(_) =>
-      }
+      val result = SlackSlashCommandController.toCommand(paramMap).failed
+      result.futureValue should matchPattern { case _: Exception => }
     }
   }
 
   "SlackChatHookPlainText" should {
     "not reveal token when rendered as string" in {
       val hook =
-        SlackChatHookPlainText(SlackChannelId("channel"), "secret", 1, isRunning = false)
+        SlackChatHookPlainText(
+          SlackChannelId("channel"),
+          SlackAuthToken("secret"),
+          1,
+          isRunning = false
+        )
       val result = hook.toString()
       result should not include "secret"
     }

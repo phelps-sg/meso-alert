@@ -20,7 +20,7 @@ import services.{HooksManagerSlackChat, SlackManagerService}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Success, Try}
 
 object SlackSlashCommandController {
 
@@ -57,7 +57,7 @@ object SlackSlashCommandController {
 
   def toCommand(implicit
       paramMap: Map[String, Seq[String]]
-  ): Try[SlashCommand] = {
+  ): Future[SlashCommand] = {
     val attributes = coreAttributes.map(param)
     attributes match {
       case Seq(Some(channelId), Some(command), Some(args)) =>
@@ -70,7 +70,7 @@ object SlackSlashCommandController {
                 userName,
                 isEnterpriseInstall
               ) =>
-            Success(
+            Future.successful(
               SlashCommand(
                 None,
                 SlackChannelId(channelId),
@@ -88,10 +88,12 @@ object SlackSlashCommandController {
               )
             )
           case _ =>
-            Failure(new IllegalArgumentException("Malformed slash command"))
+            Future.failed(
+              new IllegalArgumentException("Malformed slash command")
+            )
         }
       case _ =>
-        Failure(
+        Future.failed(
           new IllegalArgumentException(
             s"Malformed slash command- missing attributes ${attributes.filterNot(_.isEmpty)}"
           )
@@ -124,29 +126,17 @@ class SlackSlashCommandController @Inject() (
       SlackSlashCommandController.param("ssl_check")(body) match {
 
         case Some("1") =>
-          Future.successful {
-            Ok
-          }
+          Future.successful { Ok }
 
         case _ =>
-          SlackSlashCommandController.toCommand(body) match {
-
-            case Success(slashCommand) =>
-              val f = for {
-                _ <- slashCommandHistoryDao.record(slashCommand)
-                result <- process(slashCommand)
-              } yield result
-
-              f recover { case ex: Exception =>
-                ex.printStackTrace()
-                ServiceUnavailable(ex.getMessage)
-              }
-
-            case Failure(ex) =>
-              logger.error(ex.getMessage)
-              Future {
-                NotAcceptable(ex.getMessage)
-              }
+          val f = for {
+            slashCommand <- SlackSlashCommandController.toCommand(body)
+            _ <- slashCommandHistoryDao.record(slashCommand)
+            result <- process(slashCommand)
+          } yield result
+          f recover { case ex: Exception =>
+            logger.error(ex.getMessage)
+            NotAcceptable(ex.getMessage)
           }
       }
   }

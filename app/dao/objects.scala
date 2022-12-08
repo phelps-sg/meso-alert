@@ -13,6 +13,8 @@ final case class RegisteredUserId(value: String)
 
 final case class SlackTeamId(value: String) extends AnyVal with MappedTo[String]
 
+final case class SlackAuthToken(value: String) extends AnyVal with MappedTo[String]
+
 final case class SlackChannelId(value: String)
     extends AnyVal
     with MappedTo[String]
@@ -69,7 +71,7 @@ final case class SlackChatHookEncrypted(
 
 final case class SlackChatHookPlainText(
     channel: SlackChannelId,
-    token: String,
+    token: SlackAuthToken,
     threshold: Long,
     isRunning: Boolean
 ) extends SlackChatHook {
@@ -83,7 +85,7 @@ final case class SlackTeam(
     teamId: SlackTeamId,
     userId: SlackUserId,
     botId: SlackBotId,
-    accessToken: String,
+    accessToken: SlackAuthToken,
     teamName: String,
     registeredUserId: RegisteredUserId
 )

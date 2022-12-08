@@ -3,6 +3,7 @@ package services
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.slack.api.methods.MethodsClient
 import com.slack.api.methods.request.chat.ChatPostMessageRequest
+import com.slack.api.methods.request.conversations.ConversationsInfoRequest
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
 import com.slack.api.methods.response.oauth.OAuthV2AccessResponse
 import dao._
@@ -13,6 +14,8 @@ import slack.SlackClient
 import slick.SlackClientExecutionContext
 
 import scala.concurrent.{ExecutionContext, Future}
+
+case class SlackConversationInfo(channel: SlackChannelId, isPrivate: Boolean)
 
 @ImplementedBy(classOf[SlackManager])
 trait SlackManagerService {
@@ -25,12 +28,17 @@ trait SlackManagerService {
   ): Future[SlackTeam]
 
   def chatPostMessage(
-      token: String,
+      token: SlackAuthToken,
       username: String,
       channel: SlackChannelId,
       text: String,
       blocks: Blocks
   ): Future[Blocks]
+
+  def conversationInfo(
+      token: SlackAuthToken,
+      channel: SlackChannelId
+  ): Future[SlackConversationInfo]
 
 }
 
@@ -71,7 +79,7 @@ class SlackManager @Inject() (
             teamId = SlackTeamId(response.getTeam.getId),
             userId = SlackUserId(response.getAuthedUser.getId),
             botId = SlackBotId(response.getBotUserId),
-            accessToken = response.getAccessToken,
+            accessToken = SlackAuthToken(response.getAccessToken),
             teamName = response.getTeam.getName,
             registeredUserId
           )
@@ -80,20 +88,33 @@ class SlackManager @Inject() (
   }
 
   override def chatPostMessage(
-      token: String,
+      token: SlackAuthToken,
       username: String,
       channel: SlackChannelId,
       text: String,
       blocks: Blocks
   ): Future[Blocks] = {
     val request = ChatPostMessageRequest.builder
-      .token(token)
+      .token(token.value)
       .username(username)
       .channel(channel.value)
       .text(text)
       .blocksAsString(blocks.value)
       .build
     BoltFuture { slackMethods.chatPostMessage(request) } map { _ => blocks }
+  }
+
+  override def conversationInfo(
+      token: SlackAuthToken,
+      channel: SlackChannelId
+  ): Future[SlackConversationInfo] = {
+    val request = ConversationsInfoRequest.builder
+      .token(token.value)
+      .channel(channel.value)
+      .build
+    BoltFuture { slackMethods.conversationsInfo(request) } map { response =>
+      SlackConversationInfo(channel, response.getChannel.isPrivate)
+    }
   }
 
 }

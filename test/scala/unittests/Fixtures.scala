@@ -521,14 +521,14 @@ object Fixtures {
       key,
       threshold = originalThreshold,
       isRunning = true,
-      token = "test_token_1"
+      token = SlackAuthToken("test_token_1")
     )
     val stoppedHook = hook.copy(isRunning = false)
     val newHook = SlackChatHookPlainText(
       key,
       threshold = newThreshold,
       isRunning = true,
-      token = "test_token_2"
+      token = SlackAuthToken("test_token_2")
     )
     val encryptedHook =
       SlackChatHookEncrypted(
@@ -690,7 +690,7 @@ object Fixtures {
       teamId,
       teamUserId,
       botId,
-      accessToken,
+      SlackAuthToken(accessToken),
       teamName,
       registeredUserId
     )
