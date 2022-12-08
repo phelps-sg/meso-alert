@@ -23,8 +23,6 @@ import unittests.Fixtures.{
 }
 import util.BitcoinFormatting.formatSatoshi
 
-import scala.util.{Failure, Success}
-
 //noinspection TypeAnnotation
 class FormattingTests extends AnyWordSpecLike with should.Matchers {
 
@@ -112,21 +110,19 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
       SlackSlashCommandController
         .toCommand(paramMap)
         .futureValue should matchPattern {
-        case
-              SlashCommand(
-                None,
-                `channelId`,
-                `command`,
-                `text`,
-                None,
-                `slashCommandTeamId`,
-                None,
-                None,
-                None,
-                None,
-                Some(_: java.time.LocalDateTime)
-              )
-             =>
+        case SlashCommand(
+              None,
+              `channelId`,
+              `command`,
+              `text`,
+              None,
+              `slashCommandTeamId`,
+              None,
+              None,
+              None,
+              None,
+              Some(_: java.time.LocalDateTime)
+            ) =>
       }
     }
 

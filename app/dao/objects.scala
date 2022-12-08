@@ -13,7 +13,9 @@ final case class RegisteredUserId(value: String)
 
 final case class SlackTeamId(value: String) extends AnyVal with MappedTo[String]
 
-final case class SlackAuthToken(value: String) extends AnyVal with MappedTo[String]
+final case class SlackAuthToken(value: String)
+    extends AnyVal
+    with MappedTo[String]
 
 final case class SlackChannelId(value: String)
     extends AnyVal

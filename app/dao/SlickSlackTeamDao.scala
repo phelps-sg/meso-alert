@@ -53,7 +53,7 @@ class SlickSlackTeamDao @Inject() (
         team.teamId,
         team.userId,
         team.botId,
-        decrypted.asString,
+        SlackAuthToken(decrypted.asString),
         team.teamName,
         team.registeredUserId
       )
@@ -61,15 +61,16 @@ class SlickSlackTeamDao @Inject() (
   }
 
   override def toDB(team: SlackTeam): Future[SlackTeamEncrypted] = {
-    encryptionManager.encrypt(team.accessToken.getBytes) map { encrypted =>
-      SlackTeamEncrypted(
-        team.teamId,
-        team.userId,
-        team.botId,
-        accessToken = encrypted,
-        team.teamName,
-        team.registeredUserId
-      )
+    encryptionManager.encrypt(team.accessToken.value.getBytes) map {
+      encrypted =>
+        SlackTeamEncrypted(
+          team.teamId,
+          team.userId,
+          team.botId,
+          accessToken = encrypted,
+          team.teamName,
+          team.registeredUserId
+        )
     }
   }
 
