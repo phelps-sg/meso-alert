@@ -708,7 +708,7 @@ object Fixtures {
     val channelName = Some("test-channel")
     val userId = Some(SlackUserId("91011"))
     val userName = Some("test-user")
-    val testToken = "test-token"
+    val testToken = SlackAuthToken("test-token")
     val isEnterpriseInstall = Some(false)
     val timeStamp = Some(java.time.LocalDateTime.of(2001, 1, 1, 0, 0))
     val slashCommand = SlashCommand(
@@ -742,7 +742,7 @@ object Fixtures {
     def fakeRequestValidNoSignature(command: String, amount: String) =
       FakeRequest(POST, "/")
         .withFormUrlEncodedBody(
-          "token" -> testToken,
+          "token" -> testToken.value,
           "team_id" -> slashCommandTeamId.value,
           "team_domain" -> "",
           "channel_id" -> channelId.value,
@@ -757,7 +757,7 @@ object Fixtures {
     def fakeRequestValidNoSignatureBadChannel(command: String, amount: String) =
       FakeRequest(POST, "/")
         .withFormUrlEncodedBody(
-          "token" -> testToken,
+          "token" -> testToken.value,
           "team_id" -> slashCommandTeamId.value,
           "team_domain" -> "",
           "channel_id" -> channelIdBad.value,

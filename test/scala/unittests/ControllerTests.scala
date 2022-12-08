@@ -419,7 +419,7 @@ class ControllerTests
       ): Future[(Result, Seq[SlackChatHookEncrypted])] = {
         afterDbInit {
           for {
-            encrypted <- encryptionManager.encrypt(testToken.getBytes)
+            encrypted <- encryptionManager.encrypt(testToken.value.getBytes)
             _ <- db.run(
               Tables.slackTeams += SlackTeamEncrypted(
                 slashCommandTeamId,

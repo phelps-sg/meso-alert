@@ -4,7 +4,7 @@ import com.slack.api.methods.SlackApiTextResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 
-case class BoltException(msg: String) extends Exception(msg)
+final case class BoltException(msg: String) extends Exception(msg)
 
 object FutureConverters {
 
