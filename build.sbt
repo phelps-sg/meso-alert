@@ -32,7 +32,7 @@ val slickVersion = "3.4.1"
 libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % slickVersion,
   "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
-  "org.postgresql" % "postgresql" % "42.5.0"
+  "org.postgresql" % "postgresql" % "42.5.1"
 )
 
 libraryDependencies += "com.github.tminglei" %% "slick-pg_play-json" % "0.21.0"
