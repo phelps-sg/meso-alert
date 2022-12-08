@@ -179,11 +179,13 @@ class SlackSlashCommandController @Inject() (
                   isRunning = true
                 )
               )
-              started <- hooksManager.start(channel)
-            } yield started
-            f.map { _ =>
-              Ok(messagesApi(MESSAGE_CRYPTO_ALERT_NEW, amount))
-            }.recoverWith { case HookAlreadyStartedException(_) =>
+              _ <- hooksManager.start(channel)
+              result <- Future.successful(
+                Ok(messagesApi(MESSAGE_CRYPTO_ALERT_NEW, amount))
+              )
+            } yield result
+
+            f.recoverWith { case HookAlreadyStartedException(_) =>
               val f = for {
                 _ <- hooksManager.stop(channel)
                 restarted <- hooksManager.start(channel)
