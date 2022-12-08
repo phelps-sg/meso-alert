@@ -34,7 +34,7 @@ class TxMessagingActorSlackChat @Inject() (
     protected val messagesApi: MessagesApi,
     @Assisted hook: SlackChatHookPlainText
 ) extends Actor
-    with TxRetryOrDie[Unit]
+    with TxRetryOrDie[Blocks]
     with Timers
     with UnrecognizedMessageHandlerFatal
     with Logging {
@@ -50,7 +50,7 @@ class TxMessagingActorSlackChat @Inject() (
 
   val message: TxUpdate => Blocks = BlockMessages.message(messagesApi)
 
-  override def process(tx: TxUpdate): Future[Unit] = {
+  override def process(tx: TxUpdate): Future[Blocks] = {
     val msg = message(tx)
     slackManagerService.chatPostMessage(
       hook.token,

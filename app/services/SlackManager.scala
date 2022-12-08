@@ -30,7 +30,7 @@ trait SlackManagerService {
       channel: SlackChannelId,
       text: String,
       blocks: Blocks
-  ): Future[Unit]
+  ): Future[Blocks]
 
 }
 
@@ -85,7 +85,7 @@ class SlackManager @Inject() (
       channel: SlackChannelId,
       text: String,
       blocks: Blocks
-  ): Future[Unit] = {
+  ): Future[Blocks] = {
     val request = ChatPostMessageRequest.builder
       .token(token)
       .username(username)
@@ -93,7 +93,7 @@ class SlackManager @Inject() (
       .text(text)
       .blocksAsString(blocks.value)
       .build
-    BoltFuture { slackMethods.chatPostMessage(request) } map { _ => () }
+    BoltFuture { slackMethods.chatPostMessage(request) } map { _ => blocks }
   }
 
 }
