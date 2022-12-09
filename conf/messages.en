@@ -1,6 +1,7 @@
 # /crypto-alert
 slackResponse.cryptoAlertNew = OK, I will send updates on any BTC transactions exceeding {0} BTC.
 slackResponse.cryptoAlertReconfig = OK, I have reconfigured the alerts on this channel with a new threshold of {0} BTC.
+slackResponse.cryptoAlertBotInChannel = Please invite me to this channel using @BlockInsights before sending commands.
 slackResponse.generalError = Usage: `/crypto-alert [threshold amount] [currency]`
 slackResponse.currencyError = I currently only provide alerts for BTC, but other currencies are coming soon.
 slackResponse.cryptoAlertHelp = Usage: "/crypto-alert X" or "/crypto-alert X btc" (more currencies coming soon!)

@@ -3,7 +3,10 @@ package services
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.slack.api.methods.MethodsClient
 import com.slack.api.methods.request.chat.ChatPostMessageRequest
-import com.slack.api.methods.request.conversations.ConversationsInfoRequest
+import com.slack.api.methods.request.conversations.{
+  ConversationsInfoRequest,
+  ConversationsMembersRequest
+}
 import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
 import com.slack.api.methods.response.oauth.OAuthV2AccessResponse
 import dao._
@@ -14,6 +17,7 @@ import slack.SlackClient
 import slick.SlackClientExecutionContext
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.jdk.CollectionConverters._
 
 case class SlackConversationInfo(channel: SlackChannelId, isPrivate: Boolean)
 
@@ -40,6 +44,10 @@ trait SlackManagerService {
       channel: SlackChannelId
   ): Future[SlackConversationInfo]
 
+  def conversationMembers(
+      token: SlackAuthToken,
+      channel: SlackChannelId
+  ): Future[Set[SlackTeamId]]
 }
 
 /** A wrapper around the BOLT API. Unlike Bolt: i) the methods in this class
@@ -114,6 +122,19 @@ class SlackManager @Inject() (
       .build
     BoltFuture { slackMethods.conversationsInfo(request) } map { response =>
       SlackConversationInfo(channel, response.getChannel.isPrivate)
+    }
+  }
+
+  override def conversationMembers(
+      token: SlackAuthToken,
+      channel: SlackChannelId
+  ): Future[Set[SlackTeamId]] = {
+    val request = ConversationsMembersRequest.builder
+      .token(token.value)
+      .channel(channel.value)
+      .build()
+    BoltFuture { slackMethods.conversationsMembers(request) } map { response =>
+      response.getMembers.asScala.toSet.map(SlackTeamId)
     }
   }
 

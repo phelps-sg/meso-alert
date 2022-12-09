@@ -18,6 +18,7 @@ import slack.BlockMessages.{
 }
 import unittests.Fixtures.{
   MessagesFixtures,
+  SlackChatHookFixtures,
   SlackSignatureVerifierFixtures,
   SlickSlashCommandFixtures
 }
@@ -97,6 +98,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
 
     trait TestFixtures
         extends SlackSignatureVerifierFixtures
+        with SlackChatHookFixtures
         with SlickSlashCommandFixtures
 
     "convert an incoming parameter map to a case class" in new TestFixtures {

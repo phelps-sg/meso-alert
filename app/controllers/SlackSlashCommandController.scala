@@ -24,10 +24,15 @@ import scala.util.{Success, Try}
 
 object SlackSlashCommandController {
 
+  case object BotNotInPrivateChannelException
+      extends Exception("Bot is not member of private channel")
+
   val MESSAGE_CRYPTO_ALERT_HELP: String = "slackResponse.cryptoAlertHelp"
   val MESSAGE_CRYPTO_ALERT_NEW: String = "slackResponse.cryptoAlertNew"
   val MESSAGE_CRYPTO_ALERT_RECONFIG: String =
     "slackResponse.cryptoAlertReconfig"
+  val MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL: String =
+    "slackResponse.cryptoAlertBotInChannel"
   val MESSAGE_GENERAL_ERROR: String = "slackResponse.generalError"
   val MESSAGE_CURRENCY_ERROR: String = "slackResponse.currencyError"
   val MESSAGE_PAUSE_ALERTS_HELP: String = "slackResponse.pauseAlertsHelp"
@@ -170,7 +175,29 @@ class SlackSlashCommandController @Inject() (
             logger.debug(s"amount = $amount")
 
             val f = for {
+
               team <- slackTeamDao.find(slashCommand.teamId)
+
+              conversationInfo <- slackManagerService.conversationInfo(
+                team.accessToken,
+                channel
+              )
+
+              _ <-
+                if (conversationInfo.isPrivate) {
+                  slackManagerService
+                    .conversationMembers(
+                      team.accessToken,
+                      channel
+                    )
+                    .map { members =>
+                      if (members contains team.teamId) team.teamId
+                      else throw BotNotInPrivateChannelException
+                    }
+                } else {
+                  Future.successful(team.teamId)
+                }
+
               _ <- hooksManager.update(
                 SlackChatHookPlainText(
                   channel,
@@ -179,20 +206,31 @@ class SlackSlashCommandController @Inject() (
                   isRunning = true
                 )
               )
+
               _ <- hooksManager.start(channel)
+
               result <- Future.successful(
                 Ok(messagesApi(MESSAGE_CRYPTO_ALERT_NEW, amount))
               )
+
             } yield result
 
-            f.recoverWith { case HookAlreadyStartedException(_) =>
-              val f = for {
-                _ <- hooksManager.stop(channel)
-                restarted <- hooksManager.start(channel)
-              } yield restarted
-              f.map { _ =>
-                Ok(messagesApi(MESSAGE_CRYPTO_ALERT_RECONFIG, amount))
-              }
+            f.recoverWith {
+
+              case HookAlreadyStartedException(_) =>
+                for {
+                  _ <- hooksManager.stop(channel)
+                  _ <- hooksManager.start(channel)
+                  result <- Future.successful {
+                    Ok(messagesApi(MESSAGE_CRYPTO_ALERT_RECONFIG, amount))
+                  }
+                } yield result
+
+              case BotNotInPrivateChannelException =>
+                Future.successful {
+                  Ok(messagesApi(MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL))
+                }
+
             }
 
           case None =>
@@ -231,11 +269,14 @@ class SlackSlashCommandController @Inject() (
       case Array("") =>
         logger.debug("Pausing alerts")
         val f = for {
-          stopped <- hooksManager.stop(channel)
-        } yield stopped
-        f.map { _ => Ok(messagesApi(MESSAGE_PAUSE_ALERTS)) }
-          .recover { case HookNotStartedException(_) =>
+          _ <- hooksManager.stop(channel)
+          result <- Future.successful{ Ok(messagesApi(MESSAGE_PAUSE_ALERTS)) }
+        } yield result
+        f.recover { case HookNotStartedException(_) =>
             Ok(messagesApi(MESSAGE_PAUSE_ALERTS_ERROR))
+        case ex: Exception =>
+          logger.error(ex.getMessage)
+          Ok("bad")
           }
     }
   }

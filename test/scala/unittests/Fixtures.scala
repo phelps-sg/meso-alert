@@ -74,6 +74,7 @@ import services.{
   MemPoolWatcher,
   MemPoolWatcherService,
   PeerGroupProvider,
+  SlackConversationInfo,
   SlackManager,
   SlackSecretsManagerService,
   SodiumEncryptionManager,
@@ -516,23 +517,26 @@ object Fixtures {
       )
     val originalThreshold = 100L
     val newThreshold = 200L
-    val key = SlackChannelId("#test")
+    val channelId = SlackChannelId("1234")
+    val key = channelId
+    val token1 = SlackAuthToken("test_token_1")
+    val token2 = SlackAuthToken("test_token_2")
     val hook = SlackChatHookPlainText(
-      key,
+      channelId,
       threshold = originalThreshold,
       isRunning = true,
-      token = SlackAuthToken("test_token_1")
+      token = token1
     )
     val stoppedHook = hook.copy(isRunning = false)
     val newHook = SlackChatHookPlainText(
-      key,
+      channelId,
       threshold = newThreshold,
       isRunning = true,
-      token = SlackAuthToken("test_token_2")
+      token = token2
     )
     val encryptedHook =
       SlackChatHookEncrypted(
-        key,
+        channelId,
         threshold = newThreshold,
         isRunning = true,
         token = encryptedToken1
@@ -698,8 +702,8 @@ object Fixtures {
   }
 
   trait SlickSlashCommandFixtures {
-    env: SlackSignatureVerifierFixtures =>
-    val channelId = SlackChannelId("1234")
+    env: SlackSignatureVerifierFixtures with SlackChatHookFixtures =>
+//    val channelId = SlackChannelId("1234")
     val channelIdBad = SlackChannelId("4321")
     val command = "/test"
     val text = ""
@@ -708,9 +712,10 @@ object Fixtures {
     val channelName = Some("test-channel")
     val userId = Some(SlackUserId("91011"))
     val userName = Some("test-user")
-    val testToken = SlackAuthToken("test-token")
+//    val testToken = SlackAuthToken("test-token")
     val isEnterpriseInstall = Some(false)
     val timeStamp = Some(java.time.LocalDateTime.of(2001, 1, 1, 0, 0))
+
     val slashCommand = SlashCommand(
       None,
       channelId,
@@ -724,6 +729,7 @@ object Fixtures {
       isEnterpriseInstall,
       timeStamp
     )
+
     val cryptoAlertCommand =
       SlashCommand(
         None,
@@ -739,10 +745,10 @@ object Fixtures {
         None
       )
 
-    def fakeRequestValidNoSignature(command: String, amount: String) =
+    def fakeRequestValidNoSignature(command: String, argument: String = "") =
       FakeRequest(POST, "/")
         .withFormUrlEncodedBody(
-          "token" -> testToken.value,
+          "token" -> token1.value,
           "team_id" -> slashCommandTeamId.value,
           "team_domain" -> "",
           "channel_id" -> channelId.value,
@@ -750,14 +756,17 @@ object Fixtures {
           "user_id" -> "91011",
           "user_name" -> "test-user",
           "command" -> command,
-          "text" -> amount,
+          "text" -> argument,
           "is_enterprise_install" -> "false"
         )
 
-    def fakeRequestValidNoSignatureBadChannel(command: String, amount: String) =
+    def fakeRequestValidNoSignatureBadChannel(
+        command: String,
+        argument: String
+    ) =
       FakeRequest(POST, "/")
         .withFormUrlEncodedBody(
-          "token" -> testToken.value,
+          "token" -> token1.value,
           "team_id" -> slashCommandTeamId.value,
           "team_domain" -> "",
           "channel_id" -> channelIdBad.value,
@@ -765,7 +774,7 @@ object Fixtures {
           "user_id" -> "91011",
           "user_name" -> "test-user",
           "command" -> command,
-          "text" -> amount,
+          "text" -> argument,
           "is_enterprise_install" -> "false"
         )
 
@@ -776,20 +785,20 @@ object Fixtures {
         ArraySeq.unsafeWrapArray(fakeSlackSignatureHeaders): _*
       )
 
-    def fakeRequestValid(
+    def slashCommand(
         command: String,
-        amount: String
+        argument: String = ""
     ): FakeRequest[AnyContentAsFormUrlEncoded] =
       withFakeSlackSignatureHeaders(
-        fakeRequestValidNoSignature(command, amount)
+        fakeRequestValidNoSignature(command, argument)
       )
 
-    def fakeRequestValidBadChannel(
+    def slashCommandWithBadChannel(
         command: String,
-        amount: String
+        argument: String = ""
     ): FakeRequest[AnyContentAsFormUrlEncoded] =
       withFakeSlackSignatureHeaders(
-        fakeRequestValidNoSignatureBadChannel(command, amount)
+        fakeRequestValidNoSignatureBadChannel(command, argument)
       )
 
     val testUserId = "testUser"
@@ -824,11 +833,13 @@ object Fixtures {
       mockSlackSignatureVerifierService
     )
 
+    val hooksManager = new HooksManagerSlackChat(hookDao, hooksActor)
+
     val slackSlashCommandController = new SlackSlashCommandController(
       Helpers.stubControllerComponents(),
       slashCommandHistoryDao = slickSlashCommandHistoryDao,
       slackTeamDao = slickSlackTeamDao,
-      hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
+      hooksManager,
       messagesApi,
       mockSlackManagerService,
       slackSignatureVerifyAction
@@ -989,6 +1000,20 @@ object Fixtures {
         extends SlackManager(config, slackClientExecutionContext)
 
     val mockSlackManagerService = mock[MockSlackManager]
+
+    def privateChannel: Boolean = false
+    val channelId: SlackChannelId
+
+    (mockSlackManagerService
+      .conversationInfo _)
+      .expects(*, *)
+      .anyNumberOfTimes()
+      .returning(
+        Future.successful(
+          SlackConversationInfo(channelId, isPrivate = privateChannel)
+        )
+      )
+
   }
 
   trait UserFixtures extends MockFactory {

@@ -233,6 +233,7 @@ class DaoTests
         extends FixtureBindings
         with DatabaseGuiceFixtures
         with SlackSignatureVerifierFixtures
+        with SlackChatHookFixtures
         with SlickSlashCommandFixtures
         with SlickSlashCommandHistoryDaoFixtures
         with DatabaseInitializer
