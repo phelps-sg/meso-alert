@@ -270,14 +270,11 @@ class SlackSlashCommandController @Inject() (
         logger.debug("Pausing alerts")
         val f = for {
           _ <- hooksManager.stop(channel)
-          result <- Future.successful{ Ok(messagesApi(MESSAGE_PAUSE_ALERTS)) }
+          result <- Future.successful { Ok(messagesApi(MESSAGE_PAUSE_ALERTS)) }
         } yield result
         f.recover { case HookNotStartedException(_) =>
-            Ok(messagesApi(MESSAGE_PAUSE_ALERTS_ERROR))
-        case ex: Exception =>
-          logger.error(ex.getMessage)
-          Ok("bad")
-          }
+          Ok(messagesApi(MESSAGE_PAUSE_ALERTS_ERROR))
+        }
     }
   }
 
