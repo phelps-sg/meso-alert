@@ -178,25 +178,7 @@ class SlackSlashCommandController @Inject() (
 
               team <- slackTeamDao.find(slashCommand.teamId)
 
-              conversationInfo <- slackManagerService.conversationInfo(
-                team.accessToken,
-                channel
-              )
-
-              _ <-
-                if (conversationInfo.isPrivate) {
-                  slackManagerService
-                    .conversationMembers(
-                      team.accessToken,
-                      channel
-                    )
-                    .map { members =>
-                      if (members contains team.teamId) team.teamId
-                      else throw BotNotInPrivateChannelException
-                    }
-                } else {
-                  Future.successful(team.teamId)
-                }
+              _ <- checkChannelPermissions(team)
 
               _ <- hooksManager.update(
                 SlackChatHookPlainText(
@@ -311,4 +293,31 @@ class SlackSlashCommandController @Inject() (
       case "/resume-alerts" => resumeAlerts
     }
   }
+
+  def checkChannelPermissions(
+      team: SlackTeam
+  )(implicit slashCommand: SlashCommand): Future[SlackTeam] =
+    for {
+
+      conversationInfo <- slackManagerService.conversationInfo(
+        team.accessToken,
+        channel
+      )
+
+      teamId <-
+        if (conversationInfo.isPrivate) {
+          slackManagerService
+            .conversationMembers(
+              team.accessToken,
+              channel
+            )
+            .map { members =>
+              if (members contains team.teamId) team
+              else throw BotNotInPrivateChannelException
+            }
+        } else {
+          Future.successful(team)
+        }
+    } yield teamId
+
 }
