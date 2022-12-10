@@ -1004,8 +1004,7 @@ object Fixtures {
     def privateChannel: Boolean = false
     val channelId: SlackChannelId
 
-    (mockSlackManagerService
-      .conversationInfo _)
+    (mockSlackManagerService.conversationInfo _)
       .expects(*, *)
       .anyNumberOfTimes()
       .returning(

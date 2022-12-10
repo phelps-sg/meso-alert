@@ -671,8 +671,7 @@ class ControllerTests
     }
 
     "return error message when configuring alerts in private channel without membership" in new TestFixturesWithPrivateChannel {
-      (mockSlackManagerService
-        .conversationMembers _)
+      (mockSlackManagerService.conversationMembers _)
         .expects(*, *)
         .returning(
           Future.successful {
@@ -689,8 +688,7 @@ class ControllerTests
     }
 
     "return correct message when configuring alerts in private channel with membership" in new TestFixturesWithPrivateChannel {
-      (mockSlackManagerService
-        .conversationMembers _)
+      (mockSlackManagerService.conversationMembers _)
         .expects(*, *)
         .returning(
           Future.successful {
