@@ -18,7 +18,7 @@ object BlockMessages {
   val MESSAGE_TRANSACTION_HASH = "slackChat.transactionHash"
   val MESSAGE_TOO_MANY_OUTPUTS = "slackChat.tooManyOutputs"
 
-  val txsPerSection = 20
+  private val txsPerSection = 20
 
   def message(messages: MessagesApi)(tx: TxUpdate): Blocks = {
     blockMessageBuilder(messages)(
