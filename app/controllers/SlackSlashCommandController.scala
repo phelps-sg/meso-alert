@@ -24,7 +24,7 @@ import scala.util.{Success, Try}
 
 object SlackSlashCommandController {
 
-  case object BotNotInPrivateChannelException
+  private case object BotNotInPrivateChannelException
       extends Exception("Bot is not member of private channel")
 
   val MESSAGE_CRYPTO_ALERT_HELP: String = "slackResponse.cryptoAlertHelp"
@@ -139,24 +139,17 @@ class SlackSlashCommandController @Inject() (
     }
   }
 
-  /** Check whether the body contains an SSL verification request (ssl_check=1)
-    * and if so respond with 200, otherwise attempt to parse the body as a slash
-    * command and process it using the supplied function.
-    */
-  def onSlashCommand(
-      body: Map[String, Seq[String]]
-  )(processCommand: SlashCommand => Future[Result]): Future[Result] =
-    SlackSlashCommandController.param("ssl_check")(body) match {
-      case Some("1") =>
-        Future.successful { Ok }
-      case _ =>
-        SlackSlashCommandController.toCommand(body).flatMap(processCommand)
+  def process(implicit slashCommand: SlashCommand): Future[Result] = {
+    slashCommand.command match {
+      case "/crypto-alert"  => cryptoAlert
+      case "/pause-alerts"  => pauseAlerts
+      case "/resume-alerts" => resumeAlerts
     }
+  }
 
-  def channel(implicit slashCommand: SlashCommand): SlackChannelId =
-    slashCommand.channelId
-
-  def cryptoAlert(implicit slashCommand: SlashCommand): Future[Result] = {
+  private def cryptoAlert(implicit
+      slashCommand: SlashCommand
+  ): Future[Result] = {
 
     val args = slashCommand.text.toLowerCase.split("\\s+")
 
@@ -236,7 +229,9 @@ class SlackSlashCommandController @Inject() (
     }
   }
 
-  def pauseAlerts(implicit slashCommand: SlashCommand): Future[Result] = {
+  private def pauseAlerts(implicit
+      slashCommand: SlashCommand
+  ): Future[Result] = {
 
     val args = slashCommand.text.toLowerCase.split("\\s+")
 
@@ -260,7 +255,9 @@ class SlackSlashCommandController @Inject() (
     }
   }
 
-  def resumeAlerts(implicit slashCommand: SlashCommand): Future[Result] = {
+  private def resumeAlerts(implicit
+      slashCommand: SlashCommand
+  ): Future[Result] = {
     val args = slashCommand.text.toLowerCase.split("\\s+")
 
     args match {
@@ -286,15 +283,30 @@ class SlackSlashCommandController @Inject() (
     }
   }
 
-  def process(implicit slashCommand: SlashCommand): Future[Result] = {
-    slashCommand.command match {
-      case "/crypto-alert"  => cryptoAlert
-      case "/pause-alerts"  => pauseAlerts
-      case "/resume-alerts" => resumeAlerts
+  /** Check whether the body contains an SSL verification request (ssl_check=1)
+    * and if so respond with 200, otherwise attempt to parse the body as a slash
+    * command and process it using the supplied function.
+    */
+  private def onSlashCommand(
+      body: Map[String, Seq[String]]
+  )(processCommand: SlashCommand => Future[Result]): Future[Result] =
+    SlackSlashCommandController.param("ssl_check")(body) match {
+      case Some("1") =>
+        Future.successful { Ok }
+      case _ =>
+        SlackSlashCommandController.toCommand(body).flatMap(processCommand)
     }
-  }
 
-  def checkChannelPermissions(
+  /** Check whether we have permissions to execute the specified command.
+    * @param team
+    *   The team corresponding to the bot
+    * @param slashCommand
+    *   The command to be executed
+    * @return
+    *   Either return the unaltered team object, or throw an exception if
+    *   insufficient permissions.
+    */
+  private def checkChannelPermissions(
       team: SlackTeam
   )(implicit slashCommand: SlashCommand): Future[SlackTeam] =
     for {
@@ -319,5 +331,8 @@ class SlackSlashCommandController @Inject() (
           Future.successful(team)
         }
     } yield teamId
+
+  private def channel(implicit slashCommand: SlashCommand): SlackChannelId =
+    slashCommand.channelId
 
 }
