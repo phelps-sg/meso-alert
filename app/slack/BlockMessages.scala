@@ -3,7 +3,12 @@ package slack
 import actors.{TxHash, TxUpdate}
 import dao.Satoshi
 import play.api.i18n.{Lang, MessagesApi}
-import util.BitcoinFormatting.{formatSatoshi, linkToAddress, linkToTxHash, toAddresses}
+import util.BitcoinFormatting.{
+  formatSatoshi,
+  linkToAddress,
+  linkToTxHash,
+  toAddresses
+}
 
 import scala.annotation.tailrec
 

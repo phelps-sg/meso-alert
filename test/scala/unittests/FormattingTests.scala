@@ -47,7 +47,11 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
       val chatMessage: (TxHash, Satoshi, Seq[String]) => Blocks =
         blockMessageBuilder(messagesApi)
 
-      def chatMessageStr(txHash: TxHash, amount: Satoshi, addresses: Seq[String]) =
+      def chatMessageStr(
+          txHash: TxHash,
+          amount: Satoshi,
+          addresses: Seq[String]
+      ) =
         chatMessage(txHash, amount, addresses).value
 
       val testHash = TxHash("testHash")
