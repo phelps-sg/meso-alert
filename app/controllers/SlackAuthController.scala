@@ -67,13 +67,16 @@ class SlackAuthController @Inject() (
 
         case Some("access_denied") =>
           logger.info("User cancelled OAuth during 'Add to Slack'")
-          Future { Ok(views.html.index(config.get[String]("slack.deployURL"))) }
+          Future.successful {
+            Ok(views.html.index(config.get[String]("slack.deployURL")))
+          }
 
         case Some(error) =>
           logger.error(s"Error during OAuth: $error")
-          Future { ServiceUnavailable(error) }
+          Future.successful { ServiceUnavailable(error) }
 
         case None =>
+
           val f = for {
             userId <- verifyState(state)
             team <- oauthV2Access(temporaryCode.get, userId)
