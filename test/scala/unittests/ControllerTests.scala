@@ -607,7 +607,9 @@ class ControllerTests
 
       contentAsString(
         response
-      ) mustEqual "I currently only provide alerts for BTC, but other currencies are coming soon."
+      ) mustEqual messagesApi(
+        SlackSlashCommandController.MESSAGE_CURRENCY_ERROR
+      )
     }
 
     "return http status 200 when receiving an ssl_check due to url change" in new TestFixtures {
