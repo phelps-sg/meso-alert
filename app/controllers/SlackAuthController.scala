@@ -1,6 +1,6 @@
 package controllers
 
-import dao.{RegisteredUserId, Secret, SlackTeam, SlackTeamDao}
+import dao.{RegisteredUserId, Secret, SlackTeam, SlackTeamDao, DaoUtils}
 import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
 import play.api.{Configuration, Logging, mvc}
 import services.{SlackManagerService, SlackSecretsManagerService}
@@ -57,7 +57,10 @@ class SlackAuthController @Inject() (
       temporaryCode: Option[String],
       error: Option[String],
       state: Option[String]
-  ): mvc.Action[AnyContent] =
+  ): mvc.Action[AnyContent] = {
+
+    import DaoUtils._
+
     Action.async { implicit request: Request[AnyContent] =>
       logger.debug(
         s"Received slash auth redirect with state $state and code $temporaryCode"
@@ -73,19 +76,19 @@ class SlackAuthController @Inject() (
 
         case Some(error) =>
           logger.error(s"Error during OAuth: $error")
-          Future.successful { ServiceUnavailable(error) }
+          Future.successful {
+            ServiceUnavailable(error)
+          }
 
         case None =>
           val f = for {
             userId <- verifyState(state)
             team <- oauthV2Access(temporaryCode.get, userId)
             _ <- slackSecretsManagerService.unbind(userId)
-            n <- slackTeamDao.insertOrUpdate(team)
-          } yield n
+            _ <- slackTeamDao.insertOrUpdate(team).withException
+          } yield Ok(views.html.installed())
 
-          f map { case 1 =>
-            Ok(views.html.installed())
-          } recover {
+          f recover {
             case BoltException(message) =>
               ServiceUnavailable(s"Invalid user: $message")
             case ex: Exception =>
@@ -95,4 +98,5 @@ class SlackAuthController @Inject() (
           }
       }
     }
+  }
 }
