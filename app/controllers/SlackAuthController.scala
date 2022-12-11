@@ -76,7 +76,6 @@ class SlackAuthController @Inject() (
           Future.successful { ServiceUnavailable(error) }
 
         case None =>
-
           val f = for {
             userId <- verifyState(state)
             team <- oauthV2Access(temporaryCode.get, userId)
