@@ -289,7 +289,7 @@ class DaoTests
                 TransactionUpdate(
                   Some(_: Long),
                   `testHash`,
-                  10,
+                  Satoshi(10),
                   `timeStamp`,
                   true
                 )

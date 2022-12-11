@@ -309,7 +309,7 @@ class ActorTests
           // noinspection SpellCheckingInspection
           case TxUpdate(
                 _,
-                totalValue,
+                Satoshi(totalValue),
                 _,
                 _,
                 Seq(
@@ -325,7 +325,7 @@ class ActorTests
         updateCapture.value should matchPattern {
           case TxUpdate(
                 _,
-                1000000,
+                Satoshi(1000000),
                 _,
                 _,
                 Seq(
@@ -344,7 +344,7 @@ class ActorTests
                 TxHash(
                   "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4"
                 ),
-                300000000,
+                Satoshi(300000000),
                 _,
                 _,
                 Seq(
@@ -366,7 +366,7 @@ class ActorTests
                 TxHash(
                   "73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259"
                 ),
-                923985,
+                Satoshi(923985),
                 _,
                 _,
                 Seq(
@@ -524,7 +524,7 @@ class ActorTests
 
       val tx1 = TxUpdate(
         TxHash("testHash1"),
-        10,
+        Satoshi(10),
         now,
         isPending = true,
         List(),
@@ -533,7 +533,7 @@ class ActorTests
       )
       val tx2 = TxUpdate(
         TxHash("testHash2"),
-        1,
+        Satoshi(1),
         now,
         isPending = true,
         List(),

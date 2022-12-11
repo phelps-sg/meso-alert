@@ -31,7 +31,7 @@ object BitcoinFormatting {
       .mkString(", ")
 
   def message(tx: TxUpdate): String = {
-    s"New transaction ${linkToTxHash(tx.hash)} with value ${formatSatoshi(tx.value)} BTC to " +
+    s"New transaction ${linkToTxHash(tx.hash)} with value ${formatSatoshi(tx.value.value)} BTC to " +
       s"addresses ${formatOutputAddresses(tx.outputs)}"
   }
 

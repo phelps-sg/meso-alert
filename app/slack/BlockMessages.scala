@@ -25,7 +25,11 @@ object BlockMessages {
   val txsPerSection = 20
 
   def message(messages: MessagesApi)(tx: TxUpdate): Blocks = {
-    blockMessageBuilder(messages)(tx.hash, tx.value, toAddresses(tx.outputs))
+    blockMessageBuilder(messages)(
+      tx.hash,
+      tx.value.value,
+      toAddresses(tx.outputs)
+    )
   }
 
   @tailrec

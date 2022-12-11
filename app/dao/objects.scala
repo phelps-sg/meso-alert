@@ -101,10 +101,12 @@ final case class SlackTeamEncrypted(
     registeredUserId: RegisteredUserId
 )
 
+final case class Satoshi(value: Long) extends AnyVal with MappedTo[Long]
+
 final case class TransactionUpdate(
     id: Option[Long],
     hash: TxHash,
-    value: Long,
+    amount: Satoshi,
     timeStamp: java.time.LocalDateTime,
     isPending: Boolean
 )

@@ -148,7 +148,7 @@ object Tables {
       extends Table[TransactionUpdate](tag, "transaction_updates") {
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
     def hash = column[TxHash]("hash")
-    def value = column[Long]("value")
+    def value = column[Satoshi]("value")
     def time_stamp = column[java.time.LocalDateTime]("time_stamp")
     def isPending = column[Boolean]("isPending")
 
