@@ -6,7 +6,8 @@ import dao.{
   SlackAuthToken,
   SlackChannelId,
   SlackChatHookPlainText,
-  SlashCommand
+  SlashCommand,
+  Satoshi
 }
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.matchers.should
@@ -30,23 +31,23 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
   "formatSatoshiValue" should {
 
     "return a value greater than 1 when value >= 100000000" in {
-      formatSatoshi(100000000) shouldEqual "1"
-      formatSatoshi(1000000000) shouldEqual "10"
+      formatSatoshi(Satoshi(100000000)) shouldEqual "1"
+      formatSatoshi(Satoshi(1000000000)) shouldEqual "10"
     }
 
     "return a decimal value between 0 and 0.99999999 when 0 <= value < 100000000" in {
-      formatSatoshi(0) shouldEqual "0.0"
-      formatSatoshi(99999999) shouldEqual "0.99999999"
+      formatSatoshi(Satoshi(0)) shouldEqual "0.0"
+      formatSatoshi(Satoshi(99999999)) shouldEqual "0.99999999"
     }
   }
 
   "blockMessageBuilder" should {
 
     trait TestFixtures extends MessagesFixtures {
-      val chatMessage: (TxHash, Long, Seq[String]) => Blocks =
+      val chatMessage: (TxHash, Satoshi, Seq[String]) => Blocks =
         blockMessageBuilder(messagesApi)
 
-      def chatMessageStr(txHash: TxHash, amount: Long, addresses: Seq[String]) =
+      def chatMessageStr(txHash: TxHash, amount: Satoshi, addresses: Seq[String]) =
         chatMessage(txHash, amount, addresses).value
 
       val testHash = TxHash("testHash")
@@ -55,7 +56,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
     "print all outputs if they take up less than 47 sections - single section" in new TestFixtures {
       chatMessageStr(
         testHash,
-        100000000,
+        Satoshi(100000000),
         List("1", "2")
       ) should fullyMatch regex
         """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https://www\.blockchair\.com/bitcoin/transaction/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},\{"type":"section","text":\{"type": "mrkdwn", "text": "<https://www\.blockchair\.com/bitcoin/address/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>, <https://www\.blockchair\.com/bitcoin/address/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> "\}\}, \{"type":"divider"\}]"""
@@ -64,14 +65,14 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
     "print all outputs if they take up less than 47 sections - multiple sections" in new TestFixtures {
       chatMessageStr(
         testHash,
-        100000000,
+        Satoshi(100000000),
         List.range(1, 30, 1).map(x => x.toString)
       ) should fullyMatch regex
         """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https:\/\/www\.blockchair\.com\/bitcoin\/transaction\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},(\{"type":"section","text":\{"type": "mrkdwn", "text": "(<https:\/\/www\.blockchair\.com\/bitcoin\/address\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>(,)* )+"\}\}, )*\{"type":"divider"\}]"""
 
       chatMessageStr(
         testHash,
-        100000000,
+        Satoshi(100000000),
         List.range(1, 100, 1).map(x => x.toString)
       ) should fullyMatch regex
         """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https:\/\/www\.blockchair\.com\/bitcoin\/transaction\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},(\{"type":"section","text":\{"type": "mrkdwn", "text": "(<https:\/\/www\.blockchair\.com\/bitcoin\/address\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>(,)* )+"\}\}, )*\{"type":"divider"\}]"""
@@ -82,7 +83,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
       new TestFixtures {
         val result: String = chatMessageStr(
           testHash,
-          100000000,
+          Satoshi(100000000),
           List.fill(1000)("testOutput")
         )
         result should include(
