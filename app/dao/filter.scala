@@ -8,5 +8,5 @@ trait Filter {
 
 trait ThresholdFilter extends Filter {
   val threshold: Long
-  def filter(tx: TxUpdate): Boolean = tx.value.value >= threshold
+  def filter(tx: TxUpdate): Boolean = tx.amount.value >= threshold
 }

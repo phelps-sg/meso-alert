@@ -1,13 +1,9 @@
 package slack
 
 import actors.{TxHash, TxUpdate}
+import dao.Satoshi
 import play.api.i18n.{Lang, MessagesApi}
-import util.BitcoinFormatting.{
-  formatSatoshi,
-  linkToAddress,
-  linkToTxHash,
-  toAddresses
-}
+import util.BitcoinFormatting.{formatSatoshi, linkToAddress, linkToTxHash, toAddresses}
 
 import scala.annotation.tailrec
 
@@ -27,7 +23,7 @@ object BlockMessages {
   def message(messages: MessagesApi)(tx: TxUpdate): Blocks = {
     blockMessageBuilder(messages)(
       tx.hash,
-      tx.value.value,
+      tx.amount,
       toAddresses(tx.outputs)
     )
   }
@@ -77,7 +73,7 @@ object BlockMessages {
 
   def blockMessageBuilder(messages: MessagesApi)(
       txHash: TxHash,
-      txValue: Long,
+      txValue: Satoshi,
       txOutputs: Seq[String]
   ): Blocks = {
     Blocks(

@@ -1,6 +1,7 @@
 package util
 
 import actors.{TxHash, TxInputOutput, TxUpdate}
+import dao.Satoshi
 
 object BitcoinFormatting {
 
@@ -12,10 +13,12 @@ object BitcoinFormatting {
   def linkToAddress(address: String): String =
     s"<$blockChairBaseURL/address/$address|$address>"
 
-  def formatSatoshi(value: Long): String = {
-    value match {
-      case value if value >= 100000000 => (value / 100000000L).toString
-      case _                           => (value.toDouble / 100000000L).toString
+  def formatSatoshi(amount: Satoshi): String = {
+    amount.value match {
+      case value if value >= 100000000 =>
+        (value / 100000000L).toString
+      case value =>
+        (value.toDouble / 100000000L).toString
     }
   }
 
@@ -31,7 +34,7 @@ object BitcoinFormatting {
       .mkString(", ")
 
   def message(tx: TxUpdate): String = {
-    s"New transaction ${linkToTxHash(tx.hash)} with value ${formatSatoshi(tx.value.value)} BTC to " +
+    s"New transaction ${linkToTxHash(tx.hash)} with value ${formatSatoshi(tx.amount)} BTC to " +
       s"addresses ${formatOutputAddresses(tx.outputs)}"
   }
 
