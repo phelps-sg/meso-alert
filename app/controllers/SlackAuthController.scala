@@ -1,7 +1,13 @@
 package controllers
 
-import dao.{RegisteredUserId, Secret, SlackTeam, SlackTeamDao, DaoUtils}
-import play.api.mvc.{AnyContent, BaseController, ControllerComponents, Request}
+import dao.{DaoUtils, RegisteredUserId, Secret, SlackTeam, SlackTeamDao}
+import play.api.mvc.{
+  AnyContent,
+  BaseController,
+  ControllerComponents,
+  Request,
+  Result
+}
 import play.api.{Configuration, Logging, mvc}
 import services.{SlackManagerService, SlackSecretsManagerService}
 import slack.{BoltException, SlackClient}
@@ -66,37 +72,44 @@ class SlackAuthController @Inject() (
         s"Received slash auth redirect with state $state and code $temporaryCode"
       )
 
-      error match {
+      guardAgainst(error) {
 
-        case Some("access_denied") =>
-          logger.info("User cancelled OAuth during 'Add to Slack'")
-          Future.successful {
-            Ok(views.html.index(config.get[String]("slack.deployURL")))
-          }
+        val f = for {
+          userId <- verifyState(state)
+          team <- oauthV2Access(temporaryCode.get, userId)
+          _ <- slackSecretsManagerService.unbind(userId)
+          _ <- slackTeamDao.insertOrUpdate(team).withException
+        } yield Ok(views.html.installed())
 
-        case Some(error) =>
-          logger.error(s"Error during OAuth: $error")
-          Future.successful {
-            ServiceUnavailable(error)
-          }
+        f recover {
+          case BoltException(message) =>
+            ServiceUnavailable(s"Invalid user: $message")
+          case ex: Exception =>
+            logger.error(ex.getMessage)
+            ex.printStackTrace()
+            ServiceUnavailable(ex.getMessage)
+        }
 
-        case None =>
-          val f = for {
-            userId <- verifyState(state)
-            team <- oauthV2Access(temporaryCode.get, userId)
-            _ <- slackSecretsManagerService.unbind(userId)
-            _ <- slackTeamDao.insertOrUpdate(team).withException
-          } yield Ok(views.html.installed())
-
-          f recover {
-            case BoltException(message) =>
-              ServiceUnavailable(s"Invalid user: $message")
-            case ex: Exception =>
-              logger.error(ex.getMessage)
-              ex.printStackTrace()
-              ServiceUnavailable(ex.getMessage)
-          }
       }
+    }
+  }
+
+  private def guardAgainst(
+      error: Option[String]
+  )(block: => Future[Result]): Future[Result] = {
+    error match {
+      case Some("access_denied") =>
+        logger.info("User cancelled OAuth during 'Add to Slack'")
+        Future.successful {
+          Ok(views.html.index(config.get[String]("slack.deployURL")))
+        }
+      case Some(error) =>
+        logger.error(s"Error during OAuth: $error")
+        Future.successful {
+          ServiceUnavailable(error)
+        }
+      case None =>
+        block
     }
   }
 }
