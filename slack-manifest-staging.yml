@@ -41,7 +41,10 @@
                 "channels:read",
                 "chat:write",
                 "chat:write.public",
-                "commands"
+                "commands",
+                "groups:read",
+                "im:read",
+                "mpim:read"
             ]
         }
     },
