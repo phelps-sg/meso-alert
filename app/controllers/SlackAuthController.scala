@@ -33,31 +33,8 @@ class SlackAuthController @Inject() (
   final case class InvalidAuthState(state: Option[String])
       extends Exception(s"Invalid state parameter: $state")
 
-  protected def oauthV2Access(
-      temporaryCode: String,
-      userId: RegisteredUserId
-  ): Future[SlackTeam] = {
-    slackManagerService.oauthV2Access(
-      slackClientId,
-      slackClientSecret,
-      temporaryCode,
-      userId
-    )
-  }
-
-  protected def verifyState(state: Option[String]): Future[RegisteredUserId] = {
-    state match {
-      case Some(AuthRegEx(uid, secretBase64)) =>
-        slackSecretsManagerService.verifySecret(
-          RegisteredUserId(uid),
-          Secret(base64Decode(secretBase64))
-        ) map {
-          _.id
-        }
-      case _ =>
-        Future.failed(InvalidAuthState(state))
-    }
-  }
+  case object NoTemporaryCodeException
+      extends Exception("Missing temporary code")
 
   def authRedirect(
       temporaryCode: Option[String],
@@ -76,7 +53,7 @@ class SlackAuthController @Inject() (
 
         val f = for {
           userId <- verifyState(state)
-          team <- oauthV2Access(temporaryCode.get, userId)
+          team <- oauthV2Access(temporaryCode, userId)
           _ <- slackSecretsManagerService.unbind(userId)
           _ <- slackTeamDao.insertOrUpdate(team).withException
         } yield Ok(views.html.installed())
@@ -91,6 +68,37 @@ class SlackAuthController @Inject() (
         }
 
       }
+    }
+  }
+
+  protected def oauthV2Access(
+      temporaryCode: Option[String],
+      userId: RegisteredUserId
+  ): Future[SlackTeam] = {
+    temporaryCode match {
+      case Some(code) =>
+        slackManagerService.oauthV2Access(
+          slackClientId,
+          slackClientSecret,
+          code,
+          userId
+        )
+      case None =>
+        Future.failed(NoTemporaryCodeException)
+    }
+  }
+
+  protected def verifyState(state: Option[String]): Future[RegisteredUserId] = {
+    state match {
+      case Some(AuthRegEx(uid, secretBase64)) =>
+        slackSecretsManagerService.verifySecret(
+          RegisteredUserId(uid),
+          Secret(base64Decode(secretBase64))
+        ) map {
+          _.id
+        }
+      case _ =>
+        Future.failed(InvalidAuthState(state))
     }
   }
 
