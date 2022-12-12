@@ -133,8 +133,12 @@ class SlackManager @Inject() (
       .token(token.value)
       .channel(channel.value)
       .build()
+    logger.debug(s"Sending ConversationsMembersRequest $request")
     BoltFuture { slackMethods.conversationsMembers(request) } map { response =>
-      response.getMembers.asScala.toSet.map(SlackTeamId)
+      {
+        logger.debug(s"Received ConversationsMembersResponse $response")
+        response.getMembers.asScala.toSet.map(SlackTeamId)
+      }
     }
   }
 
