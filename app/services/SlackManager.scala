@@ -120,8 +120,12 @@ class SlackManager @Inject() (
       .token(token.value)
       .channel(channel.value)
       .build
+    logger.debug(s"Sending ConversationsInfoRequest $request")
     BoltFuture { slackMethods.conversationsInfo(request) } map { response =>
-      SlackConversationInfo(channel, response.getChannel.isPrivate)
+      {
+        logger.debug(s"Received ConversationsInfoResponse $response")
+        SlackConversationInfo(channel, response.getChannel.isPrivate)
+      }
     }
   }
 
