@@ -1,15 +1,6 @@
 package services
 
-import actors.{
-  Register,
-  Registered,
-  Start,
-  Started,
-  Stop,
-  Stopped,
-  Update,
-  Updated
-}
+import actors.{Register, Registered, Start, Started, Stop, Stopped, Update, Updated}
 import akka.actor.{ActorRef, ActorSystem}
 import dao.{Hook, HookDao}
 import play.api.Logging
@@ -17,7 +8,6 @@ import util.FutureInitialisingComponent
 
 import scala.annotation.unused
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 
 trait HooksManagerService[X, Y] {
 //  def init(): Future[Seq[Started[Y]]]
@@ -42,15 +32,17 @@ trait HooksManager[X, Y <: Hook[X]]
     val initFuture = for {
       keys <- hookDao.allRunningKeys()
       started <- Future.sequence(keys.map(key => start(key)))
-    } yield started
+      _ <- Future.successful {
+        logger.info(f"Started ${started.size} hooks.")
+      }
+    } yield ()
 
-    initFuture.onComplete {
-      case Success(x) => logger.info(f"Started ${x.size} hooks.")
-      case Failure(exception) =>
+    initFuture.recover {
+      case exception: Exception =>
         logger.error(f"Failed to load hooks: ${exception.getMessage}")
     }
 
-    initFuture map { _ => () }
+    initFuture
   }
 
   def start(key: X): Future[Started[Y]] = sendAndReceive(Start(key))
