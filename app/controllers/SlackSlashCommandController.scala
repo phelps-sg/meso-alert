@@ -123,10 +123,10 @@ class SlackSlashCommandController @Inject() (
 
   implicit val lang: Lang = Lang("en")
 
-  private val onSignatureValid =
+  private val onValidSignature =
     validateSignatureAsync(formUrlEncodedParser)(_)
 
-  def slashCommand: Action[ByteString] = onSignatureValid { body =>
+  def slashCommand: Action[ByteString] = onValidSignature { body =>
     onSlashCommand(body) { slashCommand =>
       val f = for {
         _ <- slashCommandHistoryDao.record(slashCommand)

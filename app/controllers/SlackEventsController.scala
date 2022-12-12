@@ -24,10 +24,10 @@ class SlackEventsController @Inject() (
     with HMACSignatureHelpers
     with Logging {
 
-  private val onSignatureValid = validateSignatureAsync(Json.parse)(_)
+  private val onValidSignature = validateSignatureAsync(Json.parse)(_)
 
   def eventsAPI(): Action[ByteString] =
-    onSignatureValid { body: JsValue =>
+    onValidSignature { body: JsValue =>
       {
         val isChallenge = (body \ "challenge").asOpt[String]
         isChallenge match {
