@@ -5,10 +5,13 @@ import com.slack.api.methods.SlackApiTextResponse
 import scala.concurrent.{ExecutionContext, Future}
 
 final case class BoltException(msg: String) extends Exception(msg)
+object BoltException {
+  val ERROR_CHANNEL_NOT_FOUND = "channel_not_found"
+}
 
 object FutureConverters {
 
-  def checkIsOK[T <: SlackApiTextResponse](result: T): T = {
+  private def checkIsOK[T <: SlackApiTextResponse](result: T): T = {
     if (result.isOk) result else throw BoltException(result.getError)
   }
 

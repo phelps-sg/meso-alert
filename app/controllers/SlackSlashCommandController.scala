@@ -17,6 +17,7 @@ import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}
 import play.api.mvc._
 import services.{HooksManagerSlackChat, SlackManagerService}
+import slack.BoltException
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -201,7 +202,7 @@ class SlackSlashCommandController @Inject() (
                   }
                 } yield result
 
-              case BotNotInPrivateChannelException =>
+              case BoltException(BoltException.ERROR_CHANNEL_NOT_FOUND) =>
                 Future.successful {
                   Ok(messagesApi(MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL))
                 }
@@ -309,28 +310,14 @@ class SlackSlashCommandController @Inject() (
   private def checkChannelPermissions(
       team: SlackTeam
   )(implicit slashCommand: SlashCommand): Future[SlackTeam] =
+    // conversationInfo will throw BoltException("channel_not_found") for
+    // private channels we are not a member of.
     for {
-
-      conversationInfo <- slackManagerService.conversationInfo(
+      _ <- slackManagerService.conversationInfo(
         team.accessToken,
         channel
       )
-
-      teamId <-
-        if (conversationInfo.isPrivate) {
-          slackManagerService
-            .conversationMembers(
-              team.accessToken,
-              channel
-            )
-            .map { members =>
-              if (members contains team.teamId) team
-              else throw BotNotInPrivateChannelException
-            }
-        } else {
-          Future.successful(team)
-        }
-    } yield teamId
+    } yield team
 
   private def channel(implicit slashCommand: SlashCommand): SlackChannelId =
     slashCommand.channelId
