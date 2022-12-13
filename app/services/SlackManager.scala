@@ -39,12 +39,12 @@ trait SlackManagerService {
       blocks: Blocks
   ): Future[Blocks]
 
-  def conversationInfo(
+  def conversationsInfo(
       token: SlackAuthToken,
       channel: SlackChannelId
   ): Future[SlackConversationInfo]
 
-  def conversationMembers(
+  def conversationsMembers(
       token: SlackAuthToken,
       channel: SlackChannelId
   ): Future[Set[SlackTeamId]]
@@ -112,7 +112,7 @@ class SlackManager @Inject() (
     BoltFuture { slackMethods.chatPostMessage(request) } map { _ => blocks }
   }
 
-  override def conversationInfo(
+  override def conversationsInfo(
       token: SlackAuthToken,
       channel: SlackChannelId
   ): Future[SlackConversationInfo] = {
@@ -129,7 +129,7 @@ class SlackManager @Inject() (
     }
   }
 
-  override def conversationMembers(
+  override def conversationsMembers(
       token: SlackAuthToken,
       channel: SlackChannelId
   ): Future[Set[SlackTeamId]] = {

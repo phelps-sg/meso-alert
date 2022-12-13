@@ -313,7 +313,7 @@ class SlackSlashCommandController @Inject() (
     // conversationInfo will throw BoltException("channel_not_found") for
     // private channels we are not a member of.
     for {
-      _ <- slackManagerService.conversationInfo(
+      _ <- slackManagerService.conversationsInfo(
         team.accessToken,
         channel
       )
