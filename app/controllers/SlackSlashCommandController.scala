@@ -25,9 +25,6 @@ import scala.util.{Success, Try}
 
 object SlackSlashCommandController {
 
-  private case object BotNotInPrivateChannelException
-      extends Exception("Bot is not member of private channel")
-
   val MESSAGE_CRYPTO_ALERT_HELP: String = "slackResponse.cryptoAlertHelp"
   val MESSAGE_CRYPTO_ALERT_NEW: String = "slackResponse.cryptoAlertNew"
   val MESSAGE_CRYPTO_ALERT_RECONFIG: String =
