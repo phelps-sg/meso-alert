@@ -87,6 +87,7 @@ import slack.BlockMessages.{
   MESSAGE_TO_ADDRESSES,
   MESSAGE_TRANSACTION_HASH
 }
+import slack.BoltException
 import slick.BtcPostgresProfile.api._
 import slick._
 import slick.dbio.{DBIO, Effect}
@@ -1012,14 +1013,25 @@ object Fixtures {
     def privateChannel: Boolean = false
     val channelId: SlackChannelId
 
-    (mockSlackManagerService.conversationInfo _)
-      .expects(*, *)
-      .anyNumberOfTimes()
-      .returning(
-        Future.successful(
-          SlackConversationInfo(channelId, isPrivate = privateChannel)
+    if (privateChannel) {
+      (mockSlackManagerService.conversationInfo _)
+        .expects(*, *)
+        .anyNumberOfTimes()
+        .returning(
+          Future.failed(
+            BoltException.ChannelNotFoundException
+          )
         )
-      )
+    } else {
+      (mockSlackManagerService.conversationInfo _)
+        .expects(*, *)
+        .anyNumberOfTimes()
+        .returning(
+          Future.successful(
+            SlackConversationInfo(channelId, isPrivate = privateChannel)
+          )
+        )
+    }
 
   }
 

@@ -673,13 +673,6 @@ class ControllerTests
     }
 
     "return error message when configuring alerts in private channel without membership" in new TestFixturesWithPrivateChannel {
-      (mockSlackManagerService.conversationMembers _)
-        .expects(*, *)
-        .returning(
-          Future.successful {
-            Set()
-          }
-        )
       val result = slashCommandWithTeam {
         slashCommand("/crypto-alert", "10")
       }
@@ -687,21 +680,6 @@ class ControllerTests
       contentAsString(
         result
       ) mustEqual SlackSlashCommandController.MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL
-    }
-
-    "return correct message when configuring alerts in private channel with membership" in new TestFixturesWithPrivateChannel {
-      (mockSlackManagerService.conversationMembers _)
-        .expects(*, *)
-        .returning(
-          Future.successful {
-            Set(slashCommandTeamId)
-          }
-        )
-      val result = cryptoAlert(10)
-      status(result) mustEqual OK
-      contentAsString(
-        result
-      ) mustEqual SlackSlashCommandController.MESSAGE_CRYPTO_ALERT_NEW
     }
 
     "return error message when pausing alerts when there are no alerts active" in new TestFixtures {

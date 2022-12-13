@@ -202,7 +202,7 @@ class SlackSlashCommandController @Inject() (
                   }
                 } yield result
 
-              case BoltException(BoltException.ERROR_CHANNEL_NOT_FOUND) =>
+              case BoltException.ChannelNotFoundException =>
                 Future.successful {
                   Ok(messagesApi(MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL))
                 }
