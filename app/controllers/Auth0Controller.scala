@@ -25,7 +25,7 @@ class Auth0Controller @Inject() (
   protected val encoder: Base64.Encoder = java.util.Base64.getEncoder
   protected val slackUrl: String = config.get[String]("slack.deployURL")
 
-  val auth0Configuration: Auth0Configuration = Auth0Configuration(
+  private val auth0Configuration: Auth0Configuration = Auth0Configuration(
     config.get[String]("auth0.clientId"),
     config.get[Uri]("auth0.domain"),
     config.get[Uri]("auth0.audience")
