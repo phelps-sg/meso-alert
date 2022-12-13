@@ -7,7 +7,9 @@ import scala.concurrent.{ExecutionContext, Future}
 final case class BoltException(msg: String) extends Exception(msg)
 object BoltException {
   val ERROR_CHANNEL_NOT_FOUND = "channel_not_found"
-  val ChannelNotFoundException = BoltException(ERROR_CHANNEL_NOT_FOUND)
+  val ChannelNotFoundException: BoltException = BoltException(
+    ERROR_CHANNEL_NOT_FOUND
+  )
 }
 
 object FutureConverters {
