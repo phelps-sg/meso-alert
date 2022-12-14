@@ -7,6 +7,7 @@ import actors.MemPoolWatcherActor.{
   PeerGroupAlreadyStartedException,
   StartPeerGroup
 }
+import actors.RateLimitingBatchingActor.TxBatch
 import actors.SlackSecretsActor.{
   GenerateSecret,
   Unbind,
@@ -19,6 +20,7 @@ import actors.{
   HookAlreadyStartedException,
   HookNotRegisteredException,
   HookNotStartedException,
+  RateLimitingBatchingActor,
   Registered,
   Started,
   Stopped,
@@ -33,6 +35,7 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
 import com.google.common.util.concurrent.ListenableFuture
 import dao._
+import io.jsonwebtoken.impl.FixedClock
 import org.bitcoinj.core._
 import org.bitcoinj.core.listeners.{
   BlocksDownloadedEventListener,
@@ -80,6 +83,7 @@ import unittests.Fixtures.{
 
 import java.math.BigInteger
 import java.net.URI
+import java.time.{Clock, OffsetDateTime}
 import scala.annotation.unused
 import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
@@ -521,25 +525,25 @@ class ActorTests
     }
 
     "only provide updates according to the user's filter" in new TestFixturesOneSubscriber {
-
-      val tx1 = TxUpdate(
-        TxHash("testHash1"),
-        Satoshi(10),
-        now,
-        isPending = true,
-        List(),
-        List(),
-        None
-      )
-      val tx2 = TxUpdate(
-        TxHash("testHash2"),
-        Satoshi(1),
-        now,
-        isPending = true,
-        List(),
-        List(),
-        None
-      )
+//
+//      val tx1 = TxUpdate(
+//        TxHash("testHash1"),
+//        Satoshi(10),
+//        now,
+//        isPending = true,
+//        List(),
+//        List(),
+//        None
+//      )
+//      val tx2 = TxUpdate(
+//        TxHash("testHash2"),
+//        Satoshi(1),
+//        now,
+//        isPending = true,
+//        List(),
+//        List(),
+//        None
+//      )
 
       (mockUserManager.authenticate _)
         .expects("test")
@@ -748,6 +752,46 @@ class ActorTests
               Seq(`stoppedHook`)
             ) =>
       }
+    }
+  }
+
+  "RateLimitingBatchActor" should {
+
+    trait TestFixtures extends FixtureBindings with TxUpdateFixtures {
+      val timestampStr: String = "2017-09-15T13:50:30.526+05:30"
+      val t0: OffsetDateTime = OffsetDateTime.parse(timestampStr)
+      val clock = mock[Clock]
+      (clock.instant _).expects().returning(t0.toInstant)
+      val actor =
+        actorSystem.actorOf(RateLimitingBatchingActor.props(self, clock))
+
+      def tPlus(millis: Int) = t0.plusNanos(1000000 * millis)
+    }
+
+    "forward separate messages when they are separated by a long delay" in new TestFixtures {
+      (clock.instant _).expects().returning(tPlus(2000).toInstant)
+      actor ! tx
+      expectMsg(tx)
+      (clock.instant _).expects().returning(tPlus(4000).toInstant)
+      actor ! tx1
+      expectMsg(tx1)
+    }
+
+    "forward a batch of messages when they are separated by a short delay" in new TestFixtures {
+      (clock.instant _).expects().returning(tPlus(500).toInstant)
+      actor ! tx
+      expectMsg(tx)
+      (clock.instant _).expects().returning(tPlus(600).toInstant)
+      actor ! tx1
+      expectNoMessage()
+      (clock.instant _).expects().returning(tPlus(700).toInstant)
+      actor ! tx2
+      (clock.instant _).expects().returning(tPlus(3000).toInstant)
+      actor ! tx3
+      expectMsg(TxBatch(Vector(tx1, tx2, tx3)))
+      (clock.instant _).expects().returning(tPlus(5000).toInstant)
+      actor ! tx4
+      expectMsg(tx4)
     }
   }
 

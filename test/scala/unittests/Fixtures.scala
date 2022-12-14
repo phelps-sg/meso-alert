@@ -2,29 +2,7 @@ package unittests
 
 import actions.Auth0ValidateJWTAction
 import actors.EncryptionActor.Encrypted
-import actors.{
-  AuthenticationActor,
-  BlockChainWatcherActor,
-  EncryptionActor,
-  HooksManagerActorSlackChat,
-  HooksManagerActorWeb,
-  MemPoolWatcherActor,
-  Register,
-  Registered,
-  SlackSecretsActor,
-  Start,
-  Started,
-  Stop,
-  Stopped,
-  TxFilterActor,
-  TxHash,
-  TxMessagingActorSlackChat,
-  TxMessagingActorWeb,
-  TxPersistenceActor,
-  TxUpdate,
-  Update,
-  Updated
-}
+import actors.{AuthenticationActor, BlockChainWatcherActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, Register, Registered, SlackSecretsActor, Start, Started, Stop, Stopped, TxFilterActor, TxHash, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor, TxUpdate, Update, Updated}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.stream.Materializer
@@ -32,12 +10,7 @@ import akka.util.{ByteString, Timeout}
 import com.google.common.io.ByteStreams
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
-import com.mesonomics.playhmacsignatures.{
-  EpochSeconds,
-  HmacSignature,
-  SignatureVerifierService,
-  SlackSignatureVerifyAction
-}
+import com.mesonomics.playhmacsignatures.{EpochSeconds, HmacSignature, SignatureVerifierService, SlackSignatureVerifyAction}
 import com.slack.api.methods.response.auth.AuthTestResponse
 import com.slack.api.methods.response.conversations.ConversationsMembersResponse
 import com.typesafe.config.ConfigFactory
@@ -46,10 +19,7 @@ import controllers.SlackSlashCommandController
 import dao._
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
-import org.bitcoinj.core.listeners.{
-  NewBestBlockListener,
-  OnTransactionBroadcastListener
-}
+import org.bitcoinj.core.listeners.{NewBestBlockListener, OnTransactionBroadcastListener}
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.store.BlockStore
 import org.bitcoinj.wallet.Wallet
@@ -65,28 +35,8 @@ import play.api.mvc.{AnyContentAsFormUrlEncoded, BodyParsers}
 import play.api.test.Helpers.POST
 import play.api.test.{FakeRequest, Helpers}
 import play.api.{Configuration, Logging, inject}
-import services.{
-  BlockChainProvider,
-  HooksManagerSlackChat,
-  HooksManagerWeb,
-  MailManager,
-  MainNetParamsProvider,
-  MemPoolWatcher,
-  MemPoolWatcherService,
-  PeerGroupProvider,
-  SlackConversationInfo,
-  SlackManager,
-  SlackSecretsManagerService,
-  SodiumEncryptionManager,
-  User,
-  UserManagerService
-}
-import slack.BlockMessages.{
-  MESSAGE_NEW_TRANSACTION,
-  MESSAGE_TOO_MANY_OUTPUTS,
-  MESSAGE_TO_ADDRESSES,
-  MESSAGE_TRANSACTION_HASH
-}
+import services.{BlockChainProvider, HooksManagerSlackChat, HooksManagerWeb, MailManager, MainNetParamsProvider, MemPoolWatcher, MemPoolWatcherService, PeerGroupProvider, SlackConversationInfo, SlackManager, SlackSecretsManagerService, SodiumEncryptionManager, User, UserManagerService}
+import slack.BlockMessages.{MESSAGE_NEW_TRANSACTION, MESSAGE_TOO_MANY_OUTPUTS, MESSAGE_TO_ADDRESSES, MESSAGE_TRANSACTION_HASH}
 import slack.BoltException
 import slick.BtcPostgresProfile.api._
 import slick._
@@ -97,6 +47,7 @@ import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 
 import java.io.{FileNotFoundException, InputStream}
 import java.net.URI
+import java.time.temporal.TemporalAmount
 import java.time.{Clock, LocalDateTime}
 import javax.inject.Provider
 import scala.collection.compat.immutable.ArraySeq
@@ -891,9 +842,11 @@ object Fixtures {
   }
 
   trait TxUpdateFixtures {
+
     val timeStamp = java.time.LocalDateTime.of(2001, 1, 1, 0, 0)
     val testHash = TxHash("testHash")
-    val tx =
+
+    val tx = {
       TxUpdate(
         testHash,
         Satoshi(10),
@@ -903,6 +856,47 @@ object Fixtures {
         List(),
         None
       )
+    }
+
+    val tx1 = TxUpdate(
+      TxHash("testHash1"),
+      Satoshi(10),
+      timeStamp.plusSeconds(1),
+      isPending = true,
+      List(),
+      List(),
+      None
+    )
+
+    val tx2 = TxUpdate(
+      TxHash("testHash2"),
+      Satoshi(1),
+      timeStamp.plusSeconds(2),
+      isPending = true,
+      List(),
+      List(),
+      None
+    )
+
+    val tx3 = TxUpdate(
+      TxHash("testHash3"),
+      Satoshi(100),
+      timeStamp.plusSeconds(3),
+      isPending = true,
+      List(),
+      List(),
+      None
+    )
+
+    val tx4 = TxUpdate(
+      TxHash("testHash4"),
+      Satoshi(1000),
+      timeStamp.plusSeconds(4),
+      isPending = true,
+      List(),
+      List(),
+      None
+    )
   }
 
   trait HookActorTestLogic[X, Y <: Hook[X], Z] extends DatabaseInitializer {
