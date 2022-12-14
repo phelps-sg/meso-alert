@@ -30,29 +30,27 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
 
   val minInterval: Duration = 1.seconds
 
-  override def receive: Receive = receiveSlow(clock.instant())
+  override def receive: Receive = slow(clock.instant())
 
-  def receiveFast(
-      batchedMessages: Vector[TxUpdate],
-      previous: Instant
-  ): Receive = { case tx: TxUpdate =>
-    val now = clock.instant()
-    val newBatch = batchedMessages :+ tx
-    if (timeDeltaNanos(now, previous) > minInterval.toNanos) {
-      out ! TxBatch(newBatch)
-      context.become(receiveSlow(now))
-    } else {
-      context.become(receiveFast(newBatch, now))
-    }
+  def fast(batch: Vector[TxUpdate], previous: Instant): Receive = {
+    case tx: TxUpdate =>
+      val now = clock.instant()
+      val newBatch = batch :+ tx
+      if (timeDeltaNanos(now, previous) > minInterval.toNanos) {
+        out ! TxBatch(newBatch)
+        context.become(slow(now))
+      } else {
+        context.become(fast(newBatch, now))
+      }
   }
 
-  def receiveSlow(previous: Instant): Receive = { case tx: TxUpdate =>
+  def slow(previous: Instant): Receive = { case tx: TxUpdate =>
     val now = clock.instant()
     out ! tx
     if (timeDeltaNanos(now, previous) <= minInterval.toNanos) {
-      context.become(receiveFast(Vector(), now))
+      context.become(fast(Vector(), now))
     } else {
-      context.become(receiveSlow(now))
+      context.become(slow(now))
     }
   }
 
