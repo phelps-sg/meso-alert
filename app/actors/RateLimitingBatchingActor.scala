@@ -47,14 +47,13 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
       lastReceive = now
   }
 
-  def receiveSlow: Receive = {
-    case tx: TxUpdate =>
-      val now = clock.instant()
-      out ! tx
-      if (timeDeltaMilliseconds(now) <= maxInterval.toMillis) {
-        context.become(receiveFast(Vector()))
-      }
-      lastReceive = now
+  def receiveSlow: Receive = { case tx: TxUpdate =>
+    val now = clock.instant()
+    out ! tx
+    if (timeDeltaMilliseconds(now) <= maxInterval.toMillis) {
+      context.become(receiveFast(Vector()))
+    }
+    lastReceive = now
   }
 
   def timeDeltaMilliseconds(t: Instant): Long =

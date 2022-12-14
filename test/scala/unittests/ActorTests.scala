@@ -35,7 +35,6 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
 import com.google.common.util.concurrent.ListenableFuture
 import dao._
-import io.jsonwebtoken.impl.FixedClock
 import org.bitcoinj.core._
 import org.bitcoinj.core.listeners.{
   BlocksDownloadedEventListener,
