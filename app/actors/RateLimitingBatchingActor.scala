@@ -38,7 +38,7 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
     case tx: TxUpdate =>
       val now = clock.instant()
       val newBatch = batchedMessages :+ tx
-      if (timeDeltaMilliseconds(now) > maxInterval.toMillis) {
+      if (timeDeltaNanos(now) > maxInterval.toNanos) {
         out ! TxBatch(newBatch)
         context.become(receiveSlow)
       } else {
@@ -50,12 +50,12 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
   def receiveSlow: Receive = { case tx: TxUpdate =>
     val now = clock.instant()
     out ! tx
-    if (timeDeltaMilliseconds(now) <= maxInterval.toMillis) {
+    if (timeDeltaNanos(now) <= maxInterval.toNanos) {
       context.become(receiveFast(Vector()))
     }
     lastReceive = now
   }
 
-  def timeDeltaMilliseconds(t: Instant): Long =
-    Math.abs(ChronoUnit.MILLIS.between(t, lastReceive))
+  private def timeDeltaNanos(t: Instant): Long =
+    Math.abs(ChronoUnit.NANOS.between(t, lastReceive))
 }
