@@ -524,25 +524,6 @@ class ActorTests
     }
 
     "only provide updates according to the user's filter" in new TestFixturesOneSubscriber {
-//
-//      val tx1 = TxUpdate(
-//        TxHash("testHash1"),
-//        Satoshi(10),
-//        now,
-//        isPending = true,
-//        List(),
-//        List(),
-//        None
-//      )
-//      val tx2 = TxUpdate(
-//        TxHash("testHash2"),
-//        Satoshi(1),
-//        now,
-//        isPending = true,
-//        List(),
-//        List(),
-//        None
-//      )
 
       (mockUserManager.authenticate _)
         .expects("test")
