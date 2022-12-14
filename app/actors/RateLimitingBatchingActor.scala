@@ -28,34 +28,34 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
 ) extends Actor
     with Logging {
 
-  var lastReceive: Instant = clock.instant()
   val minInterval: Duration = 1.seconds
 
-  override def receive: Receive = receiveSlow
+  override def receive: Receive = receiveSlow(clock.instant())
 
-  def receiveFast(batchedMessages: Vector[TxUpdate]): Receive = {
-
-    case tx: TxUpdate =>
-      val now = clock.instant()
-      val newBatch = batchedMessages :+ tx
-      if (timeDeltaNanos(now) > minInterval.toNanos) {
-        out ! TxBatch(newBatch)
-        context.become(receiveSlow)
-      } else {
-        context.become(receiveFast(newBatch))
-      }
-      lastReceive = now
+  def receiveFast(
+      batchedMessages: Vector[TxUpdate],
+      previous: Instant
+  ): Receive = { case tx: TxUpdate =>
+    val now = clock.instant()
+    val newBatch = batchedMessages :+ tx
+    if (timeDeltaNanos(now, previous) > minInterval.toNanos) {
+      out ! TxBatch(newBatch)
+      context.become(receiveSlow(now))
+    } else {
+      context.become(receiveFast(newBatch, now))
+    }
   }
 
-  def receiveSlow: Receive = { case tx: TxUpdate =>
+  def receiveSlow(previous: Instant): Receive = { case tx: TxUpdate =>
     val now = clock.instant()
     out ! tx
-    if (timeDeltaNanos(now) <= minInterval.toNanos) {
-      context.become(receiveFast(Vector()))
+    if (timeDeltaNanos(now, previous) <= minInterval.toNanos) {
+      context.become(receiveFast(Vector(), now))
+    } else {
+      context.become(receiveSlow(now))
     }
-    lastReceive = now
   }
 
-  private def timeDeltaNanos(t: Instant): Long =
-    Math.abs(ChronoUnit.NANOS.between(t, lastReceive))
+  private def timeDeltaNanos(now: Instant, previous: Instant): Long =
+    Math.abs(ChronoUnit.NANOS.between(now, previous))
 }
