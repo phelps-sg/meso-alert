@@ -191,7 +191,7 @@ class ActorTests
         with BlockChainWatcherFixtures
         with BlockFixtures {
 
-      val listenerCapture = CaptureAll[NewBestBlockListener]
+      val listenerCapture = CaptureAll[NewBestBlockListener]()
 
       (mockBlockChain
         .addNewBestBlockListener(_: NewBestBlockListener))
