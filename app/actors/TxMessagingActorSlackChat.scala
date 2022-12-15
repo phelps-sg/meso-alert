@@ -43,10 +43,10 @@ class TxMessagingActorSlackChat @Inject() (
     with UnrecognizedMessageHandlerFatal
     with Logging {
 
-  implicit val lang = Lang("en")
-  val botName = messagesApi(MESSAGE_BOT_NAME)
-
+  implicit val lang: Lang = Lang("en")
   implicit val ec: SlackChatExecutionContext = sce
+
+  private val botName = messagesApi(MESSAGE_BOT_NAME)
 
   override val maxRetryCount: Int = 3
   override val backoffPolicyBase: FiniteDuration = 2000 milliseconds
