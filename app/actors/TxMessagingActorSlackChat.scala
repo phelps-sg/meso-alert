@@ -55,11 +55,11 @@ class TxMessagingActorSlackChat @Inject() (
 
   override def success(): Unit = logger.debug("Successfully posted message")
 
-  private val message: TxUpdate => Blocks = BlockMessages.message(messagesApi)
+  private val toBlocks: TxUpdate => Blocks = BlockMessages.message(messagesApi)
 
   override def process(tx: TxBatch): Future[Blocks] = {
 
-    val msg = tx.messages.map(message) reduce { (x, y) =>
+    val blocks = tx.messages.map(toBlocks) reduce { (x, y) =>
       Blocks(s"${x.value}\n${y.value}")
     }
 
@@ -68,7 +68,7 @@ class TxMessagingActorSlackChat @Inject() (
       botName,
       hook.channel,
       "New Transaction",
-      msg
+      blocks
     )
   }
 
