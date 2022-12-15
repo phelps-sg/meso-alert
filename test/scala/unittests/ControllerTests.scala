@@ -52,7 +52,7 @@ import unittests.Fixtures.{
   MockMailManagerFixtures,
   ProvidesTestBindings,
   SecretsManagerFixtures,
-  SlackChatActorFixtures,
+  HooksManagerActorSlackChatFixtures,
   SlackChatHookFixtures,
   SlackChatHookDaoFixtures,
   SlackEventsControllerFixtures,
@@ -268,7 +268,7 @@ class ControllerTests
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
         with SlackChatHookDaoFixtures
-        with SlackChatActorFixtures
+        with HooksManagerActorSlackChatFixtures
         with SlickSlashCommandHistoryDaoFixtures
         with SlickSlashCommandFixtures
         with DatabaseInitializer
@@ -392,7 +392,7 @@ class ControllerTests
         with SlackChatHookDaoFixtures
         with SlickSlashCommandHistoryDaoFixtures
         with SlickSlackTeamDaoFixtures
-        with SlackChatActorFixtures
+        with HooksManagerActorSlackChatFixtures
         with SlickSlashCommandFixtures
         with DatabaseInitializer
         with SlackSignatureVerifierFixtures

@@ -29,6 +29,8 @@ import actors.{
   TxUpdate,
   Updated
 }
+import slack.BlockMessages
+import slack.BlockMessages.Blocks
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -62,15 +64,19 @@ import unittests.Fixtures.{
   EncryptionActorFixtures,
   EncryptionManagerFixtures,
   HookActorTestLogic,
+  HooksManagerActorSlackChatFixtures,
   MainNetParamsFixtures,
   MemPoolWatcherActorFixtures,
   MemPoolWatcherFixtures,
   MessagesFixtures,
   ProvidesTestBindings,
-  SlackChatActorFixtures,
+  RandomFixtures,
   SlackChatHookDaoFixtures,
+  SlackChatHookFixtures,
+  SlackManagerFixtures,
   SlackSecretsActorFixtures,
   TransactionFixtures,
+  TxMessagingActorSlackChatFixtures,
   TxPersistenceActorFixtures,
   TxUpdateFixtures,
   TxWatchActorFixtures,
@@ -394,12 +400,13 @@ class ActorTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
-        with MessagesFixtures
         with MainNetParamsFixtures
-        with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
-        with ActorGuiceFixtures
+        with BlockChainWatcherFixtures
+        with MessagesFixtures
         with TxUpdateFixtures
+        with ActorGuiceFixtures
+        with RandomFixtures
         with TxPersistenceActorFixtures {
 
       override def peerGroupExpectations(): Unit = {
@@ -556,7 +563,7 @@ class ActorTests
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
         with SlackChatHookDaoFixtures
-        with SlackChatActorFixtures
+        with HooksManagerActorSlackChatFixtures
         with HookActorTestLogic[
           SlackChannelId,
           SlackChatHookPlainText,
@@ -913,6 +920,58 @@ class ActorTests
         }
       } yield verified).futureValue should matchPattern { case Failure(_) =>
       }
+    }
+  }
+
+  "TxMessagingActorSlackChat" should {
+
+    trait TestFixtures
+        extends FixtureBindings
+        with TxUpdateFixtures
+        with ConfigurationFixtures
+        with MessagesFixtures
+        with MainNetParamsFixtures
+        with MemPoolWatcherFixtures
+        with BlockChainWatcherFixtures
+        with ActorGuiceFixtures
+        with RandomFixtures
+        with SlackChatHookFixtures
+        with SlackManagerFixtures
+        with TxMessagingActorSlackChatFixtures {
+
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .never()
+      }
+    }
+
+    "send a formatted message to Slack when sent a batch of a transactions" in new TestFixtures {
+
+      val blocks = BlockMessages.message(messagesApi)(tx)
+
+      val blocksCapture = CaptureAll[Blocks]()
+      val tokenCapture = CaptureAll[SlackAuthToken]()
+      val channelCapture = CaptureAll[SlackChannelId]()
+
+      (mockSlackManagerService.chatPostMessage _)
+        .expects(
+          capture(tokenCapture),
+          *,
+          capture(channelCapture),
+          *,
+          capture(blocksCapture)
+        )
+        .once()
+        .returning(Future.successful(blocks))
+
+      slackChatActor ! TxBatch(Vector(tx))
+      expectNoMessage()
+
+      blocksCapture.value shouldBe blocks
+      tokenCapture.value shouldBe hook.token
+      channelCapture.value shouldBe hook.channel
     }
   }
 

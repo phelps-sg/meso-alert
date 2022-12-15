@@ -654,15 +654,42 @@ object Fixtures {
     val queryHooks = Tables.webhooks.result
   }
 
-  trait SlackChatActorFixtures extends SlackChatHookFixtures {
+  trait TxMessagingActorSlackChatFixtures {
+    env: HasActorSystem
+      with SlackChatHookFixtures
+      with SlackManagerFixtures
+      with ConfigurationFixtures
+      with RandomFixtures
+      with MessagesFixtures
+      with ProvidesInjector =>
+    val slackChatExecutionContext =
+      injector.instanceOf[SlackChatExecutionContext]
+    val slackChatActor = actorSystem.actorOf(
+      Props(
+        new TxMessagingActorSlackChat(
+          mockSlackManagerService,
+          config,
+          slackChatExecutionContext,
+          random,
+          messagesApi,
+          hook
+        )
+      )
+    )
+  }
+
+  trait HooksManagerActorSlackChatFixtures extends SlackChatHookFixtures {
     env: HasActorSystem with ProvidesInjector =>
     val actorSystem: ActorSystem
     val hookDao: SlackChatHookDao
 
+    val slackChatActorFactory =
+      injector.instanceOf[TxMessagingActorSlackChat.Factory]
+
     val hooksActor = {
       actorSystem.actorOf(
         HooksManagerActorSlackChat.props(
-          injector.instanceOf[TxMessagingActorSlackChat.Factory],
+          slackChatActorFactory,
           injector.instanceOf[TxFilterActor.Factory],
           hookDao,
           injector.instanceOf[DatabaseExecutionContext]
@@ -704,7 +731,6 @@ object Fixtures {
 
   trait SlickSlashCommandFixtures {
     env: SlackSignatureVerifierFixtures with SlackChatHookFixtures =>
-//    val channelId = SlackChannelId("1234")
     val channelIdBad = SlackChannelId("4321")
     val command = "/test"
     val text = ""
@@ -713,7 +739,6 @@ object Fixtures {
     val channelName = Some("test-channel")
     val userId = Some(SlackUserId("91011"))
     val userName = Some("test-user")
-//    val testToken = SlackAuthToken("test-token")
     val isEnterpriseInstall = Some(false)
     val timeStamp = Some(java.time.LocalDateTime.of(2001, 1, 1, 0, 0))
 
@@ -817,7 +842,7 @@ object Fixtures {
       with SlickSlashCommandHistoryDaoFixtures
       with SlickSlackTeamDaoFixtures
       with SlackChatHookDaoFixtures
-      with SlackChatActorFixtures
+      with HooksManagerActorSlackChatFixtures
       with MessagesFixtures
       with SlackManagerFixtures
       with SlackSignatureVerifierFixtures
@@ -1044,7 +1069,9 @@ object Fixtures {
   }
 
   trait SlackManagerFixtures extends MockFactory {
-    env: ConfigurationFixtures with ProvidesInjector =>
+    env: ConfigurationFixtures
+      with ProvidesInjector
+      with SlackChatHookFixtures =>
     val slackClientExecutionContext =
       injector.instanceOf[SlackClientExecutionContext]
 
@@ -1054,7 +1081,6 @@ object Fixtures {
     val mockSlackManagerService = mock[MockSlackManager]
 
     def privateChannel: Boolean = false
-    val channelId: SlackChannelId
 
     if (privateChannel) {
       (mockSlackManagerService.conversationsInfo _)
@@ -1121,18 +1147,19 @@ object Fixtures {
     val mockMailManager = mock[MailManager]
   }
 
+  trait RandomFixtures { env: ProvidesInjector =>
+    val random = injector.instanceOf[scala.util.Random]
+  }
+
   trait TxPersistenceActorFixtures extends MockFactory {
     env: HasActorSystem
       with HasExecutionContext
-      with ProvidesInjector
+      with RandomFixtures
       with MemPoolWatcherFixtures =>
 
     val actorSystem: ActorSystem
-    //    val mockMemPoolWatcher: MemPoolWatcherService
     val executionContext: ExecutionContext
-    val injector: Injector
     val mockTransactionUpdateDao = mock[TransactionUpdateDao]
-    val random = injector.instanceOf[scala.util.Random]
     val txPersistenceActor = actorSystem.actorOf(
       TxPersistenceActor.props(
         mockTransactionUpdateDao,

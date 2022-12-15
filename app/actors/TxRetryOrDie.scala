@@ -52,7 +52,7 @@ trait TxRetryOrDie[T, M] {
       ) milliseconds
   }
 
-  def handle(tx: M)(implicit t: ClassTag[M]): Unit = {
+  def handle(tx: Any)(implicit t: ClassTag[M]): Unit = {
     tx match {
       case tx: M => self ! Retry(tx, 0, None)
 

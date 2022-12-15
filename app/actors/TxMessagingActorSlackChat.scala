@@ -49,10 +49,14 @@ class TxMessagingActorSlackChat @Inject() (
 
   override def success(): Unit = logger.debug("Successfully posted message")
 
-  val message: TxUpdate => Blocks = BlockMessages.message(messagesApi)
+  private val message: TxUpdate => Blocks = BlockMessages.message(messagesApi)
 
   override def process(tx: TxBatch): Future[Blocks] = {
-    val msg = message(tx.messages.head)
+
+    val msg = tx.messages.map(message) reduce { (x, y) =>
+      Blocks(s"${x.value}\n${y.value}")
+    }
+
     slackManagerService.chatPostMessage(
       hook.token,
       "block-insights",
@@ -62,10 +66,7 @@ class TxMessagingActorSlackChat @Inject() (
     )
   }
 
-  override def receive: Receive = {
-    case tx: TxBatch =>
-      handle(tx)
-    case m =>
-      unrecognizedMessage(m)
+  override def receive: Receive = { case x: Any =>
+    handle(x)
   }
 }
