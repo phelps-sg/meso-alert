@@ -745,31 +745,34 @@ class ActorTests
       val actor =
         actorSystem.actorOf(RateLimitingBatchingActor.props(self, clock))
 
-      def tPlus(millis: Int) = t0.plusNanos(1000000 * millis)
+      def tPlus(millis: Int) = t0.plusNanos(1000000 * millis).toInstant
+
+      def advanceClockTo(millis: Int) =
+        (clock.instant _).expects().returning(tPlus(millis))
     }
 
     "forward separate messages when they are separated by a long delay" in new TestFixtures {
-      (clock.instant _).expects().returning(tPlus(2000).toInstant)
+      advanceClockTo(2000)
       actor ! tx
       expectMsg(tx)
-      (clock.instant _).expects().returning(tPlus(4000).toInstant)
+      advanceClockTo(4000)
       actor ! tx1
       expectMsg(tx1)
     }
 
     "forward a batch of messages when they are separated by a short delay" in new TestFixtures {
-      (clock.instant _).expects().returning(tPlus(500).toInstant)
+      advanceClockTo(500)
       actor ! tx
       expectMsg(tx)
-      (clock.instant _).expects().returning(tPlus(600).toInstant)
+      advanceClockTo(600)
       actor ! tx1
       expectNoMessage()
-      (clock.instant _).expects().returning(tPlus(700).toInstant)
+      advanceClockTo(700)
       actor ! tx2
-      (clock.instant _).expects().returning(tPlus(3000).toInstant)
+      advanceClockTo(3000)
       actor ! tx3
       expectMsg(TxBatch(Vector(tx1, tx2, tx3)))
-      (clock.instant _).expects().returning(tPlus(5000).toInstant)
+      advanceClockTo(5000)
       actor ! tx4
       expectMsg(tx4)
     }
