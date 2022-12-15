@@ -388,7 +388,6 @@ object Fixtures {
 
     val mockBlockChain = mock[MockBlockChain]
     (mockBlockChain.getChainHead _).expects().once()
-    (mockBlockChain.addNewBestBlockListener(_: NewBestBlockListener)).expects(*)
 
     val mockBlockChainProvider = new BlockChainProvider {
       override val get = mockBlockChain

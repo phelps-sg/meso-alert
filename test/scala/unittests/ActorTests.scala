@@ -191,15 +191,20 @@ class ActorTests
         with BlockChainWatcherFixtures
         with BlockFixtures {
 
+      val listenerCapture = CaptureAll[NewBestBlockListener]
+
       (mockBlockChain
         .addNewBestBlockListener(_: NewBestBlockListener))
-        .expects(*)
+        .expects(capture(listenerCapture))
+        .once()
     }
 
     "listen for new best blocks on startup" in new TestFixtures {
+      listenerCapture.values.size shouldBe 0
       @unused
       val newBlockChainWatcherActor = makeBlockChainWatcherActor
       expectNoMessage()
+      listenerCapture.values.size shouldBe 1
     }
 
     "send transaction updates to listeners when a new block has been added" in new TestFixtures {
