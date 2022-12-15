@@ -29,8 +29,6 @@ import actors.{
   TxUpdate,
   Updated
 }
-import slack.BlockMessages
-import slack.BlockMessages.Blocks
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -47,14 +45,16 @@ import org.scalamock.handlers.CallHandler1
 import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.{Assertion, BeforeAndAfterAll}
 import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
+import slack.BlockMessages
+import slack.BlockMessages.Blocks
 import unittests.Fixtures.{
   ActorGuiceFixtures,
   BlockChainWatcherFixtures,
@@ -946,18 +946,6 @@ class ActorTests
         with SlackManagerFixtures
         with TxMessagingActorSlackChatFixtures {
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .never()
-      }
-    }
-
-    "send a formatted message to Slack when sent a batch of a transactions" in new TestFixtures {
-
-      val blocks = BlockMessages.message(messagesApi)(tx)
-
       val blocksCapture = CaptureAll[Blocks]()
       val tokenCapture = CaptureAll[SlackAuthToken]()
       val channelCapture = CaptureAll[SlackChannelId]()
@@ -971,14 +959,58 @@ class ActorTests
           capture(blocksCapture)
         )
         .once()
-        .returning(Future.successful(blocks))
+        .returning(Future.successful(expectedBlocks))
 
-      slackChatActor ! TxBatch(Vector(tx))
-      expectNoMessage()
+      override def peerGroupExpectations(): Unit = {
+        (mockPeerGroup
+          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+          .expects(*)
+          .never()
+      }
 
-      blocksCapture.value shouldBe blocks
-      tokenCapture.value shouldBe hook.token
-      channelCapture.value shouldBe hook.channel
+      def slackChatTestLogic: Assertion = {
+        slackChatActor ! TxBatch(transactions)
+        expectNoMessage()
+
+        blocksCapture.value shouldBe expectedBlocks
+        tokenCapture.value shouldBe hook.token
+        channelCapture.value shouldBe hook.channel
+      }
+
+      def expectedBlocks: Blocks
+      def transactions: Vector[TxUpdate]
+    }
+
+    trait SlackMessage {
+      env: MessagesFixtures =>
+      val slackMessage = BlockMessages.message(messagesApi)(_)
+    }
+
+    trait SingleTransaction extends SlackMessage {
+      env: SlackMessage with TxUpdateFixtures with MessagesFixtures =>
+      def transactions = Vector(tx)
+      def expectedBlocks = slackMessage(tx)
+    }
+
+    trait MultipleTransactions extends SlackMessage {
+      env: SlackMessage with TxUpdateFixtures with MessagesFixtures =>
+      def transactions = Vector(tx, tx1, tx2)
+      def blockStr(tx: TxUpdate): String = slackMessage(tx).value
+      def expectedBlocks = Blocks(
+        s"${blockStr(tx)}\n${blockStr(tx1)}\n${blockStr(tx2)}"
+      )
+    }
+
+    "send the correct message to Slack when sent a single transaction" in new SingleTransaction
+      with TestFixtures {
+
+      slackChatTestLogic
+    }
+
+    "send the correct message to Slack when sent a batch of transactions" in new MultipleTransactions
+      with TestFixtures {
+
+      slackChatTestLogic
     }
   }
 
