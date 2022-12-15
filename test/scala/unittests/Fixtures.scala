@@ -428,21 +428,6 @@ object Fixtures {
     (mockMemPoolWatcher.addListener _)
       .expects(capture(memPoolListenerCapture))
       .anyNumberOfTimes()
-
-    //    (mockPeerGroup
-//      .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-//      .expects(*)
-
-//    def memPoolWatcherExpectations(
-//        ch: CallHandler1[ActorRef, Unit]
-//    ): ch.Derived = {
-//      ch.never()
-//    }
-
-//    def peerGroupExpectations(): Unit
-
-//    memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
-//    peerGroupExpectations()
   }
 
   trait ConfigurationFixtures {
@@ -1174,9 +1159,6 @@ object Fixtures {
         executionContext
       )
     )
-
-//    val memPoolListenerCapture = CaptureAll[ActorRef]()
-//    (mockMemPoolWatcher.addListener _).expects(capture(memPoolListenerCapture)).anyNumberOfTimes()
 
     val txPersistenceActor = makeTxPersistenceActor
   }
