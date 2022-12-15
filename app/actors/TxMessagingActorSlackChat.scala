@@ -1,6 +1,7 @@
 package actors
 
 import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
+import actors.RateLimitingBatchingActor.TxBatch
 import akka.actor.{Actor, Timers}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
@@ -34,7 +35,7 @@ class TxMessagingActorSlackChat @Inject() (
     protected val messagesApi: MessagesApi,
     @Assisted hook: SlackChatHookPlainText
 ) extends Actor
-    with TxRetryOrDie[Blocks]
+    with TxRetryOrDie[Blocks, TxBatch]
     with Timers
     with UnrecognizedMessageHandlerFatal
     with Logging {
@@ -50,8 +51,8 @@ class TxMessagingActorSlackChat @Inject() (
 
   val message: TxUpdate => Blocks = BlockMessages.message(messagesApi)
 
-  override def process(tx: TxUpdate): Future[Blocks] = {
-    val msg = message(tx)
+  override def process(tx: TxBatch): Future[Blocks] = {
+    val msg = message(tx.messages.head)
     slackManagerService.chatPostMessage(
       hook.token,
       "block-insights",
@@ -59,5 +60,12 @@ class TxMessagingActorSlackChat @Inject() (
       "New Transaction",
       msg
     )
+  }
+
+  override def receive: Receive = {
+    case tx: TxBatch =>
+      handle(tx)
+    case m =>
+      unrecognizedMessage(m)
   }
 }

@@ -46,7 +46,7 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
 
   def slow(previous: Instant): Receive = { case tx: TxUpdate =>
     val now = clock.instant()
-    out ! tx
+    out ! TxBatch(Vector(tx))
     if (timeDeltaNanos(now, previous) <= minInterval.toNanos) {
       context.become(fast(Vector(), now))
     } else {

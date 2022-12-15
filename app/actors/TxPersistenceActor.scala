@@ -37,7 +37,7 @@ class TxPersistenceActor @Inject() (
 ) extends Actor
     with TxUpdateActor
     with Logging
-    with TxRetryOrDie[Int]
+    with TxRetryOrDie[Int, TxUpdate]
     with Timers
     with UnrecognizedMessageHandlerFatal {
 
@@ -53,4 +53,10 @@ class TxPersistenceActor @Inject() (
     registerWithWatcher()
   }
 
+  override def receive: Receive = {
+    case tx: TxUpdate =>
+      handle(tx)
+    case other =>
+      unrecognizedMessage(other)
+  }
 }
