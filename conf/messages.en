@@ -13,10 +13,11 @@ slackResponse.pauseAlertsHelp = Usage: "/pause-alerts" on a channel with active 
 slackResponse.resumeAlerts = OK, I will resume alerts on this channel.
 slackResponse.resumeAlertsError = Alerts are already active on this channel.
 slackResponse.resumeAlertsErrorNotConfigured = There are no configured alerts on this channel.
-
 slackResponse.resumeAlertsHelp = Usage: "/resume-alerts" on a channel with paused alerts to resume them.
-# Messages sent to Slack channels
+# all Slash commands
 slackResponse.notInvitedError = Please invite the bot to a channel before issuing commands.
+# Messages sent to Slack channels
+slackChat.botName = Block Insights
 slackChat.tooManyOutputs = Transaction contains too many outputs to list here. Visit the Transaction URL to view all.
 slackChat.transactionHash = Transaction Hash
 slackChat.toAddresses = to addresses

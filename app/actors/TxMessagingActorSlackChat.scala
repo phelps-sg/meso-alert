@@ -2,11 +2,12 @@ package actors
 
 import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import actors.RateLimitingBatchingActor.TxBatch
+import actors.TxMessagingActorSlackChat.MESSAGE_BOT_NAME
 import akka.actor.{Actor, Timers}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import dao.SlackChatHookPlainText
-import play.api.i18n.MessagesApi
+import play.api.i18n.{Lang, MessagesApi}
 import play.api.{Configuration, Logging}
 import services.SlackManagerService
 import slack.BlockMessages
@@ -20,6 +21,8 @@ import scala.language.postfixOps
 import scala.util.Random
 
 object TxMessagingActorSlackChat {
+
+  val MESSAGE_BOT_NAME = "slackChat.botName"
 
   trait Factory extends TxMessagingActorFactory[SlackChatHookPlainText] {
     def apply(@unused hook: SlackChatHookPlainText): Actor
@@ -40,6 +43,9 @@ class TxMessagingActorSlackChat @Inject() (
     with UnrecognizedMessageHandlerFatal
     with Logging {
 
+  implicit val lang = Lang("en")
+  val botName = messagesApi(MESSAGE_BOT_NAME)
+
   implicit val ec: SlackChatExecutionContext = sce
 
   override val maxRetryCount: Int = 3
@@ -59,7 +65,7 @@ class TxMessagingActorSlackChat @Inject() (
 
     slackManagerService.chatPostMessage(
       hook.token,
-      "block-insights",
+      botName,
       hook.channel,
       "New Transaction",
       msg
