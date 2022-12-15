@@ -3,10 +3,33 @@ package unittests
 import actors.AuthenticationActor.Auth
 import actors.BlockChainWatcherActor.{NewBlock, WatchTxConfidence}
 import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
-import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
+import actors.MemPoolWatcherActor.{
+  PeerGroupAlreadyStartedException,
+  StartPeerGroup
+}
 import actors.RateLimitingBatchingActor.TxBatch
-import actors.SlackSecretsActor.{GenerateSecret, Unbind, ValidSecret, VerifySecret}
-import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, RateLimitingBatchingActor, Registered, Started, Stopped, TxHash, TxInputOutput, TxMessagingActorSlackChat, TxUpdate, Updated}
+import actors.SlackSecretsActor.{
+  GenerateSecret,
+  Unbind,
+  ValidSecret,
+  VerifySecret
+}
+import actors.{
+  AuthenticationActor,
+  HookAlreadyRegisteredException,
+  HookAlreadyStartedException,
+  HookNotRegisteredException,
+  HookNotStartedException,
+  RateLimitingBatchingActor,
+  Registered,
+  Started,
+  Stopped,
+  TxHash,
+  TxInputOutput,
+  TxMessagingActorSlackChat,
+  TxUpdate,
+  Updated
+}
 import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -14,7 +37,11 @@ import akka.util.Timeout
 import com.google.common.util.concurrent.ListenableFuture
 import dao._
 import org.bitcoinj.core._
-import org.bitcoinj.core.listeners.{BlocksDownloadedEventListener, NewBestBlockListener, OnTransactionBroadcastListener}
+import org.bitcoinj.core.listeners.{
+  BlocksDownloadedEventListener,
+  NewBestBlockListener,
+  OnTransactionBroadcastListener
+}
 import org.scalamock.handlers.CallHandler1
 import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
@@ -29,7 +56,36 @@ import postgres.PostgresContainer
 import services._
 import slack.BlockMessages
 import slack.BlockMessages.Blocks
-import unittests.Fixtures.{ActorGuiceFixtures, BlockChainWatcherFixtures, BlockFixtures, ClockFixtures, ConfigurationFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, HooksManagerActorSlackChatFixtures, MainNetParamsFixtures, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, MessagesFixtures, ProvidesTestBindings, RandomFixtures, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlackManagerFixtures, SlackSecretsActorFixtures, TransactionFixtures, TxMessagingActorSlackChatFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
+import unittests.Fixtures.{
+  ActorGuiceFixtures,
+  BlockChainWatcherFixtures,
+  BlockFixtures,
+  ClockFixtures,
+  ConfigurationFixtures,
+  EncryptionActorFixtures,
+  EncryptionManagerFixtures,
+  HookActorTestLogic,
+  HooksManagerActorSlackChatFixtures,
+  MainNetParamsFixtures,
+  MemPoolWatcherActorFixtures,
+  MemPoolWatcherFixtures,
+  MessagesFixtures,
+  ProvidesTestBindings,
+  RandomFixtures,
+  SlackChatHookDaoFixtures,
+  SlackChatHookFixtures,
+  SlackManagerFixtures,
+  SlackSecretsActorFixtures,
+  TransactionFixtures,
+  TxMessagingActorSlackChatFixtures,
+  TxPersistenceActorFixtures,
+  TxUpdateFixtures,
+  TxWatchActorFixtures,
+  UserFixtures,
+  WebSocketFixtures,
+  WebhookActorFixtures,
+  WebhookFixtures
+}
 
 import java.math.BigInteger
 import java.net.URI
@@ -921,7 +977,9 @@ class ActorTests
         blocksCapture.value shouldBe expectedBlocks
         tokenCapture.value shouldBe hook.token
         channelCapture.value shouldBe hook.channel
-        botNameCapture.value shouldBe messagesApi(TxMessagingActorSlackChat.MESSAGE_BOT_NAME)
+        botNameCapture.value shouldBe messagesApi(
+          TxMessagingActorSlackChat.MESSAGE_BOT_NAME
+        )
       }
 
       def expectedBlocks: Blocks
