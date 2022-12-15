@@ -11,18 +11,18 @@ import scala.util.{Failure, Success}
 
 object EncryptionActor {
 
-  case class Init(secretKey: Array[Byte])
+  final case class Init(secretKey: Array[Byte])
 
   sealed trait EncryptionCommand
-  case class GenerateSecret(numBytes: Int) extends EncryptionCommand
-  case class Encrypt(plainText: Array[Byte]) extends EncryptionCommand
-  case class Encrypted(nonce: Array[Byte], cipherText: Array[Byte])
+  final case class GenerateSecret(numBytes: Int) extends EncryptionCommand
+  final case class Encrypt(plainText: Array[Byte]) extends EncryptionCommand
+  final case class Encrypted(nonce: Array[Byte], cipherText: Array[Byte])
       extends EncryptionCommand
 
-  case class Decrypted(plainText: Array[Byte]) {
+  final case class Decrypted(plainText: Array[Byte]) {
     def asString: String = plainText.map(_.toChar).mkString
   }
-  case class SodiumInitialisationError(message: String)
+  final case class SodiumInitialisationError(message: String)
       extends Exception(message)
 
   def props(): Props = Props(new EncryptionActor())
