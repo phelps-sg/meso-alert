@@ -762,26 +762,33 @@ class ActorTests
     }
 
     "forward separate messages when they are separated by a long delay" in new TestFixtures {
+
       advanceClockTo(2000)
       actor ! tx
       expectTx(tx)
+
       advanceClockTo(4000)
       actor ! tx1
       expectTx(tx1)
     }
 
     "forward a batch of messages when they are separated by a short delay" in new TestFixtures {
+
       advanceClockTo(500)
       actor ! tx
       expectTx(tx)
+
       advanceClockTo(600)
       actor ! tx1
       expectNoMessage()
+
       advanceClockTo(700)
       actor ! tx2
+
       advanceClockTo(3000)
       actor ! tx3
       expectTxs(Vector(tx1, tx2, tx3))
+
       advanceClockTo(5000)
       actor ! tx4
       expectTx(tx4)
