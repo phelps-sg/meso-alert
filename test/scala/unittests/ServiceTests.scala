@@ -97,12 +97,12 @@ class ServiceTests
         with WebhookActorFixtures
         with WebhookManagerFixtures {
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .never()
-      }
+//      override def peerGroupExpectations(): Unit = {
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .never()
+//      }
 
     }
 

@@ -3,13 +3,12 @@ package unittests
 import actions.Auth0ValidateJWTAction
 import actors.EncryptionActor.Encrypted
 import actors.SlackSecretsActor.{InvalidSecretException, Unbind, ValidSecret}
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import akka.util.Timeout
 import controllers._
 import dao._
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
-import org.scalamock.handlers.CallHandler1
 import org.scalatest.Assertion
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
@@ -45,6 +44,7 @@ import unittests.Fixtures.{
   DefaultBodyParserFixtures,
   EncryptionActorFixtures,
   EncryptionManagerFixtures,
+  HooksManagerActorSlackChatFixtures,
   MainNetParamsFixtures,
   MemPoolWatcherActorFixtures,
   MemPoolWatcherFixtures,
@@ -52,9 +52,8 @@ import unittests.Fixtures.{
   MockMailManagerFixtures,
   ProvidesTestBindings,
   SecretsManagerFixtures,
-  HooksManagerActorSlackChatFixtures,
-  SlackChatHookFixtures,
   SlackChatHookDaoFixtures,
+  SlackChatHookFixtures,
   SlackEventsControllerFixtures,
   SlackManagerFixtures,
   SlackSignatureVerifierFixtures,
@@ -117,12 +116,12 @@ class ControllerTests
         mockMailManager
       )
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .never()
-      }
+//      override def peerGroupExpectations(): Unit = {
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .never()
+//      }
 
       def persistEmailDeliveryTest(
           attrs: Map[String, String],
@@ -287,15 +286,15 @@ class ControllerTests
         slackSignatureVerifyAction
       )
 
-      memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
-        .anyNumberOfTimes()
+//      memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
+//        .anyNumberOfTimes()
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .never()
-      }
+//      override def peerGroupExpectations(): Unit = {
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .never()
+//      }
     }
 
     "stop a running hook when channel is deleted" in new TestFixtures {
@@ -402,18 +401,18 @@ class ControllerTests
 
       override def privateChannel: Boolean = false
 
-      override def memPoolWatcherExpectations(
-          ch: CallHandler1[ActorRef, Unit]
-      ): CallHandler1[ActorRef, Unit] = {
-        ch.atLeastOnce()
-      }
+//      override def memPoolWatcherExpectations(
+//          ch: CallHandler1[ActorRef, Unit]
+//      ): CallHandler1[ActorRef, Unit] = {
+//        ch.atLeastOnce()
+//      }
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .anyNumberOfTimes()
-      }
+//      override def peerGroupExpectations(): Unit = {
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .anyNumberOfTimes()
+//      }
 
       def initialiseHook: Future[Unit] = {
         for {
@@ -809,12 +808,12 @@ class ControllerTests
 
       override def privateChannel: Boolean = false
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .anyNumberOfTimes()
-      }
+//      override def peerGroupExpectations(): Unit = {
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .anyNumberOfTimes()
+//      }
 
     }
 
@@ -980,8 +979,8 @@ class ControllerTests
 
       def mockAuth0Action: Auth0ValidateJWTAction = mockAuth0ActionAlwaysSuccess
 
-      memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
-        .never()
+//      memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
+//        .never()
 
       (mockSlackSecretsManagerService.generateSecret _)
         .expects(*)
@@ -1000,15 +999,15 @@ class ControllerTests
 
       val testUser = Some("test-user")
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup.start _).expects().once()
-        (mockPeerGroup.setMaxConnections _).expects(*).once()
-        (mockPeerGroup.addPeerDiscovery _).expects(*).once()
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .anyNumberOfTimes()
-      }
+//      override def peerGroupExpectations(): Unit = {
+      (mockPeerGroup.start _).expects().once()
+      (mockPeerGroup.setMaxConnections _).expects(*).once()
+      (mockPeerGroup.addPeerDiscovery _).expects(*).once()
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .anyNumberOfTimes()
+//      }
     }
 
     "return the correct configuration" in new TestFixtures {

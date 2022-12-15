@@ -46,11 +46,11 @@ import controllers.SlackSlashCommandController
 import dao._
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
-import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.store.BlockStore
 import org.bitcoinj.wallet.Wallet
-import org.scalamock.handlers.{CallHandler1, CallHandler8}
+import org.scalamock.handlers.CallHandler8
+import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
 import pdi.jwt.JwtClaim
@@ -343,7 +343,10 @@ object Fixtures {
       .returning(genesisBlock)
       .atLeastOnce()
     (mockStoredBlock.getPrev _).expects(*).returning(null)
-    (blockStore.getChainHead _).expects().returning(mockStoredBlock)
+    (blockStore.getChainHead _)
+      .expects()
+      .returning(mockStoredBlock)
+      .anyNumberOfTimes()
 
     // noinspection NotImplementedCode
     class MockBlockChain
@@ -384,7 +387,7 @@ object Fixtures {
     }
 
     val mockBlockChain = mock[MockBlockChain]
-    (mockBlockChain.getChainHead _).expects().once()
+    (mockBlockChain.getChainHead _).expects().anyNumberOfTimes()
 
     val mockBlockChainProvider = new BlockChainProvider {
       override val get = mockBlockChain
@@ -420,20 +423,26 @@ object Fixtures {
 
     val mockMemPoolWatcher = mock[MemPoolWatcherService]
     val mockPeerGroup = mock[MainNetPeerGroup]
-    (mockPeerGroup
-      .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-      .expects(*)
 
-    def memPoolWatcherExpectations(
-        ch: CallHandler1[ActorRef, Unit]
-    ): ch.Derived = {
-      ch.never()
-    }
+    val memPoolListenerCapture = CaptureAll[ActorRef]()
+    (mockMemPoolWatcher.addListener _)
+      .expects(capture(memPoolListenerCapture))
+      .anyNumberOfTimes()
 
-    def peerGroupExpectations(): Unit
+    //    (mockPeerGroup
+//      .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+//      .expects(*)
 
-    memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
-    peerGroupExpectations()
+//    def memPoolWatcherExpectations(
+//        ch: CallHandler1[ActorRef, Unit]
+//    ): ch.Derived = {
+//      ch.never()
+//    }
+
+//    def peerGroupExpectations(): Unit
+
+//    memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
+//    peerGroupExpectations()
   }
 
   trait ConfigurationFixtures {
@@ -1156,7 +1165,8 @@ object Fixtures {
     val actorSystem: ActorSystem
     val executionContext: ExecutionContext
     val mockTransactionUpdateDao = mock[TransactionUpdateDao]
-    val txPersistenceActor = actorSystem.actorOf(
+
+    def makeTxPersistenceActor = actorSystem.actorOf(
       TxPersistenceActor.props(
         mockTransactionUpdateDao,
         mockMemPoolWatcher,
@@ -1164,6 +1174,11 @@ object Fixtures {
         executionContext
       )
     )
+
+//    val memPoolListenerCapture = CaptureAll[ActorRef]()
+//    (mockMemPoolWatcher.addListener _).expects(capture(memPoolListenerCapture)).anyNumberOfTimes()
+
+    val txPersistenceActor = makeTxPersistenceActor
   }
 
   trait TxWatchActorFixtures {

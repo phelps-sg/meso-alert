@@ -53,10 +53,5 @@ class TxPersistenceActor @Inject() (
     registerWithWatcher()
   }
 
-  override def receive: Receive = {
-    case tx: TxUpdate =>
-      handle(tx)
-    case other =>
-      unrecognizedMessage(other)
-  }
+  override def receive: Receive = { case x: Any => handle(x) }
 }
