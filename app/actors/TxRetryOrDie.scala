@@ -56,6 +56,7 @@ abstract class TxRetryOrDie[T, M: ClassTag]
   }
 
   override def receive: Receive = {
+
     case tx: M => self ! Retry(tx, 0, None)
 
     case Retry(tx: M, retryCount, _) if retryCount < maxRetryCount =>
