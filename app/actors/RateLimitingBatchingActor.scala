@@ -35,8 +35,10 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
   def fast(batch: Vector[TxUpdate], previous: Instant): Receive = {
     case tx: TxUpdate =>
       val now = clock.instant()
+      logger.debug(s"Fast mode: batching up $tx at $now")
       val newBatch = batch :+ tx
       if (timeDeltaNanos(now, previous) > minInterval.toNanos) {
+        logger.debug(s"Switching to slow mode and sending $newBatch")
         out ! TxBatch(newBatch)
         context.become(slow(now))
       } else {
@@ -46,8 +48,10 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
 
   def slow(previous: Instant): Receive = { case tx: TxUpdate =>
     val now = clock.instant()
+    logger.debug(s"Slow mode: sending $tx at $now")
     out ! TxBatch(Vector(tx))
     if (timeDeltaNanos(now, previous) <= minInterval.toNanos) {
+      logger.debug("Switching to fast mode")
       context.become(fast(Vector(), now))
     } else {
       context.become(slow(now))
