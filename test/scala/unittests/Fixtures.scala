@@ -416,7 +416,6 @@ object Fixtures {
 
   trait ClockFixtures extends MockFactory with HasClock {
 
-//    val timestampStr: String = "2017-09-15T13:50:30.526+05:30"
     val timestampStr: String = "2017-09-15T13:50:00.000+05:30"
     val now: OffsetDateTime = OffsetDateTime.parse(timestampStr)
     val clock = mock[Clock]
