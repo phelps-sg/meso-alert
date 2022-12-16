@@ -45,10 +45,7 @@ object BlockMessages {
       toBlock(batch.messages.head)
     } else {
       Block(
-        """[{"type":"header","text":{"type":"plain_text",""" +
-          s""""text":"${batch.messages.size} ${messages(
-              MESSAGE_NEW_TRANSACTIONS
-            )}"""
+        header(s"${batch.messages.size} ${messages(MESSAGE_NEW_TRANSACTIONS)}")
       )
     }
   }
