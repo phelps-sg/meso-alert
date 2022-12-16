@@ -23,6 +23,8 @@ object BlockMessages {
   val MESSAGE_TRANSACTION_HASH = "slackChat.transactionHash"
   val MESSAGE_TOO_MANY_OUTPUTS = "slackChat.tooManyOutputs"
 
+  private val MAX_SECTIONS = 47
+
   private val txsPerSection = 20
 
   def message(messages: MessagesApi)(tx: TxUpdate): Blocks = {
@@ -40,7 +42,7 @@ object BlockMessages {
       totalSections: Int,
       currentSectionString: String
   ): Blocks = {
-    if (totalSections > 47) {
+    if (totalSections > MAX_SECTIONS) {
       Blocks(
         currentSectionString +
           """"}},{"type":"section","text":{"type":"mrkdwn",""" +
