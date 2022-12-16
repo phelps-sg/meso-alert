@@ -41,12 +41,12 @@ object BlockMessages {
       batch: TxBatch
   ): Block = {
     val toBlock = txToBlock(messages)(_)
+    val toSections = txToSections(messages)(_)
     if (batch.messages.size == 1) {
       toBlock(batch.messages.head)
     } else {
-      Block(
-        header(s"${batch.messages.size} ${messages(MESSAGE_NEW_TRANSACTIONS)}")
-      )
+      val sections = batch.messages.flatMap(toSections)
+      Block(sections: _*)
     }
   }
 
