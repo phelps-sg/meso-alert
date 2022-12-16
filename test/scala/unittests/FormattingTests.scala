@@ -9,7 +9,13 @@ import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
 import slack.BlockMessages
 import slack.BlockMessages.{Block, MESSAGE_TOO_MANY_OUTPUTS, txToBlock}
-import unittests.Fixtures.{ClockFixtures, MessagesFixtures, SlackChatHookFixtures, SlackSignatureVerifierFixtures, SlickSlashCommandFixtures}
+import unittests.Fixtures.{
+  ClockFixtures,
+  MessagesFixtures,
+  SlackChatHookFixtures,
+  SlackSignatureVerifierFixtures,
+  SlickSlashCommandFixtures
+}
 import util.BitcoinFormatting.formatSatoshi
 
 //noinspection TypeAnnotation
@@ -57,7 +63,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
       val testHash = TxHash("testHash")
 
       val markdownSectionRegEx =
-        s"""\\{"type":"section","text":\\{"type":"mrkdwn","text":""".r
+        """\{"type":"section","text":\{"type":"mrkdwn","text":""".r
 
       def checkNumSections(numOutputs: Int): Assertion = {
         val m = chatMessageStr(
@@ -69,7 +75,9 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
         val n = numOutputs / BlockMessages.MAX_TXS_PER_SECTION
         val r = numOutputs % BlockMessages.MAX_TXS_PER_SECTION
         val totalOutputsSections = if (r > 0) n + 1 else n
-        markdownSectionRegEx.findAllIn(m).length shouldBe 1 + totalOutputsSections
+        markdownSectionRegEx
+          .findAllIn(m)
+          .length shouldBe 1 + totalOutputsSections
       }
     }
 
@@ -95,7 +103,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
           addresses(List.fill(1000)("testOutput"): _*)
         )
         result should include(
-            s""""text":"${messagesApi(MESSAGE_TOO_MANY_OUTPUTS)}"}"""
+          s""""text":"${messagesApi(MESSAGE_TOO_MANY_OUTPUTS)}"}"""
         )
       }
   }

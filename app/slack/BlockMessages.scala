@@ -63,6 +63,7 @@ object BlockMessages {
       ),
       txHashSection(messages)(tx.hash, " " + messages(MESSAGE_TO_ADDRESSES))
     )
+
     val allSections =
       headerAndTxHash ++ txOutputsSections(tx.outputs) :+ divider
 
