@@ -24,6 +24,14 @@ object RateLimitingBatchingActor {
     Props(new RateLimitingBatchingActor(out)(clock))
 }
 
+/** Receives TxUpdate messages and batches them into TxBatch messages. Messages
+  * received within minInterval are sent in the same batch.
+  *
+  * @param out
+  *   The actor receiving the TxBatch messages
+  * @param clock
+  *   The clock used for measuring the time interval between messages
+  */
 class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
     clock: Clock
 ) extends Actor
