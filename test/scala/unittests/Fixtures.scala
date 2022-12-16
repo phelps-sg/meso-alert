@@ -9,6 +9,7 @@ import actors.{
   HooksManagerActorSlackChat,
   HooksManagerActorWeb,
   MemPoolWatcherActor,
+  RateLimitingBatchingActor,
   Register,
   Registered,
   SlackSecretsActor,
@@ -94,7 +95,7 @@ import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 
 import java.io.{FileNotFoundException, InputStream}
 import java.net.URI
-import java.time.{Clock, LocalDateTime}
+import java.time.{Clock, LocalDateTime, OffsetDateTime}
 import javax.inject.Provider
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
@@ -260,6 +261,7 @@ object Fixtures {
       with HasExecutionContext
       with HasActorSystem
       with HasDatabase
+      with HasClock
 
   trait MemPoolWatcherActorFixtures {
     env: MemPoolWatcherFixtures
@@ -410,9 +412,23 @@ object Fixtures {
     }
   }
 
-  trait ClockFixtures {
-    def now: LocalDateTime =
-      java.time.LocalDateTime.parse("2022-09-07T00:13:30")
+  trait HasClock
+
+  trait ClockFixtures extends MockFactory with HasClock {
+
+    val timestampStr: String = "2017-09-15T13:50:30.526+05:30"
+    val now: OffsetDateTime = OffsetDateTime.parse(timestampStr)
+    val clock = mock[Clock]
+
+    def setClockExpectations(): Unit =
+      (clock.instant _).expects().returning(now.toInstant).anyNumberOfTimes()
+
+    def tPlus(millis: Int) = now.plusNanos(1000000 * millis).toInstant
+
+    def advanceClockTo(millis: Int) =
+      (clock.instant _).expects().returning(tPlus(millis))
+
+    setClockExpectations()
   }
 
   trait MemPoolWatcherFixtures extends MockFactory {
@@ -627,7 +643,7 @@ object Fixtures {
   }
 
   trait WebhookActorFixtures {
-    env: ProvidesInjector with HasActorSystem =>
+    env: ProvidesInjector with HasActorSystem with ClockFixtures =>
     val actorSystem: ActorSystem
     val hook: Webhook
     val hooksActor = {
@@ -635,8 +651,10 @@ object Fixtures {
         HooksManagerActorWeb.props(
           injector.instanceOf[TxMessagingActorWeb.Factory],
           injector.instanceOf[TxFilterActor.Factory],
+          injector.instanceOf[RateLimitingBatchingActor.Factory],
           injector.instanceOf[WebhookDao],
-          injector.instanceOf[DatabaseExecutionContext]
+          injector.instanceOf[DatabaseExecutionContext],
+          clock
         )
       )
     }
@@ -669,7 +687,7 @@ object Fixtures {
   }
 
   trait HooksManagerActorSlackChatFixtures extends SlackChatHookFixtures {
-    env: HasActorSystem with ProvidesInjector =>
+    env: HasActorSystem with ProvidesInjector with ClockFixtures =>
     val actorSystem: ActorSystem
     val hookDao: SlackChatHookDao
 
@@ -681,8 +699,10 @@ object Fixtures {
         HooksManagerActorSlackChat.props(
           slackChatActorFactory,
           injector.instanceOf[TxFilterActor.Factory],
+          injector.instanceOf[RateLimitingBatchingActor.Factory],
           hookDao,
-          injector.instanceOf[DatabaseExecutionContext]
+          injector.instanceOf[DatabaseExecutionContext],
+          clock
         )
       )
     }
@@ -1267,7 +1287,7 @@ object Fixtures {
   }
 
   trait WebhooksActorFixtures {
-    env: HasActorSystem with ProvidesInjector =>
+    env: HasActorSystem with ProvidesInjector with ClockFixtures =>
     val actorSystem: ActorSystem
     val injector: Injector
     val hooksActor = {
@@ -1275,8 +1295,10 @@ object Fixtures {
         HooksManagerActorWeb.props(
           injector.instanceOf[TxMessagingActorWeb.Factory],
           injector.instanceOf[TxFilterActor.Factory],
+          injector.instanceOf[RateLimitingBatchingActor.Factory],
           injector.instanceOf[WebhookDao],
-          injector.instanceOf[DatabaseExecutionContext]
+          injector.instanceOf[DatabaseExecutionContext],
+          clock
         )
       )
     }

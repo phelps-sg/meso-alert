@@ -20,6 +20,7 @@ import slick.dbio.DBIO
 import unittests.Fixtures.{
   ActorGuiceFixtures,
   BlockChainWatcherFixtures,
+  ClockFixtures,
   ConfigurationFixtures,
   DatabaseGuiceFixtures,
   EncryptionActorFixtures,
@@ -49,9 +50,12 @@ class ServiceTests
     with BeforeAndAfterAll {
 
   // noinspection TypeAnnotation
-  trait FixtureBindings extends ProvidesTestBindings with MessagesFixtures {
+  trait FixtureBindings
+      extends ProvidesTestBindings
+      with MessagesFixtures
+      with ClockFixtures {
     val bindModule: GuiceableModule =
-      new UnitTestModule(database, testExecutionContext, messagesApi)
+      new UnitTestModule(database, testExecutionContext, messagesApi, clock)
     val executionContext = testExecutionContext
     val actorSystem = system
     val db = database

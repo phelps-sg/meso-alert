@@ -1,32 +1,12 @@
-import actors.{
-  AuthenticationActor,
-  BlockChainWatcherActor,
-  EncryptionActor,
-  HooksManagerActorSlackChat,
-  HooksManagerActorWeb,
-  MemPoolWatcherActor,
-  SlackSecretsActor,
-  TxFilterActor,
-  TxMessagingActorSlackChat,
-  TxMessagingActorWeb,
-  TxPersistenceActor
-}
+import actors.{AuthenticationActor, BlockChainWatcherActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, RateLimitingBatchingActor, SlackSecretsActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor}
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import dao._
 import play.libs.akka.AkkaGuiceSupport
-import services.{
-  EncryptionManagerService,
-  HooksManagerSlackChat,
-  HooksManagerSlackChatService,
-  HooksManagerWeb,
-  HooksManagerWebService,
-  MemPoolWatcher,
-  MemPoolWatcherService,
-  SodiumEncryptionManager
-}
+import services.{EncryptionManagerService, HooksManagerSlackChat, HooksManagerSlackChatService, HooksManagerWeb, HooksManagerWebService, MemPoolWatcher, MemPoolWatcherService, SodiumEncryptionManager}
 import slick.jdbc.JdbcBackend.Database
 
+import java.time.Clock
 import javax.inject.{Inject, Provider, Singleton}
 import scala.util.Random
 
@@ -58,6 +38,7 @@ class Module extends AbstractModule with AkkaGuiceSupport {
       classOf[TxPersistenceActor],
       classOf[TxPersistenceActor.Factory]
     )
+    bindActorFactory(classOf[RateLimitingBatchingActor], classOf[RateLimitingBatchingActor.Factory])
   }
 
   protected def bindDatabase(): Unit = {
@@ -66,6 +47,10 @@ class Module extends AbstractModule with AkkaGuiceSupport {
 
   protected def bindPRNG(): Unit = {
     bind(classOf[scala.util.Random]).toProvider(classOf[RandomProvider])
+  }
+
+  protected def bindClock(): Unit = {
+    bind(classOf[Clock]).toProvider(classOf[ClockProvider])
   }
 
   protected def bindFutureInitialisingComponents(): Unit = {
@@ -96,6 +81,7 @@ class Module extends AbstractModule with AkkaGuiceSupport {
   override def configure(): Unit = {
     bindDatabase()
     bindPRNG()
+    bindClock()
     bindActors()
     bindFutureInitialisingComponents()
   }
@@ -109,4 +95,9 @@ class DatabaseProvider @Inject() (config: Config) extends Provider[Database] {
 @Singleton
 class RandomProvider extends Provider[scala.util.Random] {
   lazy val get: Random.type = scala.util.Random
+}
+
+@Singleton
+class ClockProvider extends Provider[Clock] {
+  lazy val get: Clock = Clock.systemUTC()
 }

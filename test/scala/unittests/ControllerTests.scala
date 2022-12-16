@@ -39,6 +39,7 @@ import unittests.Fixtures.{
   ActorGuiceFixtures,
   Auth0ActionFixtures,
   BlockChainWatcherFixtures,
+  ClockFixtures,
   ConfigurationFixtures,
   DatabaseInitializer,
   DefaultBodyParserFixtures,
@@ -84,9 +85,12 @@ class ControllerTests
     with Eventually {
 
   // noinspection TypeAnnotation
-  trait FixtureBindings extends ProvidesTestBindings with MessagesFixtures {
+  trait FixtureBindings
+      extends ProvidesTestBindings
+      with MessagesFixtures
+      with ClockFixtures {
     val bindModule: GuiceableModule =
-      new UnitTestModule(database, testExecutionContext, messagesApi)
+      new UnitTestModule(database, testExecutionContext, messagesApi, clock)
     val executionContext = testExecutionContext
     val actorSystem = system
     val db = database
@@ -286,15 +290,10 @@ class ControllerTests
         slackSignatureVerifyAction
       )
 
-//      memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
-//        .anyNumberOfTimes()
-
-//      override def peerGroupExpectations(): Unit = {
       (mockPeerGroup
         .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
         .expects(*)
         .never()
-//      }
     }
 
     "stop a running hook when channel is deleted" in new TestFixtures {
@@ -401,18 +400,10 @@ class ControllerTests
 
       override def privateChannel: Boolean = false
 
-//      override def memPoolWatcherExpectations(
-//          ch: CallHandler1[ActorRef, Unit]
-//      ): CallHandler1[ActorRef, Unit] = {
-//        ch.atLeastOnce()
-//      }
-
-//      override def peerGroupExpectations(): Unit = {
       (mockPeerGroup
         .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
         .expects(*)
         .anyNumberOfTimes()
-//      }
 
       def initialiseHook: Future[Unit] = {
         for {
@@ -808,13 +799,10 @@ class ControllerTests
 
       override def privateChannel: Boolean = false
 
-//      override def peerGroupExpectations(): Unit = {
       (mockPeerGroup
         .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
         .expects(*)
         .anyNumberOfTimes()
-//      }
-
     }
 
     "reject an invalid auth state" in new TestFixtures {
@@ -979,9 +967,6 @@ class ControllerTests
 
       def mockAuth0Action: Auth0ValidateJWTAction = mockAuth0ActionAlwaysSuccess
 
-//      memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
-//        .never()
-
       (mockSlackSecretsManagerService.generateSecret _)
         .expects(*)
         .returning(Future {
@@ -999,7 +984,6 @@ class ControllerTests
 
       val testUser = Some("test-user")
 
-//      override def peerGroupExpectations(): Unit = {
       (mockPeerGroup.start _).expects().once()
       (mockPeerGroup.setMaxConnections _).expects(*).once()
       (mockPeerGroup.addPeerDiscovery _).expects(*).once()
@@ -1007,7 +991,6 @@ class ControllerTests
         .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
         .expects(*)
         .anyNumberOfTimes()
-//      }
     }
 
     "return the correct configuration" in new TestFixtures {

@@ -14,6 +14,7 @@ import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import unittests.Fixtures.{
+  ClockFixtures,
   ConfigurationFixtures,
   DatabaseGuiceFixtures,
   DatabaseInitializer,
@@ -47,9 +48,12 @@ class DaoTests
     with BeforeAndAfterAll {
 
   // noinspection TypeAnnotation
-  trait FixtureBindings extends ProvidesTestBindings with MessagesFixtures {
+  trait FixtureBindings
+      extends ProvidesTestBindings
+      with MessagesFixtures
+      with ClockFixtures {
     val bindModule: GuiceableModule =
-      new UnitTestModule(database, testExecutionContext, messagesApi)
+      new UnitTestModule(database, testExecutionContext, messagesApi, clock)
     val executionContext = testExecutionContext
     val actorSystem = system
     val db = database

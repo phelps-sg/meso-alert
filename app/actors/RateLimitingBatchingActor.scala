@@ -16,7 +16,7 @@ object RateLimitingBatchingActor {
   final case class TxBatch(messages: Seq[TxUpdate])
 
   trait Factory {
-    def apply(@unused out: ActorRef): Actor
+    def apply(@unused out: ActorRef, clock: Clock): Actor
   }
 
   def props(out: ActorRef, clock: Clock)(implicit system: ActorSystem): Props =

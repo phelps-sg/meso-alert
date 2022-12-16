@@ -88,7 +88,6 @@ import unittests.Fixtures.{
 
 import java.math.BigInteger
 import java.net.URI
-import java.time.{Clock, OffsetDateTime}
 import scala.annotation.unused
 import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
@@ -116,9 +115,12 @@ class ActorTests
   implicit override val patienceConfig =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
-  trait FixtureBindings extends ProvidesTestBindings with MessagesFixtures {
+  trait FixtureBindings
+      extends ProvidesTestBindings
+      with MessagesFixtures
+      with ClockFixtures {
     val bindModule: GuiceableModule =
-      new UnitTestModule(database, testExecutionContext, messagesApi)
+      new UnitTestModule(database, testExecutionContext, messagesApi, clock)
     val executionContext = testExecutionContext
     val actorSystem = system
     val timeout: Timeout = 20.seconds
@@ -422,7 +424,7 @@ class ActorTests
 
     "record a new transaction update when it arrives" in new TestFixtures {
       val txCapture = CaptureAll[TxUpdate]()
-//      (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
+      //      (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
       (mockTransactionUpdateDao.record _)
         .expects(capture(txCapture))
         .returning(Future(1))
@@ -548,6 +550,7 @@ class ActorTests
 
     trait TestFixtures
         extends FixtureBindings
+        with ClockFixtures
         with ConfigurationFixtures
         with MessagesFixtures
         with MemPoolWatcherFixtures
@@ -630,6 +633,7 @@ class ActorTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with ClockFixtures
         with MessagesFixtures
         with MainNetParamsFixtures
         with BlockChainWatcherFixtures
@@ -697,21 +701,20 @@ class ActorTests
 
   "RateLimitingBatchActor" should {
 
-    trait TestFixtures extends FixtureBindings with TxUpdateFixtures {
-      val timestampStr: String = "2017-09-15T13:50:30.526+05:30"
-      val t0: OffsetDateTime = OffsetDateTime.parse(timestampStr)
-      val clock = mock[Clock]
-      (clock.instant _).expects().returning(t0.toInstant)
+    trait TestFixtures
+        extends FixtureBindings
+        with TxUpdateFixtures
+        with ClockFixtures {
+
       val actor =
         actorSystem.actorOf(RateLimitingBatchingActor.props(self, clock))
 
-      def tPlus(millis: Int) = t0.plusNanos(1000000 * millis).toInstant
-
-      def advanceClockTo(millis: Int) =
-        (clock.instant _).expects().returning(tPlus(millis))
-
       def expectTx(message: TxUpdate) = expectTxs(Vector(message))
+
       def expectTxs(messages: Vector[TxUpdate]) = expectMsg(TxBatch(messages))
+
+      override def setClockExpectations(): Unit =
+        (clock.instant _).expects().returning(now.toInstant).once()
     }
 
     "forward separate messages when they are separated by a long delay" in new TestFixtures {
@@ -930,6 +933,7 @@ class ActorTests
       }
 
       def expectedBlocks: Blocks
+
       def transactions: Vector[TxUpdate]
     }
 
@@ -941,13 +945,16 @@ class ActorTests
     trait SingleTransaction extends SlackMessage {
       env: SlackMessage with TxUpdateFixtures with MessagesFixtures =>
       def transactions = Vector(tx)
+
       def expectedBlocks = slackMessage(tx)
     }
 
     trait MultipleTransactions extends SlackMessage {
       env: SlackMessage with TxUpdateFixtures with MessagesFixtures =>
       def transactions = Vector(tx, tx1, tx2)
+
       def blockStr(tx: TxUpdate): String = slackMessage(tx).value
+
       def expectedBlocks = Blocks(
         s"${blockStr(tx)}\n${blockStr(tx1)}\n${blockStr(tx2)}"
       )

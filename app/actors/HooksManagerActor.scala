@@ -8,6 +8,7 @@ import play.api.Logging
 import play.api.libs.concurrent.InjectedActorSupport
 import slick.DatabaseExecutionContext
 
+import java.time.Clock
 import scala.concurrent.ExecutionContext
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
@@ -28,9 +29,11 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
 
   import HooksManagerActor._
 
+  val clock: Clock
   val dao: HookDao[X, Y]
   val messagingActorFactory: TxMessagingActorFactory[Y]
   val filteringActorFactory: TxFilterActor.Factory
+  val batchingActorFactory: RateLimitingBatchingActor.Factory
   val databaseExecutionContext: DatabaseExecutionContext
   val hookTypePrefix: String
 
@@ -99,12 +102,17 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
           messagingActorFactory(hook),
           name = s"$hookTypePrefix-messenger-$actorId"
         )
+      val batchingActor =
+        injectedChild(
+          batchingActorFactory(messagingActor, clock),
+          name = s"$hookTypePrefix-batcher-$actorId"
+        )
       val filteringActor =
         injectedChild(
-          filteringActorFactory(messagingActor, hook.filter),
+          filteringActorFactory(batchingActor, hook.filter),
           name = s"$hookTypePrefix-filter-$actorId"
         )
-      actors += key -> Array(messagingActor, filteringActor)
+      actors += key -> Array(messagingActor, batchingActor, filteringActor)
 
     case CreateActors(_: X, _) =>
       logger.error("Not starting child actors; unrecognized hook type")
