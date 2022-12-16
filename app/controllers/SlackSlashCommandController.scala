@@ -177,8 +177,7 @@ class SlackSlashCommandController @Inject() (
                 )
               )
               _ <- hooksManager.start(channel)
-            } yield
-              Ok(messagesApi(MESSAGE_CRYPTO_ALERT_NEW, amount))
+            } yield Ok(messagesApi(MESSAGE_CRYPTO_ALERT_NEW, amount))
 
             f.recoverWith {
 
@@ -261,11 +260,11 @@ class SlackSlashCommandController @Inject() (
           _ <- hooksManager.start(channel)
         } yield Ok(messagesApi(MESSAGE_RESUME_ALERTS))
         f recover {
-            case HookAlreadyStartedException(_) =>
-              Ok(messagesApi(MESSAGE_RESUME_ALERTS_ERROR))
-            case HookNotRegisteredException(_) =>
-              Ok(messagesApi(MESSAGE_RESUME_ALERTS_ERROR_NOT_CONFIGURED))
-          }
+          case HookAlreadyStartedException(_) =>
+            Ok(messagesApi(MESSAGE_RESUME_ALERTS_ERROR))
+          case HookNotRegisteredException(_) =>
+            Ok(messagesApi(MESSAGE_RESUME_ALERTS_ERROR_NOT_CONFIGURED))
+        }
     }
   }
 
