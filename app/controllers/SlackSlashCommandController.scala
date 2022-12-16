@@ -166,11 +166,8 @@ class SlackSlashCommandController @Inject() (
             logger.debug(s"amount = $amount")
 
             val f = for {
-
               team <- slackTeamDao.find(slashCommand.teamId)
-
               _ <- checkChannelPermissions(team)
-
               _ <- hooksManager.update(
                 SlackChatHookPlainText(
                   channel,
@@ -179,14 +176,9 @@ class SlackSlashCommandController @Inject() (
                   isRunning = true
                 )
               )
-
               _ <- hooksManager.start(channel)
-
-              result <- Future.successful(
-                Ok(messagesApi(MESSAGE_CRYPTO_ALERT_NEW, amount))
-              )
-
-            } yield result
+            } yield
+              Ok(messagesApi(MESSAGE_CRYPTO_ALERT_NEW, amount))
 
             f.recoverWith {
 
@@ -194,10 +186,7 @@ class SlackSlashCommandController @Inject() (
                 for {
                   _ <- hooksManager.stop(channel)
                   _ <- hooksManager.start(channel)
-                  result <- Future.successful {
-                    Ok(messagesApi(MESSAGE_CRYPTO_ALERT_RECONFIG, amount))
-                  }
-                } yield result
+                } yield Ok(messagesApi(MESSAGE_CRYPTO_ALERT_RECONFIG, amount))
 
               case BoltException.ChannelNotFoundException =>
                 Future.successful {
@@ -269,10 +258,9 @@ class SlackSlashCommandController @Inject() (
       case Array("") =>
         logger.debug("Resuming alerts")
         val f = for {
-          started <- hooksManager.start(channel)
-        } yield started
-        f.map { _ => Ok(messagesApi(MESSAGE_RESUME_ALERTS)) }
-          .recover {
+          _ <- hooksManager.start(channel)
+        } yield Ok(messagesApi(MESSAGE_RESUME_ALERTS))
+        f recover {
             case HookAlreadyStartedException(_) =>
               Ok(messagesApi(MESSAGE_RESUME_ALERTS_ERROR))
             case HookNotRegisteredException(_) =>
