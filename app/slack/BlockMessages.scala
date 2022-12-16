@@ -78,7 +78,7 @@ object BlockMessages {
 
   val divider: Divider =
     Divider(
-      s"""{"type":"divider"}"""
+      """{"type":"divider"}"""
     )
 
   def tooManyOutputsSection(messages: MessagesApi): Section =
