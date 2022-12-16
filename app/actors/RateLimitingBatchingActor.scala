@@ -42,10 +42,13 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
       if (timeDeltaNanos(now, previous) > minInterval.toNanos) {
         logger.debug(s"Switching to slow mode and sending $newBatch")
         out ! TxBatch(newBatch)
-        context.become(slow(now))
-      } else {
-        context.become(fast(newBatch, now))
-      }
+        context.become {
+          slow(previous = now)
+        }
+      } else
+        context.become {
+          fast(batch = newBatch, previous = now)
+        }
     case x =>
       unrecognizedMessage(x)
   }
@@ -57,10 +60,13 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
       out ! TxBatch(Vector(tx))
       if (timeDeltaNanos(now, previous) <= minInterval.toNanos) {
         logger.debug("Switching to fast mode")
-        context.become(fast(Vector(), now))
-      } else {
-        context.become(slow(now))
-      }
+        context.become {
+          fast(batch = Vector(), previous = now)
+        }
+      } else
+        context.become {
+          slow(previous = now)
+        }
     case x =>
       unrecognizedMessage(x)
   }
