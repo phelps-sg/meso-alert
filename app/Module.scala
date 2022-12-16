@@ -1,9 +1,31 @@
-import actors.{AuthenticationActor, BlockChainWatcherActor, EncryptionActor, HooksManagerActorSlackChat, HooksManagerActorWeb, MemPoolWatcherActor, RateLimitingBatchingActor, SlackSecretsActor, TxFilterActor, TxMessagingActorSlackChat, TxMessagingActorWeb, TxPersistenceActor}
+import actors.{
+  AuthenticationActor,
+  BlockChainWatcherActor,
+  EncryptionActor,
+  HooksManagerActorSlackChat,
+  HooksManagerActorWeb,
+  MemPoolWatcherActor,
+  RateLimitingBatchingActor,
+  SlackSecretsActor,
+  TxFilterActor,
+  TxMessagingActorSlackChat,
+  TxMessagingActorWeb,
+  TxPersistenceActor
+}
 import com.google.inject.AbstractModule
 import com.typesafe.config.Config
 import dao._
 import play.libs.akka.AkkaGuiceSupport
-import services.{EncryptionManagerService, HooksManagerSlackChat, HooksManagerSlackChatService, HooksManagerWeb, HooksManagerWebService, MemPoolWatcher, MemPoolWatcherService, SodiumEncryptionManager}
+import services.{
+  EncryptionManagerService,
+  HooksManagerSlackChat,
+  HooksManagerSlackChatService,
+  HooksManagerWeb,
+  HooksManagerWebService,
+  MemPoolWatcher,
+  MemPoolWatcherService,
+  SodiumEncryptionManager
+}
 import slick.jdbc.JdbcBackend.Database
 
 import java.time.Clock
@@ -38,7 +60,10 @@ class Module extends AbstractModule with AkkaGuiceSupport {
       classOf[TxPersistenceActor],
       classOf[TxPersistenceActor.Factory]
     )
-    bindActorFactory(classOf[RateLimitingBatchingActor], classOf[RateLimitingBatchingActor.Factory])
+    bindActorFactory(
+      classOf[RateLimitingBatchingActor],
+      classOf[RateLimitingBatchingActor.Factory]
+    )
   }
 
   protected def bindDatabase(): Unit = {
