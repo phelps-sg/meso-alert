@@ -1315,7 +1315,7 @@ object Fixtures {
         "en" -> Map(
           MESSAGE_NEW_TRANSACTION -> "New transaction with value",
           MESSAGE_TRANSACTION_HASH -> "Transaction Hash",
-          MESSAGE_TO_ADDRESSES -> "to addresses",
+          MESSAGE_TO_ADDRESSES -> "to addresses:",
           MESSAGE_TOO_MANY_OUTPUTS -> "Too many inputs",
           "slackResponse.currencyError" -> "I currently only provide alerts for BTC, but other currencies are coming soon."
         )

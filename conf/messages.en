@@ -20,5 +20,6 @@ slackResponse.notInvitedError = Please invite the bot to a channel before issuin
 slackChat.botName = Block Insights
 slackChat.tooManyOutputs = Transaction contains too many outputs to list here. Visit the Transaction URL to view all.
 slackChat.transactionHash = Transaction Hash
-slackChat.toAddresses = to addresses
+slackChat.toAddresses = to addresses:
 slackChat.newTransaction = New transaction with value
+slackChat.newTransactions = new transactions

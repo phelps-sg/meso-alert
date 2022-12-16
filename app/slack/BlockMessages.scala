@@ -1,7 +1,7 @@
 package slack
 
-import actors.{TxHash, TxUpdate}
-import dao.Satoshi
+import actors.RateLimitingBatchingActor.TxBatch
+import actors.{TxHash, TxInputOutput, TxUpdate}
 import play.api.i18n.{Lang, MessagesApi}
 import util.BitcoinFormatting.{
   formatSatoshi,
@@ -10,90 +10,101 @@ import util.BitcoinFormatting.{
   toAddresses
 }
 
-import scala.annotation.tailrec
-
 object BlockMessages {
 
-  case class Blocks(value: String) extends AnyVal
+  sealed trait BlockComponent {
+    val value: String
+  }
+
+  final case class Header(value: String) extends BlockComponent
+  final case class Section(value: String) extends BlockComponent
+  final case class Divider(value: String) extends BlockComponent
+
+  object Block {
+    def apply(components: BlockComponent*): Block =
+      Block(s"[${components.map(_.value).mkString(",")}]")
+  }
+  final case class Block(value: String) extends AnyVal
 
   implicit val lang: Lang = Lang("en")
 
   val MESSAGE_NEW_TRANSACTION = "slackChat.newTransaction"
+  val MESSAGE_NEW_TRANSACTIONS = "slackChat.newTransactions"
   val MESSAGE_TO_ADDRESSES = "slackChat.toAddresses"
   val MESSAGE_TRANSACTION_HASH = "slackChat.transactionHash"
   val MESSAGE_TOO_MANY_OUTPUTS = "slackChat.tooManyOutputs"
 
-  private val MAX_SECTIONS = 47
+  val MAX_SECTIONS = 47
+  val MAX_TXS_PER_SECTION = 20
 
-  private val txsPerSection = 20
-
-  def message(messages: MessagesApi)(tx: TxUpdate): Blocks = {
-    blockMessageBuilder(messages)(
-      tx.hash,
-      tx.amount,
-      toAddresses(tx.outputs)
-    )
-  }
-
-  @tailrec
-  def buildOutputsSections(messages: MessagesApi)(
-      txOutputs: Seq[String],
-      currentSectionOutputs: Int,
-      totalSections: Int,
-      currentSectionString: String
-  ): Blocks = {
-    if (totalSections > MAX_SECTIONS) {
-      Blocks(
-        currentSectionString +
-          """"}},{"type":"section","text":{"type":"mrkdwn",""" +
-          s""""text":"${messages(
-              MESSAGE_TOO_MANY_OUTPUTS
-            )}"}},{"type":"divider"}]"""
-      )
+  def txBatchToBlock(messages: MessagesApi)(
+      batch: TxBatch
+  ): Block = {
+    val toBlock = txToBlock(messages)(_)
+    if (batch.messages.size == 1) {
+      toBlock(batch.messages.head)
     } else {
-      if (currentSectionOutputs < txsPerSection && txOutputs.nonEmpty) {
-        val newSectionString = s"${linkToAddress(txOutputs.head)}, "
-        buildOutputsSections(messages)(
-          txOutputs.tail,
-          currentSectionOutputs + 1,
-          totalSections,
-          currentSectionString + newSectionString
-        )
-      } else if (currentSectionOutputs >= txsPerSection && txOutputs.nonEmpty) {
-        val newSectionString = """"}}, """ +
-          """{"type":"section","text":{"type": "mrkdwn", "text": """" +
-          s"${linkToAddress(txOutputs.head)}, "
-        buildOutputsSections(messages)(
-          txOutputs.tail,
-          1,
-          totalSections + 1,
-          currentSectionString + newSectionString
-        )
-      } else {
-        Blocks(
-          currentSectionString.take(currentSectionString.length - 2) + " " +
-            """"}}, {"type":"divider"}]"""
-        )
-      }
+      Block(
+        """[{"type":"header","text":{"type":"plain_text",""" +
+          s""""text":"${batch.messages.size} ${messages(
+              MESSAGE_NEW_TRANSACTIONS
+            )}"""
+      )
     }
   }
 
-  def blockMessageBuilder(messages: MessagesApi)(
-      txHash: TxHash,
-      txValue: Satoshi,
-      txOutputs: Seq[String]
-  ): Blocks = {
-    Blocks(
-      """[{"type":"header","text":{"type":"plain_text",""" +
-        s""""text":"${messages(MESSAGE_NEW_TRANSACTION)} ${formatSatoshi(
-            txValue
-          )}""" +
-        """ BTC","emoji":false}},{"type":"section","text":{"type":"mrkdwn",""" +
-        s"""\"text\":\"${messages(MESSAGE_TRANSACTION_HASH)}: ${linkToTxHash(
-            txHash
-          )} ${messages(MESSAGE_TO_ADDRESSES)}:\"}},""" +
-        """{"type":"section","text":{"type": "mrkdwn", "text": """" +
-        buildOutputsSections(messages)(txOutputs, 0, 3, "").value
+  def txToBlock(messages: MessagesApi)(
+      tx: TxUpdate
+  ): Block = {
+
+    val headerAndTxHash = Vector(
+      header(
+        s"${messages(MESSAGE_NEW_TRANSACTION)} ${formatSatoshi(tx.amount)} BTC"
+      ),
+      txHashSection(messages)(tx.hash, " " + messages(MESSAGE_TO_ADDRESSES))
     )
+    val allSections =
+      headerAndTxHash ++ txOutputsSections(tx.outputs) :+ divider
+
+    val messageSections =
+      if (allSections.size > MAX_SECTIONS)
+        allSections.take(MAX_SECTIONS) :+ tooManyOutputsSection(messages)
+      else
+        allSections
+
+    Block(messageSections: _*)
   }
+
+  val divider: Divider =
+    Divider(
+      s"""{"type":"divider"}"""
+    )
+
+  def tooManyOutputsSection(messages: MessagesApi): Section =
+    markdown(
+      messages(MESSAGE_TOO_MANY_OUTPUTS)
+    )
+
+  def header(text: String): Header =
+    Header(
+      s"""{"type":"header","text":{"type":"plain_text","text":"$text","emoji":false}}"""
+    )
+
+  def markdown(text: String): Section =
+    Section(s"""{"type":"section","text":{"type":"mrkdwn","text":"$text"}}""")
+
+  def txOutputsSections(outputs: Seq[TxInputOutput]): Vector[Section] = {
+    val grouped = outputs.grouped(MAX_TXS_PER_SECTION) map { subOutputs =>
+      markdown(toAddresses(subOutputs).map(linkToAddress).mkString(", "))
+    }
+    grouped.toVector
+  }
+
+  def txHashSection(
+      messages: MessagesApi
+  )(txHash: TxHash, postfix: String = ""): Section =
+    markdown(s"${messages(MESSAGE_TRANSACTION_HASH)}: ${linkToTxHash(
+        txHash
+      )}$postfix")
+
 }

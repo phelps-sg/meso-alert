@@ -54,7 +54,7 @@ import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import services._
 import slack.BlockMessages
-import slack.BlockMessages.Blocks
+import slack.BlockMessages.Block
 import unittests.Fixtures.{
   ActorGuiceFixtures,
   BlockChainWatcherFixtures,
@@ -899,7 +899,7 @@ class ActorTests
         with SlackManagerFixtures
         with TxMessagingActorSlackChatFixtures {
 
-      val blocksCapture = CaptureAll[Blocks]()
+      val blocksCapture = CaptureAll[Block]()
       val tokenCapture = CaptureAll[SlackAuthToken]()
       val channelCapture = CaptureAll[SlackChannelId]()
       val botNameCapture = CaptureAll[String]()
@@ -932,14 +932,14 @@ class ActorTests
         )
       }
 
-      def expectedBlocks: Blocks
+      def expectedBlocks: Block
 
       def transactions: Vector[TxUpdate]
     }
 
     trait SlackMessage {
       env: MessagesFixtures =>
-      val slackMessage = BlockMessages.message(messagesApi)(_)
+      val slackMessage = BlockMessages.txToBlock(messagesApi)(_)
     }
 
     trait SingleTransaction extends SlackMessage {
@@ -955,7 +955,7 @@ class ActorTests
 
       def blockStr(tx: TxUpdate): String = slackMessage(tx).value
 
-      def expectedBlocks = Blocks(
+      def expectedBlocks = Block(
         s"${blockStr(tx)}\n${blockStr(tx1)}\n${blockStr(tx2)}"
       )
     }

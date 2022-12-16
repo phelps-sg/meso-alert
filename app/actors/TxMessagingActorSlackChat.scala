@@ -11,7 +11,7 @@ import play.api.i18n.{Lang, MessagesApi}
 import play.api.{Configuration, Logging}
 import services.SlackManagerService
 import slack.BlockMessages
-import slack.BlockMessages.Blocks
+import slack.BlockMessages.Block
 import slick.SlackChatExecutionContext
 
 import scala.annotation.unused
@@ -37,7 +37,7 @@ class TxMessagingActorSlackChat @Inject() (
     val random: Random,
     protected val messagesApi: MessagesApi,
     @Assisted hook: SlackChatHookPlainText
-) extends TxRetryOrDie[Blocks, TxBatch]
+) extends TxRetryOrDie[Block, TxBatch]
     with Timers
     with UnrecognizedMessageHandlerFatal
     with Logging {
@@ -54,12 +54,12 @@ class TxMessagingActorSlackChat @Inject() (
 
   override def success(): Unit = logger.debug("Successfully posted message")
 
-  private val toBlocks: TxUpdate => Blocks = BlockMessages.message(messagesApi)
+  private val toBlocks: TxUpdate => Block = BlockMessages.txToBlock(messagesApi)
 
-  override def process(tx: TxBatch): Future[Blocks] = {
+  override def process(tx: TxBatch): Future[Block] = {
 
     val blocks = tx.messages.map(toBlocks) reduce { (x, y) =>
-      Blocks(s"${x.value}\n${y.value}")
+      Block(s"${x.value}\n${y.value}")
     }
 
     slackManagerService.chatPostMessage(

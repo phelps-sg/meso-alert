@@ -1,28 +1,15 @@
 package unittests
 
-import actors.TxHash
+import actors.{TxHash, TxInputOutput, TxUpdate}
 import controllers.SlackSlashCommandController
-import dao.{
-  SlackAuthToken,
-  SlackChannelId,
-  SlackChatHookPlainText,
-  SlashCommand,
-  Satoshi
-}
+import dao._
+import org.scalatest.Assertion
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
-import slack.BlockMessages.{
-  Blocks,
-  MESSAGE_TOO_MANY_OUTPUTS,
-  blockMessageBuilder
-}
-import unittests.Fixtures.{
-  MessagesFixtures,
-  SlackChatHookFixtures,
-  SlackSignatureVerifierFixtures,
-  SlickSlashCommandFixtures
-}
+import slack.BlockMessages
+import slack.BlockMessages.{Block, MESSAGE_TOO_MANY_OUTPUTS, txToBlock}
+import unittests.Fixtures.{ClockFixtures, MessagesFixtures, SlackChatHookFixtures, SlackSignatureVerifierFixtures, SlickSlashCommandFixtures}
 import util.BitcoinFormatting.formatSatoshi
 
 //noinspection TypeAnnotation
@@ -43,44 +30,61 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
 
   "blockMessageBuilder" should {
 
-    trait TestFixtures extends MessagesFixtures {
-      val chatMessage: (TxHash, Satoshi, Seq[String]) => Blocks =
-        blockMessageBuilder(messagesApi)
+    trait TestFixtures extends MessagesFixtures with ClockFixtures {
+      val chatMessage: (TxUpdate) => Block =
+        txToBlock(messagesApi)
+
+      def addresses(labels: String*) =
+        labels.map(label => TxInputOutput(Some(label), None))
 
       def chatMessageStr(
           txHash: TxHash,
           amount: Satoshi,
-          addresses: Seq[String]
-      ) =
-        chatMessage(txHash, amount, addresses).value
+          addresses: Seq[TxInputOutput]
+      ) = {
+        val tx = TxUpdate(
+          txHash,
+          amount,
+          time = now.toLocalDateTime,
+          isPending = false,
+          outputs = addresses,
+          inputs = Vector(),
+          confidence = None
+        )
+        chatMessage(tx).value
+      }
 
       val testHash = TxHash("testHash")
+
+      val markdownSectionRegEx =
+        s"""\\{"type":"section","text":\\{"type":"mrkdwn","text":""".r
+
+      def checkNumSections(numOutputs: Int): Assertion = {
+        val m = chatMessageStr(
+          testHash,
+          Satoshi(100000000),
+          addresses(List.range(1, numOutputs, 1).map(x => x.toString): _*)
+        )
+        println(m)
+        val n = numOutputs / BlockMessages.MAX_TXS_PER_SECTION
+        val r = numOutputs % BlockMessages.MAX_TXS_PER_SECTION
+        val totalOutputsSections = if (r > 0) n + 1 else n
+        markdownSectionRegEx.findAllIn(m).length shouldBe 1 + totalOutputsSections
+      }
     }
 
     "print all outputs if they take up less than 47 sections - single section" in new TestFixtures {
       chatMessageStr(
         testHash,
         Satoshi(100000000),
-        List("1", "2")
+        addresses("1", "2")
       ) should fullyMatch regex
-        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https://www\.blockchair\.com/bitcoin/transaction/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},\{"type":"section","text":\{"type": "mrkdwn", "text": "<https://www\.blockchair\.com/bitcoin/address/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>, <https://www\.blockchair\.com/bitcoin/address/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> "\}\}, \{"type":"divider"\}]"""
+        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https://www\.blockchair\.com/bitcoin/transaction/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"<https://www\.blockchair\.com/bitcoin/address/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>, <https://www\.blockchair\.com/bitcoin/address/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>"\}\},\{"type":"divider"\}]"""
     }
 
     "print all outputs if they take up less than 47 sections - multiple sections" in new TestFixtures {
-      chatMessageStr(
-        testHash,
-        Satoshi(100000000),
-        List.range(1, 30, 1).map(x => x.toString)
-      ) should fullyMatch regex
-        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https:\/\/www\.blockchair\.com\/bitcoin\/transaction\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},(\{"type":"section","text":\{"type": "mrkdwn", "text": "(<https:\/\/www\.blockchair\.com\/bitcoin\/address\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>(,)* )+"\}\}, )*\{"type":"divider"\}]"""
-
-      chatMessageStr(
-        testHash,
-        Satoshi(100000000),
-        List.range(1, 100, 1).map(x => x.toString)
-      ) should fullyMatch regex
-        """\[\{"type":"header","text":\{"type":"plain_text","text":"New transaction with value [0-9]+ BTC","emoji":false\}\},\{"type":"section","text":\{"type":"mrkdwn","text":"Transaction Hash: <https:\/\/www\.blockchair\.com\/bitcoin\/transaction\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+> to addresses:"\}\},(\{"type":"section","text":\{"type": "mrkdwn", "text": "(<https:\/\/www\.blockchair\.com\/bitcoin\/address\/[a-zA-Z0-9]+\|[a-zA-Z0-9]+>(,)* )+"\}\}, )*\{"type":"divider"\}]"""
-
+      checkNumSections(30)
+      checkNumSections(100)
     }
 
     "make the last section of the block a link to view all the outputs if there are more than 47 sections" in
@@ -88,13 +92,10 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
         val result: String = chatMessageStr(
           testHash,
           Satoshi(100000000),
-          List.fill(1000)("testOutput")
+          addresses(List.fill(1000)("testOutput"): _*)
         )
         result should include(
-          """{"type":"section","text":{"type":"mrkdwn",""" +
-            s""""text":"${messagesApi(
-                MESSAGE_TOO_MANY_OUTPUTS
-              )}"}},{"type":"divider"}]"""
+            s""""text":"${messagesApi(MESSAGE_TOO_MANY_OUTPUTS)}"}"""
         )
       }
   }
