@@ -28,7 +28,7 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
 ) extends Actor
     with Logging {
 
-  val minInterval: Duration = 2.seconds
+  val minInterval: Duration = 1.seconds
 
   override def receive: Receive = slow(clock.instant())
 
