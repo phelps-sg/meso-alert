@@ -37,8 +37,7 @@ class TxMessagingActorSlackChat @Inject() (
     val random: Random,
     protected val messagesApi: MessagesApi,
     @Assisted hook: SlackChatHookPlainText
-) extends Actor
-    with TxRetryOrDie[Blocks, TxBatch]
+) extends TxRetryOrDie[Blocks, TxBatch]
     with Timers
     with UnrecognizedMessageHandlerFatal
     with Logging {
@@ -72,7 +71,4 @@ class TxMessagingActorSlackChat @Inject() (
     )
   }
 
-  override def receive: Receive = { case x: Any =>
-    handle(x)
-  }
 }

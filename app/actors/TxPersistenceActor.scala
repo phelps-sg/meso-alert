@@ -34,10 +34,9 @@ class TxPersistenceActor @Inject() (
     val memPoolWatcher: MemPoolWatcherService,
     val random: Random,
     implicit val ec: ExecutionContext
-) extends Actor
+) extends TxRetryOrDie[Int, TxUpdate]
     with TxUpdateActor
     with Logging
-    with TxRetryOrDie[Int, TxUpdate]
     with Timers
     with UnrecognizedMessageHandlerFatal {
 
@@ -52,6 +51,4 @@ class TxPersistenceActor @Inject() (
     super.preStart()
     registerWithWatcher()
   }
-
-  override def receive: Receive = { case x: Any => handle(x) }
 }

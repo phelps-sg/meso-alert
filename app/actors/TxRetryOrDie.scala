@@ -21,8 +21,11 @@ object TxRetryOrDie {
   )
 }
 
-trait TxRetryOrDie[T, M] {
-  env: Actor with Timers with Logging with UnrecognizedMessageHandler =>
+abstract class TxRetryOrDie[T, M: ClassTag]
+    extends Actor
+    with Timers
+    with Logging
+    with UnrecognizedMessageHandler {
 
   import TxRetryOrDie._
 
@@ -52,36 +55,34 @@ trait TxRetryOrDie[T, M] {
       ) milliseconds
   }
 
-  def handle(tx: Any)(implicit t: ClassTag[M]): Unit = {
-    tx match {
-      case tx: M => self ! Retry(tx, 0, None)
+  override def receive = {
+    case tx: M => self ! Retry(tx, 0, None)
 
-      case Retry(tx: M, retryCount, _) if retryCount < maxRetryCount =>
-        process(tx) map { _ =>
-          success()
-        } recover { case ex: Exception =>
-          failure(ex)
-          self ! ScheduleRetry(
-            calculateWaitTime(retryCount),
-            tx,
-            retryCount + 1,
-            Some(ex)
-          )
-        }
+    case Retry(tx: M, retryCount, _) if retryCount < maxRetryCount =>
+      process(tx) map { _ =>
+        success()
+      } recover { case ex: Exception =>
+        failure(ex)
+        self ! ScheduleRetry(
+          calculateWaitTime(retryCount),
+          tx,
+          retryCount + 1,
+          Some(ex)
+        )
+      }
 
-      case Retry(tx: M, retryCount, Some(ex)) if retryCount >= maxRetryCount =>
-        self ! Die(s"Could not process tx $tx. ${ex.getMessage}")
+    case Retry(tx: M, retryCount, Some(ex)) if retryCount >= maxRetryCount =>
+      self ! Die(s"Could not process tx $tx. ${ex.getMessage}")
 
-      case ScheduleRetry(timeout, tx: M, retryCount, ex) =>
-        timers.startSingleTimer("retry", Retry(tx, retryCount, ex), timeout)
+    case ScheduleRetry(timeout, tx: M, retryCount, ex) =>
+      timers.startSingleTimer("retry", Retry(tx, retryCount, ex), timeout)
 
-      case Die(reason) =>
-        actorDeath(reason)
-        self ! PoisonPill
+    case Die(reason) =>
+      actorDeath(reason)
+      self ! PoisonPill
 
-      case x =>
-        unrecognizedMessage(x)
-    }
+    case x =>
+      unrecognizedMessage(x)
   }
 
 }
