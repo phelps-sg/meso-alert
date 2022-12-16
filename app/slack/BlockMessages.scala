@@ -50,10 +50,13 @@ object BlockMessages {
     }
   }
 
-  def txToBlock(messages: MessagesApi)(
-      tx: TxUpdate
-  ): Block = {
+  def txToBlock(messages: MessagesApi)(tx: TxUpdate): Block = Block(
+    txToSections(messages)(tx): _*
+  )
 
+  def txToSections(messages: MessagesApi)(
+      tx: TxUpdate
+  ): Vector[BlockComponent] = {
     val headerAndTxHash = Vector(
       header(
         s"${messages(MESSAGE_NEW_TRANSACTION)} ${formatSatoshi(tx.amount)} BTC"
@@ -61,17 +64,18 @@ object BlockMessages {
       txHashSection(messages)(tx.hash, " " + messages(MESSAGE_TO_ADDRESSES))
     )
 
-    val allSections =
-      headerAndTxHash ++ txOutputsSections(tx.outputs) :+ divider
-
-    val messageSections =
-      if (allSections.size > MAX_SECTIONS)
-        allSections.take(MAX_SECTIONS) :+ tooManyOutputsSection(messages)
-      else
-        allSections
-
-    Block(messageSections: _*)
+    sectionsWithinLimits(messages)(
+      headerAndTxHash ++ txOutputsSections(tx.outputs)
+    ) :+ divider
   }
+
+  def sectionsWithinLimits(
+      messages: MessagesApi
+  )(allSections: Vector[BlockComponent]): Vector[BlockComponent] =
+    if (allSections.size > MAX_SECTIONS)
+      allSections.take(MAX_SECTIONS) :+ tooManyOutputsSection(messages)
+    else
+      allSections
 
   val divider: Divider =
     Divider(
