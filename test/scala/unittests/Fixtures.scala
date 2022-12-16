@@ -416,14 +416,16 @@ object Fixtures {
 
   trait ClockFixtures extends MockFactory with HasClock {
 
-    val timestampStr: String = "2017-09-15T13:50:30.526+05:30"
+//    val timestampStr: String = "2017-09-15T13:50:30.526+05:30"
+    val timestampStr: String = "2017-09-15T13:50:00.000+05:30"
     val now: OffsetDateTime = OffsetDateTime.parse(timestampStr)
     val clock = mock[Clock]
 
     def setClockExpectations(): Unit =
       (clock.instant _).expects().returning(now.toInstant).anyNumberOfTimes()
 
-    def tPlus(millis: Int) = now.plusNanos(1000000 * millis).toInstant
+    def tPlus(millis: Int) =
+      now.plus(java.time.Duration.ofMillis(millis)).toInstant
 
     def advanceClockTo(millis: Int) =
       (clock.instant _).expects().returning(tPlus(millis))
