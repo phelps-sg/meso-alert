@@ -1,5 +1,6 @@
 package actors
 
+import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import actors.RateLimitingBatchingActor.TxBatch
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import com.google.inject.Inject
@@ -26,7 +27,8 @@ object RateLimitingBatchingActor {
 class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
     clock: Clock
 ) extends Actor
-    with Logging {
+    with Logging
+    with UnrecognizedMessageHandlerFatal {
 
   val minInterval: Duration = 2.seconds
 
@@ -44,18 +46,23 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
       } else {
         context.become(fast(newBatch, now))
       }
+    case x =>
+      unrecognizedMessage(x)
   }
 
-  def slow(previous: Instant): Receive = { case tx: TxUpdate =>
-    val now = clock.instant()
-    logger.debug(s"Slow mode: sending $tx at $now")
-    out ! TxBatch(Vector(tx))
-    if (timeDeltaNanos(now, previous) <= minInterval.toNanos) {
-      logger.debug("Switching to fast mode")
-      context.become(fast(Vector(), now))
-    } else {
-      context.become(slow(now))
-    }
+  def slow(previous: Instant): Receive = {
+    case tx: TxUpdate =>
+      val now = clock.instant()
+      logger.debug(s"Slow mode: sending $tx at $now")
+      out ! TxBatch(Vector(tx))
+      if (timeDeltaNanos(now, previous) <= minInterval.toNanos) {
+        logger.debug("Switching to fast mode")
+        context.become(fast(Vector(), now))
+      } else {
+        context.become(slow(now))
+      }
+    case x =>
+      unrecognizedMessage(x)
   }
 
   private def timeDeltaNanos(now: Instant, previous: Instant): Long =
