@@ -955,9 +955,8 @@ class ActorTests
 
       def blockStr(tx: TxUpdate): String = slackMessage(tx).value
 
-      def expectedBlocks = Block(
-        s"${blockStr(tx)}\n${blockStr(tx1)}\n${blockStr(tx2)}"
-      )
+      def expectedBlocks =
+        BlockMessages.txBatchToBlock(messagesApi)(TxBatch(transactions))
     }
 
     "send the correct message to Slack when sent a single transaction" in new SingleTransaction
