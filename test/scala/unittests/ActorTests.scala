@@ -723,7 +723,7 @@ class ActorTests
       actor ! tx
       expectTx(tx)
 
-      advanceClockTo(4000)
+      advanceClockTo(4500)
       actor ! tx1
       expectTx(tx1)
     }
@@ -741,11 +741,11 @@ class ActorTests
       advanceClockTo(700)
       actor ! tx2
 
-      advanceClockTo(3000)
+      advanceClockTo(5000)
       actor ! tx3
       expectTxs(Vector(tx1, tx2, tx3))
 
-      advanceClockTo(5000)
+      advanceClockTo(8000)
       actor ! tx4
       expectTx(tx4)
     }
