@@ -45,7 +45,9 @@ object BlockMessages {
     if (batch.messages.size == 1) {
       toBlock(batch.messages.head)
     } else {
-      val sections = batch.messages.flatMap(toSections)
+      val sections = sectionsWithinLimits(messages)(
+        batch.messages.flatMap(toSections).toVector
+      )
       Block(sections: _*)
     }
   }
