@@ -43,14 +43,12 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
 
   def encodeKey(key: X): String
 
-  implicit class HookFor(key: X) {
-    def withHook[R](fn: Hook[X] => R): Unit = {
-      dao.find(key) map { hook =>
-        Success(fn(hook))
-      } recover { case _: NoSuchElementException =>
-        Failure(HookNotRegisteredException(key))
-      } pipeTo sender()
-    }
+  def withHookFor[R](key: X)(fn: Hook[X] => R): Unit = {
+    dao.find(key) map { hook =>
+      Success(fn(hook))
+    } recover { case _: NoSuchElementException =>
+      Failure(HookNotRegisteredException(key))
+    } pipeTo sender()
   }
 
   def fail(ex: Exception): Unit = {
@@ -71,26 +69,30 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
         Success(Updated(newHook))
       } pipeTo sender()
 
-    case Start(uri: X) =>
-      logger.debug(s"Received start request for $uri")
-      if (!(actors contains uri)) {
-        uri withHook (hook => {
-          self ! CreateActors(uri, hook)
-          val startedHook = hook.newStatus(isRunning = true)
-          self ! Update(startedHook)
-          Started(startedHook)
-        })
-      } else fail(HookAlreadyStartedException(uri))
+    case Start(key: X) =>
+      logger.debug(s"Received start request for $key")
+      if (!(actors contains key)) {
+        withHookFor(key) { hook =>
+          {
+            self ! CreateActors(key, hook)
+            val startedHook = hook.newStatus(isRunning = true)
+            self ! Update(startedHook)
+            Started(startedHook)
+          }
+        }
+      } else fail(HookAlreadyStartedException(key))
 
     case Stop(key: X) =>
       logger.debug(s"Stopping actor with key $key")
       if (actors contains key) {
         actors(key).foreach(_ ! PoisonPill)
         actors -= key
-        key withHook (hook => {
-          self ! Update(hook.newStatus(isRunning = false))
-          Stopped(hook)
-        })
+        withHookFor(key) { hook =>
+          {
+            self ! Update(hook.newStatus(isRunning = false))
+            Stopped(hook)
+          }
+        }
       } else fail(HookNotStartedException(key))
 
     case CreateActors(key: X, hook: Y) =>
