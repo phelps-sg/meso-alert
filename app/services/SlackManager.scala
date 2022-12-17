@@ -11,7 +11,7 @@ import com.slack.api.methods.request.oauth.OAuthV2AccessRequest
 import com.slack.api.methods.response.oauth.OAuthV2AccessResponse
 import dao._
 import play.api.{Configuration, Logging}
-import slack.BlockMessages.Block
+import slack.BlockMessages.BlockMessage
 import slack.FutureConverters.BoltFuture
 import slack.SlackClient
 import slick.SlackClientExecutionContext
@@ -36,8 +36,8 @@ trait SlackManagerService {
       username: String,
       channel: SlackChannelId,
       text: String,
-      blocks: Block
-  ): Future[Block]
+      blocks: BlockMessage
+  ): Future[BlockMessage]
 
   def conversationsInfo(
       token: SlackAuthToken,
@@ -100,8 +100,8 @@ class SlackManager @Inject() (
       username: String,
       channel: SlackChannelId,
       text: String,
-      blocks: Block
-  ): Future[Block] = {
+      blocks: BlockMessage
+  ): Future[BlockMessage] = {
     val request = ChatPostMessageRequest.builder
       .token(token.value)
       .username(username)

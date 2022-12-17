@@ -8,7 +8,7 @@ import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
 import slack.BlockMessages
-import slack.BlockMessages.{Block, MESSAGE_TOO_MANY_OUTPUTS, txToBlock}
+import slack.BlockMessages.{BlockMessage, MESSAGE_TOO_MANY_OUTPUTS, txToBlock}
 import unittests.Fixtures.{
   ClockFixtures,
   MessagesFixtures,
@@ -37,7 +37,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
   "blockMessageBuilder" should {
 
     trait TestFixtures extends MessagesFixtures with ClockFixtures {
-      val chatMessage: (TxUpdate) => Block =
+      val chatMessage: (TxUpdate) => BlockMessage =
         txToBlock(messagesApi)
 
       def addresses(labels: String*) =

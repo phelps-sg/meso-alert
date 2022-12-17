@@ -10,21 +10,24 @@ import util.BitcoinFormatting.{
   toAddresses
 }
 
+/** Functions for constructing
+  * [[https://api.slack.com/messaging/composing/layouts rich text messages in Slack]].
+  */
 object BlockMessages {
 
-  sealed trait BlockComponent {
+  sealed trait Block {
     val value: String
   }
 
-  final case class Header(value: String) extends BlockComponent
-  final case class Section(value: String) extends BlockComponent
-  final case class Divider(value: String) extends BlockComponent
+  final case class Header(value: String) extends Block
+  final case class Section(value: String) extends Block
+  final case class Divider(value: String) extends Block
 
-  object Block {
-    def apply(components: BlockComponent*): Block =
-      Block(s"[${components.map(_.value).mkString(",")}]")
+  object BlockMessage {
+    def apply(components: Block*): BlockMessage =
+      BlockMessage(s"[${components.map(_.value).mkString(",")}]")
   }
-  final case class Block(value: String) extends AnyVal
+  final case class BlockMessage(value: String) extends AnyVal
 
   implicit val lang: Lang = Lang("en")
 
@@ -39,7 +42,7 @@ object BlockMessages {
 
   def txBatchToBlock(messages: MessagesApi)(
       batch: TxBatch
-  ): Block = {
+  ): BlockMessage = {
     val toBlock = txToBlock(messages)(_)
     val toSections = txToSections(messages)(_)
     if (batch.messages.size == 1) {
@@ -48,17 +51,18 @@ object BlockMessages {
       val sections = sectionsWithinLimits(messages)(
         batch.messages.flatMap(toSections).toVector
       )
-      Block(sections: _*)
+      BlockMessage(sections: _*)
     }
   }
 
-  def txToBlock(messages: MessagesApi)(tx: TxUpdate): Block = Block(
-    txToSections(messages)(tx): _*
-  )
+  def txToBlock(messages: MessagesApi)(tx: TxUpdate): BlockMessage =
+    BlockMessage(
+      txToSections(messages)(tx): _*
+    )
 
   def txToSections(messages: MessagesApi)(
       tx: TxUpdate
-  ): Vector[BlockComponent] = {
+  ): Vector[Block] = {
     val headerAndTxHash = Vector(
       header(
         s"${messages(MESSAGE_NEW_TRANSACTION)} ${formatSatoshi(tx.amount)} BTC"
@@ -73,7 +77,7 @@ object BlockMessages {
 
   def sectionsWithinLimits(
       messages: MessagesApi
-  )(allSections: Vector[BlockComponent]): Vector[BlockComponent] =
+  )(allSections: Vector[Block]): Vector[Block] =
     if (allSections.size > MAX_SECTIONS)
       allSections.take(MAX_SECTIONS) :+ tooManyOutputsSection(messages)
     else
