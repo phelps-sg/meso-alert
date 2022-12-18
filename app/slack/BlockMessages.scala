@@ -16,16 +16,26 @@ import util.BitcoinFormatting.{
 object BlockMessages {
 
   sealed trait Block {
-    val value: String
+    def render: String
   }
 
-  final case class Header(value: String) extends Block
-  final case class Section(value: String) extends Block
-  final case class Divider(value: String) extends Block
+  final case class Header(text: String) extends Block {
+    override def render =
+      s"""{"type":"header","text":{"type":"plain_text","text":"$text","emoji":false}}"""
+  }
+
+  final case class Section(text: String) extends Block {
+    override def render =
+      s"""{"type":"section","text":{"type":"mrkdwn","text":"$text"}}"""
+  }
+
+  final case object Divider extends Block {
+    override def render = """{"type":"divider"}"""
+  }
 
   object BlockMessage {
     def apply(components: Block*): BlockMessage =
-      BlockMessage(s"[${components.map(_.value).mkString(",")}]")
+      BlockMessage(s"[${components.map(_.render).mkString(",")}]")
   }
   final case class BlockMessage(value: String) extends AnyVal
 
@@ -64,7 +74,7 @@ object BlockMessages {
       tx: TxUpdate
   ): Vector[Block] = {
     val headerAndTxHash = Vector(
-      header(
+      Header(
         s"${messages(MESSAGE_NEW_TRANSACTION)} ${formatSatoshi(tx.amount)} BTC"
       ),
       txHashSection(messages)(tx.hash, " " + messages(MESSAGE_TO_ADDRESSES))
@@ -72,7 +82,7 @@ object BlockMessages {
 
     sectionsWithinLimits(messages)(
       headerAndTxHash ++ txOutputsSections(tx.outputs)
-    ) :+ divider
+    ) :+ Divider
   }
 
   def sectionsWithinLimits(
@@ -83,27 +93,22 @@ object BlockMessages {
     else
       allSections
 
-  val divider: Divider =
-    Divider(
-      """{"type":"divider"}"""
-    )
-
   def tooManyOutputsSection(messages: MessagesApi): Section =
-    markdown(
+    Section(
       messages(MESSAGE_TOO_MANY_OUTPUTS)
     )
 
-  def header(text: String): Header =
-    Header(
-      s"""{"type":"header","text":{"type":"plain_text","text":"$text","emoji":false}}"""
-    )
+//  def header(text: String): Header =
+//    Header(
+//      s"""{"type":"header","text":{"type":"plain_text","text":"$text","emoji":false}}"""
+//    )
 
-  def markdown(text: String): Section =
-    Section(s"""{"type":"section","text":{"type":"mrkdwn","text":"$text"}}""")
+//  def markdown(text: String): Section =
+//    Section(s"""{"type":"section","text":{"type":"mrkdwn","text":"$text"}}""")
 
   def txOutputsSections(outputs: Seq[TxInputOutput]): Vector[Section] = {
     val grouped = outputs.grouped(MAX_TXS_PER_SECTION) map { subOutputs =>
-      markdown(toAddresses(subOutputs).map(linkToAddress).mkString(", "))
+      Section(toAddresses(subOutputs).map(linkToAddress).mkString(", "))
     }
     grouped.toVector
   }
@@ -111,7 +116,7 @@ object BlockMessages {
   def txHashSection(
       messages: MessagesApi
   )(txHash: TxHash, postfix: String = ""): Section =
-    markdown(s"${messages(MESSAGE_TRANSACTION_HASH)}: ${linkToTxHash(
+    Section(s"${messages(MESSAGE_TRANSACTION_HASH)}: ${linkToTxHash(
         txHash
       )}$postfix")
 
