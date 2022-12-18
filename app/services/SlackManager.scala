@@ -107,7 +107,7 @@ class SlackManager @Inject() (
       .username(username)
       .channel(channel.value)
       .text(text)
-      .blocksAsString(blocks.value)
+      .blocksAsString(blocks.render)
       .build
     BoltFuture { slackMethods.chatPostMessage(request) } map { _ => blocks }
   }

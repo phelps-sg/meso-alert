@@ -33,11 +33,9 @@ object BlockMessages {
     override def render = """{"type":"divider"}"""
   }
 
-  object BlockMessage {
-    def apply(components: Block*): BlockMessage =
-      BlockMessage(s"[${components.map(_.render).mkString(",")}]")
+  case class BlockMessage(components: Seq[Block]) {
+    def render: String = s"[${components.map(_.render).mkString(",")}]"
   }
-  final case class BlockMessage(value: String) extends AnyVal
 
   implicit val lang: Lang = Lang("en")
 
@@ -61,13 +59,13 @@ object BlockMessages {
       val sections = sectionsWithinLimits(messages)(
         batch.messages.flatMap(toSections).toVector
       )
-      BlockMessage(sections: _*)
+      BlockMessage(sections)
     }
   }
 
   def txToBlock(messages: MessagesApi)(tx: TxUpdate): BlockMessage =
     BlockMessage(
-      txToSections(messages)(tx): _*
+      txToSections(messages)(tx)
     )
 
   def txToSections(messages: MessagesApi)(
@@ -97,14 +95,6 @@ object BlockMessages {
     Section(
       messages(MESSAGE_TOO_MANY_OUTPUTS)
     )
-
-//  def header(text: String): Header =
-//    Header(
-//      s"""{"type":"header","text":{"type":"plain_text","text":"$text","emoji":false}}"""
-//    )
-
-//  def markdown(text: String): Section =
-//    Section(s"""{"type":"section","text":{"type":"mrkdwn","text":"$text"}}""")
 
   def txOutputsSections(outputs: Seq[TxInputOutput]): Vector[Section] = {
     val grouped = outputs.grouped(MAX_TXS_PER_SECTION) map { subOutputs =>

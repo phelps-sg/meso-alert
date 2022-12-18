@@ -953,7 +953,7 @@ class ActorTests
       env: SlackMessage with TxUpdateFixtures with MessagesFixtures =>
       def transactions = Vector(tx, tx1, tx2)
 
-      def blockStr(tx: TxUpdate): String = slackMessage(tx).value
+      def blockStr(tx: TxUpdate): String = slackMessage(tx).render
 
       def expectedBlocks =
         BlockMessages.txBatchToBlock(messagesApi)(TxBatch(transactions))

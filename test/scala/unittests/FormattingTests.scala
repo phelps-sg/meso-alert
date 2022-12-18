@@ -57,7 +57,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
           inputs = Vector(),
           confidence = None
         )
-        chatMessage(tx).value
+        chatMessage(tx).render
       }
 
       val testHash = TxHash("testHash")
