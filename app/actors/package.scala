@@ -11,7 +11,7 @@ package object actors {
       val addressField: Array[(String, Json.JsValueWrapper)] =
         Array(inpOut.address).filterNot(_.isEmpty).map("address" -> _.get)
       val valueField: Array[(String, Json.JsValueWrapper)] =
-        Array(inpOut.value).filterNot(_.isEmpty).map("value" -> _.get)
+        Array(inpOut.value).filterNot(_.isEmpty).map("value" -> _.get.value)
       Json.obj(ArraySeq.unsafeWrapArray(addressField ++ valueField): _*)
     }
   }

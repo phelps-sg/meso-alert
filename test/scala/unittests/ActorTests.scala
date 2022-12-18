@@ -324,8 +324,11 @@ class ActorTests
                 _,
                 _,
                 Seq(
-                  TxInputOutput(Some(`outputAddress1`), Some(`value1`)),
-                  TxInputOutput(Some(`outputAddress2`), Some(`value2`))
+                  TxInputOutput(
+                    Some(`outputAddress1`),
+                    Some(Satoshi(`value1`))
+                  ),
+                  TxInputOutput(Some(`outputAddress2`), Some(Satoshi(`value2`)))
                 ),
                 Seq(),
                 _

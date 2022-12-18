@@ -17,7 +17,7 @@ final case class Registered[X](hook: Hook[X])
 final case class Updated[X](hook: Hook[X])
 final case class Start[X](key: X)
 final case class Stop[X](key: X)
-final case class TxInputOutput(address: Option[String], value: Option[Long])
+final case class TxInputOutput(address: Option[String], value: Option[Satoshi])
 final case class TxHash(value: String) extends AnyVal with MappedTo[String]
 
 object TxHash {
@@ -88,11 +88,11 @@ object TxUpdate {
     }
   }
 
-  def value(input: TransactionInput): Option[Long] =
-    Option(input.getValue).map(_.value)
+  def value(input: TransactionInput): Option[Satoshi] =
+    Option(input.getValue).map(x => Satoshi(x.value))
 
-  def value(output: TransactionOutput): Option[Long] =
-    Option(output.getValue).map(_.value)
+  def value(output: TransactionOutput): Option[Satoshi] =
+    Option(output.getValue).map(x => Satoshi(x.value))
 
   // noinspection ConvertExpressionToSAM
   implicit val txUpdateWrites: Writes[TxUpdate] = new Writes[TxUpdate] {
