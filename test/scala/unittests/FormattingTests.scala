@@ -65,6 +65,10 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
       val markdownSectionRegEx =
         """\{"type":"section","text":\{"type":"mrkdwn","text":""".r
 
+      val testContent = "test"
+      val testHeader = BlockMessages.Header(testContent)
+      val testSection = BlockMessages.Section(testContent)
+
       def checkBraces(b: BlockMessages.Block): Assertion = {
         val rendered = b.render
         rendered.trim.take(1) shouldEqual "{"
@@ -85,10 +89,6 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
           .findAllIn(m)
           .length shouldBe 1 + totalOutputsSections
       }
-
-      val testContent = "test"
-      val testHeader = BlockMessages.Header(testContent)
-      val testSection = BlockMessages.Section(testContent)
     }
 
     "surround blocks with square brackets" in new TestFixtures {
