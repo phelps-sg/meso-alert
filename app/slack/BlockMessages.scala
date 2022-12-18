@@ -20,17 +20,17 @@ object BlockMessages {
   }
 
   final case class Header(text: String) extends Block {
-    override def render =
+    override def render: String =
       s"""{"type":"header","text":{"type":"plain_text","text":"$text","emoji":false}}"""
   }
 
   final case class Section(text: String) extends Block {
-    override def render =
+    override def render: String =
       s"""{"type":"section","text":{"type":"mrkdwn","text":"$text"}}"""
   }
 
-  final case object Divider extends Block {
-    override def render = """{"type":"divider"}"""
+  case object Divider extends Block {
+    override def render: String = """{"type":"divider"}"""
   }
 
   case class BlockMessage(components: Seq[Block]) {
