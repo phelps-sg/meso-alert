@@ -9,7 +9,11 @@ import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
 import slack.BlockMessages
-import slack.BlockMessages.{BlockMessage, MESSAGE_TOO_MANY_OUTPUTS, txToBlock}
+import slack.BlockMessages.{
+  BlockMessage,
+  MESSAGE_TOO_MANY_OUTPUTS,
+  txToBlockMessage
+}
 import unittests.Fixtures.{
   ClockFixtures,
   MessagesFixtures,
@@ -43,7 +47,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
         with ClockFixtures
         with TxUpdateFixtures {
       val chatMessage: (TxUpdate) => BlockMessage =
-        txToBlock(messagesApi)
+        txToBlockMessage(messagesApi)
 
       def addresses(labels: String*) =
         labels.map(label => TxInputOutput(Some(label), None))
@@ -148,15 +152,15 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
 
     "render a batch of transactions" in new TestFixtures {
       val txs = Array(tx, tx1, tx2)
-      val block = BlockMessages.txBatchToBlock(messagesApi)(TxBatch(txs))
+      val block = BlockMessages.txBatchToBlockMessage(messagesApi)(TxBatch(txs))
       txs.foreach { transaction =>
         block.render should include(transaction.hash.value)
       }
     }
 
     "render a batch containing a single tx identically to a single tx" in new TestFixtures {
-      BlockMessages.txToBlock(messagesApi)(tx) shouldEqual
-        BlockMessages.txBatchToBlock(messagesApi)(TxBatch(Array(tx)))
+      BlockMessages.txToBlockMessage(messagesApi)(tx) shouldEqual
+        BlockMessages.txBatchToBlockMessage(messagesApi)(TxBatch(Array(tx)))
     }
   }
 

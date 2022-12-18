@@ -942,7 +942,7 @@ class ActorTests
 
     trait SlackMessage {
       env: MessagesFixtures =>
-      val slackMessage = BlockMessages.txToBlock(messagesApi)(_)
+      val slackMessage = BlockMessages.txToBlockMessage(messagesApi)(_)
     }
 
     trait SingleTransaction extends SlackMessage {
@@ -959,7 +959,7 @@ class ActorTests
       def blockStr(tx: TxUpdate): String = slackMessage(tx).render
 
       def expectedBlocks =
-        BlockMessages.txBatchToBlock(messagesApi)(TxBatch(transactions))
+        BlockMessages.txBatchToBlockMessage(messagesApi)(TxBatch(transactions))
     }
 
     "send the correct message to Slack when sent a single transaction" in new SingleTransaction

@@ -48,7 +48,7 @@ object BlockMessages {
   val MAX_SECTIONS = 47
   val MAX_TXS_PER_SECTION = 20
 
-  def txBatchToBlock(messages: MessagesApi)(
+  def txBatchToBlockMessage(messages: MessagesApi)(
       batch: TxBatch
   ): BlockMessage = {
     val toSections = txToSections(messages)(_)
@@ -58,7 +58,7 @@ object BlockMessages {
     BlockMessage(sections)
   }
 
-  def txToBlock(messages: MessagesApi)(tx: TxUpdate): BlockMessage =
+  def txToBlockMessage(messages: MessagesApi)(tx: TxUpdate): BlockMessage =
     BlockMessage(
       txToSections(messages)(tx)
     )
