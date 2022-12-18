@@ -51,16 +51,11 @@ object BlockMessages {
   def txBatchToBlock(messages: MessagesApi)(
       batch: TxBatch
   ): BlockMessage = {
-    val toBlock = txToBlock(messages)(_)
     val toSections = txToSections(messages)(_)
-    if (batch.messages.size == 1) {
-      toBlock(batch.messages.head)
-    } else {
-      val sections = sectionsWithinLimits(messages)(
-        batch.messages.flatMap(toSections).toVector
-      )
-      BlockMessage(sections)
-    }
+    val sections = sectionsWithinLimits(messages)(
+      batch.messages.flatMap(toSections).toVector
+    )
+    BlockMessage(sections)
   }
 
   def txToBlock(messages: MessagesApi)(tx: TxUpdate): BlockMessage =

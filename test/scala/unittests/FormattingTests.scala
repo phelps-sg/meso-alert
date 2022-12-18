@@ -1,5 +1,6 @@
 package unittests
 
+import actors.RateLimitingBatchingActor.TxBatch
 import actors.{TxHash, TxInputOutput, TxUpdate}
 import controllers.SlackSlashCommandController
 import dao._
@@ -14,7 +15,8 @@ import unittests.Fixtures.{
   MessagesFixtures,
   SlackChatHookFixtures,
   SlackSignatureVerifierFixtures,
-  SlickSlashCommandFixtures
+  SlickSlashCommandFixtures,
+  TxUpdateFixtures
 }
 import util.BitcoinFormatting.formatSatoshi
 
@@ -36,7 +38,10 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
 
   "blockMessageBuilder" should {
 
-    trait TestFixtures extends MessagesFixtures with ClockFixtures {
+    trait TestFixtures
+        extends MessagesFixtures
+        with ClockFixtures
+        with TxUpdateFixtures {
       val chatMessage: (TxUpdate) => BlockMessage =
         txToBlock(messagesApi)
 
@@ -60,7 +65,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
         chatMessage(tx).render
       }
 
-      val testHash = TxHash("testHash")
+//      val testHash = TxHash("testHash")
 
       val markdownSectionRegEx =
         """\{"type":"section","text":\{"type":"mrkdwn","text":""".r
@@ -140,6 +145,19 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
           s""""text":"${messagesApi(MESSAGE_TOO_MANY_OUTPUTS)}"}"""
         )
       }
+
+    "render a batch of transactions" in new TestFixtures {
+      val txs = Array(tx, tx1, tx2)
+      val block = BlockMessages.txBatchToBlock(messagesApi)(TxBatch(txs))
+      txs.foreach { transaction =>
+        block.render should include(transaction.hash.value)
+      }
+    }
+
+    "render a batch containing a single tx identically to a single tx" in new TestFixtures {
+      BlockMessages.txToBlock(messagesApi)(tx) shouldEqual
+        BlockMessages.txBatchToBlock(messagesApi)(TxBatch(Array(tx)))
+    }
   }
 
   "SlashCommandHistoryController" should {
