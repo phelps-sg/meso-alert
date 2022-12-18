@@ -65,6 +65,12 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
       val markdownSectionRegEx =
         """\{"type":"section","text":\{"type":"mrkdwn","text":""".r
 
+      def checkBraces(b: BlockMessages.Block): Assertion = {
+        val rendered = b.render
+        rendered.trim.take(1) shouldEqual "{"
+        rendered.takeRight(1) shouldEqual "}"
+      }
+
       def checkNumSections(numOutputs: Int): Assertion = {
         val m = chatMessageStr(
           testHash,
@@ -79,6 +85,34 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
           .findAllIn(m)
           .length shouldBe 1 + totalOutputsSections
       }
+
+      val testContent = "test"
+      val testHeader = BlockMessages.Header(testContent)
+      val testSection = BlockMessages.Section(testContent)
+    }
+
+    "surround blocks with square brackets" in new TestFixtures {
+      BlockMessage(List()).render shouldBe "[]"
+    }
+
+    "surround sections with braces" in new TestFixtures {
+      checkBraces(testSection)
+    }
+
+    "surround headers with braces" in new TestFixtures {
+      checkBraces(testHeader)
+    }
+
+    "surround dividers with braces" in new TestFixtures {
+      checkBraces(BlockMessages.Divider)
+    }
+
+    "include the text in the header" in new TestFixtures {
+      testHeader.render should include(testContent)
+    }
+
+    "include the text in the section" in new TestFixtures {
+      testSection.render should include(testContent)
     }
 
     "print all outputs if they take up less than 47 sections - single section" in new TestFixtures {
