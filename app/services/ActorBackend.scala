@@ -14,7 +14,7 @@ trait ActorBackend {
 
   implicit val ec: ExecutionContext = executionContext
 
-  def sendAndReceive[T: ClassTag, R: ClassTag](message: T): Future[R] = {
+  def sendAndReceive[T, R: ClassTag](message: T): Future[R] = {
     (actor ? message) map {
       case Success(x: R) => x
       case Failure(ex)   => throw ex
