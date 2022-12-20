@@ -52,8 +52,22 @@ trait HooksManager[X, Y <: Hook[X]]
     initFuture
   }
 
-  def start(key: X): Future[Started[Y]] = sendAndReceive(Start(key))
-  def stop(key: X): Future[Stopped[Y]] = sendAndReceive(Stop(key))
-  def register(hook: Y): Future[Registered[Y]] = sendAndReceive(Register(hook))
-  def update(hook: Y): Future[Updated[Y]] = sendAndReceive(Update(hook))
+  def start(key: X): Future[Started[Y]] = sendAndReceive[Start[X], Started[Y]] {
+    Start(key)
+  }
+
+  def stop(key: X): Future[Stopped[Y]] = sendAndReceive[Stop[X], Stopped[Y]] {
+    Stop(key)
+  }
+
+  def register(hook: Y): Future[Registered[Y]] =
+    sendAndReceive[Register[X], Registered[Y]] {
+      Register(hook)
+    }
+
+  def update(hook: Y): Future[Updated[Y]] =
+    sendAndReceive[Update[X], Updated[Y]] {
+      Update(hook)
+    }
+
 }
