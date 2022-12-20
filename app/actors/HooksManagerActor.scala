@@ -21,6 +21,13 @@ object HooksManagerActor {
   case class CreateActors[X](uri: X, hook: Hook[X])
 }
 
+/** Abstract superclass for actors which manage hooks. A hook is a subscription
+  * for blockchain events over a particular channel.
+  * @tparam X
+  *   The type of the key for the hook, typically a channel id
+  * @tparam Y
+  *   The type for the hook
+  */
 abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
     extends Actor
     with InjectedActorSupport

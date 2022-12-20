@@ -29,6 +29,9 @@ object TxPersistenceActor {
 
 }
 
+/** An actor which persists `TxUpdate` events sent by the
+  * `MemPoolWatcherService` to the database.
+  */
 class TxPersistenceActor @Inject() (
     val transactionUpdateDao: TransactionUpdateDao,
     val memPoolWatcher: MemPoolWatcherService,

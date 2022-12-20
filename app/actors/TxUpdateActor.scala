@@ -4,6 +4,8 @@ import akka.actor.Actor
 import play.api.Logging
 import services.MemPoolWatcherService
 
+/** Mixin for actors which process `TxUpdate` events from the mem pool.
+  */
 trait TxUpdateActor { env: Actor with Logging =>
 
   val memPoolWatcher: MemPoolWatcherService

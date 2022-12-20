@@ -22,15 +22,21 @@ object MemPoolWatcherActor {
   val NO_DEPS: util.List[Transaction] = Collections.emptyList
 
   sealed trait MemPoolWatcherActorMessage
+
   final case class RegisterWatcher(listener: ActorRef)
       extends MemPoolWatcherActorMessage
-  object StartPeerGroup extends MemPoolWatcherActorMessage
+
   final case class NewTransaction(tx: Transaction)
       extends MemPoolWatcherActorMessage
+
   final case class DownloadedBlock(block: Block)
       extends MemPoolWatcherActorMessage
+
   final case class IncrementCounter(key: String)
       extends MemPoolWatcherActorMessage
+
+  case object StartPeerGroup extends MemPoolWatcherActorMessage
+
   case object LogCounters extends MemPoolWatcherActorMessage
 
   case object PeerGroupAlreadyStartedException
@@ -50,6 +56,10 @@ object MemPoolWatcherActor {
     )
 }
 
+/** This actor provides a thread safe wrapper around bitcoinj's peerGroup
+  * events, and allows receiving actors to register for `TxUpdate` events every
+  * time a transaction is submitted to the mem pool.
+  */
 class MemPoolWatcherActor @Inject() (
     val peerGroupProvider: PeerGroupProvider,
     val netParamsProvider: NetParamsProvider,

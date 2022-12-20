@@ -21,6 +21,15 @@ object TxRetryOrDie {
   )
 }
 
+/** Abstract superclass for actors which attempt to process a message in the
+  * future and recover from ephemeral errors by retrying a specified number of
+  * times before terminating.
+  * @tparam T
+  *   The type of result returned in the future by the retryable operation
+  * @tparam M
+  *   The type of the incoming message which represents an operation that can be
+  *   retried
+  */
 abstract class TxRetryOrDie[T, M: ClassTag]
     extends Actor
     with Timers

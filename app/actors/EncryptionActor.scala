@@ -29,6 +29,9 @@ object EncryptionActor {
 
 }
 
+/** This actor provides a threa-safe wrapper around the native Sodium encryption
+  * library.
+  */
 class EncryptionActor
     extends Actor
     with Logging
