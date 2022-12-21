@@ -1,6 +1,5 @@
 package controllers
 
-import akka.actor.ActorSystem
 import controllers.WebhooksController.{HookDto, UriDto}
 import dao.Webhook
 import play.api.libs.json._
@@ -23,7 +22,7 @@ object WebhooksController {
 class WebhooksController @Inject() (
     val controllerComponents: ControllerComponents,
     val slackWebHooksManager: HooksManagerWebService
-)(implicit system: ActorSystem, ex: ExecutionContext)
+)(implicit ex: ExecutionContext)
     extends BaseController {
 
   def checkEx[T](f: Future[T]): Future[Result] =
