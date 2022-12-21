@@ -80,7 +80,7 @@ libraryDependencies += "org.awaitility" % "awaitility-scala" % "4.2.0" % Test
 libraryDependencies += "org.scalamock" %% "scalamock" % "5.2.0" % Test
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.14" % Test
 libraryDependencies += "com.google.guava" % "guava" % "31.1-jre" % Test
-val testContainersVersion = "0.40.11"
+val testContainersVersion = "0.40.12"
 libraryDependencies ++= Seq(
   "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainersVersion % Test,
   "com.dimafeng" %% "testcontainers-scala-postgresql" % testContainersVersion % Test
