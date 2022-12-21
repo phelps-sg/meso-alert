@@ -46,7 +46,8 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
         extends MessagesFixtures
         with ClockFixtures
         with TxUpdateFixtures {
-      val chatMessage: (TxUpdate) => BlockMessage =
+
+      val chatMessage: TxUpdate => BlockMessage =
         txToBlockMessage(messagesApi)
 
       def addresses(labels: String*) =
