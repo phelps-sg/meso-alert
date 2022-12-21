@@ -267,6 +267,7 @@ class ActorTests
         (mockWs.update _).expects(capture(updateCapture)).atLeastOnce()
 
         // This is required for raw types (see https://scalamock.org/user-guide/advanced_topics/).
+        @unused
         implicit val d = new Defaultable[ListenableFuture[_]] {
           override val default = null
         }
@@ -946,19 +947,25 @@ class ActorTests
     }
 
     trait SingleTransaction extends SlackMessage {
-      env: SlackMessage with TxUpdateFixtures with MessagesFixtures =>
-      def transactions = Vector(tx)
+      env: SlackMessage
+        with TxUpdateFixtures
+        with MessagesFixtures
+        with TestFixtures =>
 
-      def expectedBlocks = slackMessage(tx)
+      override def transactions = Vector(tx)
+
+      override def expectedBlocks = slackMessage(tx)
     }
 
     trait MultipleTransactions extends SlackMessage {
-      env: SlackMessage with TxUpdateFixtures with MessagesFixtures =>
+      env: SlackMessage
+        with TxUpdateFixtures
+        with MessagesFixtures
+        with TestFixtures =>
+
       def transactions = Vector(tx, tx1, tx2)
 
-      def blockStr(tx: TxUpdate): String = slackMessage(tx).render
-
-      def expectedBlocks =
+      override def expectedBlocks =
         BlockMessages.txBatchToBlockMessage(messagesApi)(TxBatch(transactions))
     }
 
