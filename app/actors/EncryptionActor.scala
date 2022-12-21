@@ -29,7 +29,7 @@ object EncryptionActor {
 
 }
 
-/** This actor provides a threa-safe wrapper around the native Sodium encryption
+/** This actor provides a thread-safe wrapper around the native Sodium encryption
   * library.
   */
 class EncryptionActor
