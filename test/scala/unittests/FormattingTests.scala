@@ -152,7 +152,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
       }
 
     "render a batch of transactions" in new TestFixtures {
-      val txs = Array(tx, tx1, tx2)
+      val txs = Vector(tx, tx1, tx2)
       val block = BlockMessages.txBatchToBlockMessage(messagesApi)(TxBatch(txs))
       txs.foreach { transaction =>
         block.render should include(transaction.hash.value)
@@ -161,7 +161,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
 
     "render a batch containing a single tx identically to a single tx" in new TestFixtures {
       BlockMessages.txToBlockMessage(messagesApi)(tx) shouldEqual
-        BlockMessages.txBatchToBlockMessage(messagesApi)(TxBatch(Array(tx)))
+        BlockMessages.txBatchToBlockMessage(messagesApi)(TxBatch(Vector(tx)))
     }
   }
 
