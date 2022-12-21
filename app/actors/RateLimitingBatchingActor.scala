@@ -2,7 +2,7 @@ package actors
 
 import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import actors.RateLimitingBatchingActor.TxBatch
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, Props}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import play.api.Logging
@@ -20,7 +20,7 @@ object RateLimitingBatchingActor {
     def apply(@unused out: ActorRef, clock: Clock): Actor
   }
 
-  def props(out: ActorRef, clock: Clock)(implicit system: ActorSystem): Props =
+  def props(out: ActorRef, clock: Clock): Props =
     Props(new RateLimitingBatchingActor(out)(clock))
 }
 
