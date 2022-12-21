@@ -35,9 +35,9 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.5.1"
 )
 
-libraryDependencies += "com.github.tminglei" %% "slick-pg_play-json" % "0.21.0"
+libraryDependencies += "com.github.tminglei" %% "slick-pg_play-json" % "0.21.1"
 
-val boltVersion = "1.27.1"
+val boltVersion = "1.27.2"
 libraryDependencies ++= List(
   "com.slack.api" % "bolt" % boltVersion,
   "com.slack.api" % "bolt-servlet" %  boltVersion,
