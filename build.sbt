@@ -18,7 +18,7 @@ inThisBuild(
 )
 
 libraryDependencies += guice
-libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.1"
+libraryDependencies += "org.bitcoinj" % "bitcoinj-core" % "0.16.2"
 libraryDependencies += "org.abstractj.kalium" % "kalium" % "0.8.0"
 libraryDependencies += "com.github.daddykotex" %% "courier" % "3.2.0"
 
