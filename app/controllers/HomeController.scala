@@ -28,7 +28,7 @@ object HomeController {
       email: String,
       message: String
   ) {
-    def subjectLine: String = s"${formType} - ${name} ${email}"
+    def subjectLine: String = s"$formType - $name $email"
   }
 
   object EmailFormData {
@@ -148,6 +148,7 @@ class HomeController @Inject() (
   val slackDeployURL: String = config.get[String]("slack.deployURL")
 
   def index(): Action[AnyContent] = Action {
+    // noinspection ScalaUnusedSymbol
     implicit request: Request[AnyContent] =>
       Ok(views.html.index(slackDeployURL))
   }
