@@ -1,6 +1,7 @@
 package controllers
 
 import actions.Auth0ValidateJWTAction
+import controllers.Auth0Controller.{Auth0Configuration, Result}
 import dao.{RegisteredUserId, Secret}
 import play.api.Configuration
 import play.api.libs.json.{Json, Writes}
@@ -14,22 +15,7 @@ import java.util.Base64
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class Auth0Controller @Inject() (
-    val authAction: Auth0ValidateJWTAction,
-    val slackSecretsManagerService: SlackSecretsManagerService,
-    val controllerComponents: ControllerComponents,
-    protected val config: Configuration
-)(implicit ec: ExecutionContext)
-    extends BaseController {
-
-  protected val encoder: Base64.Encoder = java.util.Base64.getEncoder
-  protected val slackUrl: String = config.get[String]("slack.deployURL")
-
-  private val auth0Configuration: Auth0Configuration = Auth0Configuration(
-    config.get[String]("auth0.clientId"),
-    config.get[Uri]("auth0.domain"),
-    config.get[Uri]("auth0.audience")
-  )
+object Auth0Controller {
 
   implicit val auth0ConfigurationWrites: Writes[Auth0Configuration] =
     (config: Auth0Configuration) =>
@@ -57,6 +43,25 @@ class Auth0Controller @Inject() (
       userId: RegisteredUserId,
       secret: Secret,
       slackUrl: String
+  )
+
+}
+
+class Auth0Controller @Inject() (
+    val authAction: Auth0ValidateJWTAction,
+    val slackSecretsManagerService: SlackSecretsManagerService,
+    val controllerComponents: ControllerComponents,
+    protected val config: Configuration
+)(implicit ec: ExecutionContext)
+    extends BaseController {
+
+  protected val encoder: Base64.Encoder = java.util.Base64.getEncoder
+  protected val slackUrl: String = config.get[String]("slack.deployURL")
+
+  private val auth0Configuration: Auth0Configuration = Auth0Configuration(
+    config.get[String]("auth0.clientId"),
+    config.get[Uri]("auth0.domain"),
+    config.get[Uri]("auth0.audience")
   )
 
   def configuration(): Action[AnyContent] = Action { _ =>
