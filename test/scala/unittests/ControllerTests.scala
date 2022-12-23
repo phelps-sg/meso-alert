@@ -696,6 +696,16 @@ class ControllerTests
       ) mustEqual SlackSlashCommandController.MESSAGE_PAUSE_ALERTS_HELP
     }
 
+    "return correct message when supplying spurious arguments to /pause-alerts" in new TestFixtures {
+      val result = slashCommandWithTeam {
+        slashCommand("/pause-alerts", "spurious")
+      }
+      status(result) mustEqual OK
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_PAUSE_ALERTS_HELP
+    }
+
     "return correct message when resuming alerts" in new TestFixtures {
       val result = sendSlashCommandsThenStopHook {
         Vector(
@@ -733,6 +743,16 @@ class ControllerTests
       contentAsString(
         result
       ) mustEqual SlackSlashCommandController.MESSAGE_RESUME_ALERTS_ERROR_NOT_CONFIGURED
+    }
+
+    "return correct message when supplying spurious arguments to /resume-alerts" in new TestFixtures {
+      val result = slashCommandWithTeam {
+        slashCommand("/resume-alerts", "spurious")
+      }
+      status(result) mustEqual OK
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_RESUME_ALERTS_HELP
     }
 
     "return correct message when asking for help with /resume-alerts" in new TestFixtures {

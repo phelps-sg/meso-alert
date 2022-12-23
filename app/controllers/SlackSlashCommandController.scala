@@ -223,12 +223,6 @@ class SlackSlashCommandController @Inject() (
 
     args match {
 
-      case Array("help") =>
-        logger.debug("pause-alerts help")
-        Future.successful {
-          Ok(messagesApi(MESSAGE_PAUSE_ALERTS_HELP))
-        }
-
       case Array("") =>
         logger.debug("Pausing alerts")
         val f = for {
@@ -238,6 +232,12 @@ class SlackSlashCommandController @Inject() (
         f.recover { case HookNotStartedException(_) =>
           Ok(messagesApi(MESSAGE_PAUSE_ALERTS_ERROR))
         }
+
+      case _ =>
+        Future.successful {
+          Ok(messagesApi(MESSAGE_PAUSE_ALERTS_HELP))
+        }
+
     }
   }
 
@@ -247,12 +247,6 @@ class SlackSlashCommandController @Inject() (
     val args = slashCommand.text.toLowerCase.split("\\s+")
 
     args match {
-
-      case Array("help") =>
-        logger.debug("resume-alerts help")
-        Future.successful {
-          Ok(messagesApi(MESSAGE_RESUME_ALERTS_HELP))
-        }
 
       case Array("") =>
         logger.debug("Resuming alerts")
@@ -265,6 +259,12 @@ class SlackSlashCommandController @Inject() (
           case HookNotRegisteredException(_) =>
             Ok(messagesApi(MESSAGE_RESUME_ALERTS_ERROR_NOT_CONFIGURED))
         }
+
+      case _ =>
+        Future.successful {
+          Ok(messagesApi(MESSAGE_RESUME_ALERTS_HELP))
+        }
+
     }
   }
 
