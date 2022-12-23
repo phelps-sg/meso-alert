@@ -103,6 +103,7 @@ import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
 import scala.jdk.CollectionConverters._
+import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
 //noinspection TypeAnnotation
@@ -160,7 +161,9 @@ object Fixtures {
   trait SlackChatManagerMock
       extends HookManagerMock[SlackChannelId, SlackChatHookPlainText]
 
-  trait MockHookManagerActor[X, Y <: Hook[X]] extends Actor with Logging {
+  abstract class MockHookManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
+      extends Actor
+      with Logging {
     val mock: HookManagerMock[X, Y]
     val hooks = mutable.Map[X, Y]()
 
