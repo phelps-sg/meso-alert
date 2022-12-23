@@ -928,7 +928,7 @@ class ActorTests
       jsonCapture.value("text").as[String] should equal(toChatMessage(tx))
     }
 
-    "post the correct message went sent mulitple transactions" in new TestFixtures {
+    "post the correct message went sent multiple transactions" in new TestFixtures {
       val txs = Vector(tx, tx1)
       webHookMessagingActor ! TxBatch(txs)
       expectNoMessage()
