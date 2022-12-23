@@ -474,7 +474,7 @@ class ControllerTests
       def slashCommand[T](initialise: => Future[T])(cleanUp: => Future[Unit])(
           command: FakeRequest[AnyContentAsFormUrlEncoded]
       ): Future[Result] =
-        slashCommands(initialise)(cleanUp)(Array(command)) map { _.head }
+        slashCommands(initialise)(cleanUp)(Vector(command)) map { _.head }
 
       def cryptoAlert(amount: Int): Future[Result] =
         slashCommand(initialiseTeam)(stopHook) {
@@ -621,7 +621,7 @@ class ControllerTests
 
     "return reconfigure message when reconfiguring alerts" in new TestFixtures {
       val result = sendSlashCommandsThenStopHook {
-        Array(
+        Vector(
           slashCommand("/crypto-alert", "5"),
           slashCommand("/crypto-alert", "10")
         )
@@ -694,7 +694,7 @@ class ControllerTests
 
     "return correct message when resuming alerts" in new TestFixtures {
       val result = sendSlashCommandsThenStopHook {
-        Array(
+        Vector(
           slashCommand("/crypto-alert", "5"),
           slashCommand("/pause-alerts"),
           slashCommand("/resume-alerts")
@@ -708,7 +708,7 @@ class ControllerTests
 
     "return error message when resuming alerts when alerts are already active" in new TestFixtures {
       val result = sendSlashCommandsThenStopHook {
-        Array(
+        Vector(
           slashCommand("/crypto-alert", "5"),
           slashCommand("/resume-alerts")
         )
