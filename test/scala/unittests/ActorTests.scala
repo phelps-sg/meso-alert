@@ -51,10 +51,12 @@ import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.scalatest.{Assertion, BeforeAndAfterAll}
 import play.api.inject.guice.GuiceableModule
+import play.api.libs.json.JsObject
 import postgres.PostgresContainer
 import services._
 import slack.BlockMessages
 import slack.BlockMessages.BlockMessage
+import sttp.model.Uri
 import unittests.Fixtures.{
   ActorGuiceFixtures,
   BlockChainWatcherFixtures,
@@ -77,14 +79,17 @@ import unittests.Fixtures.{
   SlackSecretsActorFixtures,
   TransactionFixtures,
   TxMessagingActorSlackChatFixtures,
+  TxMessagingActorWebFixtures,
   TxPersistenceActorFixtures,
   TxUpdateFixtures,
   TxWatchActorFixtures,
   UserFixtures,
+  WebManagerFixtures,
   WebSocketFixtures,
   WebhookActorFixtures,
   WebhookFixtures
 }
+import util.BitcoinFormatting.toChatMessage
 
 import java.math.BigInteger
 import java.net.URI
@@ -138,6 +143,7 @@ class ActorTests
         with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with ConfigurationFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures {
 
@@ -238,6 +244,7 @@ class ActorTests
         with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with WebSocketFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures
         with UserFixtures
@@ -411,6 +418,7 @@ class ActorTests
         with BlockChainWatcherFixtures
         with MessagesFixtures
         with TxUpdateFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with RandomFixtures
         with TxPersistenceActorFixtures {
@@ -486,6 +494,7 @@ class ActorTests
         with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with WebSocketFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with UserFixtures
         with TxUpdateFixtures
@@ -560,6 +569,7 @@ class ActorTests
         with MemPoolWatcherFixtures
         with MainNetParamsFixtures
         with BlockChainWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
@@ -642,6 +652,8 @@ class ActorTests
         with MainNetParamsFixtures
         with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
+        with WebSocketFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with WebhookFixtures
         with WebhookActorFixtures
@@ -829,6 +841,7 @@ class ActorTests
         with MainNetParamsFixtures
         with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
@@ -887,6 +900,46 @@ class ActorTests
     }
   }
 
+  "TxMessagingActorWeb" should {
+    trait TestFixtures
+        extends FixtureBindings
+        with TxUpdateFixtures
+        with ConfigurationFixtures
+        with MainNetParamsFixtures
+        with MemPoolWatcherFixtures
+        with BlockChainWatcherFixtures
+        with WebManagerFixtures
+        with ActorGuiceFixtures
+        with RandomFixtures
+        with WebhookFixtures
+        with TxMessagingActorWebFixtures {
+
+      val jsonCapture = CaptureAll[JsObject]()
+      val uriCapture = CaptureAll[URI]()
+      (mockWebManagerService.postJson _)
+        .expects(capture(jsonCapture), capture(uriCapture))
+    }
+
+    "post the correct message went sent a single transaction" in new TestFixtures {
+      webHookMessagingActor ! TxBatch(Vector(tx))
+      expectNoMessage()
+
+      uriCapture.value shouldBe Uri(hook.uri)
+      jsonCapture.value("text").as[String] should equal(toChatMessage(tx))
+    }
+
+    "post the correct message went sent mulitple transactions" in new TestFixtures {
+      val txs = Vector(tx, tx1)
+      webHookMessagingActor ! TxBatch(txs)
+      expectNoMessage()
+
+      uriCapture.value shouldBe Uri(hook.uri)
+      jsonCapture.value("text").as[String] should equal(
+        txs.map(toChatMessage).mkString("\n")
+      )
+    }
+  }
+
   "TxMessagingActorSlackChat" should {
 
     trait TestFixtures
@@ -897,6 +950,7 @@ class ActorTests
         with MainNetParamsFixtures
         with MemPoolWatcherFixtures
         with BlockChainWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with RandomFixtures
         with SlackChatHookFixtures

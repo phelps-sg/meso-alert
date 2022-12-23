@@ -33,7 +33,7 @@ object BitcoinFormatting {
       .map(linkToAddress)
       .mkString(", ")
 
-  def message(tx: TxUpdate): String = {
+  def toChatMessage(tx: TxUpdate): String = {
     s"New transaction ${linkToTxHash(tx.hash)} with value ${formatSatoshi(tx.amount)} BTC to " +
       s"addresses ${formatOutputAddresses(tx.outputs)}"
   }

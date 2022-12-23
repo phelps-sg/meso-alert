@@ -77,7 +77,8 @@ import services.{
   SlackSecretsManagerService,
   SodiumEncryptionManager,
   User,
-  UserManagerService
+  UserManagerService,
+  WebManagerService
 }
 import slack.BlockMessages.{
   MESSAGE_NEW_TRANSACTION,
@@ -458,6 +459,7 @@ object Fixtures {
     env: ConfigurationFixtures
       with MemPoolWatcherFixtures
       with BlockChainWatcherFixtures
+      with WebManagerFixtures
       with HasActorSystem
       with HasBindModule =>
 
@@ -474,6 +476,11 @@ object Fixtures {
         inject
           .bind(classOf[MemPoolWatcherService])
           .toInstance(mockMemPoolWatcher)
+      )
+      .overrides(
+        inject
+          .bind(classOf[WebManagerService])
+          .toInstance(mockWebManagerService)
       )
 
     val injector = builder.build()
@@ -664,6 +671,27 @@ object Fixtures {
     }
     val insertHook = Tables.webhooks += hook
     val queryHooks = Tables.webhooks.result
+  }
+
+  trait WebManagerFixtures { env: MockFactory =>
+    val mockWebManagerService = mock[WebManagerService]
+  }
+
+  trait TxMessagingActorWebFixtures {
+    env: WebhookFixtures
+      with HasActorSystem
+      with WebManagerFixtures
+      with RandomFixtures
+      with HasExecutionContext =>
+    val webHookMessagingActor = actorSystem.actorOf(
+      Props(
+        new TxMessagingActorWeb(
+          mockWebManagerService,
+          random,
+          hook
+        )(executionContext)
+      )
+    )
   }
 
   trait TxMessagingActorSlackChatFixtures {

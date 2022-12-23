@@ -1,37 +1,26 @@
 package actors
 
 import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
-import util.BitcoinFormatting.message
+import actors.RateLimitingBatchingActor.TxBatch
+import actors.TxMessagingActorWeb.WebRequestFailedException
 import akka.actor.Actor
+import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
-import com.google.inject.{ImplementedBy, Inject}
 import dao.Webhook
-import monix.eval.Task
 import play.api.Logging
 import play.api.libs.json.Json
-import sttp.capabilities.WebSockets
-import sttp.capabilities.monix.MonixStreams
-import sttp.client3._
-import sttp.client3.asynchttpclient.monix._
+import services.WebManagerService
 import sttp.model.Uri
+import util.BitcoinFormatting.toChatMessage
 
-import javax.inject.Singleton
 import scala.annotation.unused
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
-
-@ImplementedBy(classOf[MonixBackend])
-trait HttpBackendSelection {
-  def backend(): Task[SttpBackend[Task, _]]
-}
-
-@Singleton
-class MonixBackend extends HttpBackendSelection {
-  def backend(): Task[SttpBackend[Task, MonixStreams with WebSockets]] =
-    AsyncHttpClientMonixBackend()
-}
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Random
 
 object TxMessagingActorWeb {
+
+  final case class WebRequestFailedException(statusCode: Int)
+      extends Exception(s"HTTP request failed with status $statusCode")
 
   trait Factory extends TxMessagingActorFactory[Webhook] {
     def apply(@unused hook: Webhook): Actor
@@ -39,47 +28,31 @@ object TxMessagingActorWeb {
 }
 
 class TxMessagingActorWeb @Inject() (
-    backendSelection: HttpBackendSelection,
+    webManager: WebManagerService,
+    val random: Random,
     @Assisted hook: Webhook
-) extends Actor
+)(implicit val ec: ExecutionContext)
+    extends TxRetryOrDie[Unit, TxBatch]
     with UnrecognizedMessageHandlerFatal
     with Logging {
 
-  def process(tx: TxUpdate): Future[Unit] = {
+  override val maxRetryCount: Int = 3
 
-    val postTask = backendSelection.backend().flatMap { backend =>
-      val r = basicRequest
-        .contentType("application/json")
-        .body(Json.stringify(Json.obj("text" -> message(tx))))
-        .post(Uri(javaUri = hook.uri))
+  def success(): Unit = {
+    logger.debug("Successfully posted message")
+  }
 
-      r.send(backend)
-        .flatMap { response =>
-          Task(
-            logger.debug(
-              s"""Got ${response.code} response, body:\n${response.body}"""
-            )
-          )
-        }
-        .guarantee(backend.close())
+  def process(tx: TxBatch): Future[Unit] = {
+    val messageContent = tx.messages.map(toChatMessage).mkString("\n")
+    val jsonMessage = Json.obj("text" -> messageContent)
+    webManager.postJson(jsonMessage, Uri(hook.uri)) map { status =>
+      if (!status.isSuccess) throw WebRequestFailedException(status.code)
     }
-
-    import monix.execution.Scheduler.Implicits.global
-    val result = postTask.runToFuture
-
-    result onComplete {
-      case Success(_) => logger.debug("Successfully posted message")
-      case Failure(ex) =>
-        logger.error(ex.getMessage)
-        ex.printStackTrace()
-    }
-
-    result
   }
 
   override def receive: Receive = {
-    case tx: TxUpdate => process(tx)
-    case x            => unrecognizedMessage(x)
+    case tx: TxBatch => process(tx)
+    case x           => unrecognizedMessage(x)
   }
 
 }

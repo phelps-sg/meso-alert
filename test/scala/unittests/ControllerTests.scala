@@ -65,6 +65,7 @@ import unittests.Fixtures.{
   SlickSlashCommandHistoryDaoFixtures,
   TxWatchActorFixtures,
   UserFixtures,
+  WebManagerFixtures,
   WebSocketFixtures
 }
 import util.Encodings.base64Encode
@@ -112,6 +113,7 @@ class ControllerTests
         with MemPoolWatcherFixtures
         with TxWatchActorFixtures
         with MockMailManagerFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures {
 
       val controller = new HomeController(
@@ -266,6 +268,7 @@ class ControllerTests
         with MainNetParamsFixtures
         with MemPoolWatcherFixtures
         with BlockChainWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures
         with EncryptionActorFixtures
@@ -383,6 +386,7 @@ class ControllerTests
         with MainNetParamsFixtures
         with MemPoolWatcherFixtures
         with BlockChainWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures
         with EncryptionActorFixtures
@@ -771,6 +775,7 @@ class ControllerTests
         with MainNetParamsFixtures
         with MemPoolWatcherFixtures
         with BlockChainWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures
         with EncryptionManagerFixtures
@@ -959,6 +964,7 @@ class ControllerTests
         with MainNetParamsFixtures
         with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures
         with SlackSignatureVerifierFixtures

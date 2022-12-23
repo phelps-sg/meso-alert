@@ -29,6 +29,7 @@ import unittests.Fixtures.{
   MemPoolWatcherFixtures,
   MessagesFixtures,
   ProvidesTestBindings,
+  WebManagerFixtures,
   WebhookActorFixtures,
   WebhookDaoFixtures,
   WebhookFixtures,
@@ -95,18 +96,17 @@ class ServiceTests
         with MemPoolWatcherFixtures
         with MainNetParamsFixtures
         with BlockChainWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with WebhookDaoFixtures
         with WebhookFixtures
         with WebhookActorFixtures
         with WebhookManagerFixtures {
 
-//      override def peerGroupExpectations(): Unit = {
       (mockPeerGroup
         .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
         .expects(*)
         .never()
-//      }
 
     }
 

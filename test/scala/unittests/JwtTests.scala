@@ -9,6 +9,7 @@ import util.JWT
 import java.time.{Clock, Instant, ZoneId}
 import scala.util.{Failure, Success, Try}
 
+// noinspection SpellCheckingInspection
 class JwtTests extends AnyWordSpecLike with should.Matchers {
 
   def clock20220907: Clock =
