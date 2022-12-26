@@ -661,7 +661,10 @@ object Fixtures {
   }
 
   trait WebhookActorFixtures {
-    env: ProvidesInjector with HasActorSystem with ClockFixtures with DatabaseExecutionContextSingleton =>
+    env: ProvidesInjector
+      with HasActorSystem
+      with ClockFixtures
+      with DatabaseExecutionContextSingleton =>
     val actorSystem: ActorSystem
     val hook: Webhook
     val hooksActor = {
@@ -726,7 +729,10 @@ object Fixtures {
   }
 
   trait HooksManagerActorSlackChatFixtures extends SlackChatHookFixtures {
-    env: HasActorSystem with ProvidesInjector with ClockFixtures with DatabaseExecutionContextSingleton =>
+    env: HasActorSystem
+      with ProvidesInjector
+      with ClockFixtures
+      with DatabaseExecutionContextSingleton =>
     val actorSystem: ActorSystem
     val hookDao: SlackChatHookDao
 
@@ -1118,9 +1124,7 @@ object Fixtures {
   }
 
   trait SlackManagerFixtures extends MockFactory {
-    env: ConfigurationFixtures
-      with HasActorSystem
-      with SlackChatHookFixtures =>
+    env: ConfigurationFixtures with HasActorSystem with SlackChatHookFixtures =>
 
     val slackClientExecutionContext =
       new SlackClientExecutionContext(actorSystem)
@@ -1329,7 +1333,10 @@ object Fixtures {
   }
 
   trait WebhooksActorFixtures {
-    env: HasActorSystem with ProvidesInjector with ClockFixtures with DatabaseExecutionContextSingleton =>
+    env: HasActorSystem
+      with ProvidesInjector
+      with ClockFixtures
+      with DatabaseExecutionContextSingleton =>
     val actorSystem: ActorSystem
     val injector: Injector
     val hooksActor = {
