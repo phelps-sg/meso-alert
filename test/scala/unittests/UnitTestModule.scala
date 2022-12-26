@@ -38,10 +38,6 @@ class UnitTestModule(
       val get: Clock = clock
     })
     bind(classOf[MessagesApi]).toInstance(messagesApi)
-    bind(classOf[scala.util.Random])
-      .toProvider(new Provider[scala.util.Random] {
-        val get: scala.util.Random = new scala.util.Random(PRNG_SEED)
-      })
     bind(classOf[ExecutionContext]).toInstance(testExecutionContext)
     bindActorFactory(
       classOf[TxMessagingActorWeb],
