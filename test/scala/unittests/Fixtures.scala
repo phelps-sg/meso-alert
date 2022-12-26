@@ -218,6 +218,10 @@ object Fixtures {
     val db: Database
   }
 
+  trait DatabaseExecutionContextSingleton { env: HasActorSystem =>
+    val databaseExecutionContext = new DatabaseExecutionContext(actorSystem)
+  }
+
   trait HasExecutionContext {
     val executionContext: ExecutionContext
   }
@@ -269,9 +273,9 @@ object Fixtures {
 
   trait MemPoolWatcherActorFixtures {
     env: MemPoolWatcherFixtures
-      with ActorGuiceFixtures
       with HasActorSystem
-      with HasExecutionContext =>
+      with HasExecutionContext
+      with DatabaseExecutionContextSingleton =>
 
     val executionContext: ExecutionContext
 
@@ -282,7 +286,7 @@ object Fixtures {
       MemPoolWatcherActor.props(
         pgs,
         new MainNetParamsProvider(),
-        injector.instanceOf[DatabaseExecutionContext]
+        databaseExecutionContext
       )
     )
     val memPoolWatcher =
@@ -637,7 +641,8 @@ object Fixtures {
     env: EncryptionManagerFixtures
       with ProvidesInjector
       with HasExecutionContext
-      with HasDatabase =>
+      with HasDatabase
+      with DatabaseExecutionContextSingleton =>
 
     val db: Database
     val executionContext: ExecutionContext
@@ -645,7 +650,7 @@ object Fixtures {
     val hookDao =
       new SlickSlackChatDao(
         db,
-        injector.instanceOf[DatabaseExecutionContext],
+        databaseExecutionContext,
         encryptionManager
       )(executionContext)
   }
@@ -656,7 +661,7 @@ object Fixtures {
   }
 
   trait WebhookActorFixtures {
-    env: ProvidesInjector with HasActorSystem with ClockFixtures =>
+    env: ProvidesInjector with HasActorSystem with ClockFixtures with DatabaseExecutionContextSingleton =>
     val actorSystem: ActorSystem
     val hook: Webhook
     val hooksActor = {
@@ -666,7 +671,7 @@ object Fixtures {
           injector.instanceOf[TxFilterActor.Factory],
           injector.instanceOf[RateLimitingBatchingActor.Factory],
           injector.instanceOf[WebhookDao],
-          injector.instanceOf[DatabaseExecutionContext],
+          databaseExecutionContext,
           clock
         )
       )
@@ -702,10 +707,10 @@ object Fixtures {
       with SlackManagerFixtures
       with ConfigurationFixtures
       with RandomFixtures
-      with MessagesFixtures
-      with ProvidesInjector =>
-    val slackChatExecutionContext =
-      injector.instanceOf[SlackChatExecutionContext]
+      with MessagesFixtures =>
+
+    val slackChatExecutionContext = new SlackChatExecutionContext(actorSystem)
+
     val slackChatActor = actorSystem.actorOf(
       Props(
         new TxMessagingActorSlackChat(
@@ -721,7 +726,7 @@ object Fixtures {
   }
 
   trait HooksManagerActorSlackChatFixtures extends SlackChatHookFixtures {
-    env: HasActorSystem with ProvidesInjector with ClockFixtures =>
+    env: HasActorSystem with ProvidesInjector with ClockFixtures with DatabaseExecutionContextSingleton =>
     val actorSystem: ActorSystem
     val hookDao: SlackChatHookDao
 
@@ -735,7 +740,7 @@ object Fixtures {
           injector.instanceOf[TxFilterActor.Factory],
           injector.instanceOf[RateLimitingBatchingActor.Factory],
           hookDao,
-          injector.instanceOf[DatabaseExecutionContext],
+          databaseExecutionContext,
           clock
         )
       )
@@ -1114,10 +1119,11 @@ object Fixtures {
 
   trait SlackManagerFixtures extends MockFactory {
     env: ConfigurationFixtures
-      with ProvidesInjector
+      with HasActorSystem
       with SlackChatHookFixtures =>
+
     val slackClientExecutionContext =
-      injector.instanceOf[SlackClientExecutionContext]
+      new SlackClientExecutionContext(actorSystem)
 
     class MockSlackManager
         extends SlackManager(config, slackClientExecutionContext)
@@ -1323,7 +1329,7 @@ object Fixtures {
   }
 
   trait WebhooksActorFixtures {
-    env: HasActorSystem with ProvidesInjector with ClockFixtures =>
+    env: HasActorSystem with ProvidesInjector with ClockFixtures with DatabaseExecutionContextSingleton =>
     val actorSystem: ActorSystem
     val injector: Injector
     val hooksActor = {
@@ -1333,7 +1339,7 @@ object Fixtures {
           injector.instanceOf[TxFilterActor.Factory],
           injector.instanceOf[RateLimitingBatchingActor.Factory],
           injector.instanceOf[WebhookDao],
-          injector.instanceOf[DatabaseExecutionContext],
+          databaseExecutionContext,
           clock
         )
       )

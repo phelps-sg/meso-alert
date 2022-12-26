@@ -13,29 +13,7 @@ import play.api.inject.guice.GuiceableModule
 import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{
-  ClockFixtures,
-  ConfigurationFixtures,
-  DatabaseGuiceFixtures,
-  DatabaseInitializer,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  MessagesFixtures,
-  ProvidesTestBindings,
-  SlackChatDaoTestLogic,
-  SlackChatHookDaoFixtures,
-  SlackChatHookFixtures,
-  SlackSignatureVerifierFixtures,
-  SlickSlackTeamDaoFixtures,
-  SlickSlackTeamFixtures,
-  SlickSlashCommandFixtures,
-  SlickSlashCommandHistoryDaoFixtures,
-  SlickTransactionUpdateDaoFixtures,
-  TxUpdateFixtures,
-  WebhookDaoFixtures,
-  WebhookDaoTestLogic,
-  WebhookFixtures
-}
+import unittests.Fixtures.{ClockFixtures, ConfigurationFixtures, DatabaseExecutionContextSingleton, DatabaseGuiceFixtures, DatabaseInitializer, EncryptionActorFixtures, EncryptionManagerFixtures, MessagesFixtures, ProvidesTestBindings, SlackChatDaoTestLogic, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlackSignatureVerifierFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, SlickTransactionUpdateDaoFixtures, TxUpdateFixtures, WebhookDaoFixtures, WebhookDaoTestLogic, WebhookFixtures}
 
 // scalafix:off
 
@@ -98,6 +76,7 @@ class DaoTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with DatabaseExecutionContextSingleton
         with DatabaseGuiceFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures

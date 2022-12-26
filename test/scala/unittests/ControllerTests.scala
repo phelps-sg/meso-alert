@@ -19,55 +19,14 @@ import play.api.http.Status.{OK, SERVICE_UNAVAILABLE, UNAUTHORIZED}
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{AnyContentAsFormUrlEncoded, Result, Results}
 import play.api.test.CSRFTokenHelper._
-import play.api.test.Helpers.{
-  GET,
-  POST,
-  call,
-  contentAsJson,
-  contentAsString,
-  status,
-  writeableOf_AnyContentAsEmpty,
-  writeableOf_AnyContentAsFormUrlEncoded
-}
+import play.api.test.Helpers.{GET, POST, call, contentAsJson, contentAsString, status, writeableOf_AnyContentAsEmpty, writeableOf_AnyContentAsFormUrlEncoded}
 import play.api.test.{FakeRequest, Helpers}
 import postgres.PostgresContainer
 import services.HooksManagerSlackChat
 import slack.BoltException
 import slick.BtcPostgresProfile.api._
 import slick.Tables
-import unittests.Fixtures.{
-  ActorGuiceFixtures,
-  Auth0ActionFixtures,
-  BlockChainWatcherFixtures,
-  ClockFixtures,
-  ConfigurationFixtures,
-  DatabaseInitializer,
-  DefaultBodyParserFixtures,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  HooksManagerActorSlackChatFixtures,
-  MainNetParamsFixtures,
-  MemPoolWatcherActorFixtures,
-  MemPoolWatcherFixtures,
-  MessagesFixtures,
-  MockMailManagerFixtures,
-  ProvidesTestBindings,
-  SecretsManagerFixtures,
-  SlackChatHookDaoFixtures,
-  SlackChatHookFixtures,
-  SlackEventsControllerFixtures,
-  SlackManagerFixtures,
-  SlackSignatureVerifierFixtures,
-  SlackSlashCommandControllerFixtures,
-  SlickSlackTeamDaoFixtures,
-  SlickSlackTeamFixtures,
-  SlickSlashCommandFixtures,
-  SlickSlashCommandHistoryDaoFixtures,
-  TxWatchActorFixtures,
-  UserFixtures,
-  WebManagerFixtures,
-  WebSocketFixtures
-}
+import unittests.Fixtures.{ActorGuiceFixtures, Auth0ActionFixtures, BlockChainWatcherFixtures, ClockFixtures, ConfigurationFixtures, DatabaseExecutionContextSingleton, DatabaseInitializer, DefaultBodyParserFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, HooksManagerActorSlackChatFixtures, MainNetParamsFixtures, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, MessagesFixtures, MockMailManagerFixtures, ProvidesTestBindings, SecretsManagerFixtures, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlackEventsControllerFixtures, SlackManagerFixtures, SlackSignatureVerifierFixtures, SlackSlashCommandControllerFixtures, SlickSlackTeamDaoFixtures, SlickSlackTeamFixtures, SlickSlashCommandFixtures, SlickSlashCommandHistoryDaoFixtures, TxWatchActorFixtures, UserFixtures, WebManagerFixtures, WebSocketFixtures}
 import util.Encodings.base64Encode
 
 import scala.collection.compat.immutable.ArraySeq
@@ -270,6 +229,7 @@ class ControllerTests
         with BlockChainWatcherFixtures
         with WebManagerFixtures
         with ActorGuiceFixtures
+          with DatabaseExecutionContextSingleton
         with MemPoolWatcherActorFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
@@ -388,6 +348,7 @@ class ControllerTests
         with BlockChainWatcherFixtures
         with WebManagerFixtures
         with ActorGuiceFixtures
+          with DatabaseExecutionContextSingleton
         with MemPoolWatcherActorFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
@@ -791,6 +752,7 @@ class ControllerTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with DatabaseExecutionContextSingleton
         with EncryptionActorFixtures
         with MainNetParamsFixtures
         with MemPoolWatcherFixtures
@@ -986,6 +948,7 @@ class ControllerTests
         with MemPoolWatcherFixtures
         with WebManagerFixtures
         with ActorGuiceFixtures
+        with DatabaseExecutionContextSingleton
         with MemPoolWatcherActorFixtures
         with SlackSignatureVerifierFixtures
         with DefaultBodyParserFixtures

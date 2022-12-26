@@ -3,33 +3,10 @@ package unittests
 import actors.AuthenticationActor.Auth
 import actors.BlockChainWatcherActor.{NewBlock, WatchTxConfidence}
 import actors.EncryptionActor.{Decrypted, Encrypt, Encrypted, Init}
-import actors.MemPoolWatcherActor.{
-  PeerGroupAlreadyStartedException,
-  StartPeerGroup
-}
+import actors.MemPoolWatcherActor.{PeerGroupAlreadyStartedException, StartPeerGroup}
 import actors.RateLimitingBatchingActor.TxBatch
-import actors.SlackSecretsActor.{
-  GenerateSecret,
-  Unbind,
-  ValidSecret,
-  VerifySecret
-}
-import actors.{
-  AuthenticationActor,
-  HookAlreadyRegisteredException,
-  HookAlreadyStartedException,
-  HookNotRegisteredException,
-  HookNotStartedException,
-  RateLimitingBatchingActor,
-  Registered,
-  Started,
-  Stopped,
-  TxHash,
-  TxInputOutput,
-  TxMessagingActorSlackChat,
-  TxUpdate,
-  Updated
-}
+import actors.SlackSecretsActor.{GenerateSecret, Unbind, ValidSecret, VerifySecret}
+import actors.{AuthenticationActor, HookAlreadyRegisteredException, HookAlreadyStartedException, HookNotRegisteredException, HookNotStartedException, RateLimitingBatchingActor, Registered, Started, Stopped, TxHash, TxInputOutput, TxMessagingActorSlackChat, TxUpdate, Updated}
 import akka.actor.ActorSystem
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
@@ -37,11 +14,7 @@ import akka.util.Timeout
 import com.google.common.util.concurrent.ListenableFuture
 import dao._
 import org.bitcoinj.core._
-import org.bitcoinj.core.listeners.{
-  BlocksDownloadedEventListener,
-  NewBestBlockListener,
-  OnTransactionBroadcastListener
-}
+import org.bitcoinj.core.listeners.{BlocksDownloadedEventListener, NewBestBlockListener, OnTransactionBroadcastListener}
 import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
@@ -57,38 +30,7 @@ import services._
 import slack.BlockMessages
 import slack.BlockMessages.BlockMessage
 import sttp.model.Uri
-import unittests.Fixtures.{
-  ActorGuiceFixtures,
-  BlockChainWatcherFixtures,
-  BlockFixtures,
-  ClockFixtures,
-  ConfigurationFixtures,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  HookActorTestLogic,
-  HooksManagerActorSlackChatFixtures,
-  MainNetParamsFixtures,
-  MemPoolWatcherActorFixtures,
-  MemPoolWatcherFixtures,
-  MessagesFixtures,
-  ProvidesTestBindings,
-  RandomFixtures,
-  SlackChatHookDaoFixtures,
-  SlackChatHookFixtures,
-  SlackManagerFixtures,
-  SlackSecretsActorFixtures,
-  TransactionFixtures,
-  TxMessagingActorSlackChatFixtures,
-  TxMessagingActorWebFixtures,
-  TxPersistenceActorFixtures,
-  TxUpdateFixtures,
-  TxWatchActorFixtures,
-  UserFixtures,
-  WebManagerFixtures,
-  WebSocketFixtures,
-  WebhookActorFixtures,
-  WebhookFixtures
-}
+import unittests.Fixtures.{ActorGuiceFixtures, BlockChainWatcherFixtures, BlockFixtures, ClockFixtures, ConfigurationFixtures, DatabaseExecutionContextSingleton, EncryptionActorFixtures, EncryptionManagerFixtures, HookActorTestLogic, HooksManagerActorSlackChatFixtures, MainNetParamsFixtures, MemPoolWatcherActorFixtures, MemPoolWatcherFixtures, MessagesFixtures, ProvidesTestBindings, RandomFixtures, SlackChatHookDaoFixtures, SlackChatHookFixtures, SlackManagerFixtures, SlackSecretsActorFixtures, TransactionFixtures, TxMessagingActorSlackChatFixtures, TxMessagingActorWebFixtures, TxPersistenceActorFixtures, TxUpdateFixtures, TxWatchActorFixtures, UserFixtures, WebManagerFixtures, WebSocketFixtures, WebhookActorFixtures, WebhookFixtures}
 import util.BitcoinFormatting.toChatMessage
 
 import java.math.BigInteger
@@ -145,6 +87,7 @@ class ActorTests
         with ConfigurationFixtures
         with WebManagerFixtures
         with ActorGuiceFixtures
+        with DatabaseExecutionContextSingleton
         with MemPoolWatcherActorFixtures {
 
       (mockPeerGroup.start _).expects().once()
@@ -246,6 +189,7 @@ class ActorTests
         with WebSocketFixtures
         with WebManagerFixtures
         with ActorGuiceFixtures
+        with DatabaseExecutionContextSingleton
         with MemPoolWatcherActorFixtures
         with UserFixtures
         with TransactionFixtures {
@@ -573,6 +517,7 @@ class ActorTests
         with ActorGuiceFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
+        with DatabaseExecutionContextSingleton
         with SlackChatHookDaoFixtures
         with HooksManagerActorSlackChatFixtures
         with HookActorTestLogic[
@@ -656,6 +601,7 @@ class ActorTests
         with WebManagerFixtures
         with ActorGuiceFixtures
         with WebhookFixtures
+        with DatabaseExecutionContextSingleton
         with WebhookActorFixtures
         with HookActorTestLogic[URI, Webhook, Webhook] {
 
@@ -905,11 +851,7 @@ class ActorTests
         extends FixtureBindings
         with TxUpdateFixtures
         with ConfigurationFixtures
-        with MainNetParamsFixtures
-        with MemPoolWatcherFixtures
-        with BlockChainWatcherFixtures
         with WebManagerFixtures
-        with ActorGuiceFixtures
         with RandomFixtures
         with WebhookFixtures
         with TxMessagingActorWebFixtures {
@@ -947,11 +889,7 @@ class ActorTests
         with TxUpdateFixtures
         with ConfigurationFixtures
         with MessagesFixtures
-        with MainNetParamsFixtures
-        with MemPoolWatcherFixtures
-        with BlockChainWatcherFixtures
         with WebManagerFixtures
-        with ActorGuiceFixtures
         with RandomFixtures
         with SlackChatHookFixtures
         with SlackManagerFixtures
@@ -972,11 +910,6 @@ class ActorTests
         )
         .once()
         .returning(Future.successful(expectedBlocks))
-
-      (mockPeerGroup
-        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-        .expects(*)
-        .never()
 
       def slackChatTestLogic: Assertion = {
         slackChatActor ! TxBatch(transactions)

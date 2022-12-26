@@ -17,24 +17,7 @@ import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import slick.dbio.DBIO
-import unittests.Fixtures.{
-  ActorGuiceFixtures,
-  BlockChainWatcherFixtures,
-  ClockFixtures,
-  ConfigurationFixtures,
-  DatabaseGuiceFixtures,
-  EncryptionActorFixtures,
-  EncryptionManagerFixtures,
-  MainNetParamsFixtures,
-  MemPoolWatcherFixtures,
-  MessagesFixtures,
-  ProvidesTestBindings,
-  WebManagerFixtures,
-  WebhookActorFixtures,
-  WebhookDaoFixtures,
-  WebhookFixtures,
-  WebhookManagerFixtures
-}
+import unittests.Fixtures.{ActorGuiceFixtures, BlockChainWatcherFixtures, ClockFixtures, ConfigurationFixtures, DatabaseExecutionContextSingleton, DatabaseGuiceFixtures, EncryptionActorFixtures, EncryptionManagerFixtures, MainNetParamsFixtures, MemPoolWatcherFixtures, MessagesFixtures, ProvidesTestBindings, WebManagerFixtures, WebhookActorFixtures, WebhookDaoFixtures, WebhookFixtures, WebhookManagerFixtures}
 
 import java.net.URI
 import scala.concurrent.Future
@@ -93,6 +76,7 @@ class ServiceTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with DatabaseExecutionContextSingleton
         with MemPoolWatcherFixtures
         with MainNetParamsFixtures
         with BlockChainWatcherFixtures
