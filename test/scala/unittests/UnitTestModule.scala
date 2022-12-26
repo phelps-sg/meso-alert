@@ -12,15 +12,10 @@ import play.api.i18n.MessagesApi
 import play.libs.akka.AkkaGuiceSupport
 import slick.jdbc
 import slick.jdbc.JdbcBackend.Database
-import unittests.UnitTestModule.PRNG_SEED
 
 import java.time.Clock
 import javax.inject.Provider
 import scala.concurrent.ExecutionContext
-
-object UnitTestModule {
-  val PRNG_SEED = 1000
-}
 
 class UnitTestModule(
     val db: jdbc.JdbcBackend.Database,
