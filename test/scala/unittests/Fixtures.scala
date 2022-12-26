@@ -1191,8 +1191,10 @@ object Fixtures {
     val mockMailManager = mock[MailManager]
   }
 
-  trait RandomFixtures { env: ProvidesInjector =>
-    val random = injector.instanceOf[scala.util.Random]
+  trait RandomFixtures {
+//    val random = injector.instanceOf[scala.util.Random]
+    val prngSeed = 1000
+    val random = new scala.util.Random(prngSeed)
   }
 
   trait TxPersistenceActorFixtures extends MockFactory {
