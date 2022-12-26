@@ -116,7 +116,7 @@ class DaoTests
                 SlackChatHookEncrypted(
                   `key`,
                   _: Encrypted,
-                  `originalThreshold`,
+                  Satoshi(`originalThreshold`),
                   true
                 )
               )
@@ -143,7 +143,7 @@ class DaoTests
                 SlackChatHookEncrypted(
                   `key`,
                   _: Encrypted,
-                  `newThreshold`,
+                  Satoshi(`newThreshold`),
                   true
                 )
               )

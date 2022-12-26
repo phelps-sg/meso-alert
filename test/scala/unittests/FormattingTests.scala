@@ -216,7 +216,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
         SlackChatHookPlainText(
           SlackChannelId("channel"),
           SlackAuthToken("secret"),
-          1,
+          Satoshi(1),
           isRunning = false
         )
       val result = hook.toString()

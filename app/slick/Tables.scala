@@ -19,16 +19,16 @@ object Tables {
   def decodeBase64(data: String): Array[Byte] =
     java.util.Base64.getDecoder.decode(data)
 
-  def ws(hook: Webhook): Option[(String, Long)] = {
+  def ws(hook: Webhook): Option[(String, Satoshi)] = {
     Some((hook.uri.toURL.toString, hook.threshold))
   }
 
-  def toWebhook(tuple: (String, Long, Boolean)): Webhook =
+  def toWebhook(tuple: (String, Satoshi, Boolean)): Webhook =
     Webhook(new URI(tuple._1), tuple._2, tuple._3)
 
   class Webhooks(tag: Tag) extends Table[Webhook](tag, "webhooks") {
     def url = column[String]("url", O.PrimaryKey)
-    def threshold = column[Long]("threshold")
+    def threshold = column[Satoshi]("threshold")
     def is_running = column[Boolean]("is_running")
     def * = (url, threshold, is_running) <> (
       h => Webhook(new URI(h._1), h._2, h._3),
@@ -121,7 +121,7 @@ object Tables {
     def channel_id = column[String]("channel_id", O.PrimaryKey)
     def nonce = column[String]("nonce")
     def token = column[String]("token")
-    def threshold = column[Long]("threshold")
+    def threshold = column[Satoshi]("threshold")
     def is_running = column[Boolean]("is_running")
     def * = (channel_id, nonce, token, threshold, is_running) <> (
       h =>

@@ -5,7 +5,7 @@ import actors.{Registered, Started}
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import akka.util.Timeout
-import dao.Webhook
+import dao.{Satoshi, Webhook}
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -112,9 +112,12 @@ class ServiceTests
 
     "register and start all running hooks stored in the database on initialisation" in new TestFixtures {
 
-      val hook1 = Webhook(new URI("http://test1"), 10, isRunning = true)
-      val hook2 = Webhook(new URI("http://test2"), 20, isRunning = true)
-      val hook3 = Webhook(new URI("http://test3"), 30, isRunning = false)
+      val hook1 =
+        Webhook(new URI("http://test1"), Satoshi(10), isRunning = true)
+      val hook2 =
+        Webhook(new URI("http://test2"), Satoshi(20), isRunning = true)
+      val hook3 =
+        Webhook(new URI("http://test3"), Satoshi(30), isRunning = false)
 
       val hooks = List(hook1, hook2, hook3)
 

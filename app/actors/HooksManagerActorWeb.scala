@@ -38,13 +38,13 @@ object HooksManagerActorWeb {
           case Started(hook: Webhook) =>
             Json.obj(
               fields = "uri" -> hook.uri.toString,
-              "threshold" -> hook.threshold
+              "threshold" -> hook.threshold.value
             )
 
           case Started(hook: SlackChatHookEncrypted) =>
             Json.obj(
               fields = "channel" -> hook.channel.toString,
-              "threshold" -> hook.threshold
+              "threshold" -> hook.threshold.value
             )
 
           case Started(x) =>

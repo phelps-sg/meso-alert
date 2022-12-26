@@ -326,7 +326,7 @@ class ControllerTests
                 SlackChatHookEncrypted(
                   `channelId`,
                   _: Encrypted,
-                  500000000,
+                  Satoshi(500000000),
                   true
                 )
               )
@@ -348,7 +348,7 @@ class ControllerTests
                 SlackChatHookEncrypted(
                   `channelId`,
                   _: Encrypted,
-                  500000000,
+                  Satoshi(500000000),
                   false
                 )
               ) =>
@@ -529,7 +529,7 @@ class ControllerTests
                 SlackChatHookEncrypted(
                   `channelId`,
                   _: Encrypted,
-                  500000000,
+                  Satoshi(500000000),
                   true
                 )
               )
@@ -568,7 +568,7 @@ class ControllerTests
                 SlackChatHookEncrypted(
                   `channelId`,
                   _: Encrypted,
-                  500000000,
+                  Satoshi(500000000),
                   true
                 )
               )

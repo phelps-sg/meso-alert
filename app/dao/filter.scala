@@ -7,6 +7,6 @@ trait Filter {
 }
 
 trait ThresholdFilter extends Filter {
-  val threshold: Long
-  def filter(tx: TxUpdate): Boolean = tx.amount.value >= threshold
+  val threshold: Satoshi
+  def filter(tx: TxUpdate): Boolean = tx.amount.value >= threshold.value
 }

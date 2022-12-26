@@ -1,7 +1,7 @@
 package controllers
 
 import controllers.WebhooksController.{HookDto, UriDto}
-import dao.Webhook
+import dao.{Satoshi, Webhook}
 import play.api.libs.json._
 import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.HooksManagerWebService
@@ -47,7 +47,7 @@ class WebhooksController @Inject() (
       slackWebHooksManager.register(
         Webhook(
           new URI(request.body.uri),
-          request.body.threshold,
+          Satoshi(request.body.threshold),
           isRunning = true
         )
       )

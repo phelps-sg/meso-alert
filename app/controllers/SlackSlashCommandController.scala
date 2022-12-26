@@ -172,7 +172,7 @@ class SlackSlashCommandController @Inject() (
                 SlackChatHookPlainText(
                   channel,
                   token = team.accessToken,
-                  amount * 100000000,
+                  Satoshi(amount * 100000000),
                   isRunning = true
                 )
               )

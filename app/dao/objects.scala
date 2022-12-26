@@ -49,7 +49,7 @@ trait Hook[+X] extends ThresholdFilter {
   def newStatus(isRunning: Boolean): Hook[X]
 }
 
-final case class Webhook(uri: URI, threshold: Long, isRunning: Boolean)
+final case class Webhook(uri: URI, threshold: Satoshi, isRunning: Boolean)
     extends Hook[URI] {
   def key: URI = uri
   override def newStatus(isRunning: Boolean): Hook[URI] =
@@ -64,7 +64,7 @@ trait SlackChatHook extends Hook[SlackChannelId] {
 final case class SlackChatHookEncrypted(
     channel: SlackChannelId,
     token: Encrypted,
-    threshold: Long,
+    threshold: Satoshi,
     isRunning: Boolean
 ) extends SlackChatHook {
   override def newStatus(isRunning: Boolean): SlackChatHookEncrypted =
@@ -74,7 +74,7 @@ final case class SlackChatHookEncrypted(
 final case class SlackChatHookPlainText(
     channel: SlackChannelId,
     token: SlackAuthToken,
-    threshold: Long,
+    threshold: Satoshi,
     isRunning: Boolean
 ) extends SlackChatHook {
   override def newStatus(isRunning: Boolean): SlackChatHookPlainText =

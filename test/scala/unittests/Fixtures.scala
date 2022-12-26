@@ -509,9 +509,11 @@ object Fixtures {
     val key = new URI("http://test")
     val originalThreshold = 100L
     val newThreshold = 200L
-    val hook = Webhook(key, threshold = originalThreshold, isRunning = true)
+    val hook =
+      Webhook(key, threshold = Satoshi(originalThreshold), isRunning = true)
     val stoppedHook = hook.copy(isRunning = false)
-    val newHook = Webhook(key, threshold = newThreshold, isRunning = true)
+    val newHook =
+      Webhook(key, threshold = Satoshi(newThreshold), isRunning = true)
   }
 
   trait SlackChatHookFixtures {
@@ -541,21 +543,21 @@ object Fixtures {
     val token2 = SlackAuthToken("test_token_2")
     val hook = SlackChatHookPlainText(
       channelId,
-      threshold = originalThreshold,
+      threshold = Satoshi(originalThreshold),
       isRunning = true,
       token = token1
     )
     val stoppedHook = hook.copy(isRunning = false)
     val newHook = SlackChatHookPlainText(
       channelId,
-      threshold = newThreshold,
+      threshold = Satoshi(newThreshold),
       isRunning = true,
       token = token2
     )
     val encryptedHook =
       SlackChatHookEncrypted(
         channelId,
-        threshold = newThreshold,
+        threshold = Satoshi(newThreshold),
         isRunning = true,
         token = encryptedToken1
       )

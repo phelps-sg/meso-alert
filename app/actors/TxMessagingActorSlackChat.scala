@@ -3,7 +3,7 @@ package actors
 import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import actors.RateLimitingBatchingActor.TxBatch
 import actors.TxMessagingActorSlackChat.MESSAGE_BOT_NAME
-import akka.actor.{Actor, Timers}
+import akka.actor.Actor
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import dao.SlackChatHookPlainText
@@ -38,7 +38,6 @@ class TxMessagingActorSlackChat @Inject() (
     protected val messagesApi: MessagesApi,
     @Assisted hook: SlackChatHookPlainText
 ) extends TxRetryOrDie[BlockMessage, TxBatch]
-    with Timers
     with UnrecognizedMessageHandlerFatal
     with Logging {
 
@@ -58,9 +57,7 @@ class TxMessagingActorSlackChat @Inject() (
     BlockMessages.txBatchToBlockMessage(messagesApi)
 
   override def process(batch: TxBatch): Future[BlockMessage] = {
-
     val blockMessage = toBlock(batch)
-
     slackManagerService.chatPostMessage(
       hook.token,
       botName,
