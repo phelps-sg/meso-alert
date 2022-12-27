@@ -251,34 +251,34 @@ class FunctionalTests
     testEmailForm(s"$stagingURL/support")
   }
 
-//  "Login with invalid credentials" should "result in a login error" in {
-//    go to stagingURL
-//    explicitWait()
-//    click on id("qsLoginBtn")
-//    textField("username").value = "wrong@email.com"
-//    pwdField("password").value = "wrongPassword"
-//    click on xpath(
-//      "/html/body/div/main/section/div/div/div/form/div[2]/button"
-//    )
-//    explicitWait()
-//    assert(find(className("ulp-input-error-message")).isDefined)
-//  }
+  "Login with invalid credentials" should "result in a login error" in {
+    go to stagingURL
+    explicitWait()
+    click on id("qsLoginBtn")
+    textField("username").value = "wrong@email.com"
+    pwdField("password").value = "wrongPassword"
+    click on xpath(
+      "/html/body/div/main/section/div/div/div/form/div[2]/button"
+    )
+    explicitWait()
+    assert(find(className("ulp-input-error-message")).isDefined)
+  }
 
-//  "Login with valid credentials" should "result in the user being authenticated" in {
-//    go to stagingURL
-//    capture to "Login-pre"
-//    explicitWait()
-//    click on id("qsLoginBtn")
-//    textField("username").value = slackEmail
-//    pwdField("password").value = slackPassword
-//    click on xpath(
-//      "/html/body/div/main/section/div/div/div/form/div[2]/button"
-//    )
-//    explicitWait()
-//    capture to "Login-post"
-//    assert(find("dropdownMenuButton").isDefined)
-//  }
-//
+  "Login with valid credentials" should "result in the user being authenticated" in {
+    go to stagingURL
+    capture to "Login-pre"
+    explicitWait()
+    click on id("qsLoginBtn")
+    textField("username").value = slackEmail
+    pwdField("password").value = slackPassword
+    click on xpath(
+      "/html/body/div/main/section/div/div/div/form/div[2]/button"
+    )
+    explicitWait()
+    capture to "Login-post"
+    assert(find("dropdownMenuButton").isDefined)
+  }
+
 //  "canceling bot installation during 'add to slack'" should "redirect to home page " in {
 //    go to stagingURL
 //    capture to "CancelInstallation-pre"
