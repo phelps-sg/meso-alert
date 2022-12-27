@@ -77,7 +77,8 @@ class Auth0Controller @Inject() (
           Ok(Json.toJson(Result(userId, secret, slackUrl)))
         }
 
-      case None => Future { ServiceUnavailable("user is not logged in") }
+      case None =>
+        Future.successful { ServiceUnavailable("user is not logged in") }
     }
   }
 }
