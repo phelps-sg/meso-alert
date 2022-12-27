@@ -28,6 +28,9 @@ object SlackAuthController {
 
 }
 
+/** Controller for handling
+  * [[https://api.slack.com/authentication/oauth-v2 Slack V2 Oauth 2.0]]
+  */
 class SlackAuthController @Inject() (
     protected val config: Configuration,
     protected val slackTeamDao: SlackTeamDao,

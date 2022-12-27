@@ -57,8 +57,8 @@ object MemPoolWatcherActor {
 }
 
 /** This actor provides a thread safe wrapper around bitcoinj's peerGroup
-  * events, and allows receiving actors to register for `TxUpdate` events every
-  * time a transaction is submitted to the mem pool.
+  * events, and allows receiving actors to register for `TxUpdate` events, which
+  * are sent every time a transaction is submitted to the mem pool.
   */
 class MemPoolWatcherActor @Inject() (
     val peerGroupProvider: PeerGroupProvider,
