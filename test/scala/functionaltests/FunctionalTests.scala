@@ -68,7 +68,7 @@ class FunctionalTests
       delete all cookies
       reloadPage()
     }
-    checkForCookieMessage("SlackSignIn", cookiesAccept)
+    checkForCookieMessage(cookiesAccept)
     textField("domain").value = workspace
     pressKeys(Keys.ENTER.toString)
     checkForManualLogin()
@@ -96,7 +96,6 @@ class FunctionalTests
   }
 
   def checkForCookieMessage(
-      capturePrefix: String,
       keepCookies: Boolean = false
   ): Assertion = {
     capture to "CheckForCookieMessage-pre"
