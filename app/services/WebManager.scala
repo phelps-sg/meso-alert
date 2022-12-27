@@ -24,6 +24,7 @@ class MonixBackend extends HttpBackendSelection {
     AsyncHttpClientMonixBackend()
 }
 
+@ImplementedBy(classOf[MonixWebManager])
 trait WebManagerService {
 
   def postJson(content: JsObject, uri: Uri): Future[StatusCode]
