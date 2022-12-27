@@ -7,7 +7,7 @@
     },
     "features": {
         "bot_user": {
-            "display_name": "block-insights",
+            "display_name": "Block Insights",
             "always_online": false
         },
         "slash_commands": [
