@@ -7,7 +7,7 @@
     },
     "features": {
         "bot_user": {
-            "display_name": "block-insights-staging",
+            "display_name": "Block Insights (Staging)",
             "always_online": false
         },
         "slash_commands": [
