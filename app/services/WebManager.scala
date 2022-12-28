@@ -4,6 +4,7 @@ import com.google.inject.{ImplementedBy, Inject}
 import monix.eval.Task
 import play.api.Logging
 import play.api.libs.json.{JsObject, Json}
+import services.MonixWebManager.WebRequestFailedException
 import sttp.capabilities.WebSockets
 import sttp.capabilities.monix.MonixStreams
 import sttp.client3.asynchttpclient.monix.AsyncHttpClientMonixBackend
@@ -27,6 +28,13 @@ class MonixBackend extends HttpBackendSelection {
 @ImplementedBy(classOf[MonixWebManager])
 trait WebManagerService {
   def postJson(content: JsObject, uri: Uri): Future[StatusCode]
+}
+
+object MonixWebManager {
+
+  final case class WebRequestFailedException(statusCode: Int)
+      extends Exception(s"HTTP request failed with status $statusCode")
+
 }
 
 class MonixWebManager @Inject() (val backendSelection: HttpBackendSelection)
@@ -55,7 +63,10 @@ class MonixWebManager @Inject() (val backendSelection: HttpBackendSelection)
 
     import monix.execution.Scheduler.Implicits.global
 
-    postTask.runToFuture
+    postTask.runToFuture.map { status =>
+      if (status.isSuccess) status
+      else throw WebRequestFailedException(status.code)
+    }
   }
 
 }
