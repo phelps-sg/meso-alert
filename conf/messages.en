@@ -18,6 +18,7 @@ slackResponse.resumeAlertsHelp = Usage: "/resume-alerts" on a channel with pause
 # Messages sent to Slack channels
 slackChat.botName = Block Insights
 slackChat.tooManyOutputs = Transaction contains too many outputs to list here. Visit the Transaction URL to view all.
+slackChat.tooManyTransactions = Too many transactions to list here, try configuring a higher threshold.
 slackChat.transactionHash = Transaction Hash
 slackChat.toAddresses = to addresses:
 slackChat.newTransaction = New transaction with value
