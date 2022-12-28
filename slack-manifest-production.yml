@@ -3,7 +3,7 @@
         "name": "Block Insights",
         "description": "Block Insights provides real-time tracking of cryptocurrency transactions.",
         "background_color": "#121212",
-        "long_description": "Block Insights alerts you to cryptocurrency transactions as they happen by messaging you in your Slack channels.  You can setup and manage multiple alerts in different channels without leaving Slack.  Simply type slash commands into a channel to start receiving alerts.  For example, typing /crypto-alert 5 BTC will send a chat message every time there is a a bitcoin transaction larger than 5 BTC.  Alerts can be paused or resumed by typing /pause-alerts or /resume-alerts into the channel.  Alerts can also be configured in private channels or group DMS by first inviting the bot to the channel using the command @Block Insights, and then issuing the /crypto-alert command as described previously."
+        "long_description": "Block Insights alerts you to cryptocurrency transactions as they happen by messaging you in your Slack channels.  You can setup and manage multiple alerts in different channels without leaving Slack.  Simply type slash commands into a channel to start receiving alerts.  For example, typing /crypto-alert 5 BTC will send a chat message every time there is a a bitcoin transaction larger than 5 BTC.  Alerts can be paused or resumed by typing /pause-alerts or /resume-alerts into the channel.  Alerts can also be configured in private channels by first inviting the bot to the channel using the command @Block Insights, and then issuing the /crypto-alert command as described previously."
     },
     "features": {
         "bot_user": {
