@@ -34,7 +34,7 @@ class TxMessagingActorWeb @Inject() (
 
   override val maxRetryCount: Int = 3
 
-  def success() = {
+  def success(): Unit = {
     logger.debug("Successfully posted message")
   }
 
