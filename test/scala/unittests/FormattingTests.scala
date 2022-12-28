@@ -162,9 +162,9 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
     }
 
     "show appropriate message when including too many transactions in a batch" in new TestFixtures {
-      val batch = TxBatch(Vector.fill(BlockMessages.MAX_SECTIONS)(tx))
+      val batch = TxBatch(Vector.fill(BlockMessages.MAX_BLOCKS)(tx))
       val result = BlockMessages.txBatchToBlockMessage(messagesApi)(batch)
-      result.components.size shouldBe BlockMessages.MAX_SECTIONS + 1
+      result.components.size shouldBe BlockMessages.MAX_BLOCKS + 1
       result.components.last.render should include(
         messagesApi(BlockMessages.MESSAGE_TOO_MANY_TRANSACTIONS)
       )

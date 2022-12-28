@@ -46,19 +46,19 @@ object BlockMessages {
   val MESSAGE_TOO_MANY_OUTPUTS = "slackChat.tooManyOutputs"
   val MESSAGE_TOO_MANY_TRANSACTIONS = "slackChat.tooManyTransactions"
 
-  val MAX_SECTIONS = 47
+  val MAX_BLOCKS = 47
   val MAX_TXS_PER_SECTION = 20
 
   def txBatchToBlockMessage(messages: MessagesApi)(
       batch: TxBatch
   ): BlockMessage = {
     val toSections = txToSections(messages)(_)
-    val sections =
-      sectionsWithinLimits(
-        messages(MESSAGE_TOO_MANY_TRANSACTIONS),
-        batch.messages.flatMap(toSections).toVector
+    val blocks =
+      blocksWithinLimit(
+        batch.messages.flatMap(toSections).toVector,
+        messages(MESSAGE_TOO_MANY_TRANSACTIONS)
       )
-    BlockMessage(sections)
+    BlockMessage(blocks)
   }
 
   def txToBlockMessage(messages: MessagesApi)(tx: TxUpdate): BlockMessage =
@@ -76,20 +76,20 @@ object BlockMessages {
       txHashSection(messages)(tx.hash, " " + messages(MESSAGE_TO_ADDRESSES))
     )
 
-    sectionsWithinLimits(
-      messages(MESSAGE_TOO_MANY_OUTPUTS),
-      headerAndTxHash ++ txOutputsSections(tx.outputs)
+    blocksWithinLimit(
+      headerAndTxHash ++ txOutputsSections(tx.outputs),
+      messages(MESSAGE_TOO_MANY_OUTPUTS)
     ) :+ Divider
   }
 
-  def sectionsWithinLimits(
-      message: String,
-      allSections: Vector[Block]
+  def blocksWithinLimit(
+      allBlocks: Vector[Block],
+      limitExceededMessage: String
   ): Vector[Block] =
-    if (allSections.size > MAX_SECTIONS)
-      allSections.take(MAX_SECTIONS) :+ Section(message)
+    if (allBlocks.size > MAX_BLOCKS)
+      allBlocks.take(MAX_BLOCKS) :+ Section(limitExceededMessage)
     else
-      allSections
+      allBlocks
 
   def txOutputsSections(outputs: Seq[TxInputOutput]): Vector[Section] = {
     val grouped = outputs.grouped(MAX_TXS_PER_SECTION) map { subOutputs =>
