@@ -9,11 +9,7 @@ import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
 import slack.BlockMessages
-import slack.BlockMessages.{
-  BlockMessage,
-  MESSAGE_TOO_MANY_OUTPUTS,
-  txToBlockMessage
-}
+import slack.BlockMessages.{BlockMessage, MESSAGE_TOO_MANY_OUTPUTS}
 import unittests.Fixtures.{
   ClockFixtures,
   MessagesFixtures,
@@ -47,11 +43,19 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
         with ClockFixtures
         with TxUpdateFixtures {
 
-      val chatMessage: TxUpdate => BlockMessage =
-        txToBlockMessage(messagesApi)
-
       def addresses(labels: String*) =
         labels.map(label => TxInputOutput(Some(label), None))
+
+      val markdownSectionRegEx =
+        """\{"type":"section","text":\{"type":"mrkdwn","text":""".r
+
+      val testContent = "test"
+      val testHeader = BlockMessages.Header(testContent)
+      val testSection = BlockMessages.Section(testContent)
+
+      val txBatchToBlockMessage =
+        BlockMessages.txBatchToBlockMessage(messagesApi)(_)
+      val txToBlockMessage = BlockMessages.txToBlockMessage(messagesApi)(_)
 
       def chatMessageStr(
           txHash: TxHash,
@@ -67,15 +71,8 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
           inputs = Vector(),
           confidence = None
         )
-        chatMessage(tx).render
+        txToBlockMessage(tx).render
       }
-
-      val markdownSectionRegEx =
-        """\{"type":"section","text":\{"type":"mrkdwn","text":""".r
-
-      val testContent = "test"
-      val testHeader = BlockMessages.Header(testContent)
-      val testSection = BlockMessages.Section(testContent)
 
       def checkBraces(b: BlockMessages.Block): Assertion = {
         val rendered = b.render
@@ -151,8 +148,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
 
     "render a batch of transactions" in new TestFixtures {
       val txs = Vector(tx, tx1, tx2)
-      val blocks =
-        BlockMessages.txBatchToBlockMessage(messagesApi)(TxBatch(txs))
+      val blocks = txBatchToBlockMessage(TxBatch(txs))
       txs.foreach { transaction =>
         blocks.render should include(transaction.hash.value)
       }
@@ -163,7 +159,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
 
     "show appropriate message when including too many transactions in a batch" in new TestFixtures {
       val batch = TxBatch(Vector.fill(BlockMessages.MAX_BLOCKS)(tx))
-      val result = BlockMessages.txBatchToBlockMessage(messagesApi)(batch)
+      val result = txBatchToBlockMessage(batch)
       result.components.size shouldBe BlockMessages.MAX_BLOCKS + 1
       result.components.last.render should include(
         messagesApi(BlockMessages.MESSAGE_TOO_MANY_TRANSACTIONS)
@@ -171,8 +167,8 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
     }
 
     "render a batch containing a single tx identically to a single tx" in new TestFixtures {
-      BlockMessages.txToBlockMessage(messagesApi)(tx) shouldEqual
-        BlockMessages.txBatchToBlockMessage(messagesApi)(TxBatch(Vector(tx)))
+      txToBlockMessage(tx) shouldEqual
+        txBatchToBlockMessage(TxBatch(Vector(tx)))
     }
   }
 
