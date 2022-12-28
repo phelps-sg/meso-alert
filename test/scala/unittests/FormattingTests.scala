@@ -70,8 +70,6 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
         chatMessage(tx).render
       }
 
-//      val testHash = TxHash("testHash")
-
       val markdownSectionRegEx =
         """\{"type":"section","text":\{"type":"mrkdwn","text":""".r
 
@@ -153,10 +151,23 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
 
     "render a batch of transactions" in new TestFixtures {
       val txs = Vector(tx, tx1, tx2)
-      val block = BlockMessages.txBatchToBlockMessage(messagesApi)(TxBatch(txs))
+      val blocks =
+        BlockMessages.txBatchToBlockMessage(messagesApi)(TxBatch(txs))
       txs.foreach { transaction =>
-        block.render should include(transaction.hash.value)
+        blocks.render should include(transaction.hash.value)
       }
+      blocks.components.last.render shouldNot include(
+        messagesApi(BlockMessages.MESSAGE_TOO_MANY_TRANSACTIONS)
+      )
+    }
+
+    "show appropriate message when including too many transactions in a batch" in new TestFixtures {
+      val batch = TxBatch(Vector.fill(BlockMessages.MAX_SECTIONS)(tx))
+      val result = BlockMessages.txBatchToBlockMessage(messagesApi)(batch)
+      result.components.size shouldBe BlockMessages.MAX_SECTIONS + 1
+      result.components.last.render should include(
+        messagesApi(BlockMessages.MESSAGE_TOO_MANY_TRANSACTIONS)
+      )
     }
 
     "render a batch containing a single tx identically to a single tx" in new TestFixtures {

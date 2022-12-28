@@ -54,7 +54,8 @@ object BlockMessages {
   ): BlockMessage = {
     val toSections = txToSections(messages)(_)
     val sections =
-      sectionsWithinLimits(messages(MESSAGE_TOO_MANY_TRANSACTIONS))(
+      sectionsWithinLimits(
+        messages(MESSAGE_TOO_MANY_TRANSACTIONS),
         batch.messages.flatMap(toSections).toVector
       )
     BlockMessage(sections)
@@ -75,14 +76,16 @@ object BlockMessages {
       txHashSection(messages)(tx.hash, " " + messages(MESSAGE_TO_ADDRESSES))
     )
 
-    sectionsWithinLimits(messages(MESSAGE_TOO_MANY_OUTPUTS))(
+    sectionsWithinLimits(
+      messages(MESSAGE_TOO_MANY_OUTPUTS),
       headerAndTxHash ++ txOutputsSections(tx.outputs)
     ) :+ Divider
   }
 
   def sectionsWithinLimits(
-      message: String
-  )(allSections: Vector[Block]): Vector[Block] =
+      message: String,
+      allSections: Vector[Block]
+  ): Vector[Block] =
     if (allSections.size > MAX_SECTIONS)
       allSections.take(MAX_SECTIONS) :+ Section(message)
     else
