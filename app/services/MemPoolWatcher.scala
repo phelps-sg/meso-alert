@@ -43,7 +43,9 @@ class MemPoolWatcher @Inject() (@Named("mem-pool-actor") val actor: ActorRef)(
   }
 
   def startPeerGroup(): Future[Started[PeerGroup]] = {
-    sendAndReceive(StartPeerGroup)
+    sendAndReceive[MemPoolWatcherActorMessage, Started[PeerGroup]](
+      StartPeerGroup
+    )
   }
 
   def addListener(listener: ActorRef): Unit = {
