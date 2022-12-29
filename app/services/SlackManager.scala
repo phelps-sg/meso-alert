@@ -102,12 +102,14 @@ class SlackManager @Inject() (
       text: String,
       blocks: BlockMessage
   ): Future[BlockMessage] = {
+    val message = blocks.render
+    logger.debug(s"Sending Slack block message: $message")
     val request = ChatPostMessageRequest.builder
       .token(token.value)
       .username(username)
       .channel(channel.value)
       .text(text)
-      .blocksAsString(blocks.render)
+      .blocksAsString(message)
       .build
     BoltFuture { slackMethods.chatPostMessage(request) } map { _ => blocks }
   }
