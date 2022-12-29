@@ -46,7 +46,7 @@ class TxMessagingActorSlackChat @Inject() (
 
   private val botName = messagesApi(MESSAGE_BOT_NAME)
 
-  override val maxRetryCount: Int = 3
+  override val maxRetryCount: Int = 12
   override val backoffPolicyBase: FiniteDuration = 2000 milliseconds
   override val backoffPolicyCap: FiniteDuration = 20000 milliseconds
   override val backoffPolicyMin: FiniteDuration = 1500 milliseconds
