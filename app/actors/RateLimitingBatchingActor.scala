@@ -14,8 +14,8 @@ import scala.concurrent.duration.{Duration, DurationInt}
 
 object RateLimitingBatchingActor {
 
-  val MIN_INTERVAL: Duration = 1.second
-  val MAX_BATCH_SIZE: Int = 12
+  val MIN_INTERVAL: Duration = 2.seconds
+  val MAX_BATCH_SIZE: Int = 100
 
   final case class TxBatch(messages: Seq[TxUpdate])
 
