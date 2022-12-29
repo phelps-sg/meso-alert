@@ -47,7 +47,7 @@ object BlockMessages {
   val MESSAGE_TOO_MANY_TRANSACTIONS = "slackChat.tooManyTransactions"
 
   val MAX_BLOCKS = 47
-  val MAX_TXS_PER_SECTION = 20
+  val MAX_TXS_PER_SECTION = 12
 
   def txBatchToBlockMessage(messages: MessagesApi)(
       batch: TxBatch
