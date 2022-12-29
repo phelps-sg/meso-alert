@@ -5,6 +5,7 @@ slackResponse.cryptoAlertBotInChannel = I can only send alerts to public channel
 slackResponse.generalError = Usage: `/crypto-alert [threshold amount] [currency]`
 slackResponse.currencyError = I currently only provide alerts for BTC, but other currencies are coming soon.
 slackResponse.cryptoAlertHelp = Usage: "/crypto-alert X" or "/crypto-alert X btc" (more currencies coming soon!)
+slackResponse.cryptoAlertMinAmountError = The minimum threshold is 1
 # /pause-alerts
 slackResponse.pauseAlerts = OK, I have paused alerts for this channel.
 slackResponse.pauseAlertsError = Alerts are not active on this channel.

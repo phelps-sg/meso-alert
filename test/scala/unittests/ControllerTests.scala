@@ -584,6 +584,31 @@ class ControllerTests
       }
     }
 
+    "return an error message if a threshold less than 1 is specified" in new TestFixtures {
+      override val cryptoAlertCommand =
+        SlashCommand(
+          None,
+          channelId,
+          "/crypto-alert",
+          "0",
+          teamDomain,
+          slashCommandTeamId,
+          channelName,
+          userId,
+          userName,
+          isEnterpriseInstall,
+          None
+        )
+
+      val response = slackSlashCommandController.process(cryptoAlertCommand)
+
+      contentAsString(
+        response
+      ) mustEqual messagesApi(
+        SlackSlashCommandController.MESSAGE_CRYPTO_ALERT_MIN_AMOUNT_ERROR
+      )
+    }
+
     "return a friendly error message if non-BTC currency is specified" in new TestFixtures {
       override val cryptoAlertCommand =
         SlashCommand(

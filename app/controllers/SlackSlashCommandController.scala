@@ -31,6 +31,8 @@ object SlackSlashCommandController {
     "slackResponse.cryptoAlertReconfig"
   val MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL: String =
     "slackResponse.cryptoAlertBotInChannel"
+  val MESSAGE_CRYPTO_ALERT_MIN_AMOUNT_ERROR: String =
+    "slackResponse.cryptoAlertMinAmountError"
   val MESSAGE_GENERAL_ERROR: String = "slackResponse.generalError"
   val MESSAGE_CURRENCY_ERROR: String = "slackResponse.currencyError"
   val MESSAGE_PAUSE_ALERTS_HELP: String = "slackResponse.pauseAlertsHelp"
@@ -162,7 +164,7 @@ class SlackSlashCommandController @Inject() (
       case Array(_) | Array(_, "btc") =>
         args.head.toLongOption match {
 
-          case Some(amount) =>
+          case Some(amount) if amount >= 1 =>
             logger.debug(s"amount = $amount")
 
             val f = for {
@@ -192,6 +194,11 @@ class SlackSlashCommandController @Inject() (
                   Ok(messagesApi(MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL))
                 }
 
+            }
+
+          case Some(amount) if amount < 1 =>
+            Future.successful {
+              Ok(messagesApi(MESSAGE_CRYPTO_ALERT_MIN_AMOUNT_ERROR))
             }
 
           case None =>
