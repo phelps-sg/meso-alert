@@ -53,11 +53,12 @@ class TxMessagingActorSlackChat @Inject() (
 
   override def success(): Unit = logger.debug("Successfully posted message")
 
-  private val toBlock: TxBatch => BlockMessage =
+  private val toBlockMessage: TxBatch => BlockMessage =
     BlockMessages.txBatchToBlockMessage(messagesApi)
 
   override def process(batch: TxBatch): Future[BlockMessage] = {
-    val blockMessage = toBlock(batch)
+    val blockMessage = toBlockMessage(batch)
+    logger.debug(s"Posting chat message: $blockMessage")
     slackManagerService.chatPostMessage(
       hook.token,
       botName,
