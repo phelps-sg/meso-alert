@@ -94,6 +94,7 @@ import util.BitcoinFormatting.toChatMessage
 
 import java.math.BigInteger
 import java.net.URI
+import java.time.Duration
 import scala.annotation.unused
 import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
@@ -732,7 +733,7 @@ class ActorTests
 
       def expectTx(message: TxUpdate) = expectTxs(Vector(message))
 
-      def expectTxs(messages: Vector[TxUpdate]) = expectMsg(TxBatch(messages))
+      def expectTxs(messages: Seq[TxUpdate]) = expectMsg(TxBatch(messages))
 
       override def setClockExpectations(): Unit =
         (clock.instant _).expects().returning(now.toInstant).once()
@@ -769,6 +770,38 @@ class ActorTests
       advanceClockTo(8000)
       actor ! tx4
       expectTx(tx4)
+    }
+
+    "start a new batch when the batch size limit is reached" in new TestFixtures {
+
+      val interval = 100
+      val txs = (1 to RateLimitingBatchingActor.MAX_BATCH_SIZE) map { i: Int =>
+        TxUpdate(
+          TxHash(i.toString),
+          Satoshi(i * 1000000),
+          now.plus(Duration.ofMillis(interval * i)).toLocalDateTime,
+          isPending = false,
+          Vector(),
+          Vector(),
+          None
+        )
+      }
+
+      def send(tx: TxUpdate) = {
+        advanceClockTo(tx.time)
+        actor ! tx
+      }
+
+      advanceClockTo(500)
+      actor ! tx
+      expectTx(tx)
+
+      txs.dropRight(1) foreach { tx =>
+        send(tx)
+        expectNoMessage()
+      }
+      send(txs.last)
+      expectTxs(txs)
     }
   }
 

@@ -50,7 +50,7 @@ import org.bitcoinj.core._
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.store.BlockStore
 import org.bitcoinj.wallet.Wallet
-import org.scalamock.handlers.CallHandler8
+import org.scalamock.handlers.{CallHandler0, CallHandler8}
 import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
@@ -96,7 +96,7 @@ import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 
 import java.io.{FileNotFoundException, InputStream}
 import java.net.URI
-import java.time.{Clock, OffsetDateTime}
+import java.time._
 import javax.inject.Provider
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
@@ -424,18 +424,26 @@ object Fixtures {
 
   trait ClockFixtures extends MockFactory with HasClock {
 
-    val timestampStr: String = "2017-09-15T13:50:00.000+05:30"
+    val timestampStr: String = "2017-09-15T13:50:00.000+00:00"
     val now: OffsetDateTime = OffsetDateTime.parse(timestampStr)
     val clock = mock[Clock]
 
     def setClockExpectations(): Unit =
       (clock.instant _).expects().returning(now.toInstant).anyNumberOfTimes()
 
-    def tPlus(millis: Int) =
+    def tPlus(millis: Int): Instant =
       now.plus(java.time.Duration.ofMillis(millis)).toInstant
 
-    def advanceClockTo(millis: Int) =
+    def advanceClockTo(millis: Int): CallHandler0[Instant] =
       (clock.instant _).expects().returning(tPlus(millis))
+
+    def advanceClockTo(t: OffsetDateTime): CallHandler0[Instant] =
+      (clock.instant _).expects().returning(t.toInstant)
+
+    def advanceClockTo(t: LocalDateTime): CallHandler0[Instant] =
+      advanceClockTo(
+        t.atOffset(ZoneOffset.UTC)
+      )
 
     setClockExpectations()
   }

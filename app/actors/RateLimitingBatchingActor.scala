@@ -1,7 +1,7 @@
 package actors
 
 import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
-import actors.RateLimitingBatchingActor.TxBatch
+import actors.RateLimitingBatchingActor.{MAX_BATCH_SIZE, MIN_INTERVAL, TxBatch}
 import akka.actor.{Actor, ActorRef, Props}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
@@ -13,6 +13,9 @@ import scala.annotation.unused
 import scala.concurrent.duration.{Duration, DurationInt}
 
 object RateLimitingBatchingActor {
+
+  val MIN_INTERVAL: Duration = 1.second
+  val MAX_BATCH_SIZE: Int = 12
 
   final case class TxBatch(messages: Seq[TxUpdate])
 
@@ -38,8 +41,6 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
     with Logging
     with UnrecognizedMessageHandlerFatal {
 
-  val minInterval: Duration = 1.second
-
   override def receive: Receive = slow(clock.instant())
 
   def fast(batch: Vector[TxUpdate], previous: Instant): Receive = {
@@ -47,7 +48,10 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
       val now = clock.instant()
       logger.debug(s"Fast mode: batching up $tx at $now")
       val newBatch = batch :+ tx
-      if (timeDeltaNanos(now, previous) > minInterval.toNanos) {
+      if (
+        timeDeltaNanos(now, previous) > MIN_INTERVAL.toNanos ||
+        newBatch.size >= MAX_BATCH_SIZE
+      ) {
         logger.debug(s"Switching to slow mode and sending $newBatch")
         out ! TxBatch(newBatch)
         context.become {
@@ -66,7 +70,7 @@ class RateLimitingBatchingActor @Inject() (@Assisted val out: ActorRef)(
       val now = clock.instant()
       logger.debug(s"Slow mode: sending $tx at $now")
       out ! TxBatch(Vector(tx))
-      if (timeDeltaNanos(now, previous) <= minInterval.toNanos) {
+      if (timeDeltaNanos(now, previous) <= MIN_INTERVAL.toNanos) {
         logger.debug("Switching to fast mode")
         context.become {
           fast(batch = Vector(), previous = now)
