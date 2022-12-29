@@ -798,7 +798,7 @@ class ActorTests
 
       txs.dropRight(1) foreach { tx =>
         send(tx)
-        expectNoMessage()
+        expectNoMessage(10.millis)
       }
       send(txs.last)
       expectTxs(txs)
