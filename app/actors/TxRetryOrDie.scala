@@ -72,6 +72,7 @@ abstract class TxRetryOrDie[T, M: ClassTag]
       process(tx) map { _ =>
         success()
       } recover { case ex: Exception =>
+        logger.debug(s"retryCount = $retryCount")
         failure(ex)
         self ! ScheduleRetry(
           calculateWaitTime(retryCount),
