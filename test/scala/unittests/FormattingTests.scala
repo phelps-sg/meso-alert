@@ -9,7 +9,12 @@ import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
 import slack.BlockMessages
-import slack.BlockMessages.{BlockMessage, MESSAGE_TOO_MANY_OUTPUTS}
+import slack.BlockMessages.{
+  BlockMessage,
+  MESSAGE_TOO_MANY_OUTPUTS,
+  Section,
+  txOutputsSections
+}
 import unittests.Fixtures.{
   ClockFixtures,
   MessagesFixtures,
@@ -169,6 +174,17 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
     "render a batch containing a single tx identically to a single tx" in new TestFixtures {
       txToBlockMessage(tx) shouldEqual
         txBatchToBlockMessage(TxBatch(Vector(tx)))
+    }
+
+    "always ensure text fields are not empty even when no outputs are specified" in new TestFixtures {
+      txOutputsSections(List(TxInputOutput(None, None))).foreach(block => {
+        block match {
+          case Section(text) =>
+            text shouldNot equal("")
+          case _ =>
+            fail
+        }
+      })
     }
   }
 

@@ -93,7 +93,13 @@ object BlockMessages {
 
   def txOutputsSections(outputs: Seq[TxInputOutput]): Vector[Section] = {
     val grouped = outputs.grouped(MAX_TXS_PER_SECTION) map { subOutputs =>
-      Section(toAddresses(subOutputs).map(linkToAddress).mkString(", "))
+      val addresses = toAddresses(subOutputs).map(linkToAddress)
+      Section {
+        if (addresses.isEmpty)
+          "<no address>"
+        else
+          addresses.mkString(", ")
+      }
     }
     grouped.toVector
   }
