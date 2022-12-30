@@ -704,6 +704,16 @@ class ControllerTests
       ) mustEqual SlackSlashCommandController.MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL
     }
 
+    "return error message when attempting to resume alerts in private channel without membership" in new TestFixturesWithPrivateChannel {
+      val result = slashCommandWithTeam {
+        slashCommand("/resume-alerts")
+      }
+      status(result) mustEqual OK
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL
+    }
+
     "return error message when pausing alerts when there are no alerts active" in new TestFixtures {
       val result = slashCommandWithTeam {
         slashCommand("/pause-alerts")
