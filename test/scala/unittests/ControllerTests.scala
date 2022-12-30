@@ -123,12 +123,10 @@ class ControllerTests
         mockMailManager
       )
 
-//      override def peerGroupExpectations(): Unit = {
       (mockPeerGroup
         .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
         .expects(*)
         .never()
-//      }
 
       def persistEmailDeliveryTest(
           attrs: Map[String, String],
