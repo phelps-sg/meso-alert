@@ -1110,7 +1110,11 @@ class ActorTests
 
     "terminate the actor when max retries are reached" in new TestFixtures {
       probe.watch(retryActor)
-      retryActor ! Retry(TxBatch(Vector(tx)), maxRetries, Some(new Exception("failed")))
+      retryActor ! Retry(
+        TxBatch(Vector(tx)),
+        maxRetries,
+        Some(new Exception("failed"))
+      )
       probe.expectTerminated(retryActor)
     }
 
