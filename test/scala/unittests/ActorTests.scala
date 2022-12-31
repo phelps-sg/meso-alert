@@ -58,7 +58,7 @@ import postgres.PostgresContainer
 import services._
 import slack.BlockMessages
 import slack.BlockMessages.BlockMessage
-import sttp.model.Uri
+import sttp.model.{StatusCode, Uri}
 import unittests.Fixtures.{
   ActorGuiceFixtures,
   BlockChainWatcherFixtures,
@@ -954,6 +954,7 @@ class ActorTests
       val uriCapture = CaptureAll[URI]()
       (mockWebManagerService.postJson _)
         .expects(capture(jsonCapture), capture(uriCapture))
+        .returning(Future.successful(StatusCode(200)))
     }
 
     "post the correct message went sent a single transaction" in new TestFixtures {

@@ -90,7 +90,7 @@ abstract class TxRetryOrDie[T, M: ClassTag]
 
     case ScheduleRetry(timeout, tx: M, retryCount, ex) =>
       logger.debug(s"$self: Scheduling retry in $timeout for $tx... ")
-      timers.startSingleTimer("retry", Retry(tx, retryCount, ex), timeout)
+      timers.startSingleTimer(tx, Retry(tx, retryCount, ex), timeout)
 
     case Die(reason) =>
       actorDeath(reason)

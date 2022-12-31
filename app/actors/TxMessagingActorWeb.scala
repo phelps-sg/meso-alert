@@ -44,9 +44,4 @@ class TxMessagingActorWeb @Inject() (
     webManager.postJson(jsonMessage, Uri(hook.uri))
   }
 
-  override def receive: Receive = {
-    case tx: TxBatch => process(tx)
-    case x           => unrecognizedMessage(x)
-  }
-
 }
