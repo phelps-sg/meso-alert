@@ -51,7 +51,7 @@ abstract class TxRetryOrDie[T, M: ClassTag]
   protected def failure(ex: Throwable): Unit =
     logger.error(s"Failed to process tx, ${ex.getMessage}.")
   protected def actorDeath(reason: String): Unit =
-    logger.info(s"${this.getClass.getName} terminating because $reason")
+    logger.error(s"$self terminating because $reason")
 
   protected def calculateWaitTime(retryCount: Int): FiniteDuration = {
     val minimum = backoffPolicyMin.toMillis
@@ -74,7 +74,7 @@ abstract class TxRetryOrDie[T, M: ClassTag]
       process(tx) map { _ =>
         success()
       } recover { case ex: Exception =>
-        logger.debug(s"retryCount = $retryCount for $tx")
+        logger.debug(s"$self: retryCount = $retryCount for $tx")
         failure(ex)
         val msg = ScheduleRetry(
           calculateWaitTime(retryCount),
@@ -89,7 +89,7 @@ abstract class TxRetryOrDie[T, M: ClassTag]
       self ! Die(s"Could not process tx $tx. ${ex.getMessage}")
 
     case ScheduleRetry(timeout, tx: M, retryCount, ex) =>
-      logger.debug(s"Scheduling retry in $timeout for $tx... ")
+      logger.debug(s"$self: Scheduling retry in $timeout for $tx... ")
       timers.startSingleTimer("retry", Retry(tx, retryCount, ex), timeout)
 
     case Die(reason) =>
