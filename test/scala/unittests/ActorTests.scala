@@ -14,6 +14,7 @@ import actors.SlackSecretsActor.{
   ValidSecret,
   VerifySecret
 }
+import actors.TxRetryOrDie.{Retry, ScheduleRetry}
 import actors.{
   AuthenticationActor,
   HookAlreadyRegisteredException,
@@ -27,10 +28,11 @@ import actors.{
   TxHash,
   TxInputOutput,
   TxMessagingActorSlackChat,
+  TxRetryOrDie,
   TxUpdate,
   Updated
 }
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
@@ -96,11 +98,11 @@ import java.math.BigInteger
 import java.net.URI
 import java.time.Duration
 import scala.annotation.unused
-import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Random, Success}
 
 // scalafix:off
 
@@ -796,7 +798,7 @@ class ActorTests
       actor ! tx
       expectTx(tx)
 
-      txs.dropRight(1) foreach { tx =>
+      for (tx <- txs.dropRight(1)) {
         send(tx)
         expectNoMessage(10.millis)
       }
@@ -1059,6 +1061,58 @@ class ActorTests
 
       slackChatTestLogic
     }
+  }
+
+  "RetryOrDie" should {
+
+    trait TestFixtures
+        extends FixtureBindings
+        with RandomFixtures
+        with TxUpdateFixtures {
+
+      val probe = TestProbe()
+      class TestActor(
+          val random: Random,
+          val maxRetryCount: Int,
+          val ec: ExecutionContext,
+          override val backoffPolicyMin: FiniteDuration,
+          override val backoffPolicyCap: FiniteDuration
+      ) extends TxRetryOrDie[TxUpdate, TxUpdate] {
+        override def process(tx: TxUpdate): Future[TxUpdate] = {
+          logger.debug(s"Received $tx")
+          Future.failed(new Exception("failed"))
+        }
+        override def success(): Unit = logger.debug("Success")
+
+        override def triggerRetry(msg: ScheduleRetry[TxUpdate]): Unit =
+          probe.ref ! msg
+      }
+
+      val min = 500.millis
+      val cap = 10.seconds
+      val maxRetries = 20
+      val retryActor =
+        actorSystem.actorOf(
+          Props(new TestActor(random, maxRetries, executionContext, min, cap))
+        )
+    }
+
+    "calculate wait times within limits" in new TestFixtures {
+      for (i <- 1 to maxRetries - 1) {
+        retryActor ! Retry(tx, i, None)
+        val msg = probe.receiveOne(50.millis)
+        msg should matchPattern {
+          case ScheduleRetry(t, `tx`, _, _) if t < cap && t >= min =>
+        }
+      }
+    }
+
+    "terminate the actor when max retries are reached" in new TestFixtures {
+      probe.watch(retryActor)
+      retryActor ! Retry(tx, maxRetries, Some(new Exception("failed")))
+      probe.expectTerminated(retryActor)
+    }
+
   }
 
   override def afterAll(): Unit = {

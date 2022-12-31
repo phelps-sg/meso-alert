@@ -46,23 +46,25 @@ abstract class TxRetryOrDie[T, M: ClassTag]
   val backoffPolicyCap: FiniteDuration = 10000 milliseconds
   val backoffPolicyMin: FiniteDuration = 0 milliseconds
 
-  def process(tx: M): Future[T]
-  def success(): Unit
-  def failure(ex: Throwable): Unit =
+  protected def process(tx: M): Future[T]
+  protected def success(): Unit
+  protected def failure(ex: Throwable): Unit =
     logger.error(s"Failed to process tx, ${ex.getMessage}.")
-  def actorDeath(reason: String): Unit =
+  protected def actorDeath(reason: String): Unit =
     logger.info(s"${this.getClass.getName} terminating because $reason")
 
-  def calculateWaitTime(retryCount: Int): FiniteDuration = {
+  protected def calculateWaitTime(retryCount: Int): FiniteDuration = {
+    val minimum = backoffPolicyMin.toMillis
+    val cap = backoffPolicyCap.toMillis
+    val base = backoffPolicyBase.toMillis
     random
       .between(
-        backoffPolicyMin.toMillis,
-        min(
-          backoffPolicyCap.toMillis,
-          backoffPolicyBase.toMillis * pow(2, retryCount)
-        )
+        minimum,
+        minimum + min(cap - minimum, base * pow(2, retryCount))
       ) milliseconds
   }
+
+  protected def triggerRetry(msg: ScheduleRetry[M]) = self ! msg
 
   override def receive: Receive = {
 
@@ -72,20 +74,22 @@ abstract class TxRetryOrDie[T, M: ClassTag]
       process(tx) map { _ =>
         success()
       } recover { case ex: Exception =>
-        logger.debug(s"retryCount = $retryCount")
+        logger.debug(s"retryCount = $retryCount for $tx")
         failure(ex)
-        self ! ScheduleRetry(
+        val msg = ScheduleRetry(
           calculateWaitTime(retryCount),
           tx,
           retryCount + 1,
           Some(ex)
         )
+        triggerRetry(msg)
       }
 
     case Retry(tx: M, retryCount, Some(ex)) if retryCount >= maxRetryCount =>
       self ! Die(s"Could not process tx $tx. ${ex.getMessage}")
 
     case ScheduleRetry(timeout, tx: M, retryCount, ex) =>
+      logger.debug(s"Scheduling retry in $timeout for $tx... ")
       timers.startSingleTimer("retry", Retry(tx, retryCount, ex), timeout)
 
     case Die(reason) =>
