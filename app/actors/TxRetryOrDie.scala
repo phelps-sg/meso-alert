@@ -64,7 +64,7 @@ abstract class TxRetryOrDie[T, M: ClassTag]
       ) milliseconds
   }
 
-  protected def triggerRetry(msg: ScheduleRetry[M]) = self ! msg
+  protected def triggerRetry(msg: ScheduleRetry[M]): Unit = self ! msg
 
   override def receive: Receive = {
 

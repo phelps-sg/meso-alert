@@ -182,7 +182,7 @@ class FormattingTests extends AnyWordSpecLike with should.Matchers {
           case Section(text) =>
             text shouldNot equal("")
           case _ =>
-            fail
+            fail()
         }
       })
     }
