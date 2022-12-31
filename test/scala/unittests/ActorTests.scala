@@ -1077,14 +1077,14 @@ class ActorTests
           val ec: ExecutionContext,
           override val backoffPolicyMin: FiniteDuration,
           override val backoffPolicyCap: FiniteDuration
-      ) extends TxRetryOrDie[TxUpdate, TxUpdate] {
-        override def process(tx: TxUpdate): Future[TxUpdate] = {
+      ) extends TxRetryOrDie[TxBatch, TxBatch] {
+        override def process(tx: TxBatch): Future[TxBatch] = {
           logger.debug(s"Received $tx")
           Future.failed(new Exception("failed"))
         }
         override def success(): Unit = logger.debug("Success")
 
-        override def triggerRetry(msg: ScheduleRetry[TxUpdate]): Unit =
+        override def triggerRetry(msg: ScheduleRetry[TxBatch]): Unit =
           probe.ref ! msg
       }
 
@@ -1099,17 +1099,18 @@ class ActorTests
 
     "calculate wait times within limits" in new TestFixtures {
       for (i <- 1 to maxRetries - 1) {
-        retryActor ! Retry(tx, i, None)
+        val batch = TxBatch(Vector(tx))
+        retryActor ! Retry(batch, i, None)
         val msg = probe.receiveOne(50.millis)
         msg should matchPattern {
-          case ScheduleRetry(t, `tx`, _, _) if t < cap && t >= min =>
+          case ScheduleRetry(t, `batch`, _, _) if t < cap && t >= min =>
         }
       }
     }
 
     "terminate the actor when max retries are reached" in new TestFixtures {
       probe.watch(retryActor)
-      retryActor ! Retry(tx, maxRetries, Some(new Exception("failed")))
+      retryActor ! Retry(TxBatch(Vector(tx)), maxRetries, Some(new Exception("failed")))
       probe.expectTerminated(retryActor)
     }
 
