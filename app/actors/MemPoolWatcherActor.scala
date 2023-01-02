@@ -88,16 +88,28 @@ class MemPoolWatcherActor @Inject() (
         case IncrementCounter(key: String) =>
           counters += (key -> (counters(key) + 1))
 
-        case NewTransaction(tx: Transaction) =>
-          val result: RiskAnalysis.Result =
-            DefaultRiskAnalysis.FACTORY.create(null, tx, NO_DEPS).analyze
-          self ! IncrementCounter(TOTAL_KEY)
-          logger.debug(s"tx ${tx.getTxId} result $result")
-          self ! IncrementCounter(result.name)
-          if (result eq RiskAnalysis.Result.NON_STANDARD)
-            self ! IncrementCounter(
-              s"${RiskAnalysis.Result.NON_STANDARD} - ${DefaultRiskAnalysis.isStandard(tx)}"
+        case NewTransaction(bitcoinjTransaction: Transaction) =>
+          try {
+            val riskAnalysis = DefaultRiskAnalysis.FACTORY.create(
+              null,
+              bitcoinjTransaction,
+              NO_DEPS
             )
+            val result: RiskAnalysis.Result = riskAnalysis.analyze
+            self ! IncrementCounter(TOTAL_KEY)
+            logger.debug(s"tx ${bitcoinjTransaction.getTxId} result $result")
+            self ! IncrementCounter(result.name)
+            if (result eq RiskAnalysis.Result.NON_STANDARD)
+              self ! IncrementCounter(
+                s"${RiskAnalysis.Result.NON_STANDARD} - ${DefaultRiskAnalysis.isStandard(bitcoinjTransaction)}"
+              )
+          } catch {
+            case ex: Exception =>
+              logger.error(
+                s"Could not perform risk analysis of $bitcoinjTransaction: ${ex.getMessage}"
+              )
+              ex.printStackTrace()
+          }
 
         case DownloadedBlock(block: Block) =>
           logger.debug(
@@ -133,9 +145,17 @@ class MemPoolWatcherActor @Inject() (
 
         case LogCounters =>
           logger.debug("logging counters")
-          logger.info(
-            f"Runtime: ${(System.currentTimeMillis - startTime.get) / 1000 / 60}%d minutes"
-          )
+          startTime match {
+            case Some(t) =>
+              logger.info(
+                f"Up time: ${(System.currentTimeMillis - t) / 1000 / 60}%d minutes"
+              )
+            case None =>
+              logger.warn(
+                "Could not determine up time; actor may have restarted due to previous error."
+              )
+              startTime = Some(System.currentTimeMillis())
+          }
           for ((key, value) <- counters) {
             logger.info(
               f"  $key%-40s$value%6d  (${value * 100 / counters(TOTAL_KEY)}%d%% of total)"
