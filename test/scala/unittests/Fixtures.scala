@@ -1034,6 +1034,18 @@ object Fixtures {
       List(),
       None
     )
+
+    def generateTxs(n: Int): Seq[TxUpdate] = (1 to n) map { i =>
+      TxUpdate(
+        TxHash(s"testHash$i"),
+        Satoshi(1000 * i),
+        timeStamp.plusSeconds(i),
+        isPending = true,
+        List(),
+        List(),
+        None
+      )
+    }
   }
 
   trait HookActorTestLogic[X, Y <: Hook[X], Z] extends DatabaseInitializer {

@@ -1072,6 +1072,7 @@ class ActorTests
         with TxUpdateFixtures {
 
       val probe = TestProbe()
+
       class TestActor(
           val random: Random,
           val maxRetryCount: Int,
@@ -1079,10 +1080,12 @@ class ActorTests
           override val backoffPolicyMin: FiniteDuration,
           override val backoffPolicyCap: FiniteDuration
       ) extends TxRetryOrDie[TxBatch, TxBatch] {
+
         override def process(tx: TxBatch): Future[TxBatch] = {
           logger.debug(s"Received $tx")
           Future.failed(new Exception("failed"))
         }
+
         override def success(): Unit = logger.debug("Success")
 
         override def triggerRetry(msg: ScheduleRetry[TxBatch]): Unit =
@@ -1099,12 +1102,13 @@ class ActorTests
     }
 
     "calculate wait times within limits" in new TestFixtures {
-      for (i <- 1 to maxRetries - 1) {
-        val batch = TxBatch(Vector(tx))
+      val txs = generateTxs(maxRetries - 1)
+      for (i <- 1 until maxRetries) {
+        val batch = TxBatch(Vector(txs(i - 1)))
         retryActor ! Retry(batch, i, None)
         val msg = probe.receiveOne(50.millis)
         msg should matchPattern {
-          case ScheduleRetry(t, `batch`, _, _) if t < cap && t >= min =>
+          case ScheduleRetry(t, `batch`, _, _) if t >= min && t < cap =>
         }
       }
     }
