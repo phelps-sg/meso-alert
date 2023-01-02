@@ -46,7 +46,7 @@ class TxMessagingActorSlackChat @Inject() (
   override val maxRetryCount: Int = 3
   override val backoffPolicyBase: FiniteDuration = 2.seconds
   override val backoffPolicyCap: FiniteDuration = 20.seconds
-  override val backoffPolicyMin: FiniteDuration = 1500 milliseconds
+  override val backoffPolicyMin: FiniteDuration = 1500.milliseconds
 
   private val toBlockMessage: TxBatch => BlockMessage =
     BlockMessages.txBatchToBlockMessage(messagesApi)

@@ -42,9 +42,9 @@ abstract class RetryOrDieActor[T, M: ClassTag]
   val maxRetryCount: Int
   implicit val ec: ExecutionContext
 
-  val backoffPolicyBase: FiniteDuration = 500 milliseconds
-  val backoffPolicyCap: FiniteDuration = 10 seconds
-  val backoffPolicyMin: FiniteDuration = 0 milliseconds
+  val backoffPolicyBase: FiniteDuration = 500.milliseconds
+  val backoffPolicyCap: FiniteDuration = 10.seconds
+  val backoffPolicyMin: FiniteDuration = 0.milliseconds
 
   protected def process(tx: M): Future[T]
 
