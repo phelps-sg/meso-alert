@@ -10,7 +10,7 @@ import scala.language.postfixOps
 import scala.math.{min, pow}
 import scala.reflect.ClassTag
 
-object TxRetryOrDie {
+object RetryOrDieActor {
   //  message types
   case class Retry[M](tx: M, retryCount: Int, exception: Option[Exception])
   case class ScheduleRetry[M](
@@ -30,13 +30,13 @@ object TxRetryOrDie {
   *   The type of the incoming message which represents an operation that can be
   *   retried
   */
-abstract class TxRetryOrDie[T, M: ClassTag]
+abstract class RetryOrDieActor[T, M: ClassTag]
     extends Actor
     with Timers
     with Logging
     with UnrecognizedMessageHandler {
 
-  import TxRetryOrDie._
+  import RetryOrDieActor._
 
   val random: scala.util.Random
   val maxRetryCount: Int

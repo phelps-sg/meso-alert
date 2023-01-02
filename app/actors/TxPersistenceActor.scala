@@ -1,10 +1,8 @@
 package actors
 
-import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
-import akka.actor.{Actor, ActorRef, Props, Timers}
+import akka.actor.{Actor, ActorRef, Props}
 import com.google.inject.Inject
 import dao._
-import play.api.Logging
 import services.MemPoolWatcherService
 
 import scala.annotation.unused
@@ -37,11 +35,8 @@ class TxPersistenceActor @Inject() (
     val memPoolWatcher: MemPoolWatcherService,
     val random: Random,
     implicit val ec: ExecutionContext
-) extends TxRetryOrDie[Int, TxUpdate]
-    with TxUpdateActor
-    with Logging
-    with Timers
-    with UnrecognizedMessageHandlerFatal {
+) extends RetryOrDieActor[Int, TxUpdate]
+    with TxUpdateActor {
 
   override val maxRetryCount = 3
 

@@ -1,12 +1,10 @@
 package actors
 
-import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import actors.RateLimitingBatchingActor.TxBatch
 import akka.actor.Actor
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import dao.Webhook
-import play.api.Logging
 import play.api.libs.json.Json
 import services.WebManagerService
 import sttp.model.{StatusCode, Uri}
@@ -28,9 +26,7 @@ class TxMessagingActorWeb @Inject() (
     val random: Random,
     @Assisted hook: Webhook
 )(implicit val ec: ExecutionContext)
-    extends TxRetryOrDie[StatusCode, TxBatch]
-    with UnrecognizedMessageHandlerFatal
-    with Logging {
+    extends RetryOrDieActor[StatusCode, TxBatch] {
 
   override val maxRetryCount: Int = 3
 

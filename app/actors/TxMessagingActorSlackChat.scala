@@ -1,14 +1,13 @@
 package actors
 
-import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import actors.RateLimitingBatchingActor.TxBatch
 import actors.TxMessagingActorSlackChat.MESSAGE_BOT_NAME
 import akka.actor.Actor
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import dao.SlackChatHookPlainText
+import play.api.Configuration
 import play.api.i18n.{Lang, MessagesApi}
-import play.api.{Configuration, Logging}
 import services.SlackManagerService
 import slack.BlockMessages
 import slack.BlockMessages.BlockMessage
@@ -37,9 +36,7 @@ class TxMessagingActorSlackChat @Inject() (
     val random: Random,
     protected val messagesApi: MessagesApi,
     @Assisted hook: SlackChatHookPlainText
-) extends TxRetryOrDie[BlockMessage, TxBatch]
-    with UnrecognizedMessageHandlerFatal
-    with Logging {
+) extends RetryOrDieActor[BlockMessage, TxBatch] {
 
   implicit val lang: Lang = Lang("en")
   implicit val ec: SlackChatExecutionContext = sce

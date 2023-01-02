@@ -14,7 +14,7 @@ import actors.SlackSecretsActor.{
   ValidSecret,
   VerifySecret
 }
-import actors.TxRetryOrDie.{Retry, ScheduleRetry}
+import actors.RetryOrDieActor.{Retry, ScheduleRetry}
 import actors.{
   AuthenticationActor,
   HookAlreadyRegisteredException,
@@ -28,7 +28,7 @@ import actors.{
   TxHash,
   TxInputOutput,
   TxMessagingActorSlackChat,
-  TxRetryOrDie,
+  RetryOrDieActor,
   TxUpdate,
   Updated
 }
@@ -1079,7 +1079,7 @@ class ActorTests
           val ec: ExecutionContext,
           override val backoffPolicyMin: FiniteDuration,
           override val backoffPolicyCap: FiniteDuration
-      ) extends TxRetryOrDie[TxBatch, TxBatch] {
+      ) extends RetryOrDieActor[TxBatch, TxBatch] {
 
         override def process(tx: TxBatch): Future[TxBatch] = {
           logger.debug(s"Received $tx")
