@@ -56,14 +56,15 @@ abstract class RetryOrDieActor[T, M: ClassTag]
     logger.error(s"$self terminating because $reason")
 
   protected def calculateWaitTime(retryCount: Int): FiniteDuration = {
-    val minimum = backoffPolicyMin.toMillis
-    val cap = backoffPolicyCap.toMillis
-    val base = backoffPolicyBase.toMillis
+    def nanoseconds(duration: FiniteDuration) = duration.toNanos.toDouble
+    val minimum = nanoseconds(backoffPolicyMin)
+    val cap = nanoseconds(backoffPolicyCap)
+    val base = nanoseconds(backoffPolicyBase)
     random
       .between(
         minimum,
         minimum + min(cap - minimum, base * pow(2, retryCount))
-      ) milliseconds
+      ) nanoseconds
   }
 
   protected def triggerRetry(msg: ScheduleRetry[M]): Unit = self ! msg
