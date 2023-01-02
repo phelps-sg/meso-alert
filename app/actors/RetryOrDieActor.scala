@@ -43,13 +43,15 @@ abstract class RetryOrDieActor[T, M: ClassTag]
   implicit val ec: ExecutionContext
 
   val backoffPolicyBase: FiniteDuration = 500 milliseconds
-  val backoffPolicyCap: FiniteDuration = 10000 milliseconds
+  val backoffPolicyCap: FiniteDuration = 10 seconds
   val backoffPolicyMin: FiniteDuration = 0 milliseconds
 
   protected def process(tx: M): Future[T]
-  protected def success(): Unit
+
+  protected def success(tx: M): Unit =
+    logger.debug(s"Successfully processed $tx.")
   protected def failure(ex: Throwable): Unit =
-    logger.error(s"Failed to process tx, ${ex.getMessage}.")
+    logger.error(s"Failed to process tx: ${ex.getMessage}.")
   protected def actorDeath(reason: String): Unit =
     logger.error(s"$self terminating because $reason")
 
@@ -72,7 +74,7 @@ abstract class RetryOrDieActor[T, M: ClassTag]
 
     case Retry(tx: M, retryCount, _) if retryCount < maxRetryCount =>
       process(tx) map { _ =>
-        success()
+        success(tx)
       } recover { case ex: Exception =>
         logger.debug(s"$self: retryCount = $retryCount for $tx")
         failure(ex)
@@ -86,7 +88,7 @@ abstract class RetryOrDieActor[T, M: ClassTag]
       }
 
     case Retry(tx: M, retryCount, Some(ex)) if retryCount >= maxRetryCount =>
-      self ! Die(s"Could not process tx $tx. ${ex.getMessage}")
+      self ! Die(s"Could not process tx $tx: ${ex.getMessage}")
 
     case ScheduleRetry(timeout, tx: M, retryCount, ex) =>
       logger.debug(s"$self: Scheduling retry in $timeout for $tx... ")

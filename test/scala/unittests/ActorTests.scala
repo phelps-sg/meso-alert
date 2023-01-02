@@ -1064,7 +1064,7 @@ class ActorTests
     }
   }
 
-  "RetryOrDie" should {
+  "RetryOrDieActor" should {
 
     trait TestFixtures
         extends FixtureBindings
@@ -1085,8 +1085,6 @@ class ActorTests
           logger.debug(s"Received $tx")
           Future.failed(new Exception("failed"))
         }
-
-        override def success(): Unit = logger.debug("Success")
 
         override def triggerRetry(msg: ScheduleRetry[TxBatch]): Unit =
           probe.ref ! msg

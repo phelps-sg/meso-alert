@@ -30,11 +30,7 @@ class TxMessagingActorWeb @Inject() (
 
   override val maxRetryCount: Int = 3
 
-  def success(): Unit = {
-    logger.debug("Successfully posted message")
-  }
-
-  def process(tx: TxBatch): Future[StatusCode] = {
+  override def process(tx: TxBatch): Future[StatusCode] = {
     val messageContent = tx.messages.map(toChatMessage).mkString("\n")
     val jsonMessage = Json.obj("text" -> messageContent)
     webManager.postJson(jsonMessage, Uri(hook.uri))

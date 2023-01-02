@@ -43,8 +43,6 @@ class TxPersistenceActor @Inject() (
   override def process(tx: TxUpdate): Future[Int] =
     transactionUpdateDao.record(tx)
 
-  override def success(): Unit = logger.debug("Successfully added tx to db.")
-
   override def preStart(): Unit = {
     super.preStart()
     registerWithWatcher()
