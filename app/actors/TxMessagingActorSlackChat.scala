@@ -16,7 +16,6 @@ import slick.SlackChatExecutionContext
 import scala.annotation.unused
 import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import scala.language.postfixOps
 import scala.util.Random
 
 object TxMessagingActorSlackChat {
