@@ -177,7 +177,7 @@ class SlackSlashCommandController @Inject() (
                 )
               )
               _ <- hooksManager.start(channel)
-            } yield Ok(messagesApi(MESSAGE_CRYPTO_ALERT_NEW, amount))
+            } yield message(MESSAGE_CRYPTO_ALERT_NEW, amount)
 
             f.recoverWith {
 
@@ -185,7 +185,7 @@ class SlackSlashCommandController @Inject() (
                 for {
                   _ <- hooksManager.stop(channel)
                   _ <- hooksManager.start(channel)
-                } yield Ok(messagesApi(MESSAGE_CRYPTO_ALERT_RECONFIG, amount))
+                } yield message(MESSAGE_CRYPTO_ALERT_RECONFIG, amount)
 
               case BoltException.ChannelNotFoundException =>
                 futureMessage(MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL)
@@ -297,7 +297,9 @@ class SlackSlashCommandController @Inject() (
   private def channel(implicit slashCommand: SlashCommand): SlackChannelId =
     slashCommand.channelId
 
-  private def message(key: String): Result = Ok(messagesApi(key))
+  private def message(key: String, args: Any*): Result = Ok(
+    messagesApi(key, args)
+  )
 
   private def futureMessage(key: String): Future[Result] =
     Future.successful(message(key))
