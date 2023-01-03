@@ -298,7 +298,7 @@ class SlackSlashCommandController @Inject() (
     slashCommand.channelId
 
   private def message(key: String, args: Any*): Result = Ok(
-    messagesApi(key, args)
+    messagesApi(key, args: _*)
   )
 
   private def futureMessage(key: String): Future[Result] =
