@@ -123,6 +123,9 @@ class SlackSlashCommandController @Inject() (
 
   implicit val lang: Lang = Lang("en")
 
+  implicit def resultToFuture(result: Result): Future[Result] =
+    Future.successful(result)
+
   private val onValidSignature =
     validateSignatureAsync(formUrlEncodedParser)(_)
 
@@ -157,7 +160,7 @@ class SlackSlashCommandController @Inject() (
 
       case Array("help") =>
         logger.debug("crypto-alert help")
-        futureMessage(MESSAGE_CRYPTO_ALERT_HELP)
+        message(MESSAGE_CRYPTO_ALERT_HELP)
 
       case Array(_) | Array(_, "btc") =>
         args.head.toLongOption match {
@@ -188,22 +191,22 @@ class SlackSlashCommandController @Inject() (
                 } yield message(MESSAGE_CRYPTO_ALERT_RECONFIG, amount)
 
               case BoltException.ChannelNotFoundException =>
-                futureMessage(MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL)
+                message(MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL)
             }
 
           case Some(amount) if amount < 1 =>
-            futureMessage(MESSAGE_CRYPTO_ALERT_MIN_AMOUNT_ERROR)
+            message(MESSAGE_CRYPTO_ALERT_MIN_AMOUNT_ERROR)
 
           case None =>
             logger.debug(s"Invalid amount ${slashCommand.text}")
-            futureMessage(MESSAGE_GENERAL_ERROR)
+            message(MESSAGE_GENERAL_ERROR)
         }
 
       case Array(_, _) =>
-        futureMessage(MESSAGE_CURRENCY_ERROR)
+        message(MESSAGE_CURRENCY_ERROR)
 
       case _ =>
-        futureMessage(MESSAGE_GENERAL_ERROR)
+        message(MESSAGE_GENERAL_ERROR)
     }
   }
 
@@ -225,7 +228,7 @@ class SlackSlashCommandController @Inject() (
         }
 
       case _ =>
-        futureMessage(MESSAGE_PAUSE_ALERTS_HELP)
+        message(MESSAGE_PAUSE_ALERTS_HELP)
 
     }
   }
@@ -254,7 +257,7 @@ class SlackSlashCommandController @Inject() (
         }
 
       case _ =>
-        futureMessage(MESSAGE_RESUME_ALERTS_HELP)
+        message(MESSAGE_RESUME_ALERTS_HELP)
 
     }
   }
@@ -300,7 +303,4 @@ class SlackSlashCommandController @Inject() (
   private def message(key: String, args: Any*): Result = Ok(
     messagesApi(key, args: _*)
   )
-
-  private def futureMessage(key: String): Future[Result] =
-    Future.successful(message(key))
 }
