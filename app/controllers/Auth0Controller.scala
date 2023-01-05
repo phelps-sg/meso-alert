@@ -8,12 +8,13 @@ import play.api.libs.json.{Json, Writes}
 import play.api.mvc.{Action, AnyContent, BaseController, ControllerComponents}
 import services.SlackSecretsManagerService
 import sttp.model.Uri
+import util.AsyncResultHelpers
 import util.ConfigLoaders.UriConfigLoader
 import util.Encodings.base64Encode
 
 import java.util.Base64
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 object Auth0Controller {
 
@@ -53,7 +54,8 @@ class Auth0Controller @Inject() (
     val controllerComponents: ControllerComponents,
     protected val config: Configuration
 )(implicit ec: ExecutionContext)
-    extends BaseController {
+    extends BaseController
+    with AsyncResultHelpers {
 
   protected val encoder: Base64.Encoder = java.util.Base64.getEncoder
   protected val slackUrl: String = config.get[String]("slack.deployURL")
@@ -78,7 +80,7 @@ class Auth0Controller @Inject() (
         }
 
       case None =>
-        Future.successful { ServiceUnavailable("user is not logged in") }
+        ServiceUnavailable("user is not logged in")
     }
   }
 }

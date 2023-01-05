@@ -10,6 +10,7 @@ import play.api.mvc._
 import play.api.{Configuration, Logging, mvc}
 import services.{SlackManagerService, SlackSecretsManagerService}
 import slack.{BoltException, SlackClient}
+import util.AsyncResultHelpers
 import util.Encodings.base64Decode
 
 import javax.inject.Inject
@@ -39,6 +40,7 @@ class SlackAuthController @Inject() (
     val controllerComponents: ControllerComponents
 )(implicit val ec: ExecutionContext)
     extends BaseController
+    with AsyncResultHelpers
     with SlackClient
     with Logging {
 
@@ -115,14 +117,10 @@ class SlackAuthController @Inject() (
     error match {
       case Some("access_denied") =>
         logger.info("User cancelled OAuth during 'Add to Slack'")
-        Future.successful {
-          Ok(views.html.index(config.get[String]("slack.deployURL")))
-        }
+        Ok(views.html.index(config.get[String]("slack.deployURL")))
       case Some(error) =>
         logger.error(s"Error during OAuth: $error")
-        Future.successful {
-          ServiceUnavailable(error)
-        }
+        ServiceUnavailable(error)
       case None =>
         block
     }

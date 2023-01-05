@@ -18,6 +18,7 @@ import play.api.i18n.{Lang, MessagesApi}
 import play.api.mvc._
 import services.{HooksManagerSlackChat, SlackManagerService}
 import slack.BoltException
+import util.AsyncResultHelpers
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -119,12 +120,10 @@ class SlackSlashCommandController @Inject() (
 )(implicit val ec: ExecutionContext)
     extends BaseController
     with HMACSignatureHelpers
+    with AsyncResultHelpers
     with Logging {
 
   implicit val lang: Lang = Lang("en")
-
-  implicit def resultToFuture(result: Result): Future[Result] =
-    Future.successful(result)
 
   private val onValidSignature =
     validateSignatureAsync(formUrlEncodedParser)(_)
@@ -271,7 +270,7 @@ class SlackSlashCommandController @Inject() (
   )(processCommand: SlashCommand => Future[Result]): Future[Result] =
     SlackSlashCommandController.param("ssl_check")(body) match {
       case Some("1") =>
-        Future.successful { Ok }
+        Ok
       case _ =>
         SlackSlashCommandController.toCommand(body).flatMap(processCommand)
     }

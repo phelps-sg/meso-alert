@@ -8,6 +8,7 @@ import play.api.mvc._
 import play.api.{Configuration, Logging}
 import play.twirl.api.Html
 import services.MailManager
+import util.AsyncResultHelpers
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -53,6 +54,7 @@ class HomeController @Inject() (
     val mailManager: MailManager
 )(implicit val ec: ExecutionContext)
     extends BaseController
+    with AsyncResultHelpers
     with Logging
     with I18nSupport {
 
@@ -71,10 +73,7 @@ class HomeController @Inject() (
       emailForm
         .bindFromRequest()
         .fold(
-          _ =>
-            Future {
-              BadRequest
-            },
+          _ => BadRequest,
           formData => {
             mailManager
               .sendEmail(destination, formData.subjectLine, formData.message)

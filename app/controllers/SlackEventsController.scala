@@ -11,6 +11,7 @@ import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{Action, BaseController, ControllerComponents}
 import services.HooksManagerSlackChat
+import util.AsyncResultHelpers
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -25,6 +26,7 @@ class SlackEventsController @Inject() (
 )(implicit ec: ExecutionContext)
     extends BaseController
     with HMACSignatureHelpers
+    with AsyncResultHelpers
     with Logging {
 
   private val onValidSignature = validateSignatureAsync(Json.parse)(_)
@@ -35,9 +37,7 @@ class SlackEventsController @Inject() (
         val isChallenge = (body \ "challenge").asOpt[String]
         isChallenge match {
           case Some(challengeValue) =>
-            Future.successful {
-              Ok(challengeValue)
-            }
+            Ok(challengeValue)
           case None =>
             val eventType = (body \ "event" \ "type").as[String]
             eventType match {
@@ -46,9 +46,7 @@ class SlackEventsController @Inject() (
                 stopHook(SlackChannelId(channel))
               case ev =>
                 logger.warn(s"Received unhandled event $ev")
-                Future.successful {
-                  NotAcceptable
-                }
+                NotAcceptable
             }
         }
       }
@@ -57,13 +55,13 @@ class SlackEventsController @Inject() (
   def stopHook(channelId: SlackChannelId): Future[Status] = {
     val f = for {
       stopped <- hooksManager.stop(channelId)
-    } yield stopped
-    f.map { result =>
-      logger.info(
-        s"Stopping hook because channel ${result.hook.channel} was deleted."
-      )
-      Ok
-    }.recover { case HookNotStartedException(key) =>
+      _ <- Future.successful {
+        logger.info(
+          s"Stopping hook because channel ${stopped.hook.channel} was deleted."
+        )
+      }
+    } yield Ok
+    f.recover { case HookNotStartedException(key) =>
       logger.info(s"Channel with inactive hook $key was deleted.")
       Gone
     }
