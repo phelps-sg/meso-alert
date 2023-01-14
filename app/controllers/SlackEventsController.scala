@@ -32,8 +32,8 @@ class SlackEventsController @Inject() (
   private val onValidSignature = validateSignatureAsync(Json.parse)(_)
 
   def eventsAPI(): Action[ByteString] =
-    onValidSignature { implicit body: JsValue =>
-      onEvent { eventType =>
+    onValidSignature { body: JsValue =>
+      onEvent(body) { eventType =>
         eventType match {
           case "channel_deleted" =>
             val channel = (body \ "event" \ "channel").as[String]
@@ -60,9 +60,19 @@ class SlackEventsController @Inject() (
     }
   }
 
-  private def onEvent(
+  /** Check whether the request body is a challenge, or whether it contains an
+    * event. If it is a challenge respond with a 200 status, otherwise call the
+    * supplied handler to process the event.
+    * @param body
+    *   The body of the request as a Javascript value
+    * @param eventHandler
+    *   The call-back to process to the event
+    * @return
+    *   The result of responding to the challenge or processing the event
+    */
+  private def onEvent(body: JsValue)(
       eventHandler: String => Future[Result]
-  )(implicit body: JsValue): Future[Result] = {
+  ): Future[Result] = {
     val isChallenge = (body \ "challenge").asOpt[String]
     isChallenge match {
       case Some(challengeValue) =>
