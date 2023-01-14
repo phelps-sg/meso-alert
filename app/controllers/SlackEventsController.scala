@@ -9,7 +9,7 @@ import com.mesonomics.playhmacsignatures.{
 import dao.SlackChannelId
 import play.api.Logging
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Action, BaseController, ControllerComponents}
+import play.api.mvc.{Action, BaseController, ControllerComponents, Result}
 import services.HooksManagerSlackChat
 import util.AsyncResultHelpers
 
@@ -32,22 +32,15 @@ class SlackEventsController @Inject() (
   private val onValidSignature = validateSignatureAsync(Json.parse)(_)
 
   def eventsAPI(): Action[ByteString] =
-    onValidSignature { body: JsValue =>
-      {
-        val isChallenge = (body \ "challenge").asOpt[String]
-        isChallenge match {
-          case Some(challengeValue) =>
-            Ok(challengeValue)
-          case None =>
-            val eventType = (body \ "event" \ "type").as[String]
-            eventType match {
-              case "channel_deleted" =>
-                val channel = (body \ "event" \ "channel").as[String]
-                stopHook(SlackChannelId(channel))
-              case ev =>
-                logger.warn(s"Received unhandled event $ev")
-                NotAcceptable
-            }
+    onValidSignature { implicit body: JsValue =>
+      onEvent { eventType =>
+        eventType match {
+          case "channel_deleted" =>
+            val channel = (body \ "event" \ "channel").as[String]
+            stopHook(SlackChannelId(channel))
+          case ev =>
+            logger.warn(s"Received unhandled event $ev")
+            NotAcceptable
         }
       }
     }
@@ -64,6 +57,19 @@ class SlackEventsController @Inject() (
     f.recover { case HookNotStartedException(key) =>
       logger.info(s"Channel with inactive hook $key was deleted.")
       Gone
+    }
+  }
+
+  private def onEvent(
+      eventHandler: String => Future[Result]
+  )(implicit body: JsValue): Future[Result] = {
+    val isChallenge = (body \ "challenge").asOpt[String]
+    isChallenge match {
+      case Some(challengeValue) =>
+        Ok(challengeValue)
+      case None =>
+        val eventType = (body \ "event" \ "type").as[String]
+        eventHandler(eventType)
     }
   }
 

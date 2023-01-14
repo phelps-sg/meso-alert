@@ -23,8 +23,8 @@ libraryDependencies += "org.abstractj.kalium" % "kalium" % "0.8.0"
 libraryDependencies += "com.github.daddykotex" %% "courier" % "3.2.0"
 
 libraryDependencies ++= List(
-  "com.softwaremill.sttp.client3" %% "async-http-client-backend-monix" % "3.8.5",
-  "com.softwaremill.sttp.client3" %% "circe" % "3.8.5",
+  "com.softwaremill.sttp.client3" %% "async-http-client-backend-monix" % "3.8.8",
+  "com.softwaremill.sttp.client3" %% "circe" % "3.8.8",
   "io.circe" %% "circe-generic" % "0.14.3"
 )
 
@@ -37,7 +37,7 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += "com.github.tminglei" %% "slick-pg_play-json" % "0.21.1"
 
-val boltVersion = "1.27.2"
+val boltVersion = "1.27.3"
 libraryDependencies ++= List(
   "com.slack.api" % "bolt" % boltVersion,
   "com.slack.api" % "bolt-servlet" %  boltVersion,
@@ -62,7 +62,7 @@ libraryDependencies ++= Seq(
   "com.auth0" % "jwks-rsa" % "0.21.2"
 )
 
-libraryDependencies += "com.mesonomics" %% "play-hmac-signatures" % "0.5.4"
+libraryDependencies += "com.mesonomics" %% "play-hmac-signatures" % "0.5.5"
 
 dependencyOverrides += "org.scala-lang.modules" %% "scala-parser-combinators" % "2.1.1"
 
@@ -78,7 +78,7 @@ libraryDependencies += "org.scalatestplus.play" %% "scalatestplus-play" % "5.1.0
 libraryDependencies += "org.scalatestplus" %% "selenium-4-1" % "3.2.12.1" % "test"
 libraryDependencies += "org.awaitility" % "awaitility-scala" % "4.2.0" % Test
 libraryDependencies += "org.scalamock" %% "scalamock" % "5.2.0" % Test
-libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.14" % Test
+libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.15" % Test
 libraryDependencies += "com.google.guava" % "guava" % "31.1-jre" % Test
 val testContainersVersion = "0.40.12"
 libraryDependencies ++= Seq(
