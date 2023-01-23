@@ -68,7 +68,7 @@ object BlockMessages {
 
   def txToSections(messages: MessagesApi)(
       tx: TxUpdate
-  ): Vector[Block] = {
+  ): Seq[Block] = {
     val headerAndTxHash = Vector(
       Header(
         s"${messages(MESSAGE_NEW_TRANSACTION)} ${formatSatoshi(tx.amount)} BTC"
@@ -83,15 +83,15 @@ object BlockMessages {
   }
 
   def blocksWithinLimit(
-      allBlocks: Vector[Block],
+      allBlocks: Seq[Block],
       limitExceededMessage: String
-  ): Vector[Block] =
+  ): Seq[Block] =
     if (allBlocks.size > MAX_BLOCKS)
       allBlocks.take(MAX_BLOCKS) :+ Section(limitExceededMessage)
     else
       allBlocks
 
-  def txOutputsSections(outputs: Seq[TxInputOutput]): Vector[Section] = {
+  def txOutputsSections(outputs: Seq[TxInputOutput]): Seq[Section] = {
     val grouped = outputs.grouped(MAX_TXS_PER_SECTION) map { subOutputs =>
       val addresses = toAddresses(subOutputs).map(linkToAddress)
       Section {
