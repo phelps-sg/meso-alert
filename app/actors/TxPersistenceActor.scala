@@ -1,10 +1,8 @@
 package actors
 
-import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
-import akka.actor.{Actor, ActorRef, Props, Timers}
+import akka.actor.{Actor, ActorRef, Props}
 import com.google.inject.Inject
 import dao._
-import play.api.Logging
 import services.MemPoolWatcherService
 
 import scala.annotation.unused
@@ -29,28 +27,24 @@ object TxPersistenceActor {
 
 }
 
+/** An actor which persists `TxUpdate` events sent by the
+  * `MemPoolWatcherService` to the database.
+  */
 class TxPersistenceActor @Inject() (
     val transactionUpdateDao: TransactionUpdateDao,
     val memPoolWatcher: MemPoolWatcherService,
     val random: Random,
     implicit val ec: ExecutionContext
-) extends Actor
-    with TxUpdateActor
-    with Logging
-    with TxRetryOrDie[Int]
-    with Timers
-    with UnrecognizedMessageHandlerFatal {
+) extends RetryOrDieActor[Int, TxUpdate]
+    with TxUpdateActor {
 
   override val maxRetryCount = 3
 
   override def process(tx: TxUpdate): Future[Int] =
     transactionUpdateDao.record(tx)
 
-  override def success(): Unit = logger.debug("Successfully added tx to db.")
-
   override def preStart(): Unit = {
     super.preStart()
     registerWithWatcher()
   }
-
 }

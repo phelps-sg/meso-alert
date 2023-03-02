@@ -9,6 +9,7 @@ import actors.{
   HooksManagerActorSlackChat,
   HooksManagerActorWeb,
   MemPoolWatcherActor,
+  RateLimitingBatchingActor,
   Register,
   Registered,
   SlackSecretsActor,
@@ -27,39 +28,41 @@ import actors.{
 }
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
-import akka.util.Timeout
+import akka.stream.Materializer
+import akka.util.{ByteString, Timeout}
 import com.google.common.io.ByteStreams
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.inject.AbstractModule
+import com.mesonomics.playhmacsignatures.{
+  EpochSeconds,
+  HmacSignature,
+  SignatureVerifierService,
+  SlackSignatureVerifyAction
+}
 import com.slack.api.methods.response.auth.AuthTestResponse
 import com.slack.api.methods.response.conversations.ConversationsMembersResponse
 import com.typesafe.config.ConfigFactory
+import controllers.HomeController.EmailFormData
+import controllers.SlackSlashCommandController
 import dao._
 import org.bitcoinj.core.Utils.HEX
 import org.bitcoinj.core._
-import org.bitcoinj.core.listeners.{
-  NewBestBlockListener,
-  OnTransactionBroadcastListener
-}
 import org.bitcoinj.params.MainNetParams
 import org.bitcoinj.store.BlockStore
 import org.bitcoinj.wallet.Wallet
-import org.scalamock.handlers.CallHandler1
+import org.scalamock.handlers.{CallHandler0, CallHandler8}
+import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
 import pdi.jwt.JwtClaim
 import play.api.i18n.{DefaultMessagesApi, Lang, MessagesApi}
 import play.api.inject.Injector
-import play.api.inject.guice.{
-  GuiceApplicationBuilder,
-  GuiceInjectorBuilder,
-  GuiceableModule
-}
-import play.api.libs.json.{JsArray, JsValue, Json}
+import play.api.inject.guice.{GuiceInjectorBuilder, GuiceableModule}
+import play.api.libs.json.{JsArray, Json}
 import play.api.mvc.{AnyContentAsFormUrlEncoded, BodyParsers}
-import play.api.test.FakeRequest
 import play.api.test.Helpers.POST
-import play.api.{Application, Configuration, Logging, inject}
+import play.api.test.{FakeRequest, Helpers}
+import play.api.{Configuration, Logging, inject}
 import services.{
   BlockChainProvider,
   HooksManagerSlackChat,
@@ -69,12 +72,13 @@ import services.{
   MemPoolWatcher,
   MemPoolWatcherService,
   PeerGroupProvider,
+  SlackConversationInfo,
   SlackManager,
   SlackSecretsManagerService,
-  SlackSignatureVerifierService,
   SodiumEncryptionManager,
   User,
-  UserManagerService
+  UserManagerService,
+  WebManagerService
 }
 import slack.BlockMessages.{
   MESSAGE_NEW_TRANSACTION,
@@ -82,6 +86,7 @@ import slack.BlockMessages.{
   MESSAGE_TO_ADDRESSES,
   MESSAGE_TRANSACTION_HASH
 }
+import slack.BoltException
 import slick.BtcPostgresProfile.api._
 import slick._
 import slick.dbio.{DBIO, Effect}
@@ -91,14 +96,15 @@ import slick.sql.{FixedSqlAction, FixedSqlStreamingAction}
 
 import java.io.{FileNotFoundException, InputStream}
 import java.net.URI
-import java.time.LocalDateTime
+import java.time._
 import javax.inject.Provider
 import scala.collection.compat.immutable.ArraySeq
 import scala.collection.mutable
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
 import scala.jdk.CollectionConverters._
+import scala.reflect.ClassTag
 import scala.util.{Failure, Success, Try}
 
 //noinspection TypeAnnotation
@@ -120,11 +126,6 @@ object Fixtures {
           )
         )
     }
-//    Option(classLoader.getResourceAsStream(resource)).toRight {
-//      new FileNotFoundException(
-//        s"resource '$resource' was not found in the classpath from the given classloader."
-//      )
-//    }.toTry
   }
 
   trait WebSocketMock {
@@ -161,7 +162,9 @@ object Fixtures {
   trait SlackChatManagerMock
       extends HookManagerMock[SlackChannelId, SlackChatHookPlainText]
 
-  trait MockHookManagerActor[X, Y <: Hook[X]] extends Actor with Logging {
+  abstract class MockHookManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
+      extends Actor
+      with Logging {
     val mock: HookManagerMock[X, Y]
     val hooks = mutable.Map[X, Y]()
 
@@ -215,6 +218,10 @@ object Fixtures {
     val db: Database
   }
 
+  trait DatabaseExecutionContextSingleton { env: HasActorSystem =>
+    val databaseExecutionContext = new DatabaseExecutionContext(actorSystem)
+  }
+
   trait HasExecutionContext {
     val executionContext: ExecutionContext
   }
@@ -223,33 +230,8 @@ object Fixtures {
     val bindModule: GuiceableModule
   }
 
-  trait FakeApplication {
-    env: HasDatabase
-      with HasExecutionContext
-      with SlackSignatureVerifierFixtures
-      with MemPoolWatcherActorFixtures
-      with BlockChainWatcherFixtures
-      with HasMessagesApi =>
-
-    lazy val fakeApplication: Application =
-      new GuiceApplicationBuilder()
-        .overrides(
-          new UnitTestModule(db, executionContext, messagesApi)
-        )
-        .overrides(
-          new SignatureVerifierServiceModule()
-        )
-        .overrides(
-          new MemPoolWatcherModule()
-        )
-        .overrides(
-          new BlockChainWatcherModule()
-        )
-        .build()
-  }
-
   trait SlackSignatureVerifierFixtures extends MockFactory {
-    val mockSlackSignatureVerifierService = mock[SlackSignatureVerifierService]
+    val mockSlackSignatureVerifierService = mock[SignatureVerifierService]
     val fakeSlackSignatureHeaders = Array(
       ("X-Slack-Request-Timestamp", "1663156082"),
       (
@@ -257,24 +239,23 @@ object Fixtures {
         "v0=d1c387a20da72e5e07de4e2fb7e93cd9b44c2caa118868aad99c3b20c93de73a"
       )
     )
+  }
 
-    class SignatureVerifierServiceModule extends AbstractModule {
-      override def configure(): Unit = {
-        bind(classOf[SlackSignatureVerifierService]).toInstance(
-          mockSlackSignatureVerifierService
-        )
-      }
-    }
+  trait DefaultBodyParserFixtures {
+    env: HasExecutionContext with HasActorSystem =>
+    private implicit val system = actorSystem
+    implicit val mat: Materializer = Materializer(system)
+    val bodyParser = new BodyParsers.Default()
   }
 
   trait Auth0ActionFixtures {
-    env: FakeApplication with HasExecutionContext =>
+    env: ConfigurationFixtures
+      with DefaultBodyParserFixtures
+      with HasExecutionContext =>
+
     class MockAuth0Action(
         override protected val validateJwt: String => Try[JwtClaim]
-    ) extends Auth0ValidateJWTAction(
-          fakeApplication.injector.instanceOf[BodyParsers.Default],
-          fakeApplication.configuration
-        )(executionContext) {}
+    ) extends Auth0ValidateJWTAction(bodyParser, config)(executionContext) {}
 
     val claim = JwtClaim()
     val mockAuth0ActionAlwaysSuccess = new MockAuth0Action(_ => Success(claim))
@@ -288,12 +269,13 @@ object Fixtures {
       with HasExecutionContext
       with HasActorSystem
       with HasDatabase
+      with HasClock
 
   trait MemPoolWatcherActorFixtures {
     env: MemPoolWatcherFixtures
-      with ActorGuiceFixtures
       with HasActorSystem
-      with HasExecutionContext =>
+      with HasExecutionContext
+      with DatabaseExecutionContextSingleton =>
 
     val executionContext: ExecutionContext
 
@@ -304,7 +286,7 @@ object Fixtures {
       MemPoolWatcherActor.props(
         pgs,
         new MainNetParamsProvider(),
-        injector.instanceOf[DatabaseExecutionContext]
+        databaseExecutionContext
       )
     )
     val memPoolWatcher =
@@ -349,7 +331,8 @@ object Fixtures {
     val params = netParamsProvider.get
   }
 
-  trait BlockFixtures { env: MainNetParamsFixtures =>
+  trait BlockFixtures {
+    env: MainNetParamsFixtures =>
     val block169482: Try[Block] = resourceAsInputStream("block169482.dat") map {
       in =>
         params.getDefaultSerializer
@@ -370,7 +353,10 @@ object Fixtures {
       .returning(genesisBlock)
       .atLeastOnce()
     (mockStoredBlock.getPrev _).expects(*).returning(null)
-    (blockStore.getChainHead _).expects().returning(mockStoredBlock)
+    (blockStore.getChainHead _)
+      .expects()
+      .returning(mockStoredBlock)
+      .anyNumberOfTimes()
 
     // noinspection NotImplementedCode
     class MockBlockChain
@@ -411,8 +397,7 @@ object Fixtures {
     }
 
     val mockBlockChain = mock[MockBlockChain]
-    (mockBlockChain.getChainHead _).expects().once()
-    (mockBlockChain.addNewBestBlockListener(_: NewBestBlockListener)).expects(*)
+    (mockBlockChain.getChainHead _).expects().anyNumberOfTimes()
 
     val mockBlockChainProvider = new BlockChainProvider {
       override val get = mockBlockChain
@@ -435,9 +420,32 @@ object Fixtures {
     }
   }
 
-  trait ClockFixtures {
-    def now: LocalDateTime =
-      java.time.LocalDateTime.parse("2022-09-07T00:13:30")
+  trait HasClock
+
+  trait ClockFixtures extends MockFactory with HasClock {
+
+    val timestampStr: String = "2017-09-15T13:50:00.000+00:00"
+    val now: OffsetDateTime = OffsetDateTime.parse(timestampStr)
+    val clock = mock[Clock]
+
+    def setClockExpectations(): Unit =
+      (clock.instant _).expects().returning(now.toInstant).anyNumberOfTimes()
+
+    def tPlus(millis: Int): Instant =
+      now.plus(java.time.Duration.ofMillis(millis)).toInstant
+
+    def advanceClockTo(millis: Int): CallHandler0[Instant] =
+      (clock.instant _).expects().returning(tPlus(millis))
+
+    def advanceClockTo(t: OffsetDateTime): CallHandler0[Instant] =
+      (clock.instant _).expects().returning(t.toInstant)
+
+    def advanceClockTo(t: LocalDateTime): CallHandler0[Instant] =
+      advanceClockTo(
+        t.atOffset(ZoneOffset.UTC)
+      )
+
+    setClockExpectations()
   }
 
   trait MemPoolWatcherFixtures extends MockFactory {
@@ -448,20 +456,11 @@ object Fixtures {
 
     val mockMemPoolWatcher = mock[MemPoolWatcherService]
     val mockPeerGroup = mock[MainNetPeerGroup]
-    (mockPeerGroup
-      .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-      .expects(*)
 
-    def memPoolWatcherExpectations(
-        ch: CallHandler1[ActorRef, Unit]
-    ): ch.Derived = {
-      ch.never()
-    }
-
-    def peerGroupExpectations(): Unit
-
-    memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
-    peerGroupExpectations()
+    val memPoolListenerCapture = CaptureAll[ActorRef]()
+    (mockMemPoolWatcher.addListener _)
+      .expects(capture(memPoolListenerCapture))
+      .anyNumberOfTimes()
   }
 
   trait ConfigurationFixtures {
@@ -472,6 +471,7 @@ object Fixtures {
     env: ConfigurationFixtures
       with MemPoolWatcherFixtures
       with BlockChainWatcherFixtures
+      with WebManagerFixtures
       with HasActorSystem
       with HasBindModule =>
 
@@ -488,6 +488,11 @@ object Fixtures {
         inject
           .bind(classOf[MemPoolWatcherService])
           .toInstance(mockMemPoolWatcher)
+      )
+      .overrides(
+        inject
+          .bind(classOf[WebManagerService])
+          .toInstance(mockWebManagerService)
       )
 
     val injector = builder.build()
@@ -516,9 +521,11 @@ object Fixtures {
     val key = new URI("http://test")
     val originalThreshold = 100L
     val newThreshold = 200L
-    val hook = Webhook(key, threshold = originalThreshold, isRunning = true)
+    val hook =
+      Webhook(key, threshold = Satoshi(originalThreshold), isRunning = true)
     val stoppedHook = hook.copy(isRunning = false)
-    val newHook = Webhook(key, threshold = newThreshold, isRunning = true)
+    val newHook =
+      Webhook(key, threshold = Satoshi(newThreshold), isRunning = true)
   }
 
   trait SlackChatHookFixtures {
@@ -542,24 +549,27 @@ object Fixtures {
       )
     val originalThreshold = 100L
     val newThreshold = 200L
-    val key = SlackChannelId("#test")
+    val channelId = SlackChannelId("1234")
+    val key = channelId
+    val token1 = SlackAuthToken("test_token_1")
+    val token2 = SlackAuthToken("test_token_2")
     val hook = SlackChatHookPlainText(
-      key,
-      threshold = originalThreshold,
+      channelId,
+      threshold = Satoshi(originalThreshold),
       isRunning = true,
-      token = "test_token_1"
+      token = token1
     )
     val stoppedHook = hook.copy(isRunning = false)
     val newHook = SlackChatHookPlainText(
-      key,
-      threshold = newThreshold,
+      channelId,
+      threshold = Satoshi(newThreshold),
       isRunning = true,
-      token = "test_token_2"
+      token = token2
     )
     val encryptedHook =
       SlackChatHookEncrypted(
-        key,
-        threshold = newThreshold,
+        channelId,
+        threshold = Satoshi(newThreshold),
         isRunning = true,
         token = encryptedToken1
       )
@@ -639,7 +649,8 @@ object Fixtures {
     env: EncryptionManagerFixtures
       with ProvidesInjector
       with HasExecutionContext
-      with HasDatabase =>
+      with HasDatabase
+      with DatabaseExecutionContextSingleton =>
 
     val db: Database
     val executionContext: ExecutionContext
@@ -647,7 +658,7 @@ object Fixtures {
     val hookDao =
       new SlickSlackChatDao(
         db,
-        injector.instanceOf[DatabaseExecutionContext],
+        databaseExecutionContext,
         encryptionManager
       )(executionContext)
   }
@@ -658,7 +669,10 @@ object Fixtures {
   }
 
   trait WebhookActorFixtures {
-    env: ProvidesInjector with HasActorSystem =>
+    env: ProvidesInjector
+      with HasActorSystem
+      with ClockFixtures
+      with DatabaseExecutionContextSingleton =>
     val actorSystem: ActorSystem
     val hook: Webhook
     val hooksActor = {
@@ -666,8 +680,10 @@ object Fixtures {
         HooksManagerActorWeb.props(
           injector.instanceOf[TxMessagingActorWeb.Factory],
           injector.instanceOf[TxFilterActor.Factory],
+          injector.instanceOf[RateLimitingBatchingActor.Factory],
           injector.instanceOf[WebhookDao],
-          injector.instanceOf[DatabaseExecutionContext]
+          databaseExecutionContext,
+          clock
         )
       )
     }
@@ -675,18 +691,71 @@ object Fixtures {
     val queryHooks = Tables.webhooks.result
   }
 
-  trait SlackChatActorFixtures extends SlackChatHookFixtures {
-    env: HasActorSystem with ProvidesInjector =>
+  trait WebManagerFixtures { env: MockFactory =>
+    val mockWebManagerService = mock[WebManagerService]
+  }
+
+  trait TxMessagingActorWebFixtures {
+    env: WebhookFixtures
+      with HasActorSystem
+      with WebManagerFixtures
+      with RandomFixtures
+      with HasExecutionContext =>
+    val webHookMessagingActor = actorSystem.actorOf(
+      Props(
+        new TxMessagingActorWeb(
+          mockWebManagerService,
+          random,
+          hook
+        )(executionContext)
+      )
+    )
+  }
+
+  trait TxMessagingActorSlackChatFixtures {
+    env: HasActorSystem
+      with SlackChatHookFixtures
+      with SlackManagerFixtures
+      with ConfigurationFixtures
+      with RandomFixtures
+      with MessagesFixtures =>
+
+    val slackChatExecutionContext = new SlackChatExecutionContext(actorSystem)
+
+    val slackChatActor = actorSystem.actorOf(
+      Props(
+        new TxMessagingActorSlackChat(
+          mockSlackManagerService,
+          config,
+          slackChatExecutionContext,
+          random,
+          messagesApi,
+          hook
+        )
+      )
+    )
+  }
+
+  trait HooksManagerActorSlackChatFixtures extends SlackChatHookFixtures {
+    env: HasActorSystem
+      with ProvidesInjector
+      with ClockFixtures
+      with DatabaseExecutionContextSingleton =>
     val actorSystem: ActorSystem
     val hookDao: SlackChatHookDao
+
+    val slackChatActorFactory =
+      injector.instanceOf[TxMessagingActorSlackChat.Factory]
 
     val hooksActor = {
       actorSystem.actorOf(
         HooksManagerActorSlackChat.props(
-          injector.instanceOf[TxMessagingActorSlackChat.Factory],
+          slackChatActorFactory,
           injector.instanceOf[TxFilterActor.Factory],
+          injector.instanceOf[RateLimitingBatchingActor.Factory],
           hookDao,
-          injector.instanceOf[DatabaseExecutionContext]
+          databaseExecutionContext,
+          clock
         )
       )
     }
@@ -716,7 +785,7 @@ object Fixtures {
       teamId,
       teamUserId,
       botId,
-      accessToken,
+      SlackAuthToken(accessToken),
       teamName,
       registeredUserId
     )
@@ -724,8 +793,8 @@ object Fixtures {
   }
 
   trait SlickSlashCommandFixtures {
-    env: SlackSignatureVerifierFixtures =>
-    val channelId = SlackChannelId("1234")
+    env: SlackSignatureVerifierFixtures with SlackChatHookFixtures =>
+    val channelIdBad = SlackChannelId("4321")
     val command = "/test"
     val text = ""
     val teamDomain = None
@@ -733,9 +802,9 @@ object Fixtures {
     val channelName = Some("test-channel")
     val userId = Some(SlackUserId("91011"))
     val userName = Some("test-user")
-    val testToken = "test-token"
     val isEnterpriseInstall = Some(false)
     val timeStamp = Some(java.time.LocalDateTime.of(2001, 1, 1, 0, 0))
+
     val slashCommand = SlashCommand(
       None,
       channelId,
@@ -749,6 +818,7 @@ object Fixtures {
       isEnterpriseInstall,
       timeStamp
     )
+
     val cryptoAlertCommand =
       SlashCommand(
         None,
@@ -764,10 +834,10 @@ object Fixtures {
         None
       )
 
-    def fakeRequestValidNoSignature(command: String, amount: String) =
+    def fakeRequestValidNoSignature(command: String, argument: String = "") =
       FakeRequest(POST, "/")
         .withFormUrlEncodedBody(
-          "token" -> testToken,
+          "token" -> token1.value,
           "team_id" -> slashCommandTeamId.value,
           "team_domain" -> "",
           "channel_id" -> channelId.value,
@@ -775,13 +845,49 @@ object Fixtures {
           "user_id" -> "91011",
           "user_name" -> "test-user",
           "command" -> command,
-          "text" -> amount,
+          "text" -> argument,
           "is_enterprise_install" -> "false"
         )
 
-    def fakeRequestValid(command: String, amount: String) =
-      fakeRequestValidNoSignature(command, amount).withHeaders(
+    def fakeRequestValidNoSignatureBadChannel(
+        command: String,
+        argument: String
+    ) =
+      FakeRequest(POST, "/")
+        .withFormUrlEncodedBody(
+          "token" -> token1.value,
+          "team_id" -> slashCommandTeamId.value,
+          "team_domain" -> "",
+          "channel_id" -> channelIdBad.value,
+          "channel_name" -> "testChannelBad",
+          "user_id" -> "91011",
+          "user_name" -> "test-user",
+          "command" -> command,
+          "text" -> argument,
+          "is_enterprise_install" -> "false"
+        )
+
+    def withFakeSlackSignatureHeaders[T](
+        request: FakeRequest[T]
+    ): FakeRequest[T] =
+      request.withHeaders(
         ArraySeq.unsafeWrapArray(fakeSlackSignatureHeaders): _*
+      )
+
+    def slashCommand(
+        command: String,
+        argument: String = ""
+    ): FakeRequest[AnyContentAsFormUrlEncoded] =
+      withFakeSlackSignatureHeaders(
+        fakeRequestValidNoSignature(command, argument)
+      )
+
+    def slashCommandWithBadChannel(
+        command: String,
+        argument: String = ""
+    ): FakeRequest[AnyContentAsFormUrlEncoded] =
+      withFakeSlackSignatureHeaders(
+        fakeRequestValidNoSignatureBadChannel(command, argument)
       )
 
     val testUserId = "testUser"
@@ -792,6 +898,70 @@ object Fixtures {
     resConvMembersResponse.setMembers(mockMembers)
     val resConvMembersResponseBad = new ConversationsMembersResponse
     resConvMembersResponseBad.setMembers(List("wrongUser").asJava)
+  }
+
+  trait SlackSlashCommandControllerFixtures {
+    env: ConfigurationFixtures
+      with SlickSlashCommandHistoryDaoFixtures
+      with SlickSlackTeamDaoFixtures
+      with SlackChatHookDaoFixtures
+      with HooksManagerActorSlackChatFixtures
+      with MessagesFixtures
+      with SlackManagerFixtures
+      with SlackSignatureVerifierFixtures
+      with HasExecutionContext
+      with HasActorSystem
+      with DefaultBodyParserFixtures =>
+
+    private implicit val ec = executionContext
+    private implicit val system = actorSystem
+
+    val slackSignatureVerifyAction = new SlackSignatureVerifyAction(
+      bodyParser,
+      config,
+      mockSlackSignatureVerifierService
+    )
+
+    val hooksManager = new HooksManagerSlackChat(hookDao, hooksActor)
+
+    val slackSlashCommandController = new SlackSlashCommandController(
+      Helpers.stubControllerComponents(),
+      slashCommandHistoryDao = slickSlashCommandHistoryDao,
+      slackTeamDao = slickSlackTeamDao,
+      hooksManager,
+      messagesApi,
+      mockSlackManagerService,
+      slackSignatureVerifyAction
+    )
+
+    val signatureVerifierExpectations =
+      (mockSlackSignatureVerifierService
+        .validate(_: Clock)(_: Duration)(
+          _: (EpochSeconds, ByteString) => String
+        )(
+          _: Array[Byte] => HmacSignature
+        )(_: String)(
+          _: EpochSeconds,
+          _: ByteString,
+          _: HmacSignature
+        ))
+        .expects(*, *, *, *, *, *, *, *)
+        .anyNumberOfTimes()
+
+    def setSignatureVerifierExpectations(): CallHandler8[
+      Clock,
+      Duration,
+      (EpochSeconds, ByteString) => String,
+      Array[Byte] => HmacSignature,
+      String,
+      EpochSeconds,
+      ByteString,
+      HmacSignature,
+      Try[ByteString]
+    ] =
+      signatureVerifierExpectations.returning(Success(ByteString("valid")))
+
+    setSignatureVerifierExpectations()
   }
 
   trait SlickSlashCommandHistoryDaoFixtures {
@@ -809,10 +979,73 @@ object Fixtures {
   }
 
   trait TxUpdateFixtures {
+
     val timeStamp = java.time.LocalDateTime.of(2001, 1, 1, 0, 0)
     val testHash = TxHash("testHash")
-    val tx =
-      TxUpdate(testHash, 10, timeStamp, isPending = true, List(), List(), None)
+
+    val tx = {
+      TxUpdate(
+        testHash,
+        Satoshi(10),
+        timeStamp,
+        isPending = true,
+        List(),
+        List(),
+        None
+      )
+    }
+
+    val tx1 = TxUpdate(
+      TxHash("testHash1"),
+      Satoshi(10),
+      timeStamp.plusSeconds(1),
+      isPending = true,
+      List(),
+      List(),
+      None
+    )
+
+    val tx2 = TxUpdate(
+      TxHash("testHash2"),
+      Satoshi(1),
+      timeStamp.plusSeconds(2),
+      isPending = true,
+      List(),
+      List(),
+      None
+    )
+
+    val tx3 = TxUpdate(
+      TxHash("testHash3"),
+      Satoshi(100),
+      timeStamp.plusSeconds(3),
+      isPending = true,
+      List(),
+      List(),
+      None
+    )
+
+    val tx4 = TxUpdate(
+      TxHash("testHash4"),
+      Satoshi(1000),
+      timeStamp.plusSeconds(4),
+      isPending = true,
+      List(),
+      List(),
+      None
+    )
+
+    def generateTxs(n: Int): Seq[TxUpdate] = (1 to n) map { i =>
+      TxUpdate(
+        TxHash(s"testHash$i"),
+        Satoshi(1000 * i),
+        timeStamp.plusSeconds(i),
+        isPending = true,
+        List(),
+        List(),
+        None
+      )
+    }
   }
 
   trait HookActorTestLogic[X, Y <: Hook[X], Z] extends DatabaseInitializer {
@@ -911,14 +1144,38 @@ object Fixtures {
   }
 
   trait SlackManagerFixtures extends MockFactory {
-    env: ConfigurationFixtures with ProvidesInjector =>
+    env: ConfigurationFixtures with HasActorSystem with SlackChatHookFixtures =>
+
     val slackClientExecutionContext =
-      injector.instanceOf[SlackClientExecutionContext]
+      new SlackClientExecutionContext(actorSystem)
 
     class MockSlackManager
         extends SlackManager(config, slackClientExecutionContext)
 
     val mockSlackManagerService = mock[MockSlackManager]
+
+    def privateChannel: Boolean = false
+
+    if (privateChannel) {
+      (mockSlackManagerService.conversationsInfo _)
+        .expects(*, *)
+        .anyNumberOfTimes()
+        .returning(
+          Future.failed(
+            BoltException.ChannelNotFoundException
+          )
+        )
+    } else {
+      (mockSlackManagerService.conversationsInfo _)
+        .expects(*, *)
+        .anyNumberOfTimes()
+        .returning(
+          Future.successful(
+            SlackConversationInfo(channelId, isPrivate = privateChannel)
+          )
+        )
+    }
+
   }
 
   trait UserFixtures extends MockFactory {
@@ -935,36 +1192,52 @@ object Fixtures {
     val supportMessage = "This is a test support message."
     val expectedValidEmailSubject = "Feedback - testName test@test.com"
     val expectedValidEmailSubjectSupport = "Support - testName test@test.com"
-    val feedbackFormSubmission: FakeRequest[AnyContentAsFormUrlEncoded] =
+    val feedbackFormAttrs: Map[String, String] = Map[String, String](
+      "formType" -> feedbackFormType,
+      "name" -> emailName,
+      "email" -> emailAddress,
+      "message" -> feedbackMessage
+    )
+    val supportFormAttrs: Map[String, String] = Map[String, String](
+      "formType" -> supportFormType,
+      "name" -> emailName,
+      "email" -> emailAddress,
+      "message" -> supportMessage
+    )
+
+    def emailFormSubmission(attrs: Map[String, String]) =
       FakeRequest(POST, "/").withFormUrlEncodedBody(
-        ("formType", feedbackFormType),
-        ("name", emailName),
-        ("email", emailAddress),
-        ("message", feedbackMessage)
+        attrs.toSeq: _*
       )
-    val supportFormSubmission: FakeRequest[AnyContentAsFormUrlEncoded] =
-      FakeRequest(POST, "/").withFormUrlEncodedBody(
-        ("formType", supportFormType),
-        ("name", emailName),
-        ("email", emailAddress),
-        ("message", supportMessage)
+
+    def emailFormData(attrs: Map[String, String]) =
+      EmailFormData(
+        attrs("formType"),
+        attrs("name"),
+        attrs("email"),
+        attrs("message")
       )
+
     val mockMailManager = mock[MailManager]
+  }
+
+  trait RandomFixtures {
+//    val random = injector.instanceOf[scala.util.Random]
+    val prngSeed = 1000
+    val random = new scala.util.Random(prngSeed)
   }
 
   trait TxPersistenceActorFixtures extends MockFactory {
     env: HasActorSystem
       with HasExecutionContext
-      with ProvidesInjector
+      with RandomFixtures
       with MemPoolWatcherFixtures =>
 
     val actorSystem: ActorSystem
-    //    val mockMemPoolWatcher: MemPoolWatcherService
     val executionContext: ExecutionContext
-    val injector: Injector
     val mockTransactionUpdateDao = mock[TransactionUpdateDao]
-    val random = injector.instanceOf[scala.util.Random]
-    val txPersistenceActor = actorSystem.actorOf(
+
+    def makeTxPersistenceActor = actorSystem.actorOf(
       TxPersistenceActor.props(
         mockTransactionUpdateDao,
         mockMemPoolWatcher,
@@ -972,6 +1245,8 @@ object Fixtures {
         executionContext
       )
     )
+
+    val txPersistenceActor = makeTxPersistenceActor
   }
 
   trait TxWatchActorFixtures {
@@ -1024,7 +1299,9 @@ object Fixtures {
   }
 
   trait SlackEventsControllerFixtures {
-    val deleteChannelRequestBody: JsValue = Json.parse("""
+    val deleteChannelRequestBody = ByteString(
+      Json
+        .parse("""
   {
     "event" :
     {
@@ -1032,7 +1309,8 @@ object Fixtures {
       "channel" : "1234"
     }
   }
-  """)
+  """).toString()
+    )
   }
 
   trait EncryptionManagerFixtures {
@@ -1075,7 +1353,10 @@ object Fixtures {
   }
 
   trait WebhooksActorFixtures {
-    env: HasActorSystem with ProvidesInjector =>
+    env: HasActorSystem
+      with ProvidesInjector
+      with ClockFixtures
+      with DatabaseExecutionContextSingleton =>
     val actorSystem: ActorSystem
     val injector: Injector
     val hooksActor = {
@@ -1083,8 +1364,10 @@ object Fixtures {
         HooksManagerActorWeb.props(
           injector.instanceOf[TxMessagingActorWeb.Factory],
           injector.instanceOf[TxFilterActor.Factory],
+          injector.instanceOf[RateLimitingBatchingActor.Factory],
           injector.instanceOf[WebhookDao],
-          injector.instanceOf[DatabaseExecutionContext]
+          databaseExecutionContext,
+          clock
         )
       )
     }
@@ -1101,7 +1384,7 @@ object Fixtures {
         "en" -> Map(
           MESSAGE_NEW_TRANSACTION -> "New transaction with value",
           MESSAGE_TRANSACTION_HASH -> "Transaction Hash",
-          MESSAGE_TO_ADDRESSES -> "to addresses",
+          MESSAGE_TO_ADDRESSES -> "to addresses:",
           MESSAGE_TOO_MANY_OUTPUTS -> "Too many inputs",
           "slackResponse.currencyError" -> "I currently only provide alerts for BTC, but other currencies are coming soon."
         )

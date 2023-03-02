@@ -41,19 +41,19 @@ class SlackSecretsManager @Inject() (
     with ActorBackend {
 
   override def generateSecret(userId: RegisteredUserId): Future[Secret] =
-    sendAndReceive {
+    sendAndReceive[GenerateSecret, Secret] {
       GenerateSecret(userId)
     }
 
   override def verifySecret(
       userId: RegisteredUserId,
       secret: Secret
-  ): Future[ValidSecret] = sendAndReceive {
+  ): Future[ValidSecret] = sendAndReceive[VerifySecret, ValidSecret] {
     VerifySecret(userId, secret)
   }
 
   override def unbind(userId: RegisteredUserId): Future[Unbind] =
-    sendAndReceive {
+    sendAndReceive[Unbind, Unbind] {
       Unbind(userId)
     }
 

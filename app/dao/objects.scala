@@ -13,6 +13,10 @@ final case class RegisteredUserId(value: String)
 
 final case class SlackTeamId(value: String) extends AnyVal with MappedTo[String]
 
+final case class SlackAuthToken(value: String)
+    extends AnyVal
+    with MappedTo[String]
+
 final case class SlackChannelId(value: String)
     extends AnyVal
     with MappedTo[String]
@@ -45,7 +49,7 @@ trait Hook[+X] extends ThresholdFilter {
   def newStatus(isRunning: Boolean): Hook[X]
 }
 
-final case class Webhook(uri: URI, threshold: Long, isRunning: Boolean)
+final case class Webhook(uri: URI, threshold: Satoshi, isRunning: Boolean)
     extends Hook[URI] {
   def key: URI = uri
   override def newStatus(isRunning: Boolean): Hook[URI] =
@@ -60,7 +64,7 @@ trait SlackChatHook extends Hook[SlackChannelId] {
 final case class SlackChatHookEncrypted(
     channel: SlackChannelId,
     token: Encrypted,
-    threshold: Long,
+    threshold: Satoshi,
     isRunning: Boolean
 ) extends SlackChatHook {
   override def newStatus(isRunning: Boolean): SlackChatHookEncrypted =
@@ -69,19 +73,21 @@ final case class SlackChatHookEncrypted(
 
 final case class SlackChatHookPlainText(
     channel: SlackChannelId,
-    token: String,
-    threshold: Long,
+    token: SlackAuthToken,
+    threshold: Satoshi,
     isRunning: Boolean
 ) extends SlackChatHook {
   override def newStatus(isRunning: Boolean): SlackChatHookPlainText =
     copy(isRunning = isRunning)
+  override def toString: String =
+    s"${getClass().getSimpleName}($channel,<redacted>,$threshold,$isRunning)"
 }
 
 final case class SlackTeam(
     teamId: SlackTeamId,
     userId: SlackUserId,
     botId: SlackBotId,
-    accessToken: String,
+    accessToken: SlackAuthToken,
     teamName: String,
     registeredUserId: RegisteredUserId
 )
@@ -95,10 +101,12 @@ final case class SlackTeamEncrypted(
     registeredUserId: RegisteredUserId
 )
 
+final case class Satoshi(value: Long) extends AnyVal with MappedTo[Long]
+
 final case class TransactionUpdate(
     id: Option[Long],
     hash: TxHash,
-    value: Long,
+    amount: Satoshi,
     timeStamp: java.time.LocalDateTime,
     isPending: Boolean
 )

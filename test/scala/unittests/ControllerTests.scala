@@ -1,21 +1,20 @@
 package unittests
 
-import actions.{Auth0ValidateJWTAction, SlackSignatureVerifyAction}
+import actions.Auth0ValidateJWTAction
 import actors.EncryptionActor.Encrypted
 import actors.SlackSecretsActor.{InvalidSecretException, Unbind, ValidSecret}
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import akka.util.Timeout
 import controllers._
 import dao._
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
-import org.scalamock.handlers.CallHandler1
+import org.scalatest.Assertion
 import org.scalatest.concurrent.{Eventually, ScalaFutures}
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
-import org.scalatest.{Assertion, BeforeAndAfterAll}
 import play.api.http.Status.{OK, SERVICE_UNAVAILABLE, UNAUTHORIZED}
 import play.api.inject.guice.GuiceableModule
 import play.api.mvc.{AnyContentAsFormUrlEncoded, Result, Results}
@@ -40,11 +39,14 @@ import unittests.Fixtures.{
   ActorGuiceFixtures,
   Auth0ActionFixtures,
   BlockChainWatcherFixtures,
+  ClockFixtures,
   ConfigurationFixtures,
+  DatabaseExecutionContextSingleton,
   DatabaseInitializer,
+  DefaultBodyParserFixtures,
   EncryptionActorFixtures,
   EncryptionManagerFixtures,
-  FakeApplication,
+  HooksManagerActorSlackChatFixtures,
   MainNetParamsFixtures,
   MemPoolWatcherActorFixtures,
   MemPoolWatcherFixtures,
@@ -52,17 +54,19 @@ import unittests.Fixtures.{
   MockMailManagerFixtures,
   ProvidesTestBindings,
   SecretsManagerFixtures,
-  SlackChatActorFixtures,
   SlackChatHookDaoFixtures,
+  SlackChatHookFixtures,
   SlackEventsControllerFixtures,
   SlackManagerFixtures,
   SlackSignatureVerifierFixtures,
+  SlackSlashCommandControllerFixtures,
   SlickSlackTeamDaoFixtures,
   SlickSlackTeamFixtures,
   SlickSlashCommandFixtures,
   SlickSlashCommandHistoryDaoFixtures,
   TxWatchActorFixtures,
   UserFixtures,
+  WebManagerFixtures,
   WebSocketFixtures
 }
 import util.Encodings.base64Encode
@@ -70,7 +74,7 @@ import util.Encodings.base64Encode
 import scala.collection.compat.immutable.ArraySeq
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.util.{Failure, Success}
+import scala.util.Failure
 
 //noinspection TypeAnnotation
 class ControllerTests
@@ -80,13 +84,15 @@ class ControllerTests
     with should.Matchers
     with ScalaFutures
     with Results
-    with Eventually
-    with BeforeAndAfterAll {
+    with Eventually {
 
   // noinspection TypeAnnotation
-  trait FixtureBindings extends ProvidesTestBindings with MessagesFixtures {
+  trait FixtureBindings
+      extends ProvidesTestBindings
+      with MessagesFixtures
+      with ClockFixtures {
     val bindModule: GuiceableModule =
-      new UnitTestModule(database, testExecutionContext, messagesApi)
+      new UnitTestModule(database, testExecutionContext, messagesApi, clock)
     val executionContext = testExecutionContext
     val actorSystem = system
     val db = database
@@ -94,7 +100,7 @@ class ControllerTests
   }
 
   implicit override val patienceConfig: PatienceConfig =
-    PatienceConfig(timeout = Span(2, Seconds), interval = Span(5, Millis))
+    PatienceConfig(timeout = Span(10, Seconds), interval = Span(200, Millis))
 
   "HomeController" should {
 
@@ -108,6 +114,7 @@ class ControllerTests
         with MemPoolWatcherFixtures
         with TxWatchActorFixtures
         with MockMailManagerFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures {
 
       val controller = new HomeController(
@@ -116,17 +123,16 @@ class ControllerTests
         mockMailManager
       )
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .never()
-      }
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .never()
 
       def persistEmailDeliveryTest(
-          request: FakeRequest[AnyContentAsFormUrlEncoded],
+          attrs: Map[String, String],
           testType: String
       ): Assertion = {
+        val request = emailFormSubmission(attrs)
         (mockMailManager.sendEmail _)
           .expects(*, *, *)
           .returning(Future.failed(new Exception("error")))
@@ -139,8 +145,9 @@ class ControllerTests
       }
 
       def failedEmailDeliveryTest(
-          request: FakeRequest[AnyContentAsFormUrlEncoded]
+          attrs: Map[String, String]
       ): Assertion = {
+        val request = emailFormSubmission(attrs)
         (mockMailManager.sendEmail _)
           .expects(*, *, *)
           .returning(Future.failed(new Exception("error")))
@@ -151,10 +158,13 @@ class ControllerTests
       }
 
       def successfulEmailDeliveryTest(
-          request: FakeRequest[AnyContentAsFormUrlEncoded]
+          attrs: Map[String, String],
+          destinationEmail: String
       ): Assertion = {
+        val request = emailFormSubmission(attrs)
+        val formData = emailFormData(attrs)
         (mockMailManager.sendEmail _)
-          .expects(*, *, *)
+          .expects(destinationEmail, formData.subjectLine, formData.message)
           .returning(Future(()))
         val result = controller.postEmailForm().apply(request.withCSRFToken)
         val body = contentAsString(result)
@@ -196,21 +206,34 @@ class ControllerTests
         (mockMailManager.sendEmail _)
           .expects(*, *, *)
           .returning(Future(()))
-
-        val request = feedbackFormSubmission
+        val request = emailFormSubmission(feedbackFormAttrs)
         controller.postEmailForm().apply(request.withCSRFToken)
       }
 
-    "notify user of successful email delivery" in new TestFixtures {
-      successfulEmailDeliveryTest(feedbackFormSubmission)
+    "notify user of successful email delivery - feedback" in new TestFixtures {
+      successfulEmailDeliveryTest(
+        feedbackFormAttrs,
+        config.get[String]("email.destination")
+      )
     }
 
-    "notify user of failed email delivery" in new TestFixtures {
-      failedEmailDeliveryTest(feedbackFormSubmission)
+    "notify user of successful email delivery - support" in new TestFixtures {
+      successfulEmailDeliveryTest(
+        supportFormAttrs,
+        config.get[String]("email.destinationSupport")
+      )
+    }
+
+    "notify user of failed email delivery - support" in new TestFixtures {
+      failedEmailDeliveryTest(supportFormAttrs)
+    }
+
+    "notify user of failed email delivery - feedback" in new TestFixtures {
+      failedEmailDeliveryTest(feedbackFormAttrs)
     }
 
     "persist form data in case of a transient smtp failure" in new TestFixtures {
-      persistEmailDeliveryTest(feedbackFormSubmission, "feedback")
+      persistEmailDeliveryTest(feedbackFormAttrs, "feedback")
     }
 
     "render support form without email delivery outcome message when using http method GET at /support" in new TestFixtures {
@@ -228,20 +251,12 @@ class ControllerTests
           .expects(*, *, *)
           .returning(Future(()))
 
-        val request = supportFormSubmission
+        val request = emailFormSubmission(supportFormAttrs)
         controller.postEmailForm().apply(request.withCSRFToken)
       }
 
-    "notify user of successful email delivery - support" in new TestFixtures {
-      successfulEmailDeliveryTest(supportFormSubmission)
-    }
-
-    "notify user of failed email delivery - support" in new TestFixtures {
-      failedEmailDeliveryTest(supportFormSubmission)
-    }
-
     "persist form data in case of a transient smtp failure - support" in new TestFixtures {
-      persistEmailDeliveryTest(supportFormSubmission, "support")
+      persistEmailDeliveryTest(supportFormAttrs, "support")
     }
   }
 
@@ -252,12 +267,14 @@ class ControllerTests
         with MainNetParamsFixtures
         with MemPoolWatcherFixtures
         with BlockChainWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
+        with DatabaseExecutionContextSingleton
         with MemPoolWatcherActorFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
         with SlackChatHookDaoFixtures
-        with SlackChatActorFixtures
+        with HooksManagerActorSlackChatFixtures
         with SlickSlashCommandHistoryDaoFixtures
         with SlickSlashCommandFixtures
         with DatabaseInitializer
@@ -265,37 +282,25 @@ class ControllerTests
         with SlackEventsControllerFixtures
         with SlackSignatureVerifierFixtures
         with SlackManagerFixtures
-        with FakeApplication {
+        with DefaultBodyParserFixtures
+        with SlackSlashCommandControllerFixtures {
 
-      val controller = new SlackEventsController(
-        Helpers.stubControllerComponents(),
-        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor)
-      )
+      override def privateChannel: Boolean = false
 
-      val action =
-        fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
-      val commandController = new SlackSlashCommandController(
-        action,
+      val eventsController = new SlackEventsController(
         Helpers.stubControllerComponents(),
-        slashCommandHistoryDao = slickSlashCommandHistoryDao,
-        slackTeamDao = slickSlackTeamDao,
         hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
-        messagesApi,
-        mockSlackManagerService
+        slackSignatureVerifyAction
       )
 
-      memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
-        .anyNumberOfTimes()
-
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .never()
-      }
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .never()
     }
 
     "stop a running hook when channel is deleted" in new TestFixtures {
+
       afterDbInit {
         for {
           slackTeamEncrypted <- slickSlackTeamDao.toDB(
@@ -303,7 +308,7 @@ class ControllerTests
               slashCommandTeamId,
               SlackUserId("test-user"),
               SlackBotId("test-bot"),
-              testToken,
+              token1,
               "test-team",
               RegisteredUserId("test-user@test.domain")
             )
@@ -311,7 +316,7 @@ class ControllerTests
           _ <- db.run(
             Tables.slackTeams += slackTeamEncrypted
           )
-          response <- commandController.process(cryptoAlertCommand)
+          response <- slackSlashCommandController.process(cryptoAlertCommand)
           dbContents <- db.run(Tables.slackChatHooks.result)
         } yield (response, dbContents)
       }.futureValue should matchPattern {
@@ -321,7 +326,7 @@ class ControllerTests
                 SlackChatHookEncrypted(
                   `channelId`,
                   _: Encrypted,
-                  500000000,
+                  Satoshi(500000000),
                   true
                 )
               )
@@ -329,24 +334,47 @@ class ControllerTests
       }
 
       val fakeRequest =
-        FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
-      val result = controller.eventsAPI().apply(fakeRequest)
+        withFakeSlackSignatureHeaders(
+          FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
+        )
+      val result = eventsController.eventsAPI().apply(fakeRequest)
       status(result) mustEqual OK
-      Thread.sleep(3000)
-      val dbContents = db.run(Tables.slackChatHooks.result).futureValue
+
+      def dbContentsFuture = db.run(Tables.slackChatHooks.result)
 
       eventually {
-        dbContents should matchPattern {
+        dbContentsFuture.futureValue should matchPattern {
           case Vector(
                 SlackChatHookEncrypted(
                   `channelId`,
                   _: Encrypted,
-                  500000000,
+                  Satoshi(500000000),
                   false
                 )
               ) =>
         }
       }
+    }
+
+    "return unauthorised status when no signature headers are supplied" in new TestFixtures {
+      val fakeRequest =
+        FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
+      val result = eventsController.eventsAPI().apply(fakeRequest)
+      status(result) mustEqual UNAUTHORIZED
+    }
+
+    "return unauthorised status when invalid signature headers are supplied" in new TestFixtures {
+      override def setSignatureVerifierExpectations() =
+        signatureVerifierExpectations.returning(
+          Failure(new Exception("Invalid signature"))
+        )
+
+      val fakeRequest =
+        withFakeSlackSignatureHeaders(
+          FakeRequest(POST, "/").withBody(deleteChannelRequestBody)
+        )
+      val result = eventsController.eventsAPI().apply(fakeRequest)
+      status(result) mustEqual UNAUTHORIZED
     }
   }
 
@@ -358,92 +386,142 @@ class ControllerTests
         with MainNetParamsFixtures
         with MemPoolWatcherFixtures
         with BlockChainWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
+        with DatabaseExecutionContextSingleton
         with MemPoolWatcherActorFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
         with SlackChatHookDaoFixtures
         with SlickSlashCommandHistoryDaoFixtures
         with SlickSlackTeamDaoFixtures
-        with SlackChatActorFixtures
+        with HooksManagerActorSlackChatFixtures
         with SlickSlashCommandFixtures
         with DatabaseInitializer
         with SlackSignatureVerifierFixtures
         with SlackManagerFixtures
-        with FakeApplication {
+        with DefaultBodyParserFixtures
+        with SlackSlashCommandControllerFixtures {
 
-//      encryptionManager.init()
+      override def privateChannel: Boolean = false
 
-      val action =
-        fakeApplication.injector.instanceOf[SlackSignatureVerifyAction]
-      val controller = new SlackSlashCommandController(
-        action,
-        Helpers.stubControllerComponents(),
-        slashCommandHistoryDao = slickSlashCommandHistoryDao,
-        slackTeamDao = slickSlackTeamDao,
-        hooksManager = new HooksManagerSlackChat(hookDao, hooksActor),
-        messagesApi,
-        mockSlackManagerService
-      )
-
-      def slashCommand(
-          makeFakeRequest: => FakeRequest[AnyContentAsFormUrlEncoded]
-      ) =
-        call(controller.slashCommand, makeFakeRequest)
-
-      override def memPoolWatcherExpectations(
-          ch: CallHandler1[ActorRef, Unit]
-      ): CallHandler1[ActorRef, Unit] = {
-        ch.atLeastOnce()
-      }
-
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .anyNumberOfTimes()
-      }
-
-      val signatureVerifierExpectations =
-        (mockSlackSignatureVerifierService.validate _)
-          .expects(*, *, *)
-          .anyNumberOfTimes()
-
-      def setSignatureVerifierExpectations() =
-        signatureVerifierExpectations.returning(Success("valid"))
-      setSignatureVerifierExpectations()
-
-      (mockSlackSignatureVerifierService.validate _)
-        .expects(*, *, *)
-        .returning(Success("valid"))
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
         .anyNumberOfTimes()
 
-      def submitCommand(
+      def initialiseHook: Future[Unit] = {
+        for {
+          _ <- hooksManager.register(hook)
+          _ <- hooksManager.start(hook.channel)
+          r <- Future.successful(expectNoMessage())
+        } yield r
+      }
+
+      def stopHook: Future[Unit] = {
+        for {
+          _ <- hooksManager.stop(hook.channel)
+        } yield ()
+      }
+
+      def initialiseTeam: Future[Int] = {
+        for {
+          encrypted <- encryptionManager.encrypt(token1.value.getBytes)
+          result <- db.run(
+            Tables.slackTeams += SlackTeamEncrypted(
+              slashCommandTeamId,
+              SlackUserId("test-user"),
+              SlackBotId("test-bot"),
+              encrypted,
+              "test-team",
+              RegisteredUserId("test-user@test.domain")
+            )
+          )
+        } yield result
+      }
+
+      def noop: Future[Unit] = Future.successful(())
+
+      implicit class SeqExtension[A](s: Seq[A]) {
+        def foldLeftToFuture[B](initial: B)(f: (B, A) => Future[B]): Future[B] =
+          s.foldLeft(Future(initial))((future, item) =>
+            future.flatMap(f(_, item))
+          )
+
+        def mapInSeries[B](f: A => Future[B]): Future[Seq[B]] =
+          s.foldLeftToFuture(Seq[B]())((seq, item) => f(item).map(seq :+ _))
+      }
+
+      def slashCommands[T](
+          initialise: => Future[T]
+      )(
+          cleanUp: => Future[Unit]
+      )(
+          requests: Seq[FakeRequest[AnyContentAsFormUrlEncoded]]
+      ): Future[Seq[Result]] = {
+        afterDbInit {
+          for {
+            _ <- initialise
+            result <-
+              requests.mapInSeries(
+                call(slackSlashCommandController.slashCommand, _)
+              )
+            _ <- cleanUp
+          } yield result
+        }
+      }
+
+      def sendSlashCommandsThenStopHook(
+          requests: Seq[FakeRequest[AnyContentAsFormUrlEncoded]]
+      ): Future[Result] =
+        slashCommands(initialiseTeam)(stopHook)(requests) map { _.last }
+
+      def slashCommand[T](initialise: => Future[T])(cleanUp: => Future[Unit])(
+          command: FakeRequest[AnyContentAsFormUrlEncoded]
+      ): Future[Result] =
+        slashCommands(initialise)(cleanUp)(Vector(command)) map { _.head }
+
+      def cryptoAlert(amount: Int): Future[Result] =
+        slashCommand(initialiseTeam)(stopHook) {
+          slashCommand("/crypto-alert", amount.toString)
+        }
+
+      def slashCommandWithTeam(
+          command: FakeRequest[AnyContentAsFormUrlEncoded]
+      ): Future[Result] =
+        slashCommand(initialiseTeam)(noop)(command)
+
+      def slashCommandWithStartedHook(
+          request: FakeRequest[AnyContentAsFormUrlEncoded]
+      ): Future[Result] =
+        slashCommand {
+          for {
+            _ <- initialiseTeam
+            r <- initialiseHook
+          } yield r
+        }(noop)(request)
+
+      def submitCommand(cleanup: => Future[Unit])(
           command: SlashCommand
       ): Future[(Result, Seq[SlackChatHookEncrypted])] = {
         afterDbInit {
           for {
-            encrypted <- encryptionManager.encrypt(testToken.getBytes)
-            _ <- db.run(
-              Tables.slackTeams += SlackTeamEncrypted(
-                slashCommandTeamId,
-                SlackUserId("test-user"),
-                SlackBotId("test-bot"),
-                encrypted,
-                "test-team",
-                RegisteredUserId("test-user@test.domain")
-              )
-            )
-            response <- controller.process(command)
+            _ <- initialiseTeam
+            response <- slackSlashCommandController.process(command)
             dbContents <- db.run(Tables.slackChatHooks.result)
-            _ <- db.run(Tables.slackChatHooks.delete)
+            _ <- cleanup
           } yield (response, dbContents)
         }
       }
     }
 
+    trait TestFixturesWithPrivateChannel extends TestFixtures {
+      override def privateChannel: Boolean = true
+    }
+
     "start a chat hook specifying BTC" in new TestFixtures {
-      val futureValue = submitCommand(cryptoAlertCommand).futureValue
+
+      val futureValue = submitCommand(stopHook)(cryptoAlertCommand).futureValue
 
       futureValue should matchPattern {
         case (
@@ -452,7 +530,7 @@ class ControllerTests
                 SlackChatHookEncrypted(
                   `channelId`,
                   _: Encrypted,
-                  500000000,
+                  Satoshi(500000000),
                   true
                 )
               )
@@ -466,6 +544,7 @@ class ControllerTests
     }
 
     "start a chat hook without specifying currency" in new TestFixtures {
+
       override val cryptoAlertCommand =
         SlashCommand(
           None,
@@ -481,7 +560,7 @@ class ControllerTests
           None
         )
 
-      val futureValue = submitCommand(cryptoAlertCommand).futureValue
+      val futureValue = submitCommand(stopHook)(cryptoAlertCommand).futureValue
 
       futureValue should matchPattern {
         case (
@@ -490,7 +569,7 @@ class ControllerTests
                 SlackChatHookEncrypted(
                   `channelId`,
                   _: Encrypted,
-                  500000000,
+                  Satoshi(500000000),
                   true
                 )
               )
@@ -501,6 +580,31 @@ class ControllerTests
         case (result: Result, _) =>
           result.header.status mustEqual OK
       }
+    }
+
+    "return an error message if a threshold less than 1 is specified" in new TestFixtures {
+      override val cryptoAlertCommand =
+        SlashCommand(
+          None,
+          channelId,
+          "/crypto-alert",
+          "0",
+          teamDomain,
+          slashCommandTeamId,
+          channelName,
+          userId,
+          userName,
+          isEnterpriseInstall,
+          None
+        )
+
+      val response = slackSlashCommandController.process(cryptoAlertCommand)
+
+      contentAsString(
+        response
+      ) mustEqual messagesApi(
+        SlackSlashCommandController.MESSAGE_CRYPTO_ALERT_MIN_AMOUNT_ERROR
+      )
     }
 
     "return a friendly error message if non-BTC currency is specified" in new TestFixtures {
@@ -519,11 +623,13 @@ class ControllerTests
           None
         )
 
-      val response = controller.process(cryptoAlertCommand)
+      val response = slackSlashCommandController.process(cryptoAlertCommand)
 
       contentAsString(
         response
-      ) mustEqual "I currently only provide alerts for BTC, but other currencies are coming soon."
+      ) mustEqual messagesApi(
+        SlackSlashCommandController.MESSAGE_CURRENCY_ERROR
+      )
     }
 
     "return http status 200 when receiving an ssl_check due to url change" in new TestFixtures {
@@ -531,110 +637,186 @@ class ControllerTests
         FakeRequest(POST, "/")
           .withFormUrlEncodedBody(("ssl_check", "1"))
           .withHeaders(ArraySeq.unsafeWrapArray(fakeSlackSignatureHeaders): _*)
-      val result = call(controller.slashCommand, fakeRequest)
+      val result = call(slackSlashCommandController.slashCommand, fakeRequest)
       status(result) mustEqual OK
     }
 
     "return correct message when issuing a valid /crypto-alert command" in new TestFixtures {
-      val result = slashCommand {
-        fakeRequestValid("/crypto-alert", "5")
-      }
+      val result = cryptoAlert(5)
       status(result) mustEqual OK
-      contentAsString(result) mustEqual "slackResponse.cryptoAlertNew"
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_CRYPTO_ALERT_NEW
     }
 
     "return reconfigure message when reconfiguring alerts" in new TestFixtures {
-      val result = slashCommand {
-        fakeRequestValid("/crypto-alert", "10")
+      val result = sendSlashCommandsThenStopHook {
+        Vector(
+          slashCommand("/crypto-alert", "5"),
+          slashCommand("/crypto-alert", "10")
+        )
       }
       status(result) mustEqual OK
-      contentAsString(result) mustEqual "slackResponse.cryptoAlertReconfig"
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_CRYPTO_ALERT_RECONFIG
     }
 
     "return error message when not supplying amount to /crypto-alert" in new TestFixtures {
-      val result = slashCommand {
-        fakeRequestValid("/crypto-alert", "")
+      val result = slashCommandWithTeam {
+        slashCommand("/crypto-alert")
       }
       status(result) mustEqual OK
-      contentAsString(result) mustEqual "slackResponse.generalError"
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_GENERAL_ERROR
     }
 
     "return correct message when asking for help with /crypto-alert" in new TestFixtures {
-      val result = slashCommand {
-        fakeRequestValid("/crypto-alert", "help")
+      val result = slashCommandWithTeam {
+        slashCommand("/crypto-alert", "help")
       }
       status(result) mustEqual OK
-      contentAsString(result) mustEqual "slackResponse.cryptoAlertHelp"
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_CRYPTO_ALERT_HELP
     }
 
     "return correct message when pausing alerts" in new TestFixtures {
-      val result = slashCommand {
-        fakeRequestValid("/pause-alerts", "")
+      val result = slashCommandWithStartedHook {
+        slashCommand("/pause-alerts")
       }
       status(result) mustEqual OK
-      contentAsString(result) mustEqual "slackResponse.pauseAlerts"
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_PAUSE_ALERTS
+    }
+
+    "return error message when configuring alerts in private channel without membership" in new TestFixturesWithPrivateChannel {
+      val result = slashCommandWithTeam {
+        slashCommand("/crypto-alert", "10")
+      }
+      status(result) mustEqual OK
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL
+    }
+
+    "return error message when attempting to resume alerts in private channel without membership" in new TestFixturesWithPrivateChannel {
+      val result = slashCommandWithTeam {
+        slashCommand("/resume-alerts")
+      }
+      status(result) mustEqual OK
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL
     }
 
     "return error message when pausing alerts when there are no alerts active" in new TestFixtures {
-      val result =
-        call(
-          controller.slashCommand,
-          fakeRequestValid("/pause-alerts", "")
-        )
+      val result = slashCommandWithTeam {
+        slashCommand("/pause-alerts")
+      }
       status(result) mustEqual OK
-      contentAsString(result) mustEqual "slackResponse.pauseAlertsError"
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_PAUSE_ALERTS_ERROR
     }
 
     "return correct message when asking for help with /pause-alerts" in new TestFixtures {
-      val result = slashCommand {
-        fakeRequestValid("/pause-alerts", "help")
+      val result = slashCommandWithTeam {
+        slashCommand("/pause-alerts", "help")
       }
       status(result) mustEqual OK
-      contentAsString(result) mustEqual "slackResponse.pauseAlertsHelp"
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_PAUSE_ALERTS_HELP
+    }
+
+    "return correct message when supplying spurious arguments to /pause-alerts" in new TestFixtures {
+      val result = slashCommandWithTeam {
+        slashCommand("/pause-alerts", "spurious")
+      }
+      status(result) mustEqual OK
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_PAUSE_ALERTS_HELP
     }
 
     "return correct message when resuming alerts" in new TestFixtures {
-      val result =
-        call(
-          controller.slashCommand,
-          fakeRequestValid("/resume-alerts", "")
+      val result = sendSlashCommandsThenStopHook {
+        Vector(
+          slashCommand("/crypto-alert", "5"),
+          slashCommand("/pause-alerts"),
+          slashCommand("/resume-alerts")
         )
+      }
       status(result) mustEqual OK
-      contentAsString(result) mustEqual "slackResponse.resumeAlerts"
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_RESUME_ALERTS
     }
 
-    "return error message when resuming alerts when there are no alerts active" in new TestFixtures {
+    "return error message when resuming alerts when alerts are already active" in new TestFixtures {
+      val result = sendSlashCommandsThenStopHook {
+        Vector(
+          slashCommand("/crypto-alert", "5"),
+          slashCommand("/resume-alerts")
+        )
+      }
+      status(result) mustEqual OK
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_RESUME_ALERTS_ERROR
+    }
+
+    "return error message when resuming alerts when there are no alerts configured in the channel" in new TestFixtures {
       val result =
         call(
-          controller.slashCommand,
-          fakeRequestValid("/resume-alerts", "")
+          slackSlashCommandController.slashCommand,
+          slashCommandWithBadChannel("/resume-alerts")
         )
       status(result) mustEqual OK
-      contentAsString(result) mustEqual "slackResponse.resumeAlertsError"
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_RESUME_ALERTS_ERROR_NOT_CONFIGURED
+    }
+
+    "return correct message when supplying spurious arguments to /resume-alerts" in new TestFixtures {
+      val result = slashCommandWithTeam {
+        slashCommand("/resume-alerts", "spurious")
+      }
+      status(result) mustEqual OK
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_RESUME_ALERTS_HELP
     }
 
     "return correct message when asking for help with /resume-alerts" in new TestFixtures {
-      val result = slashCommand {
-        fakeRequestValid("/resume-alerts", "help")
+      val result = slashCommandWithTeam {
+        slashCommand("/resume-alerts", "help")
       }
       status(result) mustEqual OK
-      contentAsString(result) mustEqual "slackResponse.resumeAlertsHelp"
+      contentAsString(
+        result
+      ) mustEqual SlackSlashCommandController.MESSAGE_RESUME_ALERTS_HELP
     }
 
     "return an error message when no Slack signature is supplied" in new TestFixtures {
-      val result = slashCommand {
-        fakeRequestValidNoSignature("/pause-alerts", "")
+      val result = slashCommandWithTeam {
+        fakeRequestValidNoSignature("/pause-alerts")
       }
       status(result) mustEqual UNAUTHORIZED
     }
 
     "return an error message when an invalid Slack signature is supplied" in new TestFixtures {
+
       override def setSignatureVerifierExpectations() =
         signatureVerifierExpectations.returning(
           Failure(new Exception("Invalid signature"))
         )
-      val result = slashCommand {
-        fakeRequestValid("/pause-alerts", "")
+
+      val result = slashCommandWithTeam {
+        slashCommand("/pause-alerts")
       }
       status(result) mustEqual UNAUTHORIZED
       contentAsString(result) mustEqual "Invalid signature"
@@ -645,22 +827,24 @@ class ControllerTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with DatabaseExecutionContextSingleton
         with EncryptionActorFixtures
         with MainNetParamsFixtures
         with MemPoolWatcherFixtures
         with BlockChainWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with MemPoolWatcherActorFixtures
         with EncryptionManagerFixtures
         with SecretsManagerFixtures
+        with SlackChatHookFixtures
+        with SlickSlashCommandFixtures
         with SlackManagerFixtures
         with SlackChatHookDaoFixtures
         with SlickSlackTeamDaoFixtures
         with SlickSlackTeamFixtures
-        with SlickSlashCommandFixtures
         with DatabaseInitializer
-        with SlackSignatureVerifierFixtures
-        with FakeApplication {
+        with SlackSignatureVerifierFixtures {
 
       val user: String = "test-user@test-domain.com"
       val slackAuthState: String =
@@ -675,13 +859,12 @@ class ControllerTests
         Helpers.stubControllerComponents()
       )
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .anyNumberOfTimes()
-      }
+      override def privateChannel: Boolean = false
 
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .anyNumberOfTimes()
     }
 
     "reject an invalid auth state" in new TestFixtures {
@@ -720,12 +903,16 @@ class ControllerTests
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)
         .once()
-        .returning(Future { ValidSecret(RegisteredUserId(user)) })
+        .returning(Future {
+          ValidSecret(RegisteredUserId(user))
+        })
 
       (mockSlackSecretsManagerService.unbind _)
         .expects(RegisteredUserId(user))
         .once()
-        .returning(Future { Unbind(RegisteredUserId(user)) })
+        .returning(Future {
+          Unbind(RegisteredUserId(user))
+        })
 
       afterDbInit {
         val result = call(
@@ -752,17 +939,23 @@ class ControllerTests
       (mockSlackManagerService.oauthV2Access _)
         .expects(*, *, *, *)
         .once()
-        .returning(Future { slackTeam })
+        .returning(Future {
+          slackTeam
+        })
 
       (mockSlackSecretsManagerService.verifySecret _)
         .expects(*, *)
         .once()
-        .returning(Future { ValidSecret(RegisteredUserId(user)) })
+        .returning(Future {
+          ValidSecret(RegisteredUserId(user))
+        })
 
       (mockSlackSecretsManagerService.unbind _)
         .expects(RegisteredUserId(user))
         .once()
-        .returning(Future { Unbind(RegisteredUserId(user)) })
+        .returning(Future {
+          Unbind(RegisteredUserId(user))
+        })
 
       afterDbInit {
 
@@ -828,20 +1021,21 @@ class ControllerTests
         with MainNetParamsFixtures
         with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
+        with DatabaseExecutionContextSingleton
         with MemPoolWatcherActorFixtures
         with SlackSignatureVerifierFixtures
-        with FakeApplication
+        with DefaultBodyParserFixtures
         with Auth0ActionFixtures {
 
       def mockAuth0Action: Auth0ValidateJWTAction = mockAuth0ActionAlwaysSuccess
 
-      memPoolWatcherExpectations((mockMemPoolWatcher.addListener _).expects(*))
-        .never()
-
       (mockSlackSecretsManagerService.generateSecret _)
         .expects(*)
-        .returning(Future { slackAuthSecret })
+        .returning(Future {
+          slackAuthSecret
+        })
         .anyNumberOfTimes()
 
       val controller =
@@ -854,15 +1048,13 @@ class ControllerTests
 
       val testUser = Some("test-user")
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup.start _).expects().once()
-        (mockPeerGroup.setMaxConnections _).expects(*).once()
-        (mockPeerGroup.addPeerDiscovery _).expects(*).once()
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .anyNumberOfTimes()
-      }
+      (mockPeerGroup.start _).expects().once()
+      (mockPeerGroup.setMaxConnections _).expects(*).once()
+      (mockPeerGroup.addPeerDiscovery _).expects(*).once()
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .anyNumberOfTimes()
     }
 
     "return the correct configuration" in new TestFixtures {
@@ -877,6 +1069,7 @@ class ControllerTests
     "return unauthorized when not supplying a JWT token to the secret endpoint" in new TestFixtures {
       override def mockAuth0Action: Auth0ValidateJWTAction =
         mockAuth0ActionAlwaysFail
+
       val request = FakeRequest(GET, "")
       val result = call(controller.secret(uid = testUser), request)
       status(result) mustEqual UNAUTHORIZED
@@ -885,6 +1078,7 @@ class ControllerTests
     "return unauthorized when supplying an invalid JWT token to the secret end point" in new TestFixtures {
       override def mockAuth0Action: Auth0ValidateJWTAction =
         mockAuth0ActionAlwaysFail
+
       val request =
         FakeRequest(GET, "").withHeaders(
           "Authorization" -> "Bearer fake-invalid"
@@ -896,6 +1090,7 @@ class ControllerTests
     "return a valid secret when supplying a valid user and JWT token to the secret end point" in new TestFixtures {
       override def mockAuth0Action: Auth0ValidateJWTAction =
         mockAuth0ActionAlwaysSuccess
+
       val request =
         FakeRequest(GET, "").withHeaders("Authorization" -> "Bearer fake-valid")
       val result = call(controller.secret(uid = testUser), request)

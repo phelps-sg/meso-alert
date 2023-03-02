@@ -64,7 +64,7 @@ class SlickSlackChatDao @Inject() (
   override protected def toDB(
       hook: SlackChatHookPlainText
   ): Future[SlackChatHookEncrypted] =
-    encryptionManager.encrypt(hook.token.getBytes) map { encrypted =>
+    encryptionManager.encrypt(hook.token.value.getBytes) map { encrypted =>
       SlackChatHookEncrypted(
         channel = hook.channel,
         token = encrypted,
@@ -79,7 +79,7 @@ class SlickSlackChatDao @Inject() (
     encryptionManager.decrypt(hook.token) map { decrypted =>
       SlackChatHookPlainText(
         channel = hook.channel,
-        token = decrypted.asString,
+        token = SlackAuthToken(decrypted.asString),
         threshold = hook.threshold,
         isRunning = hook.isRunning
       )

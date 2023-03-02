@@ -5,7 +5,7 @@ import actors.{Registered, Started}
 import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import akka.util.Timeout
-import dao.Webhook
+import dao.{Satoshi, Webhook}
 import org.bitcoinj.core.listeners.OnTransactionBroadcastListener
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -20,7 +20,9 @@ import slick.dbio.DBIO
 import unittests.Fixtures.{
   ActorGuiceFixtures,
   BlockChainWatcherFixtures,
+  ClockFixtures,
   ConfigurationFixtures,
+  DatabaseExecutionContextSingleton,
   DatabaseGuiceFixtures,
   EncryptionActorFixtures,
   EncryptionManagerFixtures,
@@ -28,6 +30,7 @@ import unittests.Fixtures.{
   MemPoolWatcherFixtures,
   MessagesFixtures,
   ProvidesTestBindings,
+  WebManagerFixtures,
   WebhookActorFixtures,
   WebhookDaoFixtures,
   WebhookFixtures,
@@ -49,9 +52,12 @@ class ServiceTests
     with BeforeAndAfterAll {
 
   // noinspection TypeAnnotation
-  trait FixtureBindings extends ProvidesTestBindings with MessagesFixtures {
+  trait FixtureBindings
+      extends ProvidesTestBindings
+      with MessagesFixtures
+      with ClockFixtures {
     val bindModule: GuiceableModule =
-      new UnitTestModule(database, testExecutionContext, messagesApi)
+      new UnitTestModule(database, testExecutionContext, messagesApi, clock)
     val executionContext = testExecutionContext
     val actorSystem = system
     val db = database
@@ -88,29 +94,32 @@ class ServiceTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with DatabaseExecutionContextSingleton
         with MemPoolWatcherFixtures
         with MainNetParamsFixtures
         with BlockChainWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with WebhookDaoFixtures
         with WebhookFixtures
         with WebhookActorFixtures
         with WebhookManagerFixtures {
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .never()
-      }
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .never()
 
     }
 
     "register and start all running hooks stored in the database on initialisation" in new TestFixtures {
 
-      val hook1 = Webhook(new URI("http://test1"), 10, isRunning = true)
-      val hook2 = Webhook(new URI("http://test2"), 20, isRunning = true)
-      val hook3 = Webhook(new URI("http://test3"), 30, isRunning = false)
+      val hook1 =
+        Webhook(new URI("http://test1"), Satoshi(10), isRunning = true)
+      val hook2 =
+        Webhook(new URI("http://test2"), Satoshi(20), isRunning = true)
+      val hook3 =
+        Webhook(new URI("http://test3"), Satoshi(30), isRunning = false)
 
       val hooks = List(hook1, hook2, hook3)
 

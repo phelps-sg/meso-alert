@@ -7,27 +7,32 @@ import actors.MemPoolWatcherActor.{
   PeerGroupAlreadyStartedException,
   StartPeerGroup
 }
+import actors.RateLimitingBatchingActor.TxBatch
 import actors.SlackSecretsActor.{
   GenerateSecret,
   Unbind,
   ValidSecret,
   VerifySecret
 }
+import actors.RetryOrDieActor.{Retry, ScheduleRetry}
 import actors.{
   AuthenticationActor,
   HookAlreadyRegisteredException,
   HookAlreadyStartedException,
   HookNotRegisteredException,
   HookNotStartedException,
+  RateLimitingBatchingActor,
   Registered,
   Started,
   Stopped,
   TxHash,
   TxInputOutput,
+  TxMessagingActorSlackChat,
+  RetryOrDieActor,
   TxUpdate,
   Updated
 }
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
@@ -39,53 +44,65 @@ import org.bitcoinj.core.listeners.{
   NewBestBlockListener,
   OnTransactionBroadcastListener
 }
-import org.scalamock.handlers.CallHandler1
 import org.scalamock.matchers.ArgCapture.CaptureAll
 import org.scalamock.scalatest.MockFactory
 import org.scalamock.util.Defaultable
-import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.wordspec.AnyWordSpecLike
+import org.scalatest.{Assertion, BeforeAndAfterAll}
 import play.api.inject.guice.GuiceableModule
+import play.api.libs.json.JsObject
 import postgres.PostgresContainer
 import services._
+import slack.BlockMessages
+import slack.BlockMessages.BlockMessage
+import sttp.model.{StatusCode, Uri}
 import unittests.Fixtures.{
   ActorGuiceFixtures,
   BlockChainWatcherFixtures,
   BlockFixtures,
   ClockFixtures,
   ConfigurationFixtures,
+  DatabaseExecutionContextSingleton,
   EncryptionActorFixtures,
   EncryptionManagerFixtures,
   HookActorTestLogic,
+  HooksManagerActorSlackChatFixtures,
   MainNetParamsFixtures,
   MemPoolWatcherActorFixtures,
   MemPoolWatcherFixtures,
   MessagesFixtures,
   ProvidesTestBindings,
-  SlackChatActorFixtures,
+  RandomFixtures,
   SlackChatHookDaoFixtures,
+  SlackChatHookFixtures,
+  SlackManagerFixtures,
   SlackSecretsActorFixtures,
   TransactionFixtures,
+  TxMessagingActorSlackChatFixtures,
+  TxMessagingActorWebFixtures,
   TxPersistenceActorFixtures,
   TxUpdateFixtures,
   TxWatchActorFixtures,
   UserFixtures,
+  WebManagerFixtures,
   WebSocketFixtures,
   WebhookActorFixtures,
   WebhookFixtures
 }
+import util.BitcoinFormatting.toChatMessage
 
 import java.math.BigInteger
 import java.net.URI
+import java.time.Duration
 import scala.annotation.unused
-import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Random, Success}
 
 // scalafix:off
 
@@ -107,9 +124,12 @@ class ActorTests
   implicit override val patienceConfig =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
 
-  trait FixtureBindings extends ProvidesTestBindings with MessagesFixtures {
+  trait FixtureBindings
+      extends ProvidesTestBindings
+      with MessagesFixtures
+      with ClockFixtures {
     val bindModule: GuiceableModule =
-      new UnitTestModule(database, testExecutionContext, messagesApi)
+      new UnitTestModule(database, testExecutionContext, messagesApi, clock)
     val executionContext = testExecutionContext
     val actorSystem = system
     val timeout: Timeout = 20.seconds
@@ -127,22 +147,22 @@ class ActorTests
         with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with ConfigurationFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
+        with DatabaseExecutionContextSingleton
         with MemPoolWatcherActorFixtures {
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup.start _).expects().once()
-        (mockPeerGroup.setMaxConnections _).expects(*).once()
-        (mockPeerGroup.addPeerDiscovery _).expects(*).once()
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .once()
-        (mockPeerGroup
-          .addBlocksDownloadedEventListener(_: BlocksDownloadedEventListener))
-          .expects(*)
-          .once()
-      }
+      (mockPeerGroup.start _).expects().once()
+      (mockPeerGroup.setMaxConnections _).expects(*).once()
+      (mockPeerGroup.addPeerDiscovery _).expects(*).once()
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .once()
+      (mockPeerGroup
+        .addBlocksDownloadedEventListener(_: BlocksDownloadedEventListener))
+        .expects(*)
+        .once()
     }
 
     "return a successful acknowledgement when initialising the peer group" in new TestFixtures {
@@ -181,15 +201,20 @@ class ActorTests
         with BlockChainWatcherFixtures
         with BlockFixtures {
 
+      val listenerCapture = CaptureAll[NewBestBlockListener]()
+
       (mockBlockChain
         .addNewBestBlockListener(_: NewBestBlockListener))
-        .expects(*)
+        .expects(capture(listenerCapture))
+        .once()
     }
 
     "listen for new best blocks on startup" in new TestFixtures {
+      listenerCapture.values.size shouldBe 0
       @unused
       val newBlockChainWatcherActor = makeBlockChainWatcherActor
       expectNoMessage()
+      listenerCapture.values.size shouldBe 1
     }
 
     "send transaction updates to listeners when a new block has been added" in new TestFixtures {
@@ -224,7 +249,9 @@ class ActorTests
         with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with WebSocketFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
+        with DatabaseExecutionContextSingleton
         with MemPoolWatcherActorFixtures
         with UserFixtures
         with TransactionFixtures {
@@ -232,13 +259,10 @@ class ActorTests
       // Capture the listeners.  The second listener will be the txWatchActor
       lazy val listenerCapture = CaptureAll[OnTransactionBroadcastListener]()
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(capture(listenerCapture))
-          .atLeastOnce()
-      }
-
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(capture(listenerCapture))
+        .atLeastOnce()
     }
 
     "send the correct TxUpdate message when a transaction update is received from " +
@@ -256,6 +280,7 @@ class ActorTests
         (mockWs.update _).expects(capture(updateCapture)).atLeastOnce()
 
         // This is required for raw types (see https://scalamock.org/user-guide/advanced_topics/).
+        @unused
         implicit val d = new Defaultable[ListenableFuture[_]] {
           override val default = null
         }
@@ -309,12 +334,15 @@ class ActorTests
           // noinspection SpellCheckingInspection
           case TxUpdate(
                 _,
-                totalValue,
+                Satoshi(totalValue),
                 _,
                 _,
                 Seq(
-                  TxInputOutput(Some(`outputAddress1`), Some(`value1`)),
-                  TxInputOutput(Some(`outputAddress2`), Some(`value2`))
+                  TxInputOutput(
+                    Some(`outputAddress1`),
+                    Some(Satoshi(`value1`))
+                  ),
+                  TxInputOutput(Some(`outputAddress2`), Some(Satoshi(`value2`)))
                 ),
                 Seq(),
                 _
@@ -325,7 +353,7 @@ class ActorTests
         updateCapture.value should matchPattern {
           case TxUpdate(
                 _,
-                1000000,
+                Satoshi(1000000),
                 _,
                 _,
                 Seq(
@@ -344,7 +372,7 @@ class ActorTests
                 TxHash(
                   "6359f0868171b1d194cbee1af2f16ea598ae8fad666d9b012c8ed2b79a236ec4"
                 ),
-                300000000,
+                Satoshi(300000000),
                 _,
                 _,
                 Seq(
@@ -366,7 +394,7 @@ class ActorTests
                 TxHash(
                   "73965c0ab96fa518f47df4f3e7201e0a36f163c4857fc28150d277caa8589259"
                 ),
-                923985,
+                Satoshi(923985),
                 _,
                 _,
                 Seq(
@@ -391,44 +419,57 @@ class ActorTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
-        with MessagesFixtures
         with MainNetParamsFixtures
-        with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
-        with ActorGuiceFixtures
+        with BlockChainWatcherFixtures
+        with MessagesFixtures
         with TxUpdateFixtures
+        with WebManagerFixtures
+        with ActorGuiceFixtures
+        with RandomFixtures
         with TxPersistenceActorFixtures {
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .once()
-      }
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .anyNumberOfTimes()
     }
 
     "register itself as a listener to the mem-pool" in new TestFixtures {
-      (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
+      expectNoMessage()
+      memPoolListenerCapture.value shouldBe txPersistenceActor
     }
 
     "record a new transaction update when it arrives" in new TestFixtures {
-      (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
+      val txCapture = CaptureAll[TxUpdate]()
+      //      (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
       (mockTransactionUpdateDao.record _)
-        .expects(tx)
+        .expects(capture(txCapture))
         .returning(Future(1))
         .once()
 
       txPersistenceActor ! tx
+      expectNoMessage()
+
+      txCapture.value shouldBe tx
     }
 
     "retry to record a transaction if it fails" in new TestFixtures {
+      val txCapture = CaptureAll[TxUpdate]()
       (mockMemPoolWatcher.addListener _).expects(txPersistenceActor).once()
+
       (mockTransactionUpdateDao.record _)
         .expects(tx)
         .returning(Future.failed[Int](new Exception("error")))
-      (mockTransactionUpdateDao.record _).expects(tx).returning(Future(1))
+
+      (mockTransactionUpdateDao.record _)
+        .expects(capture(txCapture))
+        .returning(Future(1))
 
       txPersistenceActor ! tx
+      expectNoMessage(1.second)
+
+      txCapture.value shouldBe tx
     }
 
     "terminate the actor if maxRetryCount (3) is reached" in new TestFixtures {
@@ -459,35 +500,19 @@ class ActorTests
         with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
         with WebSocketFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with UserFixtures
         with TxUpdateFixtures
         with TxWatchActorFixtures {
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .never()
-      }
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .never()
     }
 
-    trait TestFixturesOneSubscriber extends TestFixtures {
-      override def memPoolWatcherExpectations(
-          ch: CallHandler1[ActorRef, Unit]
-      ) = {
-        ch.once()
-      }
-
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .never()
-      }
-    }
-
-    "provide updates when user is authenticated" in new TestFixturesOneSubscriber {
+    "provide updates when user is authenticated" in new TestFixtures {
 
       (mockUser.filter _).expects(tx).returning(true)
       (mockUserManager.authenticate _)
@@ -520,26 +545,7 @@ class ActorTests
       expectNoMessage()
     }
 
-    "only provide updates according to the user's filter" in new TestFixturesOneSubscriber {
-
-      val tx1 = TxUpdate(
-        TxHash("testHash1"),
-        10,
-        now,
-        isPending = true,
-        List(),
-        List(),
-        None
-      )
-      val tx2 = TxUpdate(
-        TxHash("testHash2"),
-        1,
-        now,
-        isPending = true,
-        List(),
-        List(),
-        None
-      )
+    "only provide updates according to the user's filter" in new TestFixtures {
 
       (mockUserManager.authenticate _)
         .expects("test")
@@ -563,16 +569,19 @@ class ActorTests
 
     trait TestFixtures
         extends FixtureBindings
+        with ClockFixtures
         with ConfigurationFixtures
         with MessagesFixtures
         with MemPoolWatcherFixtures
         with MainNetParamsFixtures
         with BlockChainWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
+        with DatabaseExecutionContextSingleton
         with SlackChatHookDaoFixtures
-        with SlackChatActorFixtures
+        with HooksManagerActorSlackChatFixtures
         with HookActorTestLogic[
           SlackChannelId,
           SlackChatHookPlainText,
@@ -581,31 +590,13 @@ class ActorTests
 
       encryptionManager.initialiseFuture()
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .never()
-      }
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .never()
 
       override def wait(duration: FiniteDuration): Unit =
         expectNoMessage(duration)
-    }
-
-    trait TestFixturesTwoSubscribers extends TestFixtures {
-      override def memPoolWatcherExpectations(
-          ch: CallHandler1[ActorRef, Unit]
-      ) = {
-        ch.twice()
-      }
-    }
-
-    trait TestFixturesOneSubscriber extends TestFixtures {
-      override def memPoolWatcherExpectations(
-          ch: CallHandler1[ActorRef, Unit]
-      ) = {
-        ch.once()
-      }
     }
 
     "return WebhookNotRegistered when trying to start an unregistered hook" in new TestFixtures {
@@ -638,13 +629,13 @@ class ActorTests
       }
     }
 
-    "return an exception when starting a hook that has already been started" in new TestFixturesOneSubscriber {
+    "return an exception when starting a hook that has already been started" in new TestFixtures {
       registerStartStart().futureValue should matchPattern {
         case Failure(HookAlreadyStartedException(`key`)) =>
       }
     }
 
-    "correctly register, start, stop and restart a web hook" in new TestFixturesTwoSubscribers {
+    "correctly register, start, stop and restart a web hook" in new TestFixtures {
       registerStartStopRestartStop().futureValue should matchPattern {
         case (
               Success(Registered(`hook`)),
@@ -663,42 +654,23 @@ class ActorTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with ClockFixtures
         with MessagesFixtures
         with MainNetParamsFixtures
         with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
+        with WebSocketFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with WebhookFixtures
+        with DatabaseExecutionContextSingleton
         with WebhookActorFixtures
         with HookActorTestLogic[URI, Webhook, Webhook] {
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .never()
-      }
-
-    }
-
-    trait TestFixturesTwoSubscribers
-        extends TestFixtures
-        with ActorGuiceFixtures {
-      override def memPoolWatcherExpectations(
-          ch: CallHandler1[ActorRef, Unit]
-      ) = {
-        ch.twice()
-      }
-    }
-
-    trait TestFixturesOneSubscriber
-        extends TestFixtures
-        with ActorGuiceFixtures {
-      override def memPoolWatcherExpectations(
-          ch: CallHandler1[ActorRef, Unit]
-      ) = {
-        ch.once()
-      }
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .never()
     }
 
     "return WebhookNotRegistered when trying to start an unregistered hook" in new TestFixtures {
@@ -731,13 +703,13 @@ class ActorTests
       }
     }
 
-    "return an exception when starting a hook that has already been started" in new TestFixturesOneSubscriber {
+    "return an exception when starting a hook that has already been started" in new TestFixtures {
       registerStartStart().futureValue should matchPattern {
         case Failure(HookAlreadyStartedException(`key`)) =>
       }
     }
 
-    "correctly register, start, stop and restart a web hook" in new TestFixturesTwoSubscribers {
+    "correctly register, start, stop and restart a web hook" in new TestFixtures {
       registerStartStopRestartStop().futureValue should matchPattern {
         case (
               Success(Registered(`hook`)),
@@ -748,6 +720,90 @@ class ActorTests
               Seq(`stoppedHook`)
             ) =>
       }
+    }
+  }
+
+  "RateLimitingBatchActor" should {
+
+    trait TestFixtures
+        extends FixtureBindings
+        with TxUpdateFixtures
+        with ClockFixtures {
+
+      val actor =
+        actorSystem.actorOf(RateLimitingBatchingActor.props(self, clock))
+
+      def expectTx(message: TxUpdate) = expectTxs(Vector(message))
+
+      def expectTxs(messages: Seq[TxUpdate]) = expectMsg(TxBatch(messages))
+
+      override def setClockExpectations(): Unit =
+        (clock.instant _).expects().returning(now.toInstant).once()
+    }
+
+    "forward separate messages when they are separated by a long delay" in new TestFixtures {
+
+      advanceClockTo(2000)
+      actor ! tx
+      expectTx(tx)
+
+      advanceClockTo(4500)
+      actor ! tx1
+      expectTx(tx1)
+    }
+
+    "forward a batch of messages when they are separated by a short delay" in new TestFixtures {
+
+      advanceClockTo(500)
+      actor ! tx
+      expectTx(tx)
+
+      advanceClockTo(600)
+      actor ! tx1
+      expectNoMessage()
+
+      advanceClockTo(700)
+      actor ! tx2
+
+      advanceClockTo(5000)
+      actor ! tx3
+      expectTxs(Vector(tx1, tx2, tx3))
+
+      advanceClockTo(8000)
+      actor ! tx4
+      expectTx(tx4)
+    }
+
+    "start a new batch when the batch size limit is reached" in new TestFixtures {
+
+      val interval = 100
+      val txs = (1 to RateLimitingBatchingActor.MAX_BATCH_SIZE) map { i: Int =>
+        TxUpdate(
+          TxHash(i.toString),
+          Satoshi(i * 1000000),
+          now.plus(Duration.ofMillis(interval * i)).toLocalDateTime,
+          isPending = false,
+          Vector(),
+          Vector(),
+          None
+        )
+      }
+
+      def send(tx: TxUpdate) = {
+        advanceClockTo(tx.time)
+        actor ! tx
+      }
+
+      advanceClockTo(500)
+      actor ! tx
+      expectTx(tx)
+
+      for (tx <- txs.dropRight(1)) {
+        send(tx)
+        expectNoMessage(10.millis)
+      }
+      send(txs.last)
+      expectTxs(txs)
     }
   }
 
@@ -825,18 +881,16 @@ class ActorTests
         with MainNetParamsFixtures
         with BlockChainWatcherFixtures
         with MemPoolWatcherFixtures
+        with WebManagerFixtures
         with ActorGuiceFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
         with SlackSecretsActorFixtures {
 
-      override def peerGroupExpectations(): Unit = {
-        (mockPeerGroup
-          .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
-          .expects(*)
-          .never()
-      }
-
+      (mockPeerGroup
+        .addOnTransactionBroadcastListener(_: OnTransactionBroadcastListener))
+        .expects(*)
+        .never()
     }
 
     "create a new secret" in new TestFixtures {
@@ -884,6 +938,189 @@ class ActorTests
       } yield verified).futureValue should matchPattern { case Failure(_) =>
       }
     }
+  }
+
+  "TxMessagingActorWeb" should {
+    trait TestFixtures
+        extends FixtureBindings
+        with TxUpdateFixtures
+        with ConfigurationFixtures
+        with WebManagerFixtures
+        with RandomFixtures
+        with WebhookFixtures
+        with TxMessagingActorWebFixtures {
+
+      val jsonCapture = CaptureAll[JsObject]()
+      val uriCapture = CaptureAll[URI]()
+      (mockWebManagerService.postJson _)
+        .expects(capture(jsonCapture), capture(uriCapture))
+        .returning(Future.successful(StatusCode(200)))
+    }
+
+    "post the correct message went sent a single transaction" in new TestFixtures {
+      webHookMessagingActor ! TxBatch(Vector(tx))
+      expectNoMessage()
+
+      uriCapture.value shouldBe Uri(hook.uri)
+      jsonCapture.value("text").as[String] should equal(toChatMessage(tx))
+    }
+
+    "post the correct message went sent multiple transactions" in new TestFixtures {
+      val txs = Vector(tx, tx1)
+      webHookMessagingActor ! TxBatch(txs)
+      expectNoMessage()
+
+      uriCapture.value shouldBe Uri(hook.uri)
+      jsonCapture.value("text").as[String] should equal(
+        txs.map(toChatMessage).mkString("\n")
+      )
+    }
+  }
+
+  "TxMessagingActorSlackChat" should {
+
+    trait TestFixtures
+        extends FixtureBindings
+        with TxUpdateFixtures
+        with ConfigurationFixtures
+        with MessagesFixtures
+        with WebManagerFixtures
+        with RandomFixtures
+        with SlackChatHookFixtures
+        with SlackManagerFixtures
+        with TxMessagingActorSlackChatFixtures {
+
+      val blocksCapture = CaptureAll[BlockMessage]()
+      val tokenCapture = CaptureAll[SlackAuthToken]()
+      val channelCapture = CaptureAll[SlackChannelId]()
+      val botNameCapture = CaptureAll[String]()
+
+      (mockSlackManagerService.chatPostMessage _)
+        .expects(
+          capture(tokenCapture),
+          capture(botNameCapture),
+          capture(channelCapture),
+          *,
+          capture(blocksCapture)
+        )
+        .once()
+        .returning(Future.successful(expectedBlocks))
+
+      def slackChatTestLogic: Assertion = {
+        slackChatActor ! TxBatch(transactions)
+        expectNoMessage()
+
+        blocksCapture.value shouldBe expectedBlocks
+        tokenCapture.value shouldBe hook.token
+        channelCapture.value shouldBe hook.channel
+        botNameCapture.value shouldBe messagesApi(
+          TxMessagingActorSlackChat.MESSAGE_BOT_NAME
+        )
+      }
+
+      def expectedBlocks: BlockMessage
+
+      def transactions: Vector[TxUpdate]
+    }
+
+    trait SlackMessage {
+      env: MessagesFixtures =>
+      val slackMessage = BlockMessages.txToBlockMessage(messagesApi)(_)
+    }
+
+    trait SingleTransaction extends SlackMessage {
+      env: SlackMessage
+        with TxUpdateFixtures
+        with MessagesFixtures
+        with TestFixtures =>
+
+      override def transactions = Vector(tx)
+
+      override def expectedBlocks = slackMessage(tx)
+    }
+
+    trait MultipleTransactions extends SlackMessage {
+      env: SlackMessage
+        with TxUpdateFixtures
+        with MessagesFixtures
+        with TestFixtures =>
+
+      def transactions = Vector(tx, tx1, tx2)
+
+      override def expectedBlocks =
+        BlockMessages.txBatchToBlockMessage(messagesApi)(TxBatch(transactions))
+    }
+
+    "send the correct message to Slack when sent a single transaction" in new SingleTransaction
+      with TestFixtures {
+
+      slackChatTestLogic
+    }
+
+    "send the correct message to Slack when sent a batch of transactions" in new MultipleTransactions
+      with TestFixtures {
+
+      slackChatTestLogic
+    }
+  }
+
+  "RetryOrDieActor" should {
+
+    trait TestFixtures
+        extends FixtureBindings
+        with RandomFixtures
+        with TxUpdateFixtures {
+
+      val probe = TestProbe()
+
+      class TestActor(
+          val random: Random,
+          val maxRetryCount: Int,
+          val ec: ExecutionContext,
+          override val backoffPolicyMin: FiniteDuration,
+          override val backoffPolicyCap: FiniteDuration
+      ) extends RetryOrDieActor[TxBatch, TxBatch] {
+
+        override def process(tx: TxBatch): Future[TxBatch] = {
+          logger.debug(s"Received $tx")
+          Future.failed(new Exception("failed"))
+        }
+
+        override def triggerRetry(msg: ScheduleRetry[TxBatch]): Unit =
+          probe.ref ! msg
+      }
+
+      val min = 500.millis
+      val cap = 10.seconds
+      val maxRetries = 20
+      val retryActor =
+        actorSystem.actorOf(
+          Props(new TestActor(random, maxRetries, executionContext, min, cap))
+        )
+    }
+
+    "calculate wait times within limits" in new TestFixtures {
+      val txs = generateTxs(maxRetries - 1)
+      for (i <- 1 until maxRetries) {
+        val batch = TxBatch(Vector(txs(i - 1)))
+        retryActor ! Retry(batch, i, None)
+        val msg = probe.receiveOne(50.millis)
+        msg should matchPattern {
+          case ScheduleRetry(t, `batch`, _, _) if t >= min && t < cap =>
+        }
+      }
+    }
+
+    "terminate the actor when max retries are reached" in new TestFixtures {
+      probe.watch(retryActor)
+      retryActor ! Retry(
+        TxBatch(Vector(tx)),
+        maxRetries,
+        Some(new Exception("failed"))
+      )
+      probe.expectTerminated(retryActor)
+    }
+
   }
 
   override def afterAll(): Unit = {

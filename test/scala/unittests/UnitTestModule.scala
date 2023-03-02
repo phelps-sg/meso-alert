@@ -2,6 +2,7 @@ package unittests
 
 import actors.{
   AuthenticationActor,
+  RateLimitingBatchingActor,
   TxFilterActor,
   TxMessagingActorSlackChat,
   TxMessagingActorWeb
@@ -12,27 +13,27 @@ import play.libs.akka.AkkaGuiceSupport
 import slick.jdbc
 import slick.jdbc.JdbcBackend.Database
 
+import java.time.Clock
 import javax.inject.Provider
 import scala.concurrent.ExecutionContext
 
 class UnitTestModule(
     val db: jdbc.JdbcBackend.Database,
     val testExecutionContext: ExecutionContext,
-    val messagesApi: MessagesApi
+    val messagesApi: MessagesApi,
+    val clock: Clock
 ) extends AbstractModule
     with AkkaGuiceSupport {
+
   override def configure(): Unit = {
     bind(classOf[Database]).toProvider(new Provider[Database] {
       val get: jdbc.JdbcBackend.Database = db
     })
+    bind(classOf[Clock]).toProvider(new Provider[Clock] {
+      val get: Clock = clock
+    })
     bind(classOf[MessagesApi]).toInstance(messagesApi)
-    bind(classOf[scala.util.Random])
-      .toProvider(new Provider[scala.util.Random] {
-        val get: scala.util.Random = new scala.util.Random(1000)
-      })
     bind(classOf[ExecutionContext]).toInstance(testExecutionContext)
-    //      bindActor(classOf[MemPoolWatcherActor], "mem-pool-actor")
-    //      bindActor(classOf[WebhooksActor], "webhooks-actor")
     bindActorFactory(
       classOf[TxMessagingActorWeb],
       classOf[TxMessagingActorWeb.Factory]
@@ -46,5 +47,9 @@ class UnitTestModule(
       classOf[AuthenticationActor.Factory]
     )
     bindActorFactory(classOf[TxFilterActor], classOf[TxFilterActor.Factory])
+    bindActorFactory(
+      classOf[RateLimitingBatchingActor],
+      classOf[RateLimitingBatchingActor.Factory]
+    )
   }
 }

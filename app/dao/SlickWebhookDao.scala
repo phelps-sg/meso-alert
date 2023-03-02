@@ -41,8 +41,10 @@ class SlickWebhookDao @Inject() (
     runKeyQuery(for (hook <- Tables.webhooks if hook.is_running) yield hook.url)
   }
 
-  override protected def toDB(hook: Webhook): Future[Webhook] = Future { hook }
-  override protected def fromDB(hook: Webhook): Future[Webhook] = Future {
-    hook
-  }
+  override protected def toDB(hook: Webhook): Future[Webhook] =
+    Future.successful { hook }
+  override protected def fromDB(hook: Webhook): Future[Webhook] =
+    Future.successful {
+      hook
+    }
 }

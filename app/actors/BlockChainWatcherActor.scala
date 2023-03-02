@@ -3,7 +3,7 @@ package actors
 import actors.MessageHandlers.UnrecognizedMessageHandlerFatal
 import akka.actor.{Actor, ActorRef, Props}
 import com.google.inject.Inject
-import org.bitcoinj.core.StoredBlock
+import org.bitcoinj.core.{AbstractBlockChain, StoredBlock}
 import org.bitcoinj.params.AbstractBitcoinNetParams
 import play.api.Logging
 import services.{BlockChainProvider, NetParamsProvider}
@@ -23,6 +23,11 @@ object BlockChainWatcherActor {
   )
 }
 
+/** This actor allows other actors to register to receive updates on a specified
+  * transaction hash by sending a `WatchTxConfidence` message. When a new block
+  * is broadcast, the receiving actor is informed of any transactions matching
+  * the given hash through a `TxUpdate` event.
+  */
 class BlockChainWatcherActor @Inject() (
     protected val blockChainProvider: BlockChainProvider,
     protected val netParamsProvider: NetParamsProvider
@@ -34,7 +39,7 @@ class BlockChainWatcherActor @Inject() (
 
   implicit val params: AbstractBitcoinNetParams = netParamsProvider.get
 
-  protected val blockChain = blockChainProvider.get
+  protected val blockChain: AbstractBlockChain = blockChainProvider.get
 
   protected var txWatchers: Map[TxHash, ActorRef] = Map()
 

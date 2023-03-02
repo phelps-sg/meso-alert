@@ -12,6 +12,12 @@ import util.Encodings.base64Encode
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
+/** An actor which generates temporary secrets for Slack authorisation when
+  * [[https://api.slack.com/authentication/oauth-v2#exchanging installing the app to a Slack workspace]].
+  * Each secret is associated with a Slack user ID, and the mapping is persisted
+  * to ensure that Slack authorisation can recover in the case of a temporary
+  * outage.
+  */
 object SlackSecretsActor {
 
   final case class InvalidSecretException(id: RegisteredUserId, secret: Secret)

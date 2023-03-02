@@ -14,7 +14,9 @@ import postgres.PostgresContainer
 import slick.BtcPostgresProfile.api._
 import slick.Tables
 import unittests.Fixtures.{
+  ClockFixtures,
   ConfigurationFixtures,
+  DatabaseExecutionContextSingleton,
   DatabaseGuiceFixtures,
   DatabaseInitializer,
   EncryptionActorFixtures,
@@ -47,9 +49,12 @@ class DaoTests
     with BeforeAndAfterAll {
 
   // noinspection TypeAnnotation
-  trait FixtureBindings extends ProvidesTestBindings with MessagesFixtures {
+  trait FixtureBindings
+      extends ProvidesTestBindings
+      with MessagesFixtures
+      with ClockFixtures {
     val bindModule: GuiceableModule =
-      new UnitTestModule(database, testExecutionContext, messagesApi)
+      new UnitTestModule(database, testExecutionContext, messagesApi, clock)
     val executionContext = testExecutionContext
     val actorSystem = system
     val db = database
@@ -94,6 +99,7 @@ class DaoTests
     trait TestFixtures
         extends FixtureBindings
         with ConfigurationFixtures
+        with DatabaseExecutionContextSingleton
         with DatabaseGuiceFixtures
         with EncryptionActorFixtures
         with EncryptionManagerFixtures
@@ -112,7 +118,7 @@ class DaoTests
                 SlackChatHookEncrypted(
                   `key`,
                   _: Encrypted,
-                  `originalThreshold`,
+                  Satoshi(`originalThreshold`),
                   true
                 )
               )
@@ -139,7 +145,7 @@ class DaoTests
                 SlackChatHookEncrypted(
                   `key`,
                   _: Encrypted,
-                  `newThreshold`,
+                  Satoshi(`newThreshold`),
                   true
                 )
               )
@@ -233,6 +239,7 @@ class DaoTests
         extends FixtureBindings
         with DatabaseGuiceFixtures
         with SlackSignatureVerifierFixtures
+        with SlackChatHookFixtures
         with SlickSlashCommandFixtures
         with SlickSlashCommandHistoryDaoFixtures
         with DatabaseInitializer
@@ -288,7 +295,7 @@ class DaoTests
                 TransactionUpdate(
                   Some(_: Long),
                   `testHash`,
-                  10,
+                  Satoshi(10),
                   `timeStamp`,
                   true
                 )

@@ -4,14 +4,26 @@ metadata:
   name: meso-alert-service
   annotations:
     kubernetes.digitalocean.com/load-balancer-id: "meso-alert-load-balancer"
+    service.beta.kubernetes.io/do-loadbalancer-certificate-id: "0d69240d-2e97-4612-9929-bc00d582dfba"
+    service.beta.kubernetes.io/do-loadbalancer-protocol: "https"
     service.beta.kubernetes.io/do-loadbalancer-size-unit: "1"
     service.beta.kubernetes.io/do-loadbalancer-disable-lets-encrypt-dns-records: "false"
+    service.beta.kubernetes.io/do-loadbalancer-healthcheck-check-interval-seconds: "10"
+    service.beta.kubernetes.io/do-loadbalancer-healthcheck-response-timeout-seconds: "5"
+    service.beta.kubernetes.io/do-loadbalancer-healthcheck-unhealthy-threshold: "3"
+    service.beta.kubernetes.io/do-loadbalancer-healthcheck-healthy-threshold: "5"
+    service.beta.kubernetes.io/do-loadbalancer-redirect-http-to-https: "true"
 spec:
   type: LoadBalancer
   selector:
     app: meso-alert
   ports:
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 9000
     - name: http
       protocol: TCP
       port: 80
       targetPort: 9000
+

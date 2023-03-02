@@ -8,6 +8,7 @@ import play.api.mvc._
 import play.api.{Configuration, Logging}
 import play.twirl.api.Html
 import services.MailManager
+import util.AsyncResultHelpers
 
 import javax.inject._
 import scala.concurrent.{ExecutionContext, Future}
@@ -27,7 +28,9 @@ object HomeController {
       name: String,
       email: String,
       message: String
-  ) {}
+  ) {
+    def subjectLine: String = s"$formType - $name $email"
+  }
 
   object EmailFormData {
     def apply(
@@ -42,7 +45,6 @@ object HomeController {
     ): Option[(String, String, String, String)] =
       Some(form.formType.toString, form.name, form.email, form.message)
   }
-
 }
 
 @Singleton
@@ -52,6 +54,7 @@ class HomeController @Inject() (
     val mailManager: MailManager
 )(implicit val ec: ExecutionContext)
     extends BaseController
+    with AsyncResultHelpers
     with Logging
     with I18nSupport {
 
@@ -70,14 +73,10 @@ class HomeController @Inject() (
       emailForm
         .bindFromRequest()
         .fold(
-          _ =>
-            Future {
-              BadRequest
-            },
+          _ => BadRequest,
           formData => {
-            val subject = s"$formType - ${formData.name} ${formData.email}"
             mailManager
-              .sendEmail(destination, subject, formData.email)
+              .sendEmail(destination, formData.subjectLine, formData.message)
               .map { _ =>
                 logger.info("email delivered")
                 Ok(
@@ -148,6 +147,7 @@ class HomeController @Inject() (
   val slackDeployURL: String = config.get[String]("slack.deployURL")
 
   def index(): Action[AnyContent] = Action {
+    // noinspection ScalaUnusedSymbol
     implicit request: Request[AnyContent] =>
       Ok(views.html.index(slackDeployURL))
   }

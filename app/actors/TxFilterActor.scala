@@ -26,6 +26,16 @@ object TxFilterActor {
     Props(new TxFilterActor(out, filter, memPoolWatcher))
 }
 
+/** An actor which receives TxUpdate events from `MemPoolWatcherService` and
+  * forwards them only if the specified filter predicate is true.
+  *
+  * @param out
+  *   The actor to forward requests to
+  * @param filter
+  *   The filter predicate
+  * @param memPoolWatcher
+  *   The service used to register for TxUpdate events
+  */
 class TxFilterActor @Inject() (
     @Assisted val out: ActorRef,
     @Assisted val filter: TxUpdate => Boolean,

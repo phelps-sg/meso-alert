@@ -1,19 +1,28 @@
 package controllers
 
-import actions.SlackSignatureVerifyAction
-import actions.SlackSignatureVerifyAction._
-import actors.{HookAlreadyStartedException, HookNotStartedException}
+import actors.{
+  HookAlreadyStartedException,
+  HookNotRegisteredException,
+  HookNotStartedException
+}
 import akka.util.ByteString
+import com.mesonomics.playhmacsignatures.SignatureVerifyAction.formUrlEncodedParser
+import com.mesonomics.playhmacsignatures.{
+  HMACSignatureHelpers,
+  SlackSignatureVerifyAction
+}
 import controllers.SlackSlashCommandController._
 import dao._
 import play.api.Logging
 import play.api.i18n.{Lang, MessagesApi}
 import play.api.mvc._
 import services.{HooksManagerSlackChat, SlackManagerService}
+import slack.BoltException
+import util.AsyncResultHelpers
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Success, Try}
 
 object SlackSlashCommandController {
 
@@ -21,6 +30,10 @@ object SlackSlashCommandController {
   val MESSAGE_CRYPTO_ALERT_NEW: String = "slackResponse.cryptoAlertNew"
   val MESSAGE_CRYPTO_ALERT_RECONFIG: String =
     "slackResponse.cryptoAlertReconfig"
+  val MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL: String =
+    "slackResponse.cryptoAlertBotInChannel"
+  val MESSAGE_CRYPTO_ALERT_MIN_AMOUNT_ERROR: String =
+    "slackResponse.cryptoAlertMinAmountError"
   val MESSAGE_GENERAL_ERROR: String = "slackResponse.generalError"
   val MESSAGE_CURRENCY_ERROR: String = "slackResponse.currencyError"
   val MESSAGE_PAUSE_ALERTS_HELP: String = "slackResponse.pauseAlertsHelp"
@@ -29,6 +42,8 @@ object SlackSlashCommandController {
   val MESSAGE_RESUME_ALERTS_HELP: String = "slackResponse.resumeAlertsHelp"
   val MESSAGE_RESUME_ALERTS: String = "slackResponse.resumeAlerts"
   val MESSAGE_RESUME_ALERTS_ERROR: String = "slackResponse.resumeAlertsError"
+  val MESSAGE_RESUME_ALERTS_ERROR_NOT_CONFIGURED =
+    "slackResponse.resumeAlertsErrorNotConfigured"
 
   private val coreAttributes = List("channel_id", "command", "text")
 
@@ -48,7 +63,7 @@ object SlackSlashCommandController {
 
   def toCommand(implicit
       paramMap: Map[String, Seq[String]]
-  ): Try[SlashCommand] = {
+  ): Future[SlashCommand] = {
     val attributes = coreAttributes.map(param)
     attributes match {
       case Seq(Some(channelId), Some(command), Some(args)) =>
@@ -61,7 +76,7 @@ object SlackSlashCommandController {
                 userName,
                 isEnterpriseInstall
               ) =>
-            Success(
+            Future.successful(
               SlashCommand(
                 None,
                 SlackChannelId(channelId),
@@ -79,10 +94,12 @@ object SlackSlashCommandController {
               )
             )
           case _ =>
-            Failure(new IllegalArgumentException("Malformed slash command"))
+            Future.failed(
+              new IllegalArgumentException("Malformed slash command")
+            )
         }
       case _ =>
-        Failure(
+        Future.failed(
           new IllegalArgumentException(
             s"Malformed slash command- missing attributes ${attributes.filterNot(_.isEmpty)}"
           )
@@ -93,170 +110,34 @@ object SlackSlashCommandController {
 }
 
 class SlackSlashCommandController @Inject() (
-    protected val slackSignatureVerifyAction: SlackSignatureVerifyAction,
     val controllerComponents: ControllerComponents,
     val slashCommandHistoryDao: SlashCommandHistoryDao,
     val slackTeamDao: SlackTeamDao,
     val hooksManager: HooksManagerSlackChat,
     messagesApi: MessagesApi,
-    protected val slackManagerService: SlackManagerService
+    protected val slackManagerService: SlackManagerService,
+    protected implicit val slackSignatureVerifyAction: SlackSignatureVerifyAction
 )(implicit val ec: ExecutionContext)
     extends BaseController
+    with HMACSignatureHelpers
+    with AsyncResultHelpers
     with Logging {
 
   implicit val lang: Lang = Lang("en")
 
-  def slashCommand: Action[ByteString] = {
-    slackSignatureVerifyAction.async(parse.byteString) { request =>
-      logger.debug("received slash command")
-      request
-        .validateSignatureAgainstBody()
-        .map(processForm) match {
-        case Success(result) => result
-        case Failure(ex) =>
-          ex.printStackTrace()
-          Future { Unauthorized(ex.getMessage) }
+  private val onValidSignature =
+    validateSignatureAsync(formUrlEncodedParser)(_)
+
+  def slashCommand: Action[ByteString] = onValidSignature { body =>
+    onSlashCommand(body) { slashCommand =>
+      val f = for {
+        _ <- slashCommandHistoryDao.record(slashCommand)
+        result <- process(slashCommand)
+      } yield result
+      f recover { case ex: Exception =>
+        logger.error(ex.getMessage)
+        NotAcceptable(ex.getMessage)
       }
-    }
-  }
-
-  def processForm(formBody: Map[String, Seq[String]]): Future[Result] = {
-    SlackSlashCommandController.param("ssl_check")(formBody) match {
-
-      case Some("1") =>
-        Future { Ok }
-
-      case _ =>
-        SlackSlashCommandController.toCommand(formBody) match {
-
-          case Success(slashCommand) =>
-            val f = for {
-              _ <- slashCommandHistoryDao.record(slashCommand)
-              result <- process(slashCommand)
-            } yield result
-
-            f recover { case ex: Exception =>
-              ex.printStackTrace()
-              ServiceUnavailable(ex.getMessage)
-            }
-
-          case Failure(ex) =>
-            logger.error(ex.getMessage)
-            Future {
-              NotAcceptable(ex.getMessage)
-            }
-        }
-    }
-  }
-
-  def channel(implicit slashCommand: SlashCommand): SlackChannelId =
-    slashCommand.channelId
-
-  def cryptoAlert(implicit slashCommand: SlashCommand): Future[Result] = {
-
-    val args = slashCommand.text.toLowerCase.split("\\s+")
-
-    args match {
-
-      case Array("help") =>
-        logger.debug("crypto-alert help")
-        Future { Ok(messagesApi(MESSAGE_CRYPTO_ALERT_HELP)) }
-
-      case Array(_) | Array(_, "btc") =>
-        args.head.toLongOption match {
-
-          case Some(amount) =>
-            logger.debug(s"amount = $amount")
-
-            val f = for {
-              team <- slackTeamDao.find(slashCommand.teamId)
-              _ <- hooksManager.update(
-                SlackChatHookPlainText(
-                  channel,
-                  token = team.accessToken,
-                  amount * 100000000,
-                  isRunning = true
-                )
-              )
-              started <- hooksManager.start(channel)
-            } yield started
-            f.map { _ =>
-              Ok(messagesApi(MESSAGE_CRYPTO_ALERT_NEW, amount))
-            }.recoverWith { case HookAlreadyStartedException(_) =>
-              val f = for {
-                _ <- hooksManager.stop(channel)
-                restarted <- hooksManager.start(channel)
-              } yield restarted
-              f.map { _ =>
-                Ok(messagesApi(MESSAGE_CRYPTO_ALERT_RECONFIG, amount))
-              }
-            }
-
-          case None =>
-            logger.debug(s"Invalid amount ${slashCommand.text}")
-            Future {
-              Ok(messagesApi(MESSAGE_GENERAL_ERROR))
-            }
-
-        }
-
-      case Array(_, _) =>
-        Future {
-          Ok(messagesApi(MESSAGE_CURRENCY_ERROR))
-        }
-
-      case _ =>
-        Future {
-          Ok(messagesApi(MESSAGE_GENERAL_ERROR))
-        }
-
-    }
-  }
-
-  def pauseAlerts(implicit slashCommand: SlashCommand): Future[Result] = {
-
-    val args = slashCommand.text.toLowerCase.split("\\s+")
-
-    args match {
-
-      case Array("help") =>
-        logger.debug("pause-alerts help")
-        Future {
-          Ok(messagesApi(MESSAGE_PAUSE_ALERTS_HELP))
-        }
-
-      case Array("") =>
-        logger.debug("Pausing alerts")
-        val f = for {
-          stopped <- hooksManager.stop(channel)
-        } yield stopped
-        f.map { _ => Ok(messagesApi(MESSAGE_PAUSE_ALERTS)) }
-          .recover { case HookNotStartedException(_) =>
-            Ok(messagesApi(MESSAGE_PAUSE_ALERTS_ERROR))
-          }
-    }
-  }
-
-  def resumeAlerts(implicit slashCommand: SlashCommand): Future[Result] = {
-    val args = slashCommand.text.toLowerCase.split("\\s+")
-
-    args match {
-
-      case Array("help") =>
-        logger.debug("resume-alerts help")
-        Future {
-          Ok(messagesApi(MESSAGE_RESUME_ALERTS_HELP))
-        }
-
-      case Array("") =>
-        logger.debug("Resuming alerts")
-        val f = for {
-          started <- hooksManager.start(channel)
-        } yield started
-        f.map { _ => Ok(messagesApi(MESSAGE_RESUME_ALERTS)) }
-          .recover { case HookAlreadyStartedException(_) =>
-            Ok(messagesApi(MESSAGE_RESUME_ALERTS_ERROR))
-          }
     }
   }
 
@@ -267,4 +148,158 @@ class SlackSlashCommandController @Inject() (
       case "/resume-alerts" => resumeAlerts
     }
   }
+
+  private def cryptoAlert(implicit
+      slashCommand: SlashCommand
+  ): Future[Result] = {
+
+    val args = slashCommand.text.toLowerCase.split("\\s+")
+
+    args match {
+
+      case Array("help") =>
+        logger.debug("crypto-alert help")
+        message(MESSAGE_CRYPTO_ALERT_HELP)
+
+      case Array(_) | Array(_, "btc") =>
+        args.head.toLongOption match {
+
+          case Some(amount) if amount >= 1 =>
+            logger.debug(s"amount = $amount")
+
+            val f = for {
+              team <- slackTeamDao.find(slashCommand.teamId)
+              _ <- checkChannelPermissions(team)
+              _ <- hooksManager.update(
+                SlackChatHookPlainText(
+                  channel,
+                  token = team.accessToken,
+                  Satoshi(amount * 100000000),
+                  isRunning = true
+                )
+              )
+              _ <- hooksManager.start(channel)
+            } yield message(MESSAGE_CRYPTO_ALERT_NEW, amount)
+
+            f.recoverWith {
+
+              case HookAlreadyStartedException(_) =>
+                for {
+                  _ <- hooksManager.stop(channel)
+                  _ <- hooksManager.start(channel)
+                } yield message(MESSAGE_CRYPTO_ALERT_RECONFIG, amount)
+
+              case BoltException.ChannelNotFoundException =>
+                message(MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL)
+            }
+
+          case Some(amount) if amount < 1 =>
+            message(MESSAGE_CRYPTO_ALERT_MIN_AMOUNT_ERROR)
+
+          case None =>
+            logger.debug(s"Invalid amount ${slashCommand.text}")
+            message(MESSAGE_GENERAL_ERROR)
+        }
+
+      case Array(_, _) =>
+        message(MESSAGE_CURRENCY_ERROR)
+
+      case _ =>
+        message(MESSAGE_GENERAL_ERROR)
+    }
+  }
+
+  private def pauseAlerts(implicit
+      slashCommand: SlashCommand
+  ): Future[Result] = {
+
+    val args = slashCommand.text.toLowerCase.split("\\s+")
+
+    args match {
+
+      case Array("") =>
+        logger.debug("Pausing alerts")
+        val f = for {
+          _ <- hooksManager.stop(channel)
+        } yield message(MESSAGE_PAUSE_ALERTS)
+        f.recover { case HookNotStartedException(_) =>
+          message(MESSAGE_PAUSE_ALERTS_ERROR)
+        }
+
+      case _ =>
+        message(MESSAGE_PAUSE_ALERTS_HELP)
+
+    }
+  }
+
+  private def resumeAlerts(implicit
+      slashCommand: SlashCommand
+  ): Future[Result] = {
+    val args = slashCommand.text.toLowerCase.split("\\s+")
+
+    args match {
+
+      case Array("") =>
+        logger.debug("Resuming alerts")
+        val f = for {
+          team <- slackTeamDao.find(slashCommand.teamId)
+          _ <- checkChannelPermissions(team)
+          _ <- hooksManager.start(channel)
+        } yield message(MESSAGE_RESUME_ALERTS)
+        f recover {
+          case HookAlreadyStartedException(_) =>
+            message(MESSAGE_RESUME_ALERTS_ERROR)
+          case HookNotRegisteredException(_) =>
+            message(MESSAGE_RESUME_ALERTS_ERROR_NOT_CONFIGURED)
+          case BoltException.ChannelNotFoundException =>
+            message(MESSAGE_CRYPTO_ALERT_BOT_NOT_IN_CHANNEL)
+        }
+
+      case _ =>
+        message(MESSAGE_RESUME_ALERTS_HELP)
+
+    }
+  }
+
+  /** Check whether the body contains an SSL verification request (ssl_check=1)
+    * and if so respond with 200, otherwise attempt to parse the body as a slash
+    * command and process it using the supplied function.
+    */
+  private def onSlashCommand(
+      body: Map[String, Seq[String]]
+  )(processCommand: SlashCommand => Future[Result]): Future[Result] =
+    SlackSlashCommandController.param("ssl_check")(body) match {
+      case Some("1") =>
+        Ok
+      case _ =>
+        SlackSlashCommandController.toCommand(body).flatMap(processCommand)
+    }
+
+  /** Check whether we have permissions to execute the specified command.
+    * @param team
+    *   The team corresponding to the bot
+    * @param slashCommand
+    *   The command to be executed
+    * @return
+    *   Either return the unaltered team object, or throw an exception if
+    *   insufficient permissions.
+    */
+  private def checkChannelPermissions(
+      team: SlackTeam
+  )(implicit slashCommand: SlashCommand): Future[SlackTeam] =
+    // conversationInfo will throw BoltException("channel_not_found") for
+    // private channels we are not a member of.
+    for {
+      _ <- slackManagerService.conversationsInfo(
+        team.accessToken,
+        channel
+      )
+    } yield team
+
+  private def channel(implicit slashCommand: SlashCommand): SlackChannelId =
+    slashCommand.channelId
+
+  private def message(key: String, args: Any*): Result = Ok(
+    messagesApi(key, args: _*)
+  )
 }

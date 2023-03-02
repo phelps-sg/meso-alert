@@ -1,6 +1,6 @@
 package actors
 
-import dao.Hook
+import dao.{Hook, Satoshi}
 import org.bitcoinj.core.TransactionConfidence.ConfidenceType
 import org.bitcoinj.core._
 import org.bitcoinj.script.ScriptException
@@ -17,7 +17,7 @@ final case class Registered[X](hook: Hook[X])
 final case class Updated[X](hook: Hook[X])
 final case class Start[X](key: X)
 final case class Stop[X](key: X)
-final case class TxInputOutput(address: Option[String], value: Option[Long])
+final case class TxInputOutput(address: Option[String], value: Option[Satoshi])
 final case class TxHash(value: String) extends AnyVal with MappedTo[String]
 
 object TxHash {
@@ -31,7 +31,7 @@ final case class TxConfidence(
 
 final case class TxUpdate(
     hash: TxHash,
-    value: Long,
+    amount: Satoshi,
     time: java.time.LocalDateTime,
     isPending: Boolean,
     outputs: Seq[TxInputOutput],
@@ -44,7 +44,7 @@ object TxUpdate {
   def apply(tx: Transaction)(implicit params: NetworkParameters): TxUpdate =
     TxUpdate(
       hash = TxHash(tx),
-      value = tx.getOutputSum.value,
+      amount = Satoshi(tx.getOutputSum.value),
       time = java.time.LocalDateTime.now(),
       isPending = tx.isPending,
       inputs = (for (input <- tx.getInputs.asScala)
@@ -88,17 +88,17 @@ object TxUpdate {
     }
   }
 
-  def value(input: TransactionInput): Option[Long] =
-    Option(input.getValue).map(_.value)
+  def value(input: TransactionInput): Option[Satoshi] =
+    Option(input.getValue).map(x => Satoshi(x.value))
 
-  def value(output: TransactionOutput): Option[Long] =
-    Option(output.getValue).map(_.value)
+  def value(output: TransactionOutput): Option[Satoshi] =
+    Option(output.getValue).map(x => Satoshi(x.value))
 
   // noinspection ConvertExpressionToSAM
   implicit val txUpdateWrites: Writes[TxUpdate] = new Writes[TxUpdate] {
     def writes(tx: TxUpdate): JsObject = Json.obj(
       fields = "hash" -> tx.hash.value,
-      "value" -> tx.value,
+      "value" -> tx.amount.value,
       "time" -> tx.time.toString(),
       "isPending" -> tx.isPending,
       "outputs" -> Json.arr(tx.outputs),

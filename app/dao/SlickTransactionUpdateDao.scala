@@ -33,7 +33,7 @@ class SlickTransactionUpdateDao @Inject() (
     val slickTxUpdate = TransactionUpdate(
       None,
       txUpdate.hash,
-      txUpdate.value,
+      txUpdate.amount,
       txUpdate.time,
       txUpdate.isPending
     )

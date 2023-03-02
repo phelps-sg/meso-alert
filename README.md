@@ -24,8 +24,9 @@ make install-dev
 #### On local development machines
 
 ~~~bash
-docker login registry.gitlab.com
+sudo docker login registry.gitlab.com
 ~~~
+Use personal access token from gitlab
 
 #### On Kubernetes clusters 
 

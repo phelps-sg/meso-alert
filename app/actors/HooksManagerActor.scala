@@ -8,6 +8,7 @@ import play.api.Logging
 import play.api.libs.concurrent.InjectedActorSupport
 import slick.DatabaseExecutionContext
 
+import java.time.Clock
 import scala.concurrent.ExecutionContext
 import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
@@ -20,6 +21,13 @@ object HooksManagerActor {
   case class CreateActors[X](uri: X, hook: Hook[X])
 }
 
+/** Abstract superclass for actors which manage hooks. A hook is a subscription
+  * for blockchain events over a particular channel.
+  * @tparam X
+  *   The type of the key for the hook, typically a channel id
+  * @tparam Y
+  *   The type for the hook
+  */
 abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
     extends Actor
     with InjectedActorSupport
@@ -28,9 +36,11 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
 
   import HooksManagerActor._
 
+  val clock: Clock
   val dao: HookDao[X, Y]
   val messagingActorFactory: TxMessagingActorFactory[Y]
   val filteringActorFactory: TxFilterActor.Factory
+  val batchingActorFactory: RateLimitingBatchingActor.Factory
   val databaseExecutionContext: DatabaseExecutionContext
   val hookTypePrefix: String
 
@@ -40,14 +50,12 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
 
   def encodeKey(key: X): String
 
-  implicit class HookFor(key: X) {
-    def withHook[R](fn: Hook[X] => R): Unit = {
-      dao.find(key) map { hook =>
-        Success(fn(hook))
-      } recover { case _: NoSuchElementException =>
-        Failure(HookNotRegisteredException(key))
-      } pipeTo sender()
-    }
+  def withHookFor[R](key: X)(fn: Hook[X] => R): Unit = {
+    dao.find(key) map { hook =>
+      Success(fn(hook))
+    } recover { case _: NoSuchElementException =>
+      Failure(HookNotRegisteredException(key))
+    } pipeTo sender()
   }
 
   def fail(ex: Exception): Unit = {
@@ -68,26 +76,30 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
         Success(Updated(newHook))
       } pipeTo sender()
 
-    case Start(uri: X) =>
-      logger.debug(s"Received start request for $uri")
-      if (!(actors contains uri)) {
-        uri withHook (hook => {
-          self ! CreateActors(uri, hook)
-          val startedHook = hook.newStatus(isRunning = true)
-          self ! Update(startedHook)
-          Started(startedHook)
-        })
-      } else fail(HookAlreadyStartedException(uri))
+    case Start(key: X) =>
+      logger.debug(s"Received start request for $key")
+      if (!(actors contains key)) {
+        withHookFor(key) { hook =>
+          {
+            self ! CreateActors(key, hook)
+            val startedHook = hook.newStatus(isRunning = true)
+            self ! Update(startedHook)
+            Started(startedHook)
+          }
+        }
+      } else fail(HookAlreadyStartedException(key))
 
     case Stop(key: X) =>
       logger.debug(s"Stopping actor with key $key")
       if (actors contains key) {
         actors(key).foreach(_ ! PoisonPill)
         actors -= key
-        key withHook (hook => {
-          self ! Update(hook.newStatus(isRunning = false))
-          Stopped(hook)
-        })
+        withHookFor(key) { hook =>
+          {
+            self ! Update(hook.newStatus(isRunning = false))
+            Stopped(hook)
+          }
+        }
       } else fail(HookNotStartedException(key))
 
     case CreateActors(key: X, hook: Y) =>
@@ -99,12 +111,17 @@ abstract class HooksManagerActor[X: ClassTag, Y <: Hook[X]: ClassTag]
           messagingActorFactory(hook),
           name = s"$hookTypePrefix-messenger-$actorId"
         )
+      val batchingActor =
+        injectedChild(
+          batchingActorFactory(messagingActor, clock),
+          name = s"$hookTypePrefix-batcher-$actorId"
+        )
       val filteringActor =
         injectedChild(
-          filteringActorFactory(messagingActor, hook.filter),
+          filteringActorFactory(batchingActor, hook.filter),
           name = s"$hookTypePrefix-filter-$actorId"
         )
-      actors += key -> Array(messagingActor, filteringActor)
+      actors += key -> Array(messagingActor, batchingActor, filteringActor)
 
     case CreateActors(_: X, _) =>
       logger.error("Not starting child actors; unrecognized hook type")

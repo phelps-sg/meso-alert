@@ -1,7 +1,7 @@
 package postgres
 
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
-import org.scalatest.Suite
+import org.scalatest.{BeforeAndAfterAll, Suite}
 import org.slf4j.{Logger, LoggerFactory}
 import slick.jdbc
 import slick.jdbc.JdbcBackend.Database
@@ -10,7 +10,7 @@ import java.util.concurrent.Executors
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
-trait PostgresContainer extends ForAllTestContainer {
+trait PostgresContainer extends ForAllTestContainer with BeforeAndAfterAll {
   self: Suite =>
 
   val logger: Logger = LoggerFactory.getLogger(classOf[PostgresContainer])
@@ -25,7 +25,7 @@ trait PostgresContainer extends ForAllTestContainer {
     password = "meso-alert-test"
   )
 
-  implicit def database: jdbc.JdbcBackend.DatabaseDef = {
+  lazy val database: jdbc.JdbcBackend.DatabaseDef = {
     logger.info(s"Returning database definition from url ${container.jdbcUrl}")
     Database.forURL(
       url = container.jdbcUrl,
@@ -38,4 +38,7 @@ trait PostgresContainer extends ForAllTestContainer {
   implicit val timeout: Duration = Duration(1, "min")
 //  implicit val ec: ExecutionContextExecutor = ExecutionContext.global
 
+  override protected def afterAll(): Unit = {
+    database.close()
+  }
 }
