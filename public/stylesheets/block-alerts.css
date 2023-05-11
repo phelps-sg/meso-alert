@@ -3588,8 +3588,7 @@ blockquote {
 
 @media screen and (max-width: 768px) {
     .container {
-        padding: 0 10px;
-        margin: 0 auto; /* Add auto margins for mobile devices */
+        padding: 20px 10px 10px 10px;
     }
 
     .main {
@@ -3598,7 +3597,6 @@ blockquote {
 
     .heading {
         font-size: 28px;
-        margin-bottom: 20px; /* Add margin bottom for better spacing */
     }
 
     .sub-heading {
