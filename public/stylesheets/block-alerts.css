@@ -3583,3 +3583,31 @@ blockquote {
     }
 }
 
+
+/* Mobile optimization */
+
+@media screen and (max-width: 768px) {
+    .container {
+        padding: 0 10px;
+        margin: 0 auto; /* Add auto margins for mobile devices */
+    }
+
+    .main {
+        padding: 20px; /* Reduce padding for mobile devices */
+    }
+
+    .heading {
+        font-size: 28px;
+        margin-bottom: 20px; /* Add margin bottom for better spacing */
+    }
+
+    .sub-heading {
+        font-size: 16px;
+        margin-bottom: 20px; /* Add margin bottom for better spacing */
+    }
+
+    .button {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}
