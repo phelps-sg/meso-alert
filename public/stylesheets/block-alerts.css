@@ -3586,7 +3586,7 @@ blockquote {
 
 /* Mobile optimization */
 
-@media screen and (max-width: 768px) {
+@media only screen and (max-width: 768px) {
     .container {
         padding: 20px 10px 10px 10px;
     }
@@ -3596,12 +3596,16 @@ blockquote {
     }
 
     .heading {
-        font-size: 28px;
+        font-size: 38px;
     }
 
     .sub-heading {
-        font-size: 16px;
+        font-size: 20px;
         margin-bottom: 20px; /* Add margin bottom for better spacing */
+    }
+
+    .p {
+        font-size: 18px;
     }
 
     .button {
