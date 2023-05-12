@@ -68,7 +68,7 @@ production-functional-tests:
 k8-staging:
   stage: deploy-staging
   image:
-    name: bitnami/kubectl:latest
+    name: bitnami/kubectl:1.26.4
     entrypoint: ['']
   script:
     - kubectl config use-context mesonomics/meso-alert:meso-alert-k8agent
